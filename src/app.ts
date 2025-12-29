@@ -1,11 +1,6 @@
 import { Hono } from "hono";
-import {
-  createWebSocketHandler,
-  websocket,
-  addConnection,
-  removeConnection,
-} from "./websocket";
-import { rerun, type Script } from "./runtime";
+import { type Script, rerun } from "./runtime";
+import { addConnection, createWebSocketHandler, removeConnection, websocket } from "./websocket";
 import type { ServerMessage } from "./websocket/types";
 
 const clientScript = `
@@ -41,12 +36,12 @@ const clientScript = `
 `;
 
 export function createApp(script: Script) {
-  const app = new Hono();
+	const app = new Hono();
 
-  // ルートページ（HTMLを返す）
-  app.get("/", (c) => {
-    const initialHtml = rerun(script);
-    return c.html(`
+	// ルートページ（HTMLを返す）
+	app.get("/", (c) => {
+		const initialHtml = rerun(script);
+		return c.html(`
       <!DOCTYPE html>
       <html>
       <head>
@@ -60,45 +55,45 @@ export function createApp(script: Script) {
       </body>
       </html>
     `);
-  });
+	});
 
-  // WebSocket エンドポイント
-  app.get(
-    "/ws",
-    createWebSocketHandler({
-      onOpen: (_evt, ws) => {
-        addConnection(ws);
-        console.log("WebSocket connected");
-      },
-      onMessage: (event, ws) => {
-        const data = JSON.parse(event.data.toString());
+	// WebSocket エンドポイント
+	app.get(
+		"/ws",
+		createWebSocketHandler({
+			onOpen: (_evt, ws) => {
+				addConnection(ws);
+				console.log("WebSocket connected");
+			},
+			onMessage: (event, ws) => {
+				const data = JSON.parse(event.data.toString());
 
-        // rerun を実行
-        const html = rerun(script, {
-          widgetId: data.widgetId,
-          value: data.value,
-        });
+				// rerun を実行
+				const html = rerun(script, {
+					widgetId: data.widgetId,
+					value: data.value,
+				});
 
-        // replaceRoot パッチを送信
-        const message: ServerMessage = {
-          type: "patch",
-          patches: [{ type: "replaceRoot", html }],
-        };
-        ws.send(JSON.stringify(message));
-      },
-      onClose: (_evt, ws) => {
-        removeConnection(ws);
-        console.log("WebSocket disconnected");
-      },
-    }),
-  );
+				// replaceRoot パッチを送信
+				const message: ServerMessage = {
+					type: "patch",
+					patches: [{ type: "replaceRoot", html }],
+				};
+				ws.send(JSON.stringify(message));
+			},
+			onClose: (_evt, ws) => {
+				removeConnection(ws);
+				console.log("WebSocket disconnected");
+			},
+		}),
+	);
 
-  // クライアント JavaScript
-  app.get("/client.js", (c) => {
-    return c.text(clientScript, 200, {
-      "Content-Type": "application/javascript",
-    });
-  });
+	// クライアント JavaScript
+	app.get("/client.js", (c) => {
+		return c.text(clientScript, 200, {
+			"Content-Type": "application/javascript",
+		});
+	});
 
-  return { app, websocket };
+	return { app, websocket };
 }
