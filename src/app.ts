@@ -66,7 +66,7 @@ export function createApp(script: Script) {
   app.get(
     "/ws",
     createWebSocketHandler({
-      onOpen: (ws) => {
+      onOpen: (_evt, ws) => {
         addConnection(ws);
         console.log("WebSocket connected");
       },
@@ -86,7 +86,7 @@ export function createApp(script: Script) {
         };
         ws.send(JSON.stringify(message));
       },
-      onClose: (ws) => {
+      onClose: (_evt, ws) => {
         removeConnection(ws);
         console.log("WebSocket disconnected");
       },
