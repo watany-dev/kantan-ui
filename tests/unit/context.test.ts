@@ -1,40 +1,40 @@
-import { describe, expect, it, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
-  setContext,
-  getContext,
-  clearContext,
+	clearContext,
+	getContext,
+	setContext,
 } from "../../src/runtime/context";
 
 describe("context", () => {
-  beforeEach(() => {
-    clearContext();
-  });
+	beforeEach(() => {
+		clearContext();
+	});
 
-  it("should return null when no context is set", () => {
-    expect(getContext()).toBeNull();
-  });
+	it("should return null when no context is set", () => {
+		expect(getContext()).toBeNull();
+	});
 
-  it("should set and get context", () => {
-    setContext({ event: { widgetId: "test", value: 123 } });
-    const ctx = getContext();
+	it("should set and get context", () => {
+		setContext({ event: { widgetId: "test", value: 123 } });
+		const ctx = getContext();
 
-    expect(ctx).not.toBeNull();
-    expect(ctx?.event?.widgetId).toBe("test");
-    expect(ctx?.event?.value).toBe(123);
-  });
+		expect(ctx).not.toBeNull();
+		expect(ctx?.event?.widgetId).toBe("test");
+		expect(ctx?.event?.value).toBe(123);
+	});
 
-  it("should clear context", () => {
-    setContext({ event: { widgetId: "test", value: "value" } });
-    clearContext();
+	it("should clear context", () => {
+		setContext({ event: { widgetId: "test", value: "value" } });
+		clearContext();
 
-    expect(getContext()).toBeNull();
-  });
+		expect(getContext()).toBeNull();
+	});
 
-  it("should handle context without event", () => {
-    setContext({});
-    const ctx = getContext();
+	it("should handle context without event", () => {
+		setContext({});
+		const ctx = getContext();
 
-    expect(ctx).not.toBeNull();
-    expect(ctx?.event).toBeUndefined();
-  });
+		expect(ctx).not.toBeNull();
+		expect(ctx?.event).toBeUndefined();
+	});
 });

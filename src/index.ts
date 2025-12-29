@@ -5,21 +5,21 @@ export { Hono } from "hono";
 export { createApp } from "./app";
 
 // Runtime
-export { rerun, getContext, setContext, clearContext } from "./runtime";
-export type { Script, RerunContext } from "./runtime";
+export { clearContext, getContext, rerun, setContext } from "./runtime";
+export type { RerunContext, Script } from "./runtime";
 
 // WebSocket
 export {
-  createWebSocketHandler,
-  upgradeWebSocket,
-  websocket,
-  addConnection,
-  removeConnection,
-  getConnectionCount,
+	addConnection,
+	createWebSocketHandler,
+	getConnectionCount,
+	removeConnection,
+	upgradeWebSocket,
+	websocket,
 } from "./websocket";
 export type {
-  ClientMessage,
-  ServerMessage,
-  Patch,
-  ReplaceRootPatch,
+	ClientMessage,
+	Patch,
+	ReplaceRootPatch,
+	ServerMessage,
 } from "./websocket/types";

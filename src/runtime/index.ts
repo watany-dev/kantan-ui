@@ -1,2 +1,2 @@
 export { rerun, type Script } from "./rerun";
-export { getContext, setContext, clearContext, type RerunContext } from "./context";
+export { clearContext, getContext, setContext, type RerunContext } from "./context";
