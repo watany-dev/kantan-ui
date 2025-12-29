@@ -1,11 +1,25 @@
-import { Hono } from "hono";
+// Re-export Hono
+export { Hono } from "hono";
 
-const app = new Hono();
+// App factory
+export { createApp } from "./app";
 
-app.get("/", (c) => {
-	return c.text("kantan-ui");
-});
+// Runtime
+export { rerun, getContext, setContext, clearContext } from "./runtime";
+export type { Script, RerunContext } from "./runtime";
 
-export default app;
-
-export { Hono };
+// WebSocket
+export {
+	createWebSocketHandler,
+	upgradeWebSocket,
+	websocket,
+	addConnection,
+	removeConnection,
+	getConnectionCount,
+} from "./websocket";
+export type {
+	ClientMessage,
+	ServerMessage,
+	Patch,
+	ReplaceRootPatch,
+} from "./websocket/types";
