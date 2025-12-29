@@ -1,14 +1,10 @@
-import { type RerunContext, clearContext, setContext } from "./context";
 import { setCurrentSessionId } from "../session/state";
 import { resetWidgetCounter } from "../widgets/registry";
+import { type RerunContext, clearContext, setContext } from "./context";
 
 export type Script = () => string;
 
-export function rerun(
-	script: Script,
-	event?: RerunContext["event"],
-	sessionId?: string,
-): string {
+export function rerun(script: Script, event?: RerunContext["event"], sessionId?: string): string {
 	try {
 		// Widget カウンターをリセット
 		resetWidgetCounter();

@@ -1,6 +1,6 @@
 import { getContext } from "../runtime/context";
-import type { ButtonConfig } from "./types";
 import { generateWidgetId } from "./registry";
+import type { ButtonConfig } from "./types";
 
 function escapeHtml(text: string): string {
 	return text
@@ -28,10 +28,7 @@ export function button(label: string, config?: Partial<ButtonConfig>): boolean {
 /**
  * ボタンのHTMLをレンダリング
  */
-export function renderButton(
-	label: string,
-	config?: Partial<ButtonConfig>,
-): string {
+export function renderButton(label: string, config?: Partial<ButtonConfig>): string {
 	const id = generateWidgetId(config?.key);
 
 	return `<button id="${id}" onclick="sendEvent('${id}', 'clicked')" class="kt-button">${escapeHtml(label)}</button>`;

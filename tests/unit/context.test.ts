@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import {
-	clearContext,
-	getContext,
-	setContext,
-} from "../../src/runtime/context";
+import { clearContext, getContext, setContext } from "../../src/runtime/context";
 
 describe("context", () => {
 	beforeEach(() => {

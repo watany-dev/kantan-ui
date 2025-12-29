@@ -1,10 +1,5 @@
+import { generateWidgetId, getWidgetValue, hasWidgetValue, setWidgetValue } from "./registry";
 import type { SelectboxConfig } from "./types";
-import {
-	generateWidgetId,
-	getWidgetValue,
-	hasWidgetValue,
-	setWidgetValue,
-} from "./registry";
 
 function escapeHtml(text: string): string {
 	return text

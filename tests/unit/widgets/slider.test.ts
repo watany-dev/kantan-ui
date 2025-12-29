@@ -1,12 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-	SessionManager,
-	resetSessionManager,
-	setSessionManager,
-} from "../../../src/session/manager";
+import { SessionManager, resetSessionManager, setSessionManager } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
-import { renderSlider, slider } from "../../../src/widgets/slider";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
+import { renderSlider, slider } from "../../../src/widgets/slider";
 
 describe("slider", () => {
 	let manager: SessionManager;

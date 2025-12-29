@@ -121,11 +121,8 @@ export function createApp(script: Script) {
 					}
 
 					// rerun を実行
-					const html = rerun(
-						script,
-						{ widgetId: data.widgetId!, value: data.value },
-						session.id,
-					);
+					const widgetId = data.widgetId ?? "";
+					const html = rerun(script, { widgetId, value: data.value }, session.id);
 
 					// replaceRoot パッチを送信
 					const message: ServerMessage = {
