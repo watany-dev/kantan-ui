@@ -13,6 +13,7 @@
 	},
 	"files": ["dist"],
 	"scripts": {
+		"prepare": "lefthook install",
 		"dev": "bun run --watch src/server.ts",
 		"build": "bun build src/index.ts --outdir dist --target bun && bun run build:types",
 		"build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
@@ -21,6 +22,7 @@
 		"test:coverage": "bun --bun vitest run --coverage",
 		"test:e2e": "playwright test",
 		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
 		"check": "biome check --write .",
 		"audit": "npm audit --audit-level=moderate",
@@ -45,6 +47,7 @@
 		"@playwright/test": "^1.49.0",
 		"@types/bun": "^1.1.0",
 		"@vitest/coverage-istanbul": "^2.1.0",
+		"lefthook": "^1.6.0",
 		"typescript": "^5.7.0",
 		"vitest": "^2.1.0"
 	},
