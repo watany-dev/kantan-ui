@@ -8,7 +8,9 @@ export default defineConfig({
 		coverage: {
 			provider: "istanbul",
 			reporter: ["text", "json", "html"],
-			exclude: ["node_modules", "dist", "e2e", "tests", "*.config.ts"],
+			reportsDirectory: "./coverage",
+			include: ["src/**/*.ts"],
+			exclude: ["node_modules", "dist", "e2e", "tests", "*.config.ts", "src/server.ts"],
 			thresholds: {
 				lines: 95,
 				functions: 95,

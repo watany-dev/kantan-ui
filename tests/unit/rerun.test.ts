@@ -1,8 +1,24 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { getContext } from "../../src/runtime/context";
 import { rerun } from "../../src/runtime/rerun";
+import {
+	SessionManager,
+	getCurrentSessionId,
+	resetSessionManager,
+	setSessionManager,
+} from "../../src/session";
+import { generateWidgetId, resetWidgetCounter } from "../../src/widgets";
 
 describe("rerun", () => {
+	beforeEach(() => {
+		resetWidgetCounter();
+		resetSessionManager();
+	});
+
+	afterEach(() => {
+		resetSessionManager();
+	});
+
 	it("should execute script and return HTML", () => {
 		const script = () => "<div>Hello</div>";
 		const result = rerun(script);
@@ -37,5 +53,50 @@ describe("rerun", () => {
 
 		expect(() => rerun(script)).toThrow("Test error");
 		expect(getContext()).toBeNull();
+	});
+
+	it("should set sessionId in context during execution", () => {
+		const manager = new SessionManager();
+		setSessionManager(manager);
+		const session = manager.createSession();
+
+		let capturedSessionId: string | null = null;
+		const script = () => {
+			capturedSessionId = getCurrentSessionId();
+			return "<div>Test</div>";
+		};
+
+		rerun(script, undefined, session.id);
+
+		expect(capturedSessionId).toBe(session.id);
+	});
+
+	it("should clear sessionId after execution", () => {
+		const manager = new SessionManager();
+		setSessionManager(manager);
+		const session = manager.createSession();
+
+		const script = () => "<div>Test</div>";
+		rerun(script, undefined, session.id);
+
+		expect(getCurrentSessionId()).toBeNull();
+	});
+
+	it("should reset widget counter on each rerun", () => {
+		const manager = new SessionManager();
+		setSessionManager(manager);
+		const session = manager.createSession();
+
+		const script = () => {
+			const id = generateWidgetId();
+			return `<div>${id}</div>`;
+		};
+
+		const result1 = rerun(script, undefined, session.id);
+		const result2 = rerun(script, undefined, session.id);
+
+		// Both should generate widget_0 because counter is reset
+		expect(result1).toBe("<div>widget_0</div>");
+		expect(result2).toBe("<div>widget_0</div>");
 	});
 });

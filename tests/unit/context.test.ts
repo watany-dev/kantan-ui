@@ -33,4 +33,24 @@ describe("context", () => {
 		expect(ctx).not.toBeNull();
 		expect(ctx?.event).toBeUndefined();
 	});
+
+	it("should handle context with sessionId", () => {
+		setContext({ sessionId: "session-123" });
+		const ctx = getContext();
+
+		expect(ctx).not.toBeNull();
+		expect(ctx?.sessionId).toBe("session-123");
+	});
+
+	it("should handle context with both sessionId and event", () => {
+		setContext({
+			sessionId: "session-456",
+			event: { widgetId: "btn1", value: "clicked" },
+		});
+		const ctx = getContext();
+
+		expect(ctx).not.toBeNull();
+		expect(ctx?.sessionId).toBe("session-456");
+		expect(ctx?.event?.widgetId).toBe("btn1");
+	});
 });
