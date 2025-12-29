@@ -1,22 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
-	// App
-	createApp,
-	// Runtime
-	rerun,
-	getContext,
-	setContext,
-	clearContext,
-	// Session
 	SessionManager,
-	getSessionManager,
-	session_state,
-	// Widgets
 	button,
+	clearContext,
+	createApp,
+	getContext,
+	getSessionManager,
+	resetWidgetCounter,
+	rerun,
+	selectbox,
+	session_state,
+	setContext,
 	slider,
 	text_input,
-	selectbox,
-	resetWidgetCounter,
 } from "../src/index";
 
 describe("kantan-ui exports", () => {
