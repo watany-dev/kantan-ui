@@ -63,9 +63,7 @@ describe("websocket types", () => {
 	});
 
 	it("should allow valid ServerMessage with patches", () => {
-		const patches: Patch[] = [
-			{ type: "replaceRoot", html: "<div>New content</div>" },
-		];
+		const patches: Patch[] = [{ type: "replaceRoot", html: "<div>New content</div>" }];
 
 		const message: ServerMessage = {
 			type: "patch",

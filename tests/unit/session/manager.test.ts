@@ -13,9 +13,7 @@ describe("SessionManager", () => {
 			const session = manager.createSession();
 
 			expect(session.id).toBeDefined();
-			expect(session.id).toMatch(
-				/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-			);
+			expect(session.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
 			expect(session.state).toEqual({});
 			expect(session.createdAt).toBeInstanceOf(Date);
 			expect(session.lastAccessedAt).toBeInstanceOf(Date);
