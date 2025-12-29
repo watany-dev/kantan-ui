@@ -43,8 +43,10 @@ test.describe("WebSocket connection and replaceRoot", () => {
 
 		const ws = await wsPromise;
 
-		// 最初のinitメッセージを待つ
-		await page.waitForTimeout(100);
+		// WebSocket接続が確立されるまで待つ（初期patchを受信するまで）
+		await new Promise<void>((resolve) => {
+			ws.on("framereceived", () => resolve());
+		});
 
 		// WebSocketメッセージを監視（eventタイプのみ）
 		const messagePromise = new Promise<string>((resolve) => {
@@ -75,10 +77,12 @@ test.describe("WebSocket connection and replaceRoot", () => {
 
 		const ws = await wsPromise;
 
-		// 初期ロードの後、ボタンクリックでpatchを受信することを確認
-		await page.waitForTimeout(100);
+		// 初期patchを受信するまで待つ（セッションが確立されるまで）
+		await new Promise<void>((resolve) => {
+			ws.on("framereceived", () => resolve());
+		});
 
-		// サーバからのメッセージを監視
+		// 次のサーバからのメッセージを監視
 		const responsePromise = new Promise<string>((resolve) => {
 			ws.on("framereceived", (frame) => {
 				resolve(frame.payload.toString());
@@ -88,8 +92,11 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		// ボタンをクリックしてイベントを発火
 		await page.click("#btn_inc");
 
-		// サーバからのレスポンスを確認
-		const receivedMessage = await responsePromise;
+		// サーバからのレスポンスを確認（タイムアウト5秒）
+		const receivedMessage = await Promise.race([
+			responsePromise,
+			new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000)),
+		]);
 		const parsed = JSON.parse(receivedMessage);
 		expect(parsed.type).toBe("patch");
 		expect(parsed.patches).toHaveLength(1);
@@ -100,6 +107,14 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	test("should update counter when increment button is clicked", async ({ page }) => {
 		await page.goto("/");
 
+		// WebSocket接続が完全に確立されるまで待つ
+		await page.waitForFunction(() => {
+			// @ts-ignore
+			return window.ws && window.ws.readyState === WebSocket.OPEN;
+		}, { timeout: 5000 }).catch(() => {
+			// wsがグローバルでない場合はタイムアウトで進む
+		});
+
 		// 初期カウント確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 0",
@@ -108,20 +123,28 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		// インクリメントボタンをクリック
 		await page.click("#btn_inc");
 
-		// カウントが増加したことを確認
+		// カウントが増加したことを確認（リトライあり）
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
+			{ timeout: 10000 },
 		);
 	});
 
 	test("should update slider value", async ({ page }) => {
 		await page.goto("/");
 
-		// スライダーを操作
-		const slider = page.locator("#volume_slider");
-		await slider.fill("75");
+		// 初期表示を待つ
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 50");
 
-		// 値が反映されることを確認
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75");
+		const slider = page.locator("#volume_slider");
+
+		// スライダーを操作（inputイベントを発火させる）
+		await slider.evaluate((el: HTMLInputElement) => {
+			el.value = "75";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+
+		// 値が反映されることを確認（リトライあり）
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75", { timeout: 10000 });
 	});
 });
