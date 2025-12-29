@@ -1,10 +1,19 @@
 import { setCurrentSessionId } from "../session/state";
 import { resetWidgetCounter } from "../widgets/registry";
 import { type RerunContext, clearContext, setContext } from "./context";
+import { RenderContext, setRenderContext } from "../kt/context";
 
-export type Script = () => string;
+/**
+ * スクリプトの型
+ * - string を返す: 従来のAPI（手動HTML生成）
+ * - void を返す: 宣言的API（kt.* を使用）
+ */
+export type Script = () => string | void;
 
 export function rerun(script: Script, event?: RerunContext["event"], sessionId?: string): string {
+	// レンダリングコンテキストを作成
+	const renderContext = new RenderContext();
+
 	try {
 		// Widget カウンターをリセット
 		resetWidgetCounter();
@@ -15,13 +24,22 @@ export function rerun(script: Script, event?: RerunContext["event"], sessionId?:
 		// コンテキストを設定
 		setContext({ event, sessionId });
 
-		// スクリプトを実行してHTMLを生成
-		const html = script();
+		// レンダリングコンテキストを設定
+		setRenderContext(renderContext);
 
-		return html;
+		// スクリプトを実行してHTMLを生成
+		const result = script();
+
+		// スクリプトが文字列を返した場合はそれを使用
+		// void を返した場合はバッファからHTMLを取得
+		if (typeof result === "string") {
+			return result;
+		}
+		return renderContext.getHtml();
 	} finally {
 		// コンテキストをクリア
 		clearContext();
 		setCurrentSessionId(null);
+		setRenderContext(null);
 	}
 }
