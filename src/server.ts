@@ -96,6 +96,9 @@ ${escapeHtml(
 )}
 		</pre>
 	`);
+
+	// 宣言的APIを使用する場合はundefinedを返す（HTMLはバッファから自動取得）
+	return undefined;
 };
 
 function escapeHtml(text: string): string {
