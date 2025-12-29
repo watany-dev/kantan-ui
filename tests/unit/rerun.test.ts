@@ -7,7 +7,7 @@ import {
 	resetSessionManager,
 	setSessionManager,
 } from "../../src/session";
-import { resetWidgetCounter } from "../../src/widgets";
+import { generateWidgetId, resetWidgetCounter } from "../../src/widgets";
 
 describe("rerun", () => {
 	beforeEach(() => {
@@ -86,12 +86,6 @@ describe("rerun", () => {
 		const manager = new SessionManager();
 		setSessionManager(manager);
 		const session = manager.createSession();
-
-		let firstCounter = -1;
-		let secondCounter = -1;
-
-		// Import generateWidgetId to track counter
-		const { generateWidgetId } = require("../../src/widgets/registry");
 
 		const script = () => {
 			const id = generateWidgetId();
