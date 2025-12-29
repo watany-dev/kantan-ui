@@ -1,14 +1,14 @@
+import { RenderContext, setRenderContext } from "../kt/context";
 import { setCurrentSessionId } from "../session/state";
 import { resetWidgetCounter } from "../widgets/registry";
 import { type RerunContext, clearContext, setContext } from "./context";
-import { RenderContext, setRenderContext } from "../kt/context";
 
 /**
  * スクリプトの型
  * - string を返す: 従来のAPI（手動HTML生成）
- * - void を返す: 宣言的API（kt.* を使用）
+ * - undefined を返す: 宣言的API（kt.* を使用）
  */
-export type Script = () => string | void;
+export type Script = () => string | undefined;
 
 export function rerun(script: Script, event?: RerunContext["event"], sessionId?: string): string {
 	// レンダリングコンテキストを作成

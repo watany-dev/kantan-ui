@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
 	RenderContext,
-	setRenderContext,
 	getRenderContext,
 	requireRenderContext,
+	setRenderContext,
 } from "../../../src/kt/context";
 
 describe("RenderContext", () => {
@@ -54,9 +54,7 @@ describe("RenderContext global functions", () => {
 	});
 
 	it("should throw when requireRenderContext called without context", () => {
-		expect(() => requireRenderContext()).toThrow(
-			"RenderContext is not available",
-		);
+		expect(() => requireRenderContext()).toThrow("RenderContext is not available");
 	});
 
 	it("should return context when requireRenderContext called with context", () => {

@@ -1,17 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import {
-	RenderContext,
-	setRenderContext,
-} from "../../../src/kt/context";
-import {
-	write,
-	title,
-	header,
-	subheader,
-	text,
-	divider,
-	html,
-} from "../../../src/kt/output";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { RenderContext, setRenderContext } from "../../../src/kt/context";
+import { divider, header, html, subheader, text, title, write } from "../../../src/kt/output";
 
 describe("Output APIs", () => {
 	let ctx: RenderContext;

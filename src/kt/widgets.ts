@@ -7,9 +7,9 @@ import {
 } from "../widgets/registry";
 import type {
 	ButtonConfig,
+	SelectboxConfig,
 	SliderConfig,
 	TextInputConfig,
-	SelectboxConfig,
 } from "../widgets/types";
 import { requireRenderContext } from "./context";
 

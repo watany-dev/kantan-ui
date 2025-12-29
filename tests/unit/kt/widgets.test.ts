@@ -1,13 +1,8 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { setContext, clearContext } from "../../../src/runtime/context";
+import { button, selectbox, slider, text_input } from "../../../src/kt/widgets";
+import { clearContext, setContext } from "../../../src/runtime/context";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
-import {
-	button,
-	slider,
-	text_input,
-	selectbox,
-} from "../../../src/kt/widgets";
 
 describe("Declarative Widget APIs", () => {
 	let ctx: RenderContext;
@@ -139,9 +134,7 @@ describe("Declarative Widget APIs", () => {
 			const html = ctx.getHtml();
 			expect(html).toContain("kt-button");
 			expect(html).toContain("kt-slider-container");
-			expect(html.indexOf("kt-button")).toBeLessThan(
-				html.indexOf("kt-slider-container"),
-			);
+			expect(html.indexOf("kt-button")).toBeLessThan(html.indexOf("kt-slider-container"));
 		});
 	});
 

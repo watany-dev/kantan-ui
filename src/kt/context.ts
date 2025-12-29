@@ -57,7 +57,9 @@ export function getRenderContext(): RenderContext | null {
  */
 export function requireRenderContext(): RenderContext {
 	if (!currentRenderContext) {
-		throw new Error("RenderContext is not available. kt APIs must be called within a script execution.");
+		throw new Error(
+			"RenderContext is not available. kt APIs must be called within a script execution.",
+		);
 	}
 	return currentRenderContext;
 }

@@ -1,6 +1,6 @@
 import { createApp } from "./app";
-import { session_state } from "./session";
 import { kt } from "./kt";
+import { session_state } from "./session";
 
 /**
  * デモスクリプト - 宣言的API (kt.*) を使用
@@ -55,12 +55,9 @@ const script = () => {
 
 	// セレクトボックス
 	kt.subheader("Selectbox");
-	const color = kt.selectbox(
-		"Color Theme",
-		["blue", "green", "red", "purple"],
-		"blue",
-		{ key: "color_select" },
-	);
+	const color = kt.selectbox("Color Theme", ["blue", "green", "red", "purple"], "blue", {
+		key: "color_select",
+	});
 
 	kt.divider();
 
@@ -85,12 +82,18 @@ const script = () => {
 	kt.subheader("Session State (Debug)");
 	kt.html(`
 		<pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;">
-${escapeHtml(JSON.stringify({
-	counter: session_state.counter,
-	name,
-	volume,
-	color,
-}, null, 2))}
+${escapeHtml(
+	JSON.stringify(
+		{
+			counter: session_state.counter,
+			name,
+			volume,
+			color,
+		},
+		null,
+		2,
+	),
+)}
 		</pre>
 	`);
 };
