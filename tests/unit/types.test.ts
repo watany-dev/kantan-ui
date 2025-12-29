@@ -7,7 +7,7 @@ import type {
 } from "../../src/websocket/types";
 
 describe("websocket types", () => {
-	it("should allow valid ClientMessage", () => {
+	it("should allow valid ClientMessage with event type", () => {
 		const message: ClientMessage = {
 			type: "event",
 			widgetId: "btn1",
@@ -17,6 +17,16 @@ describe("websocket types", () => {
 		expect(message.type).toBe("event");
 		expect(message.widgetId).toBe("btn1");
 		expect(message.value).toBe("clicked");
+	});
+
+	it("should allow valid ClientMessage with init type", () => {
+		const message: ClientMessage = {
+			type: "init",
+			sessionId: "abc-123",
+		};
+
+		expect(message.type).toBe("init");
+		expect(message.sessionId).toBe("abc-123");
 	});
 
 	it("should allow ClientMessage with various value types", () => {
@@ -53,7 +63,9 @@ describe("websocket types", () => {
 	});
 
 	it("should allow valid ServerMessage with patches", () => {
-		const patches: Patch[] = [{ type: "replaceRoot", html: "<div>New content</div>" }];
+		const patches: Patch[] = [
+			{ type: "replaceRoot", html: "<div>New content</div>" },
+		];
 
 		const message: ServerMessage = {
 			type: "patch",
@@ -62,6 +74,16 @@ describe("websocket types", () => {
 
 		expect(message.type).toBe("patch");
 		expect(message.patches).toHaveLength(1);
-		expect(message.patches[0].type).toBe("replaceRoot");
+		expect(message.patches?.[0].type).toBe("replaceRoot");
+	});
+
+	it("should allow ServerMessage with sessionId", () => {
+		const message: ServerMessage = {
+			type: "patch",
+			patches: [{ type: "replaceRoot", html: "<div>Content</div>" }],
+			sessionId: "session-123",
+		};
+
+		expect(message.sessionId).toBe("session-123");
 	});
 });
