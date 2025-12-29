@@ -1,134 +1,104 @@
 import { createApp } from "./app";
-import { getContext } from "./runtime";
+import { kt } from "./kt";
 import { session_state } from "./session";
 
-// デモスクリプト - Widget API と session_state を使用
+/**
+ * デモスクリプト - 宣言的API (kt.*) を使用
+ *
+ * kt.* APIを使うと、HTMLを手動で生成する必要がなく、
+ * Streamlitのように直感的にUIを構築できます。
+ */
 const script = () => {
-	const context = getContext();
-
 	// カウンターの初期化
 	if (session_state.counter === undefined) {
 		session_state.counter = 0;
 	}
 
-	// 名前の初期化
-	if (session_state.name === undefined) {
-		session_state.name = "World";
-	}
+	// タイトル
+	kt.title("kantan-ui Demo");
+	kt.write("Streamlit風の宣言的APIで構築されたデモアプリです。");
 
-	// スライダー値の初期化
-	if (session_state.sliderValue === undefined) {
-		session_state.sliderValue = 50;
-	}
+	kt.divider();
 
-	// カラーの初期化
-	if (session_state.color === undefined) {
-		session_state.color = "blue";
-	}
+	// ===== Counter Section =====
+	kt.header("Counter");
 
-	// ボタンイベント処理
-	if (context?.event?.widgetId === "btn_inc") {
+	// インクリメントボタン
+	if (kt.button("+ Increment", { key: "btn_inc" })) {
 		session_state.counter = (session_state.counter as number) + 1;
 	}
-	if (context?.event?.widgetId === "btn_dec") {
+
+	// デクリメントボタン
+	if (kt.button("- Decrement", { key: "btn_dec" })) {
 		session_state.counter = Math.max(0, (session_state.counter as number) - 1);
 	}
-	if (context?.event?.widgetId === "btn_reset") {
+
+	// リセットボタン
+	if (kt.button("Reset", { key: "btn_reset" })) {
 		session_state.counter = 0;
 	}
 
-	// 入力値の更新
-	if (context?.event?.widgetId === "name_input") {
-		session_state.name = context.event.value as string;
-	}
-	if (context?.event?.widgetId === "slider") {
-		session_state.sliderValue = context.event.value as number;
-	}
-	if (context?.event?.widgetId === "color_select") {
-		session_state.color = context.event.value as string;
-	}
+	kt.write(`Current count: ${session_state.counter}`);
 
-	const name = session_state.name as string;
-	const counter = session_state.counter as number;
-	const sliderValue = session_state.sliderValue as number;
-	const color = session_state.color as string;
+	kt.divider();
 
-	return `
-    <div style="padding: 20px; font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h1 style="color: ${color};">Hello, ${escapeHtml(name)}!</h1>
+	// ===== Input Widgets Section =====
+	kt.header("Input Widgets");
 
-      <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h2>Counter: ${counter}</h2>
-        <div style="display: flex; gap: 10px;">
-          <button id="btn_inc" onclick="sendEvent('btn_inc', 'clicked')" class="kt-button" style="background: #4CAF50; color: white; border: none;">
-            + Increment
-          </button>
-          <button id="btn_dec" onclick="sendEvent('btn_dec', 'clicked')" class="kt-button" style="background: #f44336; color: white; border: none;">
-            - Decrement
-          </button>
-          <button id="btn_reset" onclick="sendEvent('btn_reset', 'clicked')" class="kt-button" style="background: #9e9e9e; color: white; border: none;">
-            Reset
-          </button>
-        </div>
-      </div>
+	// テキスト入力
+	kt.subheader("Text Input");
+	const name = kt.text_input("Your Name", "World", { key: "name_input" });
 
-      <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3>Text Input</h3>
-        <div class="kt-text-input-container">
-          <label for="name_input" class="kt-text-input-label">Your Name:</label>
-          <input
-            type="text"
-            id="name_input"
-            value="${escapeHtml(name)}"
-            oninput="sendEvent('name_input', this.value)"
-            class="kt-text-input"
-            style="padding: 8px; width: 200px; border: 1px solid #ccc; border-radius: 4px;"
-          />
-        </div>
-      </div>
+	// スライダー
+	kt.subheader("Slider");
+	const volume = kt.slider("Volume", 0, 100, 50, { key: "volume_slider" });
 
-      <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3>Slider</h3>
-        <div class="kt-slider-container">
-          <label for="slider" class="kt-slider-label">Value: ${sliderValue}</label>
-          <input
-            type="range"
-            id="slider"
-            min="0"
-            max="100"
-            value="${sliderValue}"
-            oninput="sendEvent('slider', Number(this.value))"
-            class="kt-slider"
-            style="width: 200px;"
-          />
-        </div>
-        <div style="margin-top: 10px; height: 20px; background: linear-gradient(to right, #e0e0e0 0%, ${color} ${sliderValue}%, #e0e0e0 ${sliderValue}%); border-radius: 4px;"></div>
-      </div>
+	// セレクトボックス
+	kt.subheader("Selectbox");
+	const color = kt.selectbox("Color Theme", ["blue", "green", "red", "purple"], "blue", {
+		key: "color_select",
+	});
 
-      <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3>Selectbox</h3>
-        <div class="kt-selectbox-container">
-          <label for="color_select" class="kt-selectbox-label">Color Theme:</label>
-          <select
-            id="color_select"
-            onchange="sendEvent('color_select', this.value)"
-            class="kt-selectbox"
-            style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;"
-          >
-            <option value="blue" ${color === "blue" ? "selected" : ""}>Blue</option>
-            <option value="green" ${color === "green" ? "selected" : ""}>Green</option>
-            <option value="red" ${color === "red" ? "selected" : ""}>Red</option>
-            <option value="purple" ${color === "purple" ? "selected" : ""}>Purple</option>
-          </select>
-        </div>
-      </div>
+	kt.divider();
 
-      <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 20px;">
-        <h4 style="margin: 0 0 10px 0;">Session State Debug</h4>
-        <pre style="margin: 0; font-size: 12px; overflow-x: auto;">${escapeHtml(JSON.stringify({ counter, name, sliderValue, color }, null, 2))}</pre>
-      </div>
-    </div>
-  `;
+	// ===== Results Section =====
+	kt.header("Results");
+
+	// カスタムHTMLで結果を表示（スタイル付き）
+	kt.html(`
+		<div style="background: linear-gradient(135deg, ${color} 0%, ${color}88 100%);
+		            color: white; padding: 20px; border-radius: 8px; margin: 10px 0;">
+			<h2 style="margin: 0 0 10px 0;">Hello, ${escapeHtml(name)}!</h2>
+			<p style="margin: 0;">Volume: ${volume}%</p>
+			<div style="background: rgba(255,255,255,0.3); height: 10px; border-radius: 5px; margin-top: 10px;">
+				<div style="background: white; height: 100%; width: ${volume}%; border-radius: 5px;"></div>
+			</div>
+		</div>
+	`);
+
+	kt.divider();
+
+	// ===== Debug Section =====
+	kt.subheader("Session State (Debug)");
+	kt.html(`
+		<pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;">
+${escapeHtml(
+	JSON.stringify(
+		{
+			counter: session_state.counter,
+			name,
+			volume,
+			color,
+		},
+		null,
+		2,
+	),
+)}
+		</pre>
+	`);
+
+	// 宣言的APIを使用する場合はundefinedを返す（HTMLはバッファから自動取得）
+	return undefined;
 };
 
 function escapeHtml(text: string): string {

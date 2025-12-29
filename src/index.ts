@@ -66,3 +66,12 @@ export type {
 	Patch,
 	ReplaceRootPatch,
 } from "./websocket/types";
+
+// kt - Declarative UI API
+export { kt } from "./kt";
+export {
+	RenderContext,
+	setRenderContext,
+	getRenderContext,
+	requireRenderContext,
+} from "./kt/context";

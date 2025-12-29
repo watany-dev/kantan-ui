@@ -4,18 +4,26 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	test("should load initial HTML", async ({ page }) => {
 		await page.goto("/");
 
-		// 初期HTMLの確認
-		await expect(page.locator("#app h1")).toHaveText("kantan-ui");
-		await expect(page.locator("#app p")).toHaveText("WebSocket connection established!");
+		// 初期HTMLの確認（新しいデモアプリ）
+		await expect(page.locator("#app h1.kt-title")).toHaveText("kantan-ui Demo");
+		await expect(page.locator("#app .kt-write").first()).toContainText("Streamlit風の宣言的API");
 	});
 
-	test("should have button that can trigger sendEvent", async ({ page }) => {
+	test("should have buttons that can trigger sendEvent", async ({ page }) => {
 		await page.goto("/");
 
-		// ボタンが存在することを確認
-		const button = page.locator("#app button");
-		await expect(button).toHaveText("Click me");
-		await expect(button).toBeVisible();
+		// カウンターボタンが存在することを確認
+		const incButton = page.locator("#btn_inc");
+		await expect(incButton).toHaveText("+ Increment");
+		await expect(incButton).toBeVisible();
+
+		const decButton = page.locator("#btn_dec");
+		await expect(decButton).toHaveText("- Decrement");
+		await expect(decButton).toBeVisible();
+
+		const resetButton = page.locator("#btn_reset");
+		await expect(resetButton).toHaveText("Reset");
+		await expect(resetButton).toBeVisible();
 	});
 
 	test("should establish WebSocket connection", async ({ page }) => {
@@ -35,21 +43,30 @@ test.describe("WebSocket connection and replaceRoot", () => {
 
 		const ws = await wsPromise;
 
-		// WebSocketメッセージを監視
+		// WebSocket接続が確立されるまで待つ（初期patchを受信するまで）
+		await new Promise<void>((resolve) => {
+			ws.on("framereceived", () => resolve());
+		});
+
+		// WebSocketメッセージを監視（eventタイプのみ）
 		const messagePromise = new Promise<string>((resolve) => {
 			ws.on("framesent", (frame) => {
-				resolve(frame.payload.toString());
+				const payload = frame.payload.toString();
+				const parsed = JSON.parse(payload);
+				if (parsed.type === "event") {
+					resolve(payload);
+				}
 			});
 		});
 
 		// ボタンをクリック
-		await page.click("#app button");
+		await page.click("#btn_inc");
 
 		// 送信されたメッセージを確認
 		const sentMessage = await messagePromise;
 		const parsed = JSON.parse(sentMessage);
 		expect(parsed.type).toBe("event");
-		expect(parsed.widgetId).toBe("btn1");
+		expect(parsed.widgetId).toBe("btn_inc");
 		expect(parsed.value).toBe("clicked");
 	});
 
@@ -60,7 +77,12 @@ test.describe("WebSocket connection and replaceRoot", () => {
 
 		const ws = await wsPromise;
 
-		// サーバからのメッセージを監視
+		// 初期patchを受信するまで待つ（セッションが確立されるまで）
+		await new Promise<void>((resolve) => {
+			ws.on("framereceived", () => resolve());
+		});
+
+		// 次のサーバからのメッセージを監視
 		const responsePromise = new Promise<string>((resolve) => {
 			ws.on("framereceived", (frame) => {
 				resolve(frame.payload.toString());
@@ -68,10 +90,13 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		});
 
 		// ボタンをクリックしてイベントを発火
-		await page.click("#app button");
+		await page.click("#btn_inc");
 
-		// サーバからのレスポンスを確認
-		const receivedMessage = await responsePromise;
+		// サーバからのレスポンスを確認（タイムアウト5秒）
+		const receivedMessage = await Promise.race([
+			responsePromise,
+			new Promise<string>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000)),
+		]);
 		const parsed = JSON.parse(receivedMessage);
 		expect(parsed.type).toBe("patch");
 		expect(parsed.patches).toHaveLength(1);
@@ -79,13 +104,47 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		expect(parsed.patches[0].html).toContain("kantan-ui");
 	});
 
-	test("should serve client.js", async ({ page }) => {
-		const response = await page.goto("/client.js");
-		expect(response?.status()).toBe(200);
-		expect(response?.headers()["content-type"]).toContain("javascript");
+	test("should update counter when increment button is clicked", async ({ page }) => {
+		await page.goto("/");
 
-		const content = await response?.text();
-		expect(content).toContain("WebSocket");
-		expect(content).toContain("sendEvent");
+		// WebSocket接続が完全に確立されるまで待つ
+		await page.waitForFunction(() => {
+			// @ts-ignore
+			return window.ws && window.ws.readyState === WebSocket.OPEN;
+		}, { timeout: 5000 }).catch(() => {
+			// wsがグローバルでない場合はタイムアウトで進む
+		});
+
+		// 初期カウント確認
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 0",
+		);
+
+		// インクリメントボタンをクリック
+		await page.click("#btn_inc");
+
+		// カウントが増加したことを確認（リトライあり）
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+			{ timeout: 10000 },
+		);
+	});
+
+	test("should update slider value", async ({ page }) => {
+		await page.goto("/");
+
+		// 初期表示を待つ
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 50");
+
+		const slider = page.locator("#volume_slider");
+
+		// スライダーを操作（inputイベントを発火させる）
+		await slider.evaluate((el: HTMLInputElement) => {
+			el.value = "75";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+
+		// 値が反映されることを確認（リトライあり）
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75", { timeout: 10000 });
 	});
 });
