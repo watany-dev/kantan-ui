@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { SessionManager, resetSessionManager, setSessionManager } from "../../../src/session/manager";
+import {
+	SessionManager,
+	resetSessionManager,
+	setSessionManager,
+} from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
 import { renderSelectbox, selectbox } from "../../../src/widgets/selectbox";
@@ -103,11 +107,7 @@ describe("selectbox", () => {
 		});
 
 		it("should escape HTML in options", () => {
-			const html = renderSelectbox(
-				"Color",
-				["<script>", "normal"],
-				"<script>",
-			);
+			const html = renderSelectbox("Color", ["<script>", "normal"], "<script>");
 
 			expect(html).not.toContain("<script>");
 			expect(html).toContain("&lt;script&gt;");
