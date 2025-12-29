@@ -20,10 +20,13 @@
     "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "check": "biome check --write ."
+    "check": "biome check --write .",
+    "audit": "npm audit --audit-level=moderate",
+    "ci": "bun run lint && bun run build && bun run test:coverage"
   },
   "keywords": [
     "ui",
@@ -49,6 +52,7 @@
     "@biomejs/biome": "^1.9.0",
     "@playwright/test": "^1.49.0",
     "@types/bun": "^1.1.0",
+    "@vitest/coverage-v8": "^2.1.0",
     "typescript": "^5.7.0",
     "vitest": "^2.1.0"
   },
