@@ -201,6 +201,31 @@ describe("Declarative Widget APIs", () => {
 			expect(() => selectbox("Empty", [])).toThrow("selectbox: options array must not be empty");
 		});
 
+		it("selectbox should throw error when defaultValue is not in options", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => selectbox("Color", ["Red", "Green", "Blue"], "Yellow")).toThrow(
+				'selectbox: defaultValue "Yellow" must be one of the options',
+			);
+		});
+
+		it("slider should throw error when min > max", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => slider("Volume", 100, 0, 50)).toThrow("slider: min (100) must be <= max (0)");
+		});
+
+		it("slider should throw error when defaultValue out of range", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => slider("Volume", 0, 100, 150)).toThrow(
+				"slider: defaultValue (150) must be between min (0) and max (100)",
+			);
+		});
+
 		it("selectbox should use custom key with stored value", () => {
 			const session = manager.createSession();
 			setCurrentSessionId(session.id);

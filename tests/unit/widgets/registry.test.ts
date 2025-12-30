@@ -126,6 +126,18 @@ describe("widgets/registry", () => {
 			expect(getWidgetValue("str_widget", "")).toBe("hello");
 			expect(getWidgetValue("bool_widget", false)).toBe(true);
 		});
+
+		it("should return stored value for non-primitive types without validation", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			const defaultObj = { key: "default" };
+			const storedObj = { key: "stored" };
+			manager.setState(session.id, "obj_widget", storedObj);
+
+			// Non-primitive types bypass type validation
+			const value = getWidgetValue("obj_widget", defaultObj);
+			expect(value).toEqual(storedObj);
+		});
 	});
 
 	describe("setWidgetValue", () => {
