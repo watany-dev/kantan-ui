@@ -6,6 +6,18 @@ export interface ClientMessage {
 	sessionId?: string; // 既存セッションIDを送信
 }
 
+/** ClientMessageの型ガード */
+export function isClientMessage(data: unknown): data is ClientMessage {
+	if (typeof data !== "object" || data === null) return false;
+	const msg = data as Record<string, unknown>;
+	if (msg.type !== "event" && msg.type !== "init") return false;
+	if (msg.widgetId !== undefined && typeof msg.widgetId !== "string")
+		return false;
+	if (msg.sessionId !== undefined && typeof msg.sessionId !== "string")
+		return false;
+	return true;
+}
+
 // サーバ → クライアント
 export interface ServerMessage {
 	type: "patch" | "session" | "error";

@@ -3,7 +3,11 @@ import { type KantanConfig, type ResolvedKantanConfig, resolveConfig } from "./c
 import { type Script, rerun } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { createWebSocketHandler, websocket } from "./websocket";
-import type { ClientMessage, ServerMessage } from "./websocket/types";
+import {
+	type ClientMessage,
+	type ServerMessage,
+	isClientMessage,
+} from "./websocket/types";
 
 // Generate a random nonce for CSP
 function generateNonce(): string {
@@ -109,9 +113,9 @@ function generateClientScript(config: ResolvedKantanConfig): string {
       if (msg.type === "patch" && msg.patches) {
         for (const patch of msg.patches) {
           if (patch.type === "replaceRoot") {
-            // Security: Check for potentially dangerous content
+            // Security: Check for potentially dangerous content (defense in depth, CSP is primary)
             const html = patch.html;
-            if (/<script[\\s\\S]*?>|javascript:/i.test(html)) {
+            if (/<script[\\s\\S]*?>|javascript:|\\s+on\\w+\\s*=/i.test(html)) {
               console.error("Blocked potentially unsafe HTML content");
               continue;
             }
@@ -240,13 +244,19 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 				console.log("WebSocket connected");
 			},
 			onMessage: (event, ws) => {
-				let data: ClientMessage;
+				let parsed: unknown;
 				try {
-					data = JSON.parse(event.data.toString());
+					parsed = JSON.parse(event.data.toString());
 				} catch (err) {
 					console.error("Failed to parse client message:", err);
 					return;
 				}
+
+				if (!isClientMessage(parsed)) {
+					console.error("Invalid client message format");
+					return;
+				}
+				const data: ClientMessage = parsed;
 
 				if (data.type === "init") {
 					// セッションを取得または作成
@@ -304,5 +314,9 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 		}),
 	);
 
-	return { app, websocket };
+	const shutdown = () => {
+		sessionManager.stopCleanupInterval();
+	};
+
+	return { app, websocket, shutdown };
 }
