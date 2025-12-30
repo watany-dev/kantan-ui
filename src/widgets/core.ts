@@ -17,18 +17,11 @@ export function isButtonPressed(widgetId: string): boolean {
 /**
  * スライダーのバリデーション
  */
-export function validateSlider(
-	min: number,
-	max: number,
-	defaultValue?: number,
-): void {
+export function validateSlider(min: number, max: number, defaultValue?: number): void {
 	if (min > max) {
 		throw new Error(`slider: min (${min}) must be <= max (${max})`);
 	}
-	if (
-		defaultValue !== undefined &&
-		(defaultValue < min || defaultValue > max)
-	) {
+	if (defaultValue !== undefined && (defaultValue < min || defaultValue > max)) {
 		throw new Error(
 			`slider: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
 		);
@@ -39,11 +32,7 @@ export function validateSlider(
  * スライダーのstate管理
  * 初期値をstateに保存し、現在値を返す
  */
-export function initializeSliderState(
-	widgetId: string,
-	min: number,
-	defaultValue?: number,
-): number {
+export function initializeSliderState(widgetId: string, min: number, defaultValue?: number): number {
 	const initial = defaultValue ?? min;
 
 	if (!hasWidgetValue(widgetId)) {
@@ -57,10 +46,7 @@ export function initializeSliderState(
  * テキスト入力のstate管理
  * 初期値をstateに保存し、現在値を返す
  */
-export function initializeTextInputState(
-	widgetId: string,
-	defaultValue?: string,
-): string {
+export function initializeTextInputState(widgetId: string, defaultValue?: string): string {
 	const initial = defaultValue ?? "";
 
 	if (!hasWidgetValue(widgetId)) {
@@ -73,17 +59,12 @@ export function initializeTextInputState(
 /**
  * セレクトボックスのバリデーション
  */
-export function validateSelectbox(
-	options: string[],
-	defaultValue?: string,
-): void {
+export function validateSelectbox(options: string[], defaultValue?: string): void {
 	if (!options || options.length === 0) {
 		throw new Error("selectbox: options array must not be empty");
 	}
 	if (defaultValue !== undefined && !options.includes(defaultValue)) {
-		throw new Error(
-			`selectbox: defaultValue "${defaultValue}" must be one of the options`,
-		);
+		throw new Error(`selectbox: defaultValue "${defaultValue}" must be one of the options`);
 	}
 }
 
@@ -91,11 +72,7 @@ export function validateSelectbox(
  * セレクトボックスのstate管理
  * 初期値をstateに保存し、現在値を返す
  */
-export function initializeSelectboxState(
-	widgetId: string,
-	options: string[],
-	defaultValue?: string,
-): string {
+export function initializeSelectboxState(widgetId: string, options: string[], defaultValue?: string): string {
 	const initial = defaultValue ?? options[0] ?? "";
 
 	if (!hasWidgetValue(widgetId)) {

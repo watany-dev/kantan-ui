@@ -69,9 +69,7 @@ describe("resolveConfig", () => {
 		expect(resolved.session.sessionKey).toBe("custom-key");
 		expect(resolved.session.ttl).toBe(60000);
 		// Default should still be used for cleanupInterval
-		expect(resolved.session.cleanupInterval).toBe(
-			DEFAULT_SESSION_CONFIG.cleanupInterval,
-		);
+		expect(resolved.session.cleanupInterval).toBe(DEFAULT_SESSION_CONFIG.cleanupInterval);
 	});
 
 	it("should override client config values", () => {
@@ -85,9 +83,7 @@ describe("resolveConfig", () => {
 		expect(resolved.client.maxReconnectAttempts).toBe(5);
 		expect(resolved.client.baseReconnectDelay).toBe(500);
 		// Default should still be used for maxReconnectDelay
-		expect(resolved.client.maxReconnectDelay).toBe(
-			DEFAULT_CLIENT_CONFIG.maxReconnectDelay,
-		);
+		expect(resolved.client.maxReconnectDelay).toBe(DEFAULT_CLIENT_CONFIG.maxReconnectDelay);
 	});
 
 	it("should override both session and client configs", () => {

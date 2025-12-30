@@ -1,10 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setContext } from "../../../src/runtime/context";
-import {
-	getSessionManager,
-	resetSessionManager,
-	setCurrentSessionId,
-} from "../../../src/session";
+import { getSessionManager, resetSessionManager, setCurrentSessionId } from "../../../src/session";
 import {
 	initializeSelectboxState,
 	initializeSliderState,
@@ -63,9 +59,7 @@ describe("widgets/core", () => {
 		});
 
 		it("should throw when min > max", () => {
-			expect(() => validateSlider(100, 0)).toThrow(
-				"slider: min (100) must be <= max (0)",
-			);
+			expect(() => validateSlider(100, 0)).toThrow("slider: min (100) must be <= max (0)");
 		});
 
 		it("should not throw for valid defaultValue within range", () => {
@@ -137,9 +131,7 @@ describe("widgets/core", () => {
 		});
 
 		it("should throw for empty options", () => {
-			expect(() => validateSelectbox([])).toThrow(
-				"selectbox: options array must not be empty",
-			);
+			expect(() => validateSelectbox([])).toThrow("selectbox: options array must not be empty");
 		});
 
 		it("should throw for null/undefined options", () => {

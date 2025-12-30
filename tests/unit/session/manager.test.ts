@@ -25,9 +25,7 @@ describe("SessionManager", () => {
 
 			expect(config.sessionKey).toBe(DEFAULT_SESSION_CONFIG.sessionKey);
 			expect(config.ttl).toBe(DEFAULT_SESSION_CONFIG.ttl);
-			expect(config.cleanupInterval).toBe(
-				DEFAULT_SESSION_CONFIG.cleanupInterval,
-			);
+			expect(config.cleanupInterval).toBe(DEFAULT_SESSION_CONFIG.cleanupInterval);
 		});
 
 		it("should use custom config values when provided", () => {
@@ -55,9 +53,7 @@ describe("SessionManager", () => {
 
 			expect(config.sessionKey).toBe(DEFAULT_SESSION_CONFIG.sessionKey);
 			expect(config.ttl).toBe(60000);
-			expect(config.cleanupInterval).toBe(
-				DEFAULT_SESSION_CONFIG.cleanupInterval,
-			);
+			expect(config.cleanupInterval).toBe(DEFAULT_SESSION_CONFIG.cleanupInterval);
 
 			customManager.stopCleanupInterval();
 		});
@@ -84,9 +80,7 @@ describe("SessionManager", () => {
 
 			// Cleanup should have been called
 			expect(customManager.getSessionCount()).toBe(0);
-			expect(consoleSpy).toHaveBeenCalledWith(
-				"Session cleanup: removed 1 expired session(s)",
-			);
+			expect(consoleSpy).toHaveBeenCalledWith("Session cleanup: removed 1 expired session(s)");
 
 			customManager.stopCleanupInterval();
 			consoleSpy.mockRestore();

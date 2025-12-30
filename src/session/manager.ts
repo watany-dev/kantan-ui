@@ -14,8 +14,7 @@ export class SessionManager {
 		this.config = {
 			sessionKey: config.sessionKey ?? DEFAULT_SESSION_CONFIG.sessionKey,
 			ttl: config.ttl ?? DEFAULT_SESSION_CONFIG.ttl,
-			cleanupInterval:
-				config.cleanupInterval ?? DEFAULT_SESSION_CONFIG.cleanupInterval,
+			cleanupInterval: config.cleanupInterval ?? DEFAULT_SESSION_CONFIG.cleanupInterval,
 		};
 
 		// 定期的なクリーンアップを開始

@@ -1,9 +1,4 @@
-import type {
-	ClientConfig,
-	KantanConfig,
-	ResolvedKantanConfig,
-	SessionConfig,
-} from "./types";
+import type { ClientConfig, KantanConfig, ResolvedKantanConfig, SessionConfig } from "./types";
 
 /**
  * セッション設定のデフォルト値
