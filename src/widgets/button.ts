@@ -1,5 +1,5 @@
-import { getContext } from "../runtime/context";
 import { escapeHtml } from "../utils/html";
+import { isButtonPressed } from "./core";
 import { generateWidgetId } from "./registry";
 import type { ButtonConfig } from "./types";
 
@@ -9,12 +9,7 @@ import type { ButtonConfig } from "./types";
  */
 export function button(label: string, config?: Partial<ButtonConfig>): boolean {
 	const id = generateWidgetId(config?.key);
-	const context = getContext();
-
-	// 現在の rerun がこのボタンの押下によるものかチェック
-	const pressed = context?.event?.widgetId === id;
-
-	return pressed;
+	return isButtonPressed(id);
 }
 
 /**

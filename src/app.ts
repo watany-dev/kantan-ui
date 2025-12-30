@@ -1,6 +1,7 @@
 import { Hono } from "hono";
+import { type KantanConfig, type ResolvedKantanConfig, resolveConfig } from "./config";
 import { type Script, rerun } from "./runtime";
-import { getSessionManager } from "./session";
+import { SessionManager, setSessionManager } from "./session";
 import { createWebSocketHandler, websocket } from "./websocket";
 import type { ClientMessage, ServerMessage } from "./websocket/types";
 
@@ -11,12 +12,16 @@ function generateNonce(): string {
 	return btoa(String.fromCharCode(...array));
 }
 
-const clientScript = `
-  let sessionId = localStorage.getItem("kt-session-id");
+// クライアントスクリプトを生成（設定値を注入）
+function generateClientScript(config: ResolvedKantanConfig): string {
+	return `
+  let sessionId = localStorage.getItem("${config.session.sessionKey}");
   let ws = null;
   let reconnectAttempts = 0;
-  const maxReconnectAttempts = 10;
-  const baseReconnectDelay = 1000; // 1秒
+  const maxReconnectAttempts = ${config.client.maxReconnectAttempts};
+  const baseReconnectDelay = ${config.client.baseReconnectDelay};
+  const maxReconnectDelay = ${config.client.maxReconnectDelay};
+  const sessionKey = "${config.session.sessionKey}";
 
   // 接続状態インジケーターを作成
   function createConnectionIndicator() {
@@ -87,7 +92,7 @@ const clientScript = `
         console.error("Server error:", msg.error?.code, msg.error?.message);
         if (msg.error?.code === "SESSION_NOT_FOUND") {
           // セッションをクリアして再接続
-          localStorage.removeItem("kt-session-id");
+          localStorage.removeItem(sessionKey);
           sessionId = null;
           ws.close();
           connect();
@@ -98,7 +103,7 @@ const clientScript = `
       // セッションID を保存
       if (msg.sessionId) {
         sessionId = msg.sessionId;
-        localStorage.setItem("kt-session-id", sessionId);
+        localStorage.setItem(sessionKey, sessionId);
       }
 
       if (msg.type === "patch" && msg.patches) {
@@ -134,8 +139,8 @@ const clientScript = `
       return;
     }
     reconnectAttempts++;
-    // 指数バックオフ: 1s, 2s, 4s, 8s... 最大30秒
-    const delay = Math.min(baseReconnectDelay * Math.pow(2, reconnectAttempts - 1), 30000);
+    // 指数バックオフ: 1s, 2s, 4s, 8s... 最大遅延まで
+    const delay = Math.min(baseReconnectDelay * Math.pow(2, reconnectAttempts - 1), maxReconnectDelay);
     console.log("Reconnecting in " + delay + "ms (attempt " + reconnectAttempts + ")");
     updateConnectionStatus("reconnecting");
     setTimeout(connect, delay);
@@ -176,6 +181,7 @@ const clientScript = `
     }
   });
 `;
+}
 
 const defaultStyles = `
   .kt-button { padding: 8px 16px; cursor: pointer; }
@@ -190,9 +196,12 @@ const defaultStyles = `
   .kt-selectbox-label { display: block; margin-bottom: 4px; }
 `;
 
-export function createApp(script: Script) {
+export function createApp(script: Script, userConfig?: KantanConfig) {
+	const config = resolveConfig(userConfig);
+	const sessionManager = new SessionManager(config.session);
+	setSessionManager(sessionManager);
+	const clientScript = generateClientScript(config);
 	const app = new Hono();
-	const sessionManager = getSessionManager();
 
 	// ルートページ（HTMLを返す）
 	app.get("/", (c) => {

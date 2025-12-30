@@ -4,6 +4,20 @@ export { Hono } from "hono";
 // App factory
 export { createApp } from "./app";
 
+// Config
+export type {
+	KantanConfig,
+	SessionConfig,
+	ClientConfig,
+	ResolvedKantanConfig,
+} from "./config";
+export {
+	DEFAULT_SESSION_CONFIG,
+	DEFAULT_CLIENT_CONFIG,
+	DEFAULT_CONFIG,
+	resolveConfig,
+} from "./config";
+
 // Runtime
 export { rerun, getContext, setContext, clearContext } from "./runtime";
 export type { Script, RerunContext } from "./runtime";
@@ -18,12 +32,7 @@ export {
 	setCurrentSessionId,
 	getCurrentSessionId,
 } from "./session";
-export type {
-	SessionId,
-	Session,
-	SessionConfig,
-	SessionState,
-} from "./session/types";
+export type { SessionId, Session, SessionState } from "./session/types";
 
 // Widgets
 export {

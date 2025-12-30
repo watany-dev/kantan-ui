@@ -1,5 +1,6 @@
 import { escapeHtml } from "../utils/html";
-import { generateWidgetId, getWidgetValue, hasWidgetValue, setWidgetValue } from "./registry";
+import { initializeTextInputState } from "./core";
+import { generateWidgetId } from "./registry";
 import type { TextInputConfig } from "./types";
 
 /**
@@ -12,15 +13,7 @@ export function text_input(
 	config?: Partial<TextInputConfig>,
 ): string {
 	const id = generateWidgetId(config?.key);
-	const initial = defaultValue ?? "";
-
-	// 初回のみデフォルト値を state に保存
-	if (!hasWidgetValue(id)) {
-		setWidgetValue(id, initial);
-	}
-
-	// 現在の値を取得
-	return getWidgetValue<string>(id, initial);
+	return initializeTextInputState(id, defaultValue);
 }
 
 /**
