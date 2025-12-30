@@ -3,11 +3,7 @@ import { type KantanConfig, type ResolvedKantanConfig, resolveConfig } from "./c
 import { type Script, rerun } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { createWebSocketHandler, websocket } from "./websocket";
-import {
-	type ClientMessage,
-	type ServerMessage,
-	isClientMessage,
-} from "./websocket/types";
+import { type ClientMessage, type ServerMessage, isClientMessage } from "./websocket/types";
 
 // Generate a random nonce for CSP
 function generateNonce(): string {

@@ -5,6 +5,8 @@ describe("isClientMessage", () => {
 	it("returns true for valid init message", () => {
 		expect(isClientMessage({ type: "init" })).toBe(true);
 		expect(isClientMessage({ type: "init", sessionId: "abc" })).toBe(true);
+		// null is allowed (localStorage.getItem returns null)
+		expect(isClientMessage({ type: "init", sessionId: null })).toBe(true);
 	});
 
 	it("returns true for valid event message", () => {
