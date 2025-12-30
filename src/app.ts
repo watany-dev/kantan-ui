@@ -4,6 +4,13 @@ import { getSessionManager } from "./session";
 import { createWebSocketHandler, websocket } from "./websocket";
 import type { ClientMessage, ServerMessage } from "./websocket/types";
 
+// Generate a random nonce for CSP
+function generateNonce(): string {
+	const array = new Uint8Array(16);
+	crypto.getRandomValues(array);
+	return btoa(String.fromCharCode(...array));
+}
+
 const clientScript = `
   let sessionId = localStorage.getItem("kt-session-id");
   const ws = new WebSocket(\`ws://\${location.host}/ws\`);
@@ -32,7 +39,13 @@ const clientScript = `
     if (msg.type === "patch" && msg.patches) {
       for (const patch of msg.patches) {
         if (patch.type === "replaceRoot") {
-          document.getElementById("app").innerHTML = patch.html;
+          // Security: Check for potentially dangerous content
+          const html = patch.html;
+          if (/<script[\\s\\S]*?>|javascript:|on\\w+\\s*=/i.test(html)) {
+            console.error("Blocked potentially unsafe HTML content");
+            continue;
+          }
+          document.getElementById("app").innerHTML = html;
         }
       }
     }
@@ -73,6 +86,14 @@ export function createApp(script: Script) {
 	app.get("/", (c) => {
 		// 初期表示はセッションなしで rerun
 		const initialHtml = rerun(script);
+		const nonce = generateNonce();
+
+		// Set CSP header to prevent XSS attacks
+		c.header(
+			"Content-Security-Policy",
+			`default-src 'self'; script-src 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:;`,
+		);
+
 		return c.html(`
       <!DOCTYPE html>
       <html>
@@ -84,7 +105,7 @@ export function createApp(script: Script) {
       </head>
       <body>
         <div id="app">${initialHtml}</div>
-        <script>${clientScript}</script>
+        <script nonce="${nonce}">${clientScript}</script>
       </body>
       </html>
     `);
