@@ -13,6 +13,11 @@ describe("SessionManager", () => {
 		manager = new SessionManager();
 	});
 
+	afterEach(() => {
+		// Clean up interval to prevent timer leaks
+		manager.stopCleanupInterval();
+	});
+
 	describe("createSession", () => {
 		it("should create a new session with unique id", () => {
 			const session = manager.createSession();
@@ -131,20 +136,20 @@ describe("SessionManager", () => {
 
 	describe("cleanup", () => {
 		it("should remove expired sessions", () => {
+			vi.useFakeTimers();
 			const manager = new SessionManager({ ttl: 100 }); // 100ms TTL
-			const session = manager.createSession();
+			manager.createSession();
 
-			// Manually set lastAccessedAt to past
-			const pastDate = new Date(Date.now() - 200);
-			const storedSession = manager.getSession(session.id);
-			if (storedSession) {
-				storedSession.lastAccessedAt = pastDate;
-			}
+			// Advance time past TTL
+			vi.advanceTimersByTime(150);
 
 			const cleaned = manager.cleanup();
 
 			expect(cleaned).toBe(1);
 			expect(manager.getSessionCount()).toBe(0);
+
+			manager.stopCleanupInterval();
+			vi.useRealTimers();
 		});
 
 		it("should not remove active sessions", () => {
@@ -155,6 +160,69 @@ describe("SessionManager", () => {
 
 			expect(cleaned).toBe(0);
 			expect(manager.getSessionCount()).toBe(1);
+
+			manager.stopCleanupInterval();
+		});
+
+		it("should not start cleanup interval multiple times", () => {
+			const setIntervalSpy = vi.spyOn(global, "setInterval");
+			const manager = new SessionManager();
+
+			// First creation already starts interval
+			expect(setIntervalSpy).toHaveBeenCalledTimes(1);
+
+			// Manually trigger startCleanupInterval again (via private method test)
+			// Since it's private, we test by creating another manager
+			const manager2 = new SessionManager();
+			expect(setIntervalSpy).toHaveBeenCalledTimes(2); // Each manager gets its own interval
+
+			manager.stopCleanupInterval();
+			manager2.stopCleanupInterval();
+			setIntervalSpy.mockRestore();
+		});
+
+		it("should stop cleanup interval when requested", () => {
+			const clearIntervalSpy = vi.spyOn(global, "clearInterval");
+			const manager = new SessionManager();
+
+			manager.stopCleanupInterval();
+
+			expect(clearIntervalSpy).toHaveBeenCalled();
+			clearIntervalSpy.mockRestore();
+		});
+
+		it("should handle stopping cleanup interval when not running", () => {
+			const manager = new SessionManager();
+			manager.stopCleanupInterval();
+
+			// Should not throw when called again
+			expect(() => manager.stopCleanupInterval()).not.toThrow();
+		});
+
+		it("should automatically clean up expired sessions via interval", async () => {
+			vi.useFakeTimers();
+			const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+			const manager = new SessionManager({ ttl: 100 });
+			const session = manager.createSession();
+
+			// Set session to expired
+			const pastDate = new Date(Date.now() - 200);
+			const storedSession = manager.getSession(session.id);
+			if (storedSession) {
+				storedSession.lastAccessedAt = pastDate;
+			}
+
+			// Fast forward time to trigger cleanup interval (60000ms by default)
+			vi.advanceTimersByTime(60000);
+
+			// Cleanup should have been called automatically
+			expect(manager.getSessionCount()).toBe(0);
+			expect(consoleSpy).toHaveBeenCalledWith("Session cleanup: removed 1 expired session(s)");
+
+			manager.stopCleanupInterval();
+			consoleSpy.mockRestore();
+			vi.useRealTimers();
 		});
 	});
 
