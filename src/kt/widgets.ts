@@ -39,7 +39,7 @@ export function button(label: string, config?: Partial<ButtonConfig>): boolean {
 
 	// HTMLをバッファに追加
 	ctx.append(
-		`<button id="${id}" onclick="sendEvent('${id}', 'clicked')" class="kt-button">${escapeHtml(label)}</button>`,
+		`<button id="${id}" data-kt-event="click" class="kt-button">${escapeHtml(label)}</button>`,
 	);
 
 	return pressed;
@@ -72,7 +72,7 @@ export function slider(
 	// HTMLをバッファに追加
 	ctx.append(`<div class="kt-slider-container">
   <label for="${id}" class="kt-slider-label">${escapeHtml(label)}: ${value}</label>
-  <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}" oninput="sendEvent('${id}', Number(this.value))" class="kt-slider" />
+  <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}" data-kt-event="input" data-kt-type="number" class="kt-slider" />
 </div>`);
 
 	return value;
@@ -103,7 +103,7 @@ export function text_input(
 	// HTMLをバッファに追加
 	ctx.append(`<div class="kt-text-input-container">
   <label for="${id}" class="kt-text-input-label">${escapeHtml(label)}</label>
-  <input type="text" id="${id}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" oninput="sendEvent('${id}', this.value)" class="kt-text-input" />
+  <input type="text" id="${id}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" data-kt-event="input" class="kt-text-input" />
 </div>`);
 
 	return value;
@@ -142,7 +142,7 @@ export function selectbox(
 	// HTMLをバッファに追加
 	ctx.append(`<div class="kt-selectbox-container">
   <label for="${id}" class="kt-selectbox-label">${escapeHtml(label)}</label>
-  <select id="${id}" onchange="sendEvent('${id}', this.value)" class="kt-selectbox">
+  <select id="${id}" data-kt-event="change" class="kt-selectbox">
     ${optionsHtml}
   </select>
 </div>`);
