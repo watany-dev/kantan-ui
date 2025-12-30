@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
+import { kt } from "../src/kt";
+import { clearContext, getContext, setContext } from "../src/runtime/context";
+import { rerun } from "../src/runtime/rerun";
 // Note: Import individual modules to avoid hono/bun dependency in Node.js test environment
 import {
 	SessionManager,
 	getSessionManager,
-	setSessionManager,
 	resetSessionManager,
+	setSessionManager,
 } from "../src/session/manager";
-import { session_state, setCurrentSessionId, getCurrentSessionId } from "../src/session/state";
-import { rerun } from "../src/runtime/rerun";
-import { getContext, setContext, clearContext } from "../src/runtime/context";
+import { getCurrentSessionId, session_state, setCurrentSessionId } from "../src/session/state";
 import { button } from "../src/widgets/button";
+import { resetWidgetCounter } from "../src/widgets/registry";
+import { selectbox } from "../src/widgets/selectbox";
 import { slider } from "../src/widgets/slider";
 import { text_input } from "../src/widgets/text-input";
-import { selectbox } from "../src/widgets/selectbox";
-import { resetWidgetCounter } from "../src/widgets/registry";
-import { kt } from "../src/kt";
 
 describe("kantan-ui module exports", () => {
 	it("should export runtime functions", () => {

@@ -105,9 +105,7 @@ describe("session_state", () => {
 
 			state.counter = 100;
 
-			expect(warnSpy).toHaveBeenCalledWith(
-				"session_state への書き込みは rerun 中のみ有効です",
-			);
+			expect(warnSpy).toHaveBeenCalledWith("session_state への書き込みは rerun 中のみ有効です");
 			warnSpy.mockRestore();
 		});
 
