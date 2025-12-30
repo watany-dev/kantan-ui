@@ -29,6 +29,6 @@ export function renderTextInput(
 
 	return `<div class="kt-text-input-container">
   <label for="${id}" class="kt-text-input-label">${escapeHtml(label)}</label>
-  <input type="text" id="${id}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" oninput="sendEvent('${id}', this.value)" class="kt-text-input" />
+  <input type="text" id="${id}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" data-kt-event="input" class="kt-text-input" />
 </div>`;
 }

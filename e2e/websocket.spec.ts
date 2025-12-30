@@ -126,4 +126,54 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		// 値が反映されることを確認（リトライあり）
 		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75", { timeout: 10000 });
 	});
+
+	test("should update text input value", async ({ page }) => {
+		await page.goto("/");
+
+		// 初期表示を待つ
+		await expect(page.locator("#name_input")).toHaveValue("World");
+
+		const textInput = page.locator("#name_input");
+
+		// テキストをクリアして新しい値を入力
+		await textInput.fill("Alice");
+
+		// 結果セクションに反映されることを確認
+		await expect(page.locator("#app")).toContainText("Hello, Alice!", { timeout: 10000 });
+	});
+
+	test("should update selectbox value", async ({ page }) => {
+		await page.goto("/");
+
+		// 初期表示を待つ
+		await expect(page.locator("#color_select")).toHaveValue("blue");
+
+		const selectbox = page.locator("#color_select");
+
+		// 新しい値を選択
+		await selectbox.selectOption("green");
+
+		// 値が反映されることを確認（Session State Debugセクション）
+		await expect(page.locator("pre")).toContainText('"color": "green"', { timeout: 10000 });
+	});
+
+	test("should persist session state across page reload", async ({ page }) => {
+		await page.goto("/");
+
+		// カウンターを増やす
+		await page.click("#btn_inc");
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+			{ timeout: 10000 },
+		);
+
+		// ページをリロード
+		await page.reload();
+
+		// セッションが維持されていることを確認
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+			{ timeout: 10000 },
+		);
+	});
 });

@@ -18,18 +18,3 @@ export function createWebSocketHandler(handlers: WebSocketHandlers) {
 		onError: handlers.onError,
 	}));
 }
-
-// 接続中の WebSocket を管理
-const connections = new Set<WSContext>();
-
-export function addConnection(ws: WSContext): void {
-	connections.add(ws);
-}
-
-export function removeConnection(ws: WSContext): void {
-	connections.delete(ws);
-}
-
-export function getConnectionCount(): number {
-	return connections.size;
-}
