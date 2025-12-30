@@ -21,6 +21,7 @@
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
 		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",
 		"check": "biome check --write .",
 		"audit": "npm audit --audit-level=moderate",
