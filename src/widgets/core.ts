@@ -32,7 +32,11 @@ export function validateSlider(min: number, max: number, defaultValue?: number):
  * スライダーのstate管理
  * 初期値をstateに保存し、現在値を返す
  */
-export function initializeSliderState(widgetId: string, min: number, defaultValue?: number): number {
+export function initializeSliderState(
+	widgetId: string,
+	min: number,
+	defaultValue?: number,
+): number {
 	const initial = defaultValue ?? min;
 
 	if (!hasWidgetValue(widgetId)) {
@@ -72,7 +76,11 @@ export function validateSelectbox(options: string[], defaultValue?: string): voi
  * セレクトボックスのstate管理
  * 初期値をstateに保存し、現在値を返す
  */
-export function initializeSelectboxState(widgetId: string, options: string[], defaultValue?: string): string {
+export function initializeSelectboxState(
+	widgetId: string,
+	options: string[],
+	defaultValue?: string,
+): string {
 	const initial = defaultValue ?? options[0] ?? "";
 
 	if (!hasWidgetValue(widgetId)) {
