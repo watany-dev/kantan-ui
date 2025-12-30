@@ -48,14 +48,10 @@
 
 ---
 
-### 3. Traditional API と kt.* API の重複
+### 3. ~~Traditional API と kt.* API の重複~~ ✅ 解消済み
 **ファイル**: `src/widgets/*.ts` vs `src/kt/widgets.ts`
 
-**現状**: 同じ機能が2箇所で実装されている
-
-**対策案**:
-- kt.* API を Traditional API の薄いラッパーにする
-- または共通のコアロジックを抽出
+**対応**: kt.* API が Traditional API をラップする形にリファクタリング
 
 ---
 
@@ -63,5 +59,5 @@
 
 1. ~~**Phase 1**: WebSocket再接続 + セッションエラー通知~~ ✅ 完了
 2. ~~**Phase 2**: 型安全性 + バリデーション + テスト追加~~ ✅ 完了
-3. **Phase 3**: 設定の外部化 + 残テスト追加
-4. **Phase 4**: API重複の解消
+3. ~~**Phase 3**: 設定の外部化 + 残テスト追加~~ ✅ 完了
+4. ~~**Phase 4**: API重複の解消~~ ✅ 完了
