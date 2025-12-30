@@ -108,8 +108,10 @@ export function createApp(script: Script) {
 					};
 					ws.send(JSON.stringify(message));
 				} else if (data.type === "event") {
-					// セッションを取得
-					const session = sessionManager.getSessionByWebSocket(ws);
+					// セッションを取得（sessionIdを直接使用、WSContext比較の問題を回避）
+					const session = data.sessionId
+						? sessionManager.getSession(data.sessionId)
+						: sessionManager.getSessionByWebSocket(ws);
 					if (!session) {
 						console.error("Session not found for WebSocket");
 						return;
