@@ -95,7 +95,7 @@ describe("selectbox", () => {
 			expect(html).toContain("<select");
 			expect(html).toContain("<option");
 			expect(html).toContain("Color");
-			expect(html).toContain("sendEvent");
+			expect(html).toContain('data-kt-event="change"');
 		});
 
 		it("should mark selected option", () => {

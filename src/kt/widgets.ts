@@ -1,13 +1,8 @@
-import { escapeHtml } from "../utils/html";
-import {
-	initializeSelectboxState,
-	initializeSliderState,
-	initializeTextInputState,
-	isButtonPressed,
-	validateSelectbox,
-	validateSlider,
-} from "../widgets/core";
+import { button as imperativeButton, renderButton } from "../widgets/button";
 import { generateWidgetId } from "../widgets/registry";
+import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/selectbox";
+import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
+import { text_input as imperativeTextInput, renderTextInput } from "../widgets/text-input";
 import type {
 	ButtonConfig,
 	SelectboxConfig,
@@ -22,14 +17,11 @@ import { requireRenderContext } from "./context";
  */
 export function button(label: string, config?: Partial<ButtonConfig>): boolean {
 	const ctx = requireRenderContext();
+	// IDを先に生成してロジックとレンダリングで共有
 	const id = generateWidgetId(config?.key);
-	const pressed = isButtonPressed(id);
-
-	// HTMLをバッファに追加
-	ctx.append(
-		`<button id="${id}" data-kt-event="click" class="kt-button">${escapeHtml(label)}</button>`,
-	);
-
+	const configWithId = { ...config, key: id };
+	const pressed = imperativeButton(label, configWithId);
+	ctx.append(renderButton(label, configWithId));
 	return pressed;
 }
 
@@ -44,19 +36,12 @@ export function slider(
 	defaultValue?: number,
 	config?: Partial<SliderConfig>,
 ): number {
-	validateSlider(min, max, defaultValue);
-
 	const ctx = requireRenderContext();
+	// IDを先に生成してロジックとレンダリングで共有
 	const id = generateWidgetId(config?.key);
-	const step = config?.step ?? 1;
-	const value = initializeSliderState(id, min, defaultValue);
-
-	// HTMLをバッファに追加
-	ctx.append(`<div class="kt-slider-container">
-  <label for="${id}" class="kt-slider-label">${escapeHtml(label)}: ${value}</label>
-  <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}" data-kt-event="input" data-kt-type="number" class="kt-slider" />
-</div>`);
-
+	const configWithId = { ...config, key: id };
+	const value = imperativeSlider(label, min, max, defaultValue, configWithId);
+	ctx.append(renderSlider(label, min, max, value, configWithId));
 	return value;
 }
 
@@ -70,16 +55,11 @@ export function text_input(
 	config?: Partial<TextInputConfig>,
 ): string {
 	const ctx = requireRenderContext();
+	// IDを先に生成してロジックとレンダリングで共有
 	const id = generateWidgetId(config?.key);
-	const placeholder = config?.placeholder ?? "";
-	const value = initializeTextInputState(id, defaultValue);
-
-	// HTMLをバッファに追加
-	ctx.append(`<div class="kt-text-input-container">
-  <label for="${id}" class="kt-text-input-label">${escapeHtml(label)}</label>
-  <input type="text" id="${id}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" data-kt-event="input" class="kt-text-input" />
-</div>`);
-
+	const configWithId = { ...config, key: id };
+	const value = imperativeTextInput(label, defaultValue, configWithId);
+	ctx.append(renderTextInput(label, value, configWithId));
 	return value;
 }
 
@@ -93,27 +73,11 @@ export function selectbox(
 	defaultValue?: string,
 	config?: Partial<SelectboxConfig>,
 ): string {
-	validateSelectbox(options, defaultValue);
-
 	const ctx = requireRenderContext();
+	// IDを先に生成してロジックとレンダリングで共有
 	const id = generateWidgetId(config?.key);
-	const value = initializeSelectboxState(id, options, defaultValue);
-
-	// オプションHTML生成
-	const optionsHtml = options
-		.map(
-			(opt) =>
-				`<option value="${escapeHtml(opt)}" ${opt === value ? "selected" : ""}>${escapeHtml(opt)}</option>`,
-		)
-		.join("\n    ");
-
-	// HTMLをバッファに追加
-	ctx.append(`<div class="kt-selectbox-container">
-  <label for="${id}" class="kt-selectbox-label">${escapeHtml(label)}</label>
-  <select id="${id}" data-kt-event="change" class="kt-selectbox">
-    ${optionsHtml}
-  </select>
-</div>`);
-
+	const configWithId = { ...config, key: id };
+	const value = imperativeSelectbox(label, options, defaultValue, configWithId);
+	ctx.append(renderSelectbox(label, options, value, configWithId));
 	return value;
 }

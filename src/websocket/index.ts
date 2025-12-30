@@ -9,7 +9,4 @@ export {
 	upgradeWebSocket,
 	websocket,
 	createWebSocketHandler,
-	addConnection,
-	removeConnection,
-	getConnectionCount,
 } from "./handler";

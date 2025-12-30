@@ -65,9 +65,6 @@ export {
 	createWebSocketHandler,
 	upgradeWebSocket,
 	websocket,
-	addConnection,
-	removeConnection,
-	getConnectionCount,
 } from "./websocket";
 export type {
 	ClientMessage,

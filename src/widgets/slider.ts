@@ -34,6 +34,6 @@ export function renderSlider(
 
 	return `<div class="kt-slider-container">
   <label for="${id}" class="kt-slider-label">${escapeHtml(label)}: ${value}</label>
-  <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}" oninput="sendEvent('${id}', Number(this.value))" class="kt-slider" />
+  <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}" data-kt-event="input" data-kt-type="number" class="kt-slider" />
 </div>`;
 }

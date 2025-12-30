@@ -77,7 +77,7 @@ describe("text_input", () => {
 			expect(html).toContain('<input type="text"');
 			expect(html).toContain('value="World"');
 			expect(html).toContain("Name");
-			expect(html).toContain("sendEvent");
+			expect(html).toContain('data-kt-event="input"');
 		});
 
 		it("should include placeholder when provided", () => {
