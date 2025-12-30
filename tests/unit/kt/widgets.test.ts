@@ -2,6 +2,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import { button, selectbox, slider, text_input } from "../../../src/kt/widgets";
 import { clearContext, setContext } from "../../../src/runtime/context";
+import {
+	SessionManager,
+	resetSessionManager,
+	setSessionManager,
+} from "../../../src/session/manager";
+import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
 
 describe("Declarative Widget APIs", () => {
@@ -142,6 +148,71 @@ describe("Declarative Widget APIs", () => {
 		it("should throw error when no context", () => {
 			setRenderContext(null);
 			expect(() => button("Click")).toThrow("RenderContext is not available");
+		});
+	});
+
+	describe("with session state", () => {
+		let manager: SessionManager;
+
+		beforeEach(() => {
+			manager = new SessionManager();
+			setSessionManager(manager);
+		});
+
+		afterEach(() => {
+			setCurrentSessionId(null);
+			resetSessionManager();
+		});
+
+		it("slider should use existing stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "widget_0", 75);
+
+			const value = slider("Volume", 0, 100, 50);
+
+			expect(value).toBe(75);
+		});
+
+		it("text_input should use existing stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "widget_0", "stored text");
+
+			const value = text_input("Name", "default");
+
+			expect(value).toBe("stored text");
+		});
+
+		it("selectbox should use existing stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "widget_0", "Blue");
+
+			const value = selectbox("Color", ["Red", "Green", "Blue"], "Red");
+
+			expect(value).toBe("Blue");
+		});
+
+		it("selectbox should handle empty options array", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const value = selectbox("Empty", []);
+
+			expect(value).toBe("");
+		});
+
+		it("selectbox should use custom key with stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "my_select", "Green");
+
+			const value = selectbox("Color", ["Red", "Green", "Blue"], "Red", {
+				key: "my_select",
+			});
+
+			expect(value).toBe("Green");
 		});
 	});
 });

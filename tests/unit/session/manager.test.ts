@@ -1,5 +1,10 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { SessionManager } from "../../../src/session/manager";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	SessionManager,
+	getSessionManager,
+	resetSessionManager,
+	setSessionManager,
+} from "../../../src/session/manager";
 
 describe("SessionManager", () => {
 	let manager: SessionManager;
@@ -114,6 +119,14 @@ describe("SessionManager", () => {
 
 			expect(state).toBeUndefined();
 		});
+
+		it("should do nothing when setting state for non-existent session", () => {
+			// Should not throw
+			manager.setState("non-existent-id", "key", "value");
+
+			// Verify nothing was set
+			expect(manager.getState("non-existent-id")).toBeUndefined();
+		});
 	});
 
 	describe("cleanup", () => {
@@ -155,5 +168,97 @@ describe("SessionManager", () => {
 			manager.createSession();
 			expect(manager.getSessionCount()).toBe(2);
 		});
+	});
+
+	describe("WebSocket association", () => {
+		it("should associate WebSocket with session", () => {
+			const session = manager.createSession();
+			const mockWs = { send: vi.fn() } as unknown as Parameters<
+				typeof manager.associateWebSocket
+			>[0];
+
+			manager.associateWebSocket(mockWs, session.id);
+			const retrieved = manager.getSessionByWebSocket(mockWs);
+
+			expect(retrieved).toBeDefined();
+			expect(retrieved?.id).toBe(session.id);
+		});
+
+		it("should return undefined for unassociated WebSocket", () => {
+			const mockWs = { send: vi.fn() } as unknown as Parameters<
+				typeof manager.associateWebSocket
+			>[0];
+
+			const session = manager.getSessionByWebSocket(mockWs);
+
+			expect(session).toBeUndefined();
+		});
+
+		it("should remove WebSocket association", () => {
+			const session = manager.createSession();
+			const mockWs = { send: vi.fn() } as unknown as Parameters<
+				typeof manager.associateWebSocket
+			>[0];
+
+			manager.associateWebSocket(mockWs, session.id);
+			manager.removeWebSocket(mockWs);
+
+			const retrieved = manager.getSessionByWebSocket(mockWs);
+			expect(retrieved).toBeUndefined();
+		});
+
+		it("should handle removing non-associated WebSocket", () => {
+			const mockWs = { send: vi.fn() } as unknown as Parameters<
+				typeof manager.associateWebSocket
+			>[0];
+
+			// Should not throw
+			expect(() => manager.removeWebSocket(mockWs)).not.toThrow();
+		});
+
+		it("should handle associating WebSocket with non-existent session connections", () => {
+			const mockWs = { send: vi.fn() } as unknown as Parameters<
+				typeof manager.associateWebSocket
+			>[0];
+
+			// Associate with a session ID that doesn't have sessionToWs entry
+			manager.associateWebSocket(mockWs, "non-existent-session");
+
+			// Should be retrievable by WS but session won't exist
+			const wsSessionId = manager.getSessionByWebSocket(mockWs);
+			expect(wsSessionId).toBeUndefined();
+		});
+	});
+});
+
+describe("Global SessionManager", () => {
+	afterEach(() => {
+		resetSessionManager();
+	});
+
+	it("should create global manager on first call to getSessionManager", () => {
+		const manager = getSessionManager();
+		expect(manager).toBeInstanceOf(SessionManager);
+	});
+
+	it("should return same instance on subsequent calls", () => {
+		const manager1 = getSessionManager();
+		const manager2 = getSessionManager();
+		expect(manager1).toBe(manager2);
+	});
+
+	it("should allow setting custom manager", () => {
+		const customManager = new SessionManager({ ttl: 5000 });
+		setSessionManager(customManager);
+
+		expect(getSessionManager()).toBe(customManager);
+	});
+
+	it("should reset global manager", () => {
+		const manager1 = getSessionManager();
+		resetSessionManager();
+		const manager2 = getSessionManager();
+
+		expect(manager1).not.toBe(manager2);
 	});
 });

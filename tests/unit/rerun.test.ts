@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { getRenderContext } from "../../src/kt/context";
 import { getContext } from "../../src/runtime/context";
 import { rerun } from "../../src/runtime/rerun";
 import {
@@ -98,5 +99,35 @@ describe("rerun", () => {
 		// Both should generate widget_0 because counter is reset
 		expect(result1).toBe("<div>widget_0</div>");
 		expect(result2).toBe("<div>widget_0</div>");
+	});
+
+	it("should return HTML from render context when script returns void", () => {
+		const script = () => {
+			// Script that uses kt API (appends to render context) and returns undefined
+			const ctx = getRenderContext();
+			if (ctx) {
+				ctx.append("<h1>Title</h1>");
+				ctx.append("<p>Content</p>");
+			}
+			// Return void (undefined)
+		};
+
+		const result = rerun(script);
+
+		expect(result).toBe("<h1>Title</h1>\n<p>Content</p>");
+	});
+
+	it("should clear render context after execution", () => {
+		const script = () => {
+			const ctx = getRenderContext();
+			if (ctx) {
+				ctx.append("<div>Test</div>");
+			}
+		};
+
+		rerun(script);
+
+		// Render context should be cleared
+		expect(getRenderContext()).toBeNull();
 	});
 });
