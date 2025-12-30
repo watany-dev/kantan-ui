@@ -14,7 +14,5 @@ export interface Session {
 	lastAccessedAt: Date;
 }
 
-// セッション設定
-export interface SessionConfig {
-	ttl?: number; // セッションTTL（ミリ秒）、デフォルト: 30分
-}
+// SessionConfigはconfig/types.tsから再エクスポート
+export type { SessionConfig } from "../config/types";
