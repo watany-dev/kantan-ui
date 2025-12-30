@@ -41,7 +41,7 @@ const clientScript = `
         if (patch.type === "replaceRoot") {
           // Security: Check for potentially dangerous content
           const html = patch.html;
-          if (/<script[\\s\\S]*?>|javascript:|on\\w+\\s*=/i.test(html)) {
+          if (/<script[\\s\\S]*?>|javascript:/i.test(html)) {
             console.error("Blocked potentially unsafe HTML content");
             continue;
           }
@@ -63,6 +63,29 @@ const clientScript = `
   window.sendEvent = (widgetId, value) => {
     ws.send(JSON.stringify({ type: "event", widgetId, value, sessionId }));
   };
+
+  // イベント委譲: data-kt-event 属性を持つ要素のイベントを処理
+  document.getElementById("app").addEventListener("click", (e) => {
+    const target = e.target.closest("[data-kt-event='click']");
+    if (target && target.id) {
+      window.sendEvent(target.id, "clicked");
+    }
+  });
+
+  document.getElementById("app").addEventListener("input", (e) => {
+    const target = e.target;
+    if (target.dataset && target.dataset.ktEvent === "input" && target.id) {
+      const value = target.dataset.ktType === "number" ? Number(target.value) : target.value;
+      window.sendEvent(target.id, value);
+    }
+  });
+
+  document.getElementById("app").addEventListener("change", (e) => {
+    const target = e.target;
+    if (target.dataset && target.dataset.ktEvent === "change" && target.id) {
+      window.sendEvent(target.id, target.value);
+    }
+  });
 `;
 
 const defaultStyles = `

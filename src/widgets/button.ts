@@ -31,5 +31,5 @@ export function button(label: string, config?: Partial<ButtonConfig>): boolean {
 export function renderButton(label: string, config?: Partial<ButtonConfig>): string {
 	const id = generateWidgetId(config?.key);
 
-	return `<button id="${id}" onclick="sendEvent('${id}', 'clicked')" class="kt-button">${escapeHtml(label)}</button>`;
+	return `<button id="${id}" data-kt-event="click" class="kt-button">${escapeHtml(label)}</button>`;
 }

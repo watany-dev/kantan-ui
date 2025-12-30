@@ -63,7 +63,7 @@ describe("button", () => {
 
 			expect(html).toContain("<button");
 			expect(html).toContain("Click me");
-			expect(html).toContain("sendEvent");
+			expect(html).toContain('data-kt-event="click"');
 			expect(html).toContain("kt-button");
 		});
 
