@@ -39,9 +39,9 @@ bun run dev
 import { createApp, kt, createTypedSessionState } from "kantan-ui";
 
 // 型安全なセッション状態を定義
-interface AppState {
+type AppState = {
   count: number;
-}
+};
 
 const state = createTypedSessionState<AppState>({
   count: 0,  // デフォルト値
@@ -117,11 +117,11 @@ const color = kt.selectbox("Color", ["Red", "Green", "Blue"], "Blue", { key: "co
 import { createTypedSessionState } from "kantan-ui";
 
 // 型を定義してデフォルト値を指定
-interface AppState {
+type AppState = {
   counter: number;
   name: string;
   items: string[];
-}
+};
 
 const state = createTypedSessionState<AppState>({
   counter: 0,

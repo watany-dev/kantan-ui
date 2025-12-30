@@ -11,9 +11,9 @@ import { escapeHtml } from "./utils/html";
  * - デフォルト値の自動初期化
  * - IDEの補完が効く
  */
-interface AppState {
+type AppState = {
 	counter: number;
-}
+};
 
 const state = createTypedSessionState<AppState>({
 	counter: 0,

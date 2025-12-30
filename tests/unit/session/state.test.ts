@@ -269,5 +269,48 @@ describe("session_state", () => {
 			expect(warnSpy).toHaveBeenCalledWith("session_state への書き込みは rerun 中のみ有効です");
 			warnSpy.mockRestore();
 		});
+
+		it("should return false for 'in' check on non-default key with session but no state", () => {
+			// Set a non-existent session ID
+			setCurrentSessionId("non-existent-session-id");
+
+			const state = createTypedSessionState(defaults);
+
+			// "counter" is in defaults, so it returns true
+			expect("counter" in state).toBe(true);
+			// "unknown" is not in defaults and state is undefined
+			expect("unknown" in state).toBe(false);
+		});
+
+		it("should return undefined from getOwnPropertyDescriptor for non-default key when no session", () => {
+			const state = createTypedSessionState(defaults);
+			const descriptor = Object.getOwnPropertyDescriptor(state, "unknown");
+
+			expect(descriptor).toBeUndefined();
+		});
+
+		it("should return undefined from getOwnPropertyDescriptor for non-existent key with session", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(defaults);
+			// "unknown" is not in defaults and not in session state
+			const descriptor = Object.getOwnPropertyDescriptor(state, "unknown");
+
+			expect(descriptor).toBeUndefined();
+		});
+
+		it("should return default value descriptor when session exists but key only in defaults", () => {
+			const session = manager.createSession();
+			// Don't set "counter" in session state, only in defaults
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(defaults);
+			// Access "name" which is in defaults but not set in session yet
+			// First access counter to not trigger auto-initialization for name
+			const descriptor = Object.getOwnPropertyDescriptor(state, "name");
+
+			expect(descriptor?.value).toBe("World");
+		});
 	});
 });

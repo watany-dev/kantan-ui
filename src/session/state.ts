@@ -60,10 +60,10 @@ export function createSessionState(): SessionState {
  *
  * @example
  * ```typescript
- * interface AppState {
+ * type AppState = {
  *   counter: number;
  *   name: string;
- * }
+ * };
  *
  * const state = createTypedSessionState<AppState>({
  *   counter: 0,
@@ -76,9 +76,7 @@ export function createSessionState(): SessionState {
  * state.unknown = 1;  // コンパイルエラー
  * ```
  */
-export function createTypedSessionState<T extends Record<string, unknown>>(
-	defaults: T,
-): T {
+export function createTypedSessionState<T extends Record<string, unknown>>(defaults: T): T {
 	return new Proxy({} as T, {
 		get(_target, prop: string) {
 			if (!currentSessionId) {
