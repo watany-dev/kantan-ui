@@ -1,5 +1,6 @@
 import { escapeHtml } from "../utils/html";
-import { generateWidgetId, getWidgetValue, hasWidgetValue, setWidgetValue } from "./registry";
+import { initializeSelectboxState, validateSelectbox } from "./core";
+import { generateWidgetId } from "./registry";
 import type { SelectboxConfig } from "./types";
 
 /**
@@ -12,24 +13,9 @@ export function selectbox(
 	defaultValue?: string,
 	config?: Partial<SelectboxConfig>,
 ): string {
-	// バリデーション
-	if (!options || options.length === 0) {
-		throw new Error("selectbox: options array must not be empty");
-	}
-	if (defaultValue !== undefined && !options.includes(defaultValue)) {
-		throw new Error(`selectbox: defaultValue "${defaultValue}" must be one of the options`);
-	}
-
+	validateSelectbox(options, defaultValue);
 	const id = generateWidgetId(config?.key);
-	const initial = defaultValue ?? options[0] ?? "";
-
-	// 初回のみデフォルト値を state に保存
-	if (!hasWidgetValue(id)) {
-		setWidgetValue(id, initial);
-	}
-
-	// 現在の値を取得
-	return getWidgetValue<string>(id, initial);
+	return initializeSelectboxState(id, options, defaultValue);
 }
 
 /**

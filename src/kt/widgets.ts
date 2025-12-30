@@ -1,11 +1,13 @@
-import { getContext } from "../runtime/context";
 import { escapeHtml } from "../utils/html";
 import {
-	generateWidgetId,
-	getWidgetValue,
-	hasWidgetValue,
-	setWidgetValue,
-} from "../widgets/registry";
+	initializeSelectboxState,
+	initializeSliderState,
+	initializeTextInputState,
+	isButtonPressed,
+	validateSelectbox,
+	validateSlider,
+} from "../widgets/core";
+import { generateWidgetId } from "../widgets/registry";
 import type {
 	ButtonConfig,
 	SelectboxConfig,
@@ -21,10 +23,7 @@ import { requireRenderContext } from "./context";
 export function button(label: string, config?: Partial<ButtonConfig>): boolean {
 	const ctx = requireRenderContext();
 	const id = generateWidgetId(config?.key);
-	const context = getContext();
-
-	// 現在の rerun がこのボタンの押下によるものかチェック
-	const pressed = context?.event?.widgetId === id;
+	const pressed = isButtonPressed(id);
 
 	// HTMLをバッファに追加
 	ctx.append(
@@ -45,28 +44,12 @@ export function slider(
 	defaultValue?: number,
 	config?: Partial<SliderConfig>,
 ): number {
-	// バリデーション
-	if (min > max) {
-		throw new Error(`slider: min (${min}) must be <= max (${max})`);
-	}
-	if (defaultValue !== undefined && (defaultValue < min || defaultValue > max)) {
-		throw new Error(
-			`slider: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
-		);
-	}
+	validateSlider(min, max, defaultValue);
 
 	const ctx = requireRenderContext();
 	const id = generateWidgetId(config?.key);
 	const step = config?.step ?? 1;
-	const initial = defaultValue ?? min;
-
-	// 初回のみデフォルト値を state に保存
-	if (!hasWidgetValue(id)) {
-		setWidgetValue(id, initial);
-	}
-
-	// 現在の値を取得
-	const value = getWidgetValue<number>(id, initial);
+	const value = initializeSliderState(id, min, defaultValue);
 
 	// HTMLをバッファに追加
 	ctx.append(`<div class="kt-slider-container">
@@ -89,15 +72,7 @@ export function text_input(
 	const ctx = requireRenderContext();
 	const id = generateWidgetId(config?.key);
 	const placeholder = config?.placeholder ?? "";
-	const initial = defaultValue ?? "";
-
-	// 初回のみデフォルト値を state に保存
-	if (!hasWidgetValue(id)) {
-		setWidgetValue(id, initial);
-	}
-
-	// 現在の値を取得
-	const value = getWidgetValue<string>(id, initial);
+	const value = initializeTextInputState(id, defaultValue);
 
 	// HTMLをバッファに追加
 	ctx.append(`<div class="kt-text-input-container">
@@ -118,25 +93,11 @@ export function selectbox(
 	defaultValue?: string,
 	config?: Partial<SelectboxConfig>,
 ): string {
-	// バリデーション
-	if (!options || options.length === 0) {
-		throw new Error("selectbox: options array must not be empty");
-	}
-	if (defaultValue !== undefined && !options.includes(defaultValue)) {
-		throw new Error(`selectbox: defaultValue "${defaultValue}" must be one of the options`);
-	}
+	validateSelectbox(options, defaultValue);
 
 	const ctx = requireRenderContext();
 	const id = generateWidgetId(config?.key);
-	const initial = defaultValue ?? options[0] ?? "";
-
-	// 初回のみデフォルト値を state に保存
-	if (!hasWidgetValue(id)) {
-		setWidgetValue(id, initial);
-	}
-
-	// 現在の値を取得
-	const value = getWidgetValue<string>(id, initial);
+	const value = initializeSelectboxState(id, options, defaultValue);
 
 	// オプションHTML生成
 	const optionsHtml = options

@@ -1,5 +1,6 @@
 import { escapeHtml } from "../utils/html";
-import { generateWidgetId, getWidgetValue, hasWidgetValue, setWidgetValue } from "./registry";
+import { initializeSliderState, validateSlider } from "./core";
+import { generateWidgetId } from "./registry";
 import type { SliderConfig } from "./types";
 
 /**
@@ -13,26 +14,9 @@ export function slider(
 	defaultValue?: number,
 	config?: Partial<SliderConfig>,
 ): number {
-	// バリデーション
-	if (min > max) {
-		throw new Error(`slider: min (${min}) must be <= max (${max})`);
-	}
-	if (defaultValue !== undefined && (defaultValue < min || defaultValue > max)) {
-		throw new Error(
-			`slider: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
-		);
-	}
-
+	validateSlider(min, max, defaultValue);
 	const id = generateWidgetId(config?.key);
-	const initial = defaultValue ?? min;
-
-	// 初回のみデフォルト値を state に保存
-	if (!hasWidgetValue(id)) {
-		setWidgetValue(id, initial);
-	}
-
-	// 現在の値を取得
-	return getWidgetValue<number>(id, initial);
+	return initializeSliderState(id, min, defaultValue);
 }
 
 /**
