@@ -1,6 +1,7 @@
 import { createApp } from "./app";
 import { kt } from "./kt";
 import { session_state } from "./session";
+import { escapeHtml } from "./utils/html";
 
 /**
  * デモスクリプト - 宣言的API (kt.*) を使用
@@ -100,15 +101,6 @@ ${escapeHtml(
 	// 宣言的APIを使用する場合はundefinedを返す（HTMLはバッファから自動取得）
 	return undefined;
 };
-
-function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;");
-}
 
 const { app, websocket } = createApp(script);
 

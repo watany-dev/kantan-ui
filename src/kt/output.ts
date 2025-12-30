@@ -1,16 +1,5 @@
+import { escapeHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
-
-/**
- * HTMLをエスケープ
- */
-function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;");
-}
 
 /**
  * テキストまたはHTMLを出力
