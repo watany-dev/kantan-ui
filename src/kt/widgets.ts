@@ -1,20 +1,8 @@
-import {
-	button as imperativeButton,
-	renderButton,
-} from "../widgets/button";
+import { button as imperativeButton, renderButton } from "../widgets/button";
 import { generateWidgetId } from "../widgets/registry";
-import {
-	selectbox as imperativeSelectbox,
-	renderSelectbox,
-} from "../widgets/selectbox";
-import {
-	slider as imperativeSlider,
-	renderSlider,
-} from "../widgets/slider";
-import {
-	text_input as imperativeTextInput,
-	renderTextInput,
-} from "../widgets/text-input";
+import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/selectbox";
+import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
+import { text_input as imperativeTextInput, renderTextInput } from "../widgets/text-input";
 import type {
 	ButtonConfig,
 	SelectboxConfig,
