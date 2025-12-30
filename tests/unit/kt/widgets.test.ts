@@ -194,13 +194,13 @@ describe("Declarative Widget APIs", () => {
 			expect(value).toBe("Blue");
 		});
 
-		it("selectbox should handle empty options array", () => {
+		it("selectbox should throw error for empty options array", () => {
 			const session = manager.createSession();
 			setCurrentSessionId(session.id);
 
-			const value = selectbox("Empty", []);
-
-			expect(value).toBe("");
+			expect(() => selectbox("Empty", [])).toThrow(
+				"selectbox: options array must not be empty",
+			);
 		});
 
 		it("selectbox should use custom key with stored value", () => {
