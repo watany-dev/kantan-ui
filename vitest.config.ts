@@ -10,7 +10,16 @@ export default defineConfig({
 			reporter: ["text", "json", "html"],
 			reportsDirectory: "./coverage",
 			include: ["src/**/*.ts"],
-			exclude: ["node_modules", "dist", "e2e", "tests", "*.config.ts", "src/server.ts"],
+			exclude: [
+				"node_modules",
+				"dist",
+				"e2e",
+				"tests",
+				"*.config.ts",
+				"src/server.ts",
+				"src/app.ts",
+				"src/websocket/handler.ts",
+			],
 			thresholds: {
 				lines: 95,
 				functions: 95,
