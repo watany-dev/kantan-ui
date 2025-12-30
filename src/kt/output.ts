@@ -51,7 +51,17 @@ export function divider(): void {
 
 /**
  * 生のHTMLを出力（エスケープなし）
- * 注意: XSSに注意して使用すること
+ *
+ * @security この関数はXSS脆弱性の原因となる可能性があります。
+ * ユーザー入力を含むHTMLを渡さないでください。
+ * 信頼できる静的HTMLのみに使用してください。
+ *
+ * @example
+ * // OK: 静的HTML
+ * kt.html('<div class="custom">Static content</div>');
+ *
+ * // NG: ユーザー入力を含む
+ * kt.html(`<div>${userInput}</div>`); // 危険!
  */
 export function html(rawHtml: string): void {
 	const ctx = requireRenderContext();

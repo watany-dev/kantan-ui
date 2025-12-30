@@ -4,6 +4,7 @@ export type {
 	Patch,
 	ReplaceRootPatch,
 } from "./types";
+export { isClientMessage } from "./types";
 export {
 	upgradeWebSocket,
 	websocket,
