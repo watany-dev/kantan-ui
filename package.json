@@ -11,9 +11,7 @@
 			"import": "./dist/index.js"
 		}
 	},
-	"files": [
-		"dist"
-	],
+	"files": ["dist"],
 	"scripts": {
 		"dev": "bun run --watch src/server.ts",
 		"build": "bun build src/index.ts --outdir dist --target bun && bun run build:types",
@@ -28,13 +26,7 @@
 		"audit": "npm audit --audit-level=moderate",
 		"ci": "bun run lint && bun run build && bun run test:coverage"
 	},
-	"keywords": [
-		"ui",
-		"framework",
-		"hono",
-		"streamlit",
-		"web"
-	],
+	"keywords": ["ui", "framework", "hono", "streamlit", "web"],
 	"author": "",
 	"license": "MIT",
 	"repository": {
