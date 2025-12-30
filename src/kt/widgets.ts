@@ -45,6 +45,16 @@ export function slider(
 	defaultValue?: number,
 	config?: Partial<SliderConfig>,
 ): number {
+	// バリデーション
+	if (min > max) {
+		throw new Error(`slider: min (${min}) must be <= max (${max})`);
+	}
+	if (defaultValue !== undefined && (defaultValue < min || defaultValue > max)) {
+		throw new Error(
+			`slider: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
+		);
+	}
+
 	const ctx = requireRenderContext();
 	const id = generateWidgetId(config?.key);
 	const step = config?.step ?? 1;
@@ -108,6 +118,16 @@ export function selectbox(
 	defaultValue?: string,
 	config?: Partial<SelectboxConfig>,
 ): string {
+	// バリデーション
+	if (!options || options.length === 0) {
+		throw new Error("selectbox: options array must not be empty");
+	}
+	if (defaultValue !== undefined && !options.includes(defaultValue)) {
+		throw new Error(
+			`selectbox: defaultValue "${defaultValue}" must be one of the options`,
+		);
+	}
+
 	const ctx = requireRenderContext();
 	const id = generateWidgetId(config?.key);
 	const initial = defaultValue ?? options[0] ?? "";

@@ -8,9 +8,13 @@ export interface ClientMessage {
 
 // サーバ → クライアント
 export interface ServerMessage {
-	type: "patch" | "session";
+	type: "patch" | "session" | "error";
 	patches?: Patch[];
 	sessionId?: string; // 新規セッションID通知
+	error?: {
+		code: "SESSION_NOT_FOUND" | "INVALID_MESSAGE" | "UNKNOWN";
+		message: string;
+	};
 }
 
 export type Patch = ReplaceRootPatch;
