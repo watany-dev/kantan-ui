@@ -7,6 +7,9 @@ dist/
 # Bun
 bun.lockb
 
+# npm (this project uses Bun)
+package-lock.json
+
 # Logs
 *.log
 

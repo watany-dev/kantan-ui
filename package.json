@@ -42,7 +42,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.0",
-		"@playwright/test": "^1.49.0",
+		"@playwright/test": "^1.50.0",
 		"@types/bun": "^1.1.0",
 		"@vitest/coverage-istanbul": "^2.1.0",
 		"typescript": "^5.7.0",
