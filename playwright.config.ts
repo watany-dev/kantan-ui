@@ -1,5 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// ローカル開発環境でキャッシュ済みのChromiumを使用
+const chromiumPath = process.env.CI
+	? undefined
+	: "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
+
 export default defineConfig({
 	testDir: "./e2e",
 	fullyParallel: true,
@@ -14,7 +19,12 @@ export default defineConfig({
 	projects: [
 		{
 			name: "chromium",
-			use: { ...devices["Desktop Chrome"] },
+			use: {
+				...devices["Desktop Chrome"],
+				launchOptions: {
+					executablePath: chromiumPath,
+				},
+			},
 		},
 	],
 	webServer: {
