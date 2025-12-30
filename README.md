@@ -36,22 +36,26 @@ bun run dev
 ### 基本的なアプリ作成（宣言的API）
 
 ```typescript
-import { createApp, kt, session_state } from "kantan-ui";
+import { createApp, kt, createTypedSessionState } from "kantan-ui";
+
+// 型安全なセッション状態を定義
+type AppState = {
+  count: number;
+};
+
+const state = createTypedSessionState<AppState>({
+  count: 0,  // デフォルト値
+});
 
 const script = () => {
-  // セッション状態の初期化
-  if (session_state.count === undefined) {
-    session_state.count = 0;
-  }
-
   kt.title("Counter App");
 
   // ボタンが押されたらtrueを返す
   if (kt.button("+ Increment")) {
-    session_state.count = (session_state.count as number) + 1;
+    state.count++;  // 型安全！型アサーション不要
   }
 
-  kt.write(`Count: ${session_state.count}`);
+  kt.write(`Count: ${state.count}`);
 
   // 宣言的APIを使用する場合はundefinedを返す
   return undefined;
@@ -101,9 +105,40 @@ const name = kt.text_input("Your name", "Default", { key: "name" });
 const color = kt.selectbox("Color", ["Red", "Green", "Blue"], "Blue", { key: "color" });
 ```
 
-### session_state
+### セッション状態管理
 
-ユーザーごとのセッション状態を管理するオブジェクトです。Streamlitの`st.session_state`と同様に使用できます。
+ユーザーごとのセッション状態を管理します。Streamlitの`st.session_state`と同様に使用できます。
+
+#### createTypedSessionState（推奨）
+
+型安全なセッション状態を作成します。型アサーションなしで安全にアクセスでき、IDEの補完も効きます。
+
+```typescript
+import { createTypedSessionState } from "kantan-ui";
+
+// 型を定義してデフォルト値を指定
+type AppState = {
+  counter: number;
+  name: string;
+  items: string[];
+};
+
+const state = createTypedSessionState<AppState>({
+  counter: 0,
+  name: "World",
+  items: [],
+});
+
+// 型安全にアクセス可能
+state.counter++;           // OK - number型
+state.name = "Hello";      // OK - string型
+state.items.push("item");  // OK - string[]型
+// state.unknown = 1;      // コンパイルエラー！
+```
+
+#### session_state（後方互換用）
+
+動的なキーが必要な場合は、従来の`session_state`も利用できます。
 
 ```typescript
 import { session_state } from "kantan-ui";
@@ -113,7 +148,7 @@ if (session_state.myValue === undefined) {
   session_state.myValue = "initial";
 }
 
-// 読み取り
+// 読み取り（型アサーションが必要）
 const value = session_state.myValue as string;
 
 // 書き込み

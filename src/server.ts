@@ -1,7 +1,23 @@
 import { createApp } from "./app";
 import { kt } from "./kt";
-import { session_state } from "./session";
+import { createTypedSessionState } from "./session";
 import { escapeHtml } from "./utils/html";
+
+/**
+ * 型安全なセッションステート定義
+ *
+ * createTypedSessionState<T>() を使うことで:
+ * - 型アサーション不要で型安全にアクセス可能
+ * - デフォルト値の自動初期化
+ * - IDEの補完が効く
+ */
+type AppState = {
+	counter: number;
+};
+
+const state = createTypedSessionState<AppState>({
+	counter: 0,
+});
 
 /**
  * デモスクリプト - 宣言的API (kt.*) を使用
@@ -10,11 +26,6 @@ import { escapeHtml } from "./utils/html";
  * Streamlitのように直感的にUIを構築できます。
  */
 const script = () => {
-	// カウンターの初期化
-	if (session_state.counter === undefined) {
-		session_state.counter = 0;
-	}
-
 	// タイトル
 	kt.title("kantan-ui Demo");
 	kt.write("Streamlit風の宣言的APIで構築されたデモアプリです。");
@@ -24,22 +35,22 @@ const script = () => {
 	// ===== Counter Section =====
 	kt.header("Counter");
 
-	// インクリメントボタン
+	// インクリメントボタン（型アサーション不要！）
 	if (kt.button("+ Increment", { key: "btn_inc" })) {
-		session_state.counter = (session_state.counter as number) + 1;
+		state.counter++;
 	}
 
 	// デクリメントボタン
 	if (kt.button("- Decrement", { key: "btn_dec" })) {
-		session_state.counter = Math.max(0, (session_state.counter as number) - 1);
+		state.counter = Math.max(0, state.counter - 1);
 	}
 
 	// リセットボタン
 	if (kt.button("Reset", { key: "btn_reset" })) {
-		session_state.counter = 0;
+		state.counter = 0;
 	}
 
-	kt.write(`Current count: ${session_state.counter}`);
+	kt.write(`Current count: ${state.counter}`);
 
 	kt.divider();
 
@@ -86,7 +97,7 @@ const script = () => {
 ${escapeHtml(
 	JSON.stringify(
 		{
-			counter: session_state.counter,
+			counter: state.counter,
 			name,
 			volume,
 			color,

@@ -9,6 +9,7 @@ export {
 	setCurrentSessionId,
 	getCurrentSessionId,
 	createSessionState,
+	createTypedSessionState,
 } from "./state";
 export type {
 	SessionId,

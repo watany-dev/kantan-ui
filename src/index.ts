@@ -29,6 +29,7 @@ export {
 	setSessionManager,
 	resetSessionManager,
 	session_state,
+	createTypedSessionState,
 	setCurrentSessionId,
 	getCurrentSessionId,
 } from "./session";
