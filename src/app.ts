@@ -15,7 +15,13 @@ const clientScript = `
   };
 
   ws.onmessage = (e) => {
-    const msg = JSON.parse(e.data);
+    let msg;
+    try {
+      msg = JSON.parse(e.data);
+    } catch (err) {
+      console.error("Failed to parse WebSocket message:", err);
+      return;
+    }
 
     // セッションID を保存
     if (msg.sessionId) {
@@ -92,7 +98,13 @@ export function createApp(script: Script) {
 				console.log("WebSocket connected");
 			},
 			onMessage: (event, ws) => {
-				const data: ClientMessage = JSON.parse(event.data.toString());
+				let data: ClientMessage;
+				try {
+					data = JSON.parse(event.data.toString());
+				} catch (err) {
+					console.error("Failed to parse client message:", err);
+					return;
+				}
 
 				if (data.type === "init") {
 					// セッションを取得または作成
