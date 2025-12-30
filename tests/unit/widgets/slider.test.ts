@@ -104,7 +104,8 @@ describe("slider", () => {
 			expect(html).toContain('max="100"');
 			expect(html).toContain('value="50"');
 			expect(html).toContain("Volume: 50");
-			expect(html).toContain("sendEvent");
+			expect(html).toContain('data-kt-event="input"');
+			expect(html).toContain('data-kt-type="number"');
 		});
 
 		it("should include step attribute", () => {
