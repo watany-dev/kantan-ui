@@ -2,17 +2,42 @@ import type { WSContext } from "hono/ws";
 import type { Session, SessionConfig, SessionId, SessionState } from "./types";
 
 const DEFAULT_TTL = 30 * 60 * 1000; // 30分
+const DEFAULT_CLEANUP_INTERVAL = 60 * 1000; // 1分ごとにクリーンアップ
 
 export class SessionManager {
 	private sessions = new Map<SessionId, Session>();
 	private wsToSession = new Map<WSContext, SessionId>();
 	private sessionToWs = new Map<SessionId, Set<WSContext>>();
 	private config: Required<SessionConfig>;
+	private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
 
 	constructor(config: SessionConfig = {}) {
 		this.config = {
 			ttl: config.ttl ?? DEFAULT_TTL,
 		};
+
+		// 定期的なクリーンアップを開始
+		this.startCleanupInterval();
+	}
+
+	// クリーンアップインターバルを開始
+	private startCleanupInterval(): void {
+		if (this.cleanupIntervalId) return;
+
+		this.cleanupIntervalId = setInterval(() => {
+			const cleaned = this.cleanup();
+			if (cleaned > 0) {
+				console.log(`Session cleanup: removed ${cleaned} expired session(s)`);
+			}
+		}, DEFAULT_CLEANUP_INTERVAL);
+	}
+
+	// クリーンアップインターバルを停止
+	stopCleanupInterval(): void {
+		if (this.cleanupIntervalId) {
+			clearInterval(this.cleanupIntervalId);
+			this.cleanupIntervalId = null;
+		}
 	}
 
 	// セッションを生成

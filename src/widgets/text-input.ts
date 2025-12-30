@@ -1,14 +1,6 @@
+import { escapeHtml } from "../utils/html";
 import { generateWidgetId, getWidgetValue, hasWidgetValue, setWidgetValue } from "./registry";
 import type { TextInputConfig } from "./types";
-
-function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;");
-}
 
 /**
  * テキスト入力ウィジェット

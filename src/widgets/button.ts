@@ -1,15 +1,7 @@
 import { getContext } from "../runtime/context";
+import { escapeHtml } from "../utils/html";
 import { generateWidgetId } from "./registry";
 import type { ButtonConfig } from "./types";
-
-function escapeHtml(text: string): string {
-	return text
-		.replace(/&/g, "&amp;")
-		.replace(/</g, "&lt;")
-		.replace(/>/g, "&gt;")
-		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;");
-}
 
 /**
  * ボタンウィジェット
