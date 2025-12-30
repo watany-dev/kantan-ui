@@ -36,9 +36,7 @@ describe("slider", () => {
 			const session = manager.createSession();
 			setCurrentSessionId(session.id);
 
-			expect(() => slider("Volume", 100, 0, 50)).toThrow(
-				"slider: min (100) must be <= max (0)",
-			);
+			expect(() => slider("Volume", 100, 0, 50)).toThrow("slider: min (100) must be <= max (0)");
 		});
 
 		it("should throw error when defaultValue < min", () => {

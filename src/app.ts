@@ -264,8 +264,7 @@ export function createApp(script: Script) {
 							type: "error",
 							error: {
 								code: "SESSION_NOT_FOUND",
-								message:
-									"Session not found. Please refresh or reconnect.",
+								message: "Session not found. Please refresh or reconnect.",
 							},
 						};
 						ws.send(JSON.stringify(errorMessage));

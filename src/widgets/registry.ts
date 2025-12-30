@@ -18,9 +18,7 @@ export function generateWidgetId(key?: string): string {
  * 型ガードを選択する
  * defaultValueの型に基づいて適切な型ガードを返す
  */
-function getTypeValidator<T>(
-	defaultValue: T,
-): ((v: unknown) => boolean) | null {
+function getTypeValidator<T>(defaultValue: T): ((v: unknown) => boolean) | null {
 	switch (typeof defaultValue) {
 		case "string":
 			return isString;

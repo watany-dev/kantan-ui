@@ -198,9 +198,7 @@ describe("Declarative Widget APIs", () => {
 			const session = manager.createSession();
 			setCurrentSessionId(session.id);
 
-			expect(() => selectbox("Empty", [])).toThrow(
-				"selectbox: options array must not be empty",
-			);
+			expect(() => selectbox("Empty", [])).toThrow("selectbox: options array must not be empty");
 		});
 
 		it("selectbox should use custom key with stored value", () => {

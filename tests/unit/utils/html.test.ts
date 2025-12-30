@@ -38,7 +38,7 @@ describe("escapeHtml", () => {
 		});
 
 		it("should escape SVG-based XSS", () => {
-			const malicious = '<svg onload="alert(\'xss\')">';
+			const malicious = "<svg onload=\"alert('xss')\">";
 			const escaped = escapeHtml(malicious);
 
 			expect(escaped).not.toContain("<svg");
@@ -84,7 +84,7 @@ describe("escapeHtml", () => {
 		});
 
 		it("should escape multiple special characters", () => {
-			expect(escapeHtml("<div class=\"test\">&</div>")).toBe(
+			expect(escapeHtml('<div class="test">&</div>')).toBe(
 				"&lt;div class=&quot;test&quot;&gt;&amp;&lt;/div&gt;",
 			);
 		});

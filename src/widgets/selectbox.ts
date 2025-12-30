@@ -17,9 +17,7 @@ export function selectbox(
 		throw new Error("selectbox: options array must not be empty");
 	}
 	if (defaultValue !== undefined && !options.includes(defaultValue)) {
-		throw new Error(
-			`selectbox: defaultValue "${defaultValue}" must be one of the options`,
-		);
+		throw new Error(`selectbox: defaultValue "${defaultValue}" must be one of the options`);
 	}
 
 	const id = generateWidgetId(config?.key);
