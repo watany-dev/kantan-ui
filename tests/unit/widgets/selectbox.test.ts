@@ -41,13 +41,20 @@ describe("selectbox", () => {
 			expect(value).toBe("red");
 		});
 
-		it("should return empty string when options empty", () => {
+		it("should throw error when options array is empty", () => {
 			const session = manager.createSession();
 			setCurrentSessionId(session.id);
 
-			const value = selectbox("Color", []);
+			expect(() => selectbox("Color", [])).toThrow("selectbox: options array must not be empty");
+		});
 
-			expect(value).toBe("");
+		it("should throw error when defaultValue is not in options", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => selectbox("Color", ["red", "green", "blue"], "yellow")).toThrow(
+				'selectbox: defaultValue "yellow" must be one of the options',
+			);
 		});
 
 		it("should return stored value on subsequent calls", () => {

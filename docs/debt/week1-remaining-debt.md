@@ -12,78 +12,20 @@
 
 ---
 
-## 未対応 (MEDIUM)
+## 対応済み (MEDIUM) - Phase 1 & 2
 
-### 1. WebSocket再接続ロジックの欠如
-**ファイル**: `src/app.ts` (clientScript)
-
-**現状**: 接続切断時の自動復旧なし
-```typescript
-ws.onclose = () => {
-  console.log("Disconnected from server");
-  // 再接続ロジックなし
-};
-```
-
-**対策案**:
-- 指数バックオフによる自動再接続
-- オフライン時のメッセージキューイング
-- 接続状態のUI表示
-
----
-
-### 2. セッション未発見時のサイレント失敗
-**ファイル**: `src/app.ts:127-130`
-
-**現状**:
-```typescript
-if (!session) {
-  console.error("Session not found for WebSocket");
-  return; // クライアントに通知なし
-}
-```
-
-**対策案**:
-- クライアントにエラーメッセージを送信
-- セッション再確立のフローを実装
-
----
-
-### 3. 型安全性の問題
-**ファイル**: `src/widgets/registry.ts`, `src/session/state.ts`
-
-**現状**:
-```typescript
-return state[widgetId] as T;  // 型検証なし
-```
-
-**対策案**:
-- ランタイム型バリデーション (zod等)
-- 型ガード関数の追加
-
----
-
-### 4. Widgetバリデーションの欠如
-**ファイル**: `src/widgets/slider.ts`, `src/kt/widgets.ts`
-
-**現状**: 入力値の検証なし
-- `min > max` のチェックなし
-- `defaultValue` の範囲チェックなし
-- `selectbox` の空配列チェックなし
-
-**対策案**:
-```typescript
-if (min > max) throw new Error("min must be <= max");
-if (defaultValue < min || defaultValue > max) {
-  throw new Error("defaultValue out of range");
-}
-```
+| 優先度 | 問題 | 対応 |
+|--------|------|------|
+| MEDIUM | WebSocket再接続ロジックの欠如 | 指数バックオフ再接続 + 接続状態UI表示 |
+| MEDIUM | セッション未発見時のサイレント失敗 | クライアントにエラー通知送信 |
+| MEDIUM | 型安全性の問題 | 型ガード関数追加 (`utils/type-guards.ts`) |
+| MEDIUM | Widgetバリデーションの欠如 | slider/selectboxにバリデーション追加 |
 
 ---
 
 ## 未対応 (LOW)
 
-### 5. ハードコードされた値
+### 1. ハードコードされた値
 | 場所 | 値 | 推奨 |
 |------|-----|------|
 | `app.ts` | `"kt-session-id"` | 設定可能に |
@@ -92,19 +34,21 @@ if (defaultValue < min || defaultValue > max) {
 
 ---
 
-### 6. テストカバレッジ不足
+### 2. テストカバレッジ不足
 
-**不足しているテスト**:
-- [ ] JSON.parse失敗時のエラーハンドリング
-- [ ] 不正なWebSocketメッセージ
-- [ ] セッションタイムアウト/クリーンアップ
-- [ ] 無効なslider範囲 (min > max)
-- [ ] 空のselectboxオプション
-- [ ] XSSインジェクション
+**追加済みテスト**:
+- [x] 無効なslider範囲 (min > max)
+- [x] 空のselectboxオプション
+- [x] 型ミスマッチ時のフォールバック
+- [x] 型ガードユーティリティ
+- [x] XSSインジェクション (escapeHtml)
+- [x] セッションタイムアウト/クリーンアップ (既存)
+
+**備考**: JSON.parse/WebSocketメッセージのテストはE2Eテストでカバー
 
 ---
 
-### 7. Traditional API と kt.* API の重複
+### 3. Traditional API と kt.* API の重複
 **ファイル**: `src/widgets/*.ts` vs `src/kt/widgets.ts`
 
 **現状**: 同じ機能が2箇所で実装されている
@@ -117,7 +61,7 @@ if (defaultValue < min || defaultValue > max) {
 
 ## 優先順位
 
-1. **Phase 1**: WebSocket再接続 + セッションエラー通知
-2. **Phase 2**: 型安全性 + バリデーション
-3. **Phase 3**: 設定の外部化 + テスト追加
+1. ~~**Phase 1**: WebSocket再接続 + セッションエラー通知~~ ✅ 完了
+2. ~~**Phase 2**: 型安全性 + バリデーション + テスト追加~~ ✅ 完了
+3. **Phase 3**: 設定の外部化 + 残テスト追加
 4. **Phase 4**: API重複の解消

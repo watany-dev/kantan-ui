@@ -13,6 +13,16 @@ export function slider(
 	defaultValue?: number,
 	config?: Partial<SliderConfig>,
 ): number {
+	// バリデーション
+	if (min > max) {
+		throw new Error(`slider: min (${min}) must be <= max (${max})`);
+	}
+	if (defaultValue !== undefined && (defaultValue < min || defaultValue > max)) {
+		throw new Error(
+			`slider: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
+		);
+	}
+
 	const id = generateWidgetId(config?.key);
 	const initial = defaultValue ?? min;
 

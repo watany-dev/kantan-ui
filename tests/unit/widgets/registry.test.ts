@@ -84,6 +84,60 @@ describe("widgets/registry", () => {
 			const value = getWidgetValue("widget_0", "fallback");
 			expect(value).toBe("fallback");
 		});
+
+		it("should return default value when stored value has wrong type (number expected)", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			// Store a string when number is expected
+			manager.setState(session.id, "widget_0", "not a number");
+
+			const value = getWidgetValue("widget_0", 42);
+			expect(value).toBe(42);
+		});
+
+		it("should return default value when stored value has wrong type (string expected)", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			// Store a number when string is expected
+			manager.setState(session.id, "widget_0", 123);
+
+			const value = getWidgetValue("widget_0", "default");
+			expect(value).toBe("default");
+		});
+
+		it("should return default value when stored value has wrong type (boolean expected)", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			// Store a string when boolean is expected
+			manager.setState(session.id, "widget_0", "true");
+
+			const value = getWidgetValue("widget_0", false);
+			expect(value).toBe(false);
+		});
+
+		it("should return stored value when types match", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "num_widget", 100);
+			manager.setState(session.id, "str_widget", "hello");
+			manager.setState(session.id, "bool_widget", true);
+
+			expect(getWidgetValue("num_widget", 0)).toBe(100);
+			expect(getWidgetValue("str_widget", "")).toBe("hello");
+			expect(getWidgetValue("bool_widget", false)).toBe(true);
+		});
+
+		it("should return stored value for non-primitive types without validation", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			const defaultObj = { key: "default" };
+			const storedObj = { key: "stored" };
+			manager.setState(session.id, "obj_widget", storedObj);
+
+			// Non-primitive types bypass type validation
+			const value = getWidgetValue("obj_widget", defaultObj);
+			expect(value).toEqual(storedObj);
+		});
 	});
 
 	describe("setWidgetValue", () => {
