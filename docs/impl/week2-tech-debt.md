@@ -351,7 +351,7 @@ export function renderButton(label: string, config?: Partial<ButtonConfig>): str
 
 ### Phase 3: 中長期改善
 7. [ ] グローバル状態の整理（DI検討）
-8. [ ] 型安全なセッションステートの設計
+8. [x] 型安全なセッションステートの設計 → `createTypedSessionState<T>()` 実装済み
 9. [ ] WSContext比較問題の根本調査
 
 ---

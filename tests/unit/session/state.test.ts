@@ -6,6 +6,7 @@ import {
 } from "../../../src/session/manager";
 import {
 	createSessionState,
+	createTypedSessionState,
 	getCurrentSessionId,
 	setCurrentSessionId,
 } from "../../../src/session/state";
@@ -158,6 +159,115 @@ describe("session_state", () => {
 
 			// getState returns undefined, so the branch `state ? Object.keys(state) : []` returns []
 			expect(keys).toEqual([]);
+		});
+	});
+
+	describe("createTypedSessionState", () => {
+		interface TestState {
+			counter: number;
+			name: string;
+		}
+
+		const defaults: TestState = {
+			counter: 0,
+			name: "World",
+		};
+
+		it("should return default values when no session", () => {
+			const state = createTypedSessionState(defaults);
+
+			expect(state.counter).toBe(0);
+			expect(state.name).toBe("World");
+		});
+
+		it("should auto-initialize values on first access", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(defaults);
+
+			// First access should set default value
+			expect(state.counter).toBe(0);
+			expect(manager.getState(session.id)?.counter).toBe(0);
+		});
+
+		it("should get stored value instead of default", () => {
+			const session = manager.createSession();
+			manager.setState(session.id, "counter", 42);
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(defaults);
+
+			expect(state.counter).toBe(42);
+		});
+
+		it("should set value to session state", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(defaults);
+			state.counter = 100;
+
+			expect(manager.getState(session.id)?.counter).toBe(100);
+		});
+
+		it("should include default keys in 'in' check", () => {
+			const state = createTypedSessionState(defaults);
+
+			expect("counter" in state).toBe(true);
+			expect("name" in state).toBe(true);
+			expect("unknown" in state).toBe(false);
+		});
+
+		it("should include default keys in Object.keys()", () => {
+			const state = createTypedSessionState(defaults);
+			const keys = Object.keys(state);
+
+			expect(keys).toContain("counter");
+			expect(keys).toContain("name");
+		});
+
+		it("should merge session keys with default keys", () => {
+			const session = manager.createSession();
+			manager.setState(session.id, "extra", "value");
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(defaults);
+			const keys = Object.keys(state);
+
+			expect(keys).toContain("counter");
+			expect(keys).toContain("name");
+			expect(keys).toContain("extra");
+		});
+
+		it("should return descriptor for default keys when no session", () => {
+			const state = createTypedSessionState(defaults);
+			const descriptor = Object.getOwnPropertyDescriptor(state, "counter");
+
+			expect(descriptor?.enumerable).toBe(true);
+			expect(descriptor?.configurable).toBe(true);
+			expect(descriptor?.value).toBe(0);
+		});
+
+		it("should return descriptor for session value when exists", () => {
+			const session = manager.createSession();
+			manager.setState(session.id, "counter", 42);
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(defaults);
+			const descriptor = Object.getOwnPropertyDescriptor(state, "counter");
+
+			expect(descriptor?.value).toBe(42);
+		});
+
+		it("should warn when setting value without session", () => {
+			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+			const state = createTypedSessionState(defaults);
+
+			state.counter = 100;
+
+			expect(warnSpy).toHaveBeenCalledWith("session_state への書き込みは rerun 中のみ有効です");
+			warnSpy.mockRestore();
 		});
 	});
 });
