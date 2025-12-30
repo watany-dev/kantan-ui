@@ -1,5 +1,6 @@
 import { getSessionManager } from "../session/manager";
 import { getCurrentSessionId } from "../session/state";
+import { isBoolean, isNumber, isString } from "../utils/type-guards";
 
 // Widget ID 生成カウンター（rerun 毎にリセット）
 let widgetCounter = 0;
@@ -13,6 +14,25 @@ export function generateWidgetId(key?: string): string {
 	return `widget_${widgetCounter++}`;
 }
 
+/**
+ * 型ガードを選択する
+ * defaultValueの型に基づいて適切な型ガードを返す
+ */
+function getTypeValidator<T>(
+	defaultValue: T,
+): ((v: unknown) => boolean) | null {
+	switch (typeof defaultValue) {
+		case "string":
+			return isString;
+		case "number":
+			return isNumber;
+		case "boolean":
+			return isBoolean;
+		default:
+			return null;
+	}
+}
+
 // Widget の値を取得
 export function getWidgetValue<T>(widgetId: string, defaultValue: T): T {
 	const sessionId = getCurrentSessionId();
@@ -22,7 +42,19 @@ export function getWidgetValue<T>(widgetId: string, defaultValue: T): T {
 	if (!state || !(widgetId in state)) {
 		return defaultValue;
 	}
-	return state[widgetId] as T;
+
+	const value = state[widgetId];
+	const validator = getTypeValidator(defaultValue);
+
+	// 型ガードで検証（プリミティブ型のみ）
+	if (validator && !validator(value)) {
+		console.warn(
+			`Type mismatch for widget "${widgetId}": expected ${typeof defaultValue}, got ${typeof value}. Using default value.`,
+		);
+		return defaultValue;
+	}
+
+	return value as T;
 }
 
 // Widget の値を設定

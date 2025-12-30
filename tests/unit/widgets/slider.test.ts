@@ -32,6 +32,33 @@ describe("slider", () => {
 			expect(value).toBe(50);
 		});
 
+		it("should throw error when min > max", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => slider("Volume", 100, 0, 50)).toThrow(
+				"slider: min (100) must be <= max (0)",
+			);
+		});
+
+		it("should throw error when defaultValue < min", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => slider("Volume", 0, 100, -10)).toThrow(
+				"slider: defaultValue (-10) must be between min (0) and max (100)",
+			);
+		});
+
+		it("should throw error when defaultValue > max", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => slider("Volume", 0, 100, 150)).toThrow(
+				"slider: defaultValue (150) must be between min (0) and max (100)",
+			);
+		});
+
 		it("should return min as default when no default provided", () => {
 			const session = manager.createSession();
 			setCurrentSessionId(session.id);
