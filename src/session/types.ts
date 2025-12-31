@@ -12,6 +12,8 @@ export interface Session {
 	state: SessionState;
 	createdAt: Date;
 	lastAccessedAt: Date;
+	/** 前回レンダリングしたHTML（差分検出用） */
+	lastHtml?: string;
 }
 
 // SessionConfigはconfig/types.tsから再エクスポート
