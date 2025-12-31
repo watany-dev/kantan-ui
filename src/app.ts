@@ -363,6 +363,11 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 					if (session.lastHtml) {
 						const diffResult = diff(session.lastHtml, newHtml);
 						patches = toWebSocketPatches(diffResult, newHtml);
+						// 差分が検出されなくても、HTMLが変わっている場合はreplaceRootにフォールバック
+						// （idを持たない要素の変更を反映するため）
+						if (patches.length === 0 && session.lastHtml !== newHtml) {
+							patches = [{ type: "replaceRoot", html: newHtml }];
+						}
 					} else {
 						patches = [{ type: "replaceRoot", html: newHtml }];
 					}
