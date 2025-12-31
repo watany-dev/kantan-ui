@@ -1,8 +1,10 @@
 import { Hono } from "hono";
 import { type KantanConfig, type ResolvedKantanConfig, resolveConfig } from "./config";
+import { diff, toWebSocketPatches } from "./diff";
 import { type Script, rerun } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { createWebSocketHandler, websocket } from "./websocket";
+import type { Patch } from "./websocket/types";
 import { type ClientMessage, type ServerMessage, isClientMessage } from "./websocket/types";
 
 // Generate a random nonce for CSP
@@ -108,15 +110,74 @@ function generateClientScript(config: ResolvedKantanConfig): string {
 
       if (msg.type === "patch" && msg.patches) {
         for (const patch of msg.patches) {
-          if (patch.type === "replaceRoot") {
-            // Security: Check for potentially dangerous content (defense in depth, CSP is primary)
-            const html = patch.html;
-            if (/<script[\\s\\S]*?>|javascript:|\\s+on\\w+\\s*=/i.test(html)) {
-              console.error("Blocked potentially unsafe HTML content");
-              continue;
-            }
-            document.getElementById("app").innerHTML = html;
+          applyPatch(patch);
+        }
+      }
+    };
+
+    // Security check for HTML content
+    function isUnsafeHtml(html) {
+      return /<script[\\s\\S]*?>|javascript:|\\s+on\\w+\\s*=/i.test(html);
+    }
+
+    // Apply a single patch to the DOM
+    function applyPatch(patch) {
+      switch (patch.type) {
+        case "replaceRoot": {
+          if (isUnsafeHtml(patch.html)) {
+            console.error("Blocked potentially unsafe HTML content");
+            return;
           }
+          document.getElementById("app").innerHTML = patch.html;
+          break;
+        }
+
+        case "replaceNode": {
+          if (isUnsafeHtml(patch.html)) {
+            console.error("Blocked potentially unsafe HTML content");
+            return;
+          }
+          const el = document.getElementById(patch.id);
+          if (el) {
+            const temp = document.createElement("div");
+            temp.innerHTML = patch.html;
+            const newEl = temp.firstElementChild || temp.firstChild;
+            if (newEl) {
+              el.replaceWith(newEl);
+            }
+          }
+          break;
+        }
+
+        case "removeNode": {
+          const el = document.getElementById(patch.id);
+          if (el) {
+            el.remove();
+          }
+          break;
+        }
+
+        case "insertNode": {
+          if (isUnsafeHtml(patch.html)) {
+            console.error("Blocked potentially unsafe HTML content");
+            return;
+          }
+          const parent = patch.parentId === "__root__"
+            ? document.getElementById("app")
+            : document.getElementById(patch.parentId);
+          if (parent) {
+            const temp = document.createElement("div");
+            temp.innerHTML = patch.html;
+            const newEl = temp.firstElementChild || temp.firstChild;
+            if (newEl) {
+              if (patch.index >= 0 && patch.index < parent.children.length) {
+                parent.insertBefore(newEl, parent.children[patch.index]);
+              } else {
+                parent.appendChild(newEl);
+              }
+            }
+          }
+          break;
         }
       }
     };
@@ -259,8 +320,10 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 					const session = sessionManager.getOrCreateSession(data.sessionId);
 					sessionManager.associateWebSocket(ws, session.id);
 
-					// 初期HTMLを送信
+					// 初期HTMLを生成して保存
 					const html = rerun(script, undefined, session.id);
+					session.lastHtml = html;
+
 					const message: ServerMessage = {
 						type: "patch",
 						patches: [{ type: "replaceRoot", html }],
@@ -293,14 +356,33 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 
 					// rerun を実行
 					const widgetId = data.widgetId ?? "";
-					const html = rerun(script, { widgetId, value: data.value }, session.id);
+					const newHtml = rerun(script, { widgetId, value: data.value }, session.id);
 
-					// replaceRoot パッチを送信
-					const message: ServerMessage = {
-						type: "patch",
-						patches: [{ type: "replaceRoot", html }],
-					};
-					ws.send(JSON.stringify(message));
+					// 差分を計算
+					let patches: Patch[];
+					if (session.lastHtml) {
+						const diffResult = diff(session.lastHtml, newHtml);
+						patches = toWebSocketPatches(diffResult, newHtml);
+						// 差分が検出されなくても、HTMLが変わっている場合はreplaceRootにフォールバック
+						// （idを持たない要素の変更を反映するため）
+						if (patches.length === 0 && session.lastHtml !== newHtml) {
+							patches = [{ type: "replaceRoot", html: newHtml }];
+						}
+					} else {
+						patches = [{ type: "replaceRoot", html: newHtml }];
+					}
+
+					// HTML履歴を更新
+					session.lastHtml = newHtml;
+
+					// パッチを送信（変更がある場合のみ）
+					if (patches.length > 0) {
+						const message: ServerMessage = {
+							type: "patch",
+							patches,
+						};
+						ws.send(JSON.stringify(message));
+					}
 				}
 			},
 			onClose: (_evt, ws) => {

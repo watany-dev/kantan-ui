@@ -1,0 +1,35 @@
+/**
+ * 差分検出のための型定義
+ */
+
+/**
+ * パースされたノードツリー
+ */
+export interface VNode {
+	/** ノードのID（id属性の値） */
+	id: string;
+	/** HTMLタグ名 */
+	tag: string;
+	/** 属性のマップ */
+	attributes: Record<string, string>;
+	/** このノードのHTML文字列全体 */
+	html: string;
+}
+
+/**
+ * 差分パッチの種類
+ */
+export type DiffPatch =
+	| { type: "replace"; id: string; html: string }
+	| { type: "remove"; id: string }
+	| { type: "insert"; parentId: string; index: number; html: string };
+
+/**
+ * 差分検出の結果
+ */
+export interface DiffResult {
+	/** 検出されたパッチのリスト */
+	patches: DiffPatch[];
+	/** 変更があったかどうか */
+	hasChanges: boolean;
+}
