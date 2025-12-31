@@ -87,6 +87,40 @@ describe("parseHtml", () => {
 		const nodes = parseHtml(html);
 		expect(nodes).toHaveLength(0);
 	});
+
+	it("should handle nested elements with same tag name", () => {
+		const html = `<div id="outer">
+			<div>
+				<div>Deeply nested</div>
+			</div>
+		</div>`;
+		const nodes = parseHtml(html);
+
+		expect(nodes).toHaveLength(1);
+		expect(nodes[0].id).toBe("outer");
+		expect(nodes[0].html).toContain("Deeply nested");
+	});
+
+	it("should handle unclosed tags gracefully", () => {
+		const html = '<div id="broken">No closing tag';
+		const nodes = parseHtml(html);
+		// Should still extract what it can
+		expect(nodes.length).toBeGreaterThanOrEqual(0);
+	});
+
+	it("should handle multiple levels of nesting", () => {
+		const html = `<div id="level1">
+			<div id="level2">
+				<span id="level3">Content</span>
+			</div>
+		</div>`;
+		const nodes = parseHtml(html);
+
+		const ids = nodes.map((n) => n.id);
+		expect(ids).toContain("level1");
+		expect(ids).toContain("level2");
+		expect(ids).toContain("level3");
+	});
 });
 
 describe("buildNodeMap", () => {

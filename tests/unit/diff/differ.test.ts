@@ -117,6 +117,29 @@ describe("toWebSocketPatches", () => {
 		});
 	});
 
+	it("should convert insert patch to insertNode", () => {
+		const result = {
+			patches: [
+				{
+					type: "insert" as const,
+					parentId: "__root__",
+					index: 0,
+					html: "<button>New</button>",
+				},
+			],
+			hasChanges: true,
+		};
+		const patches = toWebSocketPatches(result, "<div>html</div>");
+
+		expect(patches).toHaveLength(1);
+		expect(patches[0]).toEqual({
+			type: "insertNode",
+			parentId: "__root__",
+			index: 0,
+			html: "<button>New</button>",
+		});
+	});
+
 	it("should fallback to replaceRoot when too many patches", () => {
 		// 11個以上のパッチでフォールバック
 		const patches = Array.from({ length: 11 }, (_, i) => ({
