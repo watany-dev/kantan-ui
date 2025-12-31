@@ -36,7 +36,7 @@ export function renderSelectbox(
 		)
 		.join("\n    ");
 
-	return `<div class="kt-selectbox-container">
+	return `<div id="${id}-container" class="kt-selectbox-container">
   <label for="${id}" class="kt-selectbox-label">${escapeHtml(label)}</label>
   <select id="${id}" data-kt-event="change" class="kt-selectbox">
     ${optionsHtml}

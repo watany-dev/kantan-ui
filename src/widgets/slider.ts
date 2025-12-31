@@ -32,7 +32,7 @@ export function renderSlider(
 	const id = generateWidgetId(config?.key);
 	const step = config?.step ?? 1;
 
-	return `<div class="kt-slider-container">
+	return `<div id="${id}-container" class="kt-slider-container">
   <label for="${id}" class="kt-slider-label">${escapeHtml(label)}: ${value}</label>
   <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}" data-kt-event="input" data-kt-type="number" class="kt-slider" />
 </div>`;
