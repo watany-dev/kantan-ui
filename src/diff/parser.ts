@@ -10,17 +10,15 @@ export function parseHtml(html: string): VNode[] {
 
 	// id="xxx" を持つ要素を抽出する正規表現
 	// 自己終了タグ（<input ... />）と通常タグ（<div>...</div>）の両方に対応
-	const idPattern =
-		/<([a-z][a-z0-9]*)\s+([^>]*?)id="([^"]+)"([^>]*?)(\/?>)([\s\S]*?)(?:<\/\1>)?/gi;
+	const idPattern = /<([a-z][a-z0-9]*)\s+([^>]*?)id="([^"]+)"([^>]*?)(\/?>)([\s\S]*?)(?:<\/\1>)?/gi;
 
-	let match: RegExpExecArray | null;
-	while ((match = idPattern.exec(html)) !== null) {
+	for (const match of html.matchAll(idPattern)) {
 		const [fullMatch, tag, beforeId, id, afterId, closeTag] = match;
 		const isSelfClosing = closeTag === "/>" || isSelfClosingTag(tag);
 
 		// 自己終了タグでない場合は終了タグまでのHTMLを取得
 		let nodeHtml = fullMatch;
-		if (!isSelfClosing && closeTag === ">") {
+		if (!isSelfClosing && closeTag === ">" && match.index !== undefined) {
 			// 終了タグを探す（ネストを考慮した簡易版）
 			const endTagPos = findClosingTag(html, match.index + fullMatch.length, tag);
 			if (endTagPos !== -1) {
@@ -28,7 +26,7 @@ export function parseHtml(html: string): VNode[] {
 			}
 		}
 
-		const attributes = extractAttributes(beforeId + " id=\"" + id + "\" " + afterId);
+		const attributes = extractAttributes(`${beforeId} id="${id}" ${afterId}`);
 
 		nodes.push({
 			id,
@@ -109,8 +107,7 @@ function extractAttributes(attrString: string): Record<string, string> {
 	const attrs: Record<string, string> = {};
 	const attrPattern = /([a-z][a-z0-9-]*)\s*=\s*"([^"]*)"/gi;
 
-	let match: RegExpExecArray | null;
-	while ((match = attrPattern.exec(attrString)) !== null) {
+	for (const match of attrString.matchAll(attrPattern)) {
 		attrs[match[1].toLowerCase()] = match[2];
 	}
 

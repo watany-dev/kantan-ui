@@ -28,11 +28,7 @@ export interface ServerMessage {
 	};
 }
 
-export type Patch =
-	| ReplaceRootPatch
-	| ReplaceNodePatch
-	| RemoveNodePatch
-	| InsertNodePatch;
+export type Patch = ReplaceRootPatch | ReplaceNodePatch | RemoveNodePatch | InsertNodePatch;
 
 export interface ReplaceRootPatch {
 	type: "replaceRoot";

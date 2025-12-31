@@ -1,4 +1,3 @@
-import type { DiffPatch, DiffResult } from "./types";
 import type {
 	InsertNodePatch,
 	Patch,
@@ -7,6 +6,7 @@ import type {
 	ReplaceRootPatch,
 } from "../websocket/types";
 import { buildNodeMap, parseHtml } from "./parser";
+import type { DiffPatch, DiffResult } from "./types";
 
 /**
  * 差分パッチの最大数のしきい値
@@ -68,10 +68,7 @@ export function diff(oldHtml: string, newHtml: string): DiffResult {
  * 差分パッチをWebSocketパッチ形式に変換
  * 差分が多すぎる場合はreplaceRootにフォールバック
  */
-export function toWebSocketPatches(
-	diffResult: DiffResult,
-	fullHtml: string,
-): Patch[] {
+export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Patch[] {
 	if (!diffResult.hasChanges) {
 		return [];
 	}
