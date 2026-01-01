@@ -36,12 +36,23 @@ export function isValidId(id: string): boolean {
  * @returns VNodeの配列（最大1000要素）
  * @throws {Error} サイズ超過、タイムアウト、要素数超過時
  */
+/**
+ * 中間データ構造：パース中のノード情報
+ */
+interface ParsedNode {
+	id: string;
+	tag: string;
+	html: string;
+	startPos: number;
+	endPos: number;
+}
+
 export function parseHtml(html: string): VNode[] {
 	// サイズチェック
 	if (html.length > PARSER_LIMITS.MAX_HTML_SIZE) {
 		throw new Error(`HTML size exceeds limit: ${html.length} > ${PARSER_LIMITS.MAX_HTML_SIZE}`);
 	}
-	const nodes: VNode[] = [];
+	const parsedNodes: ParsedNode[] = [];
 	const startTime = performance.now();
 
 	// id="xxx" を持つ要素を抽出する正規表現
@@ -55,7 +66,7 @@ export function parseHtml(html: string): VNode[] {
 		}
 
 		// 要素数チェック
-		if (nodes.length >= PARSER_LIMITS.MAX_ELEMENTS) {
+		if (parsedNodes.length >= PARSER_LIMITS.MAX_ELEMENTS) {
 			throw new Error(`Element count exceeds limit: ${PARSER_LIMITS.MAX_ELEMENTS}`);
 		}
 
@@ -67,21 +78,93 @@ export function parseHtml(html: string): VNode[] {
 		}
 
 		const isSelfClosing = closeTag === "/>" || isSelfClosingTag(tag);
+		const startPos = match.index ?? 0;
 
 		// 自己終了タグでない場合は終了タグまでのHTMLを取得
 		let nodeHtml = fullMatch;
+		let endPos = startPos + fullMatch.length;
+
 		if (!isSelfClosing && closeTag === ">" && match.index !== undefined) {
 			// 終了タグを探す（ネストを考慮した簡易版）
 			const endTagPos = findClosingTag(html, match.index + fullMatch.length, tag, startTime);
 			if (endTagPos !== -1) {
 				nodeHtml = html.substring(match.index, endTagPos);
+				endPos = endTagPos;
 			}
 		}
 
-		nodes.push({
+		parsedNodes.push({
 			id,
 			tag,
 			html: nodeHtml,
+			startPos,
+			endPos,
+		});
+	}
+
+	// 親子関係と順序を計算
+	return buildNodeTree(parsedNodes);
+}
+
+/**
+ * パースされたノードから親子関係と順序を計算してVNodeを構築
+ */
+function buildNodeTree(parsedNodes: ParsedNode[]): VNode[] {
+	const nodes: VNode[] = [];
+
+	for (const node of parsedNodes) {
+		// この要素を包含する最も近い親を探す
+		let parentId: string | null = null;
+		let smallestContainerSize = Number.POSITIVE_INFINITY;
+
+		for (const potentialParent of parsedNodes) {
+			if (potentialParent.id === node.id) continue;
+
+			// potentialParentがnodeを包含しているか確認
+			const containsNode =
+				potentialParent.startPos < node.startPos && potentialParent.endPos > node.endPos;
+
+			if (containsNode) {
+				const containerSize = potentialParent.endPos - potentialParent.startPos;
+				if (containerSize < smallestContainerSize) {
+					smallestContainerSize = containerSize;
+					parentId = potentialParent.id;
+				}
+			}
+		}
+
+		// 同じ親を持つ兄弟の中での順序を計算
+		const siblings = parsedNodes.filter((n) => {
+			if (n.id === node.id) return false;
+
+			// 同じ親を持つか確認
+			let nParentId: string | null = null;
+			let nSmallestSize = Number.POSITIVE_INFINITY;
+
+			for (const pp of parsedNodes) {
+				if (pp.id === n.id) continue;
+				const contains = pp.startPos < n.startPos && pp.endPos > n.endPos;
+				if (contains) {
+					const size = pp.endPos - pp.startPos;
+					if (size < nSmallestSize) {
+						nSmallestSize = size;
+						nParentId = pp.id;
+					}
+				}
+			}
+
+			return nParentId === parentId;
+		});
+
+		// 自分より前に出現する兄弟の数が順序
+		const order = siblings.filter((s) => s.startPos < node.startPos).length;
+
+		nodes.push({
+			id: node.id,
+			tag: node.tag,
+			html: node.html,
+			parentId,
+			order,
 		});
 	}
 

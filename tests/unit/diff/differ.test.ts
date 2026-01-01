@@ -55,6 +55,57 @@ describe("diff", () => {
 		expect(insertPatches[0].type).toBe("insert");
 	});
 
+	it("should include correct parentId and order in insert patch", () => {
+		const oldHtml = '<div id="parent"><span id="child1">First</span></div>';
+		const newHtml = `<div id="parent">
+			<span id="child1">First</span>
+			<span id="child2">Second</span>
+		</div>`;
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		const insertPatches = result.patches.filter((p) => p.type === "insert");
+		expect(insertPatches).toHaveLength(1);
+		expect(insertPatches[0]).toMatchObject({
+			type: "insert",
+			parentId: "parent",
+			index: 1, // child2 is the second child
+		});
+	});
+
+	it("should include __root__ as parentId for top-level insert", () => {
+		const oldHtml = '<button id="btn-1">Button 1</button>';
+		const newHtml = `
+			<button id="btn-1">Button 1</button>
+			<button id="btn-2">Button 2</button>
+		`;
+		const result = diff(oldHtml, newHtml);
+
+		const insertPatches = result.patches.filter((p) => p.type === "insert");
+		expect(insertPatches[0]).toMatchObject({
+			type: "insert",
+			parentId: "__root__",
+			index: 1,
+		});
+	});
+
+	it("should handle insert at beginning", () => {
+		const oldHtml = '<button id="btn-2">Button 2</button>';
+		const newHtml = `
+			<button id="btn-1">Button 1</button>
+			<button id="btn-2">Button 2</button>
+		`;
+		const result = diff(oldHtml, newHtml);
+
+		const insertPatches = result.patches.filter((p) => p.type === "insert");
+		expect(insertPatches).toHaveLength(1);
+		expect(insertPatches[0]).toMatchObject({
+			type: "insert",
+			parentId: "__root__",
+			index: 0,
+		});
+	});
+
 	it("should detect changes in slider container", () => {
 		const oldHtml = `<div id="widget_0-container" class="kt-slider-container">
 			<label for="widget_0">Speed: 50</label>

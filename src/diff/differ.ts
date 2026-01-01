@@ -6,13 +6,24 @@ import type {
 	ReplaceRootPatch,
 } from "../websocket/types";
 import { buildNodeMap, parseHtml } from "./parser";
-import type { DiffPatch, DiffResult } from "./types";
+import type { DiffPatch, DiffResult, VNode } from "./types";
 
 /**
  * 差分パッチの最大数のしきい値
  * これを超える場合はreplaceRootにフォールバック
  */
 const PATCH_THRESHOLD = 10;
+
+/**
+ * VNodeの配列からID→VNodeのマップを作成
+ */
+function buildVNodeMap(nodes: VNode[]): Map<string, VNode> {
+	const map = new Map<string, VNode>();
+	for (const node of nodes) {
+		map.set(node.id, node);
+	}
+	return map;
+}
 
 /**
  * 2つのHTML間の差分を検出
@@ -22,35 +33,35 @@ export function diff(oldHtml: string, newHtml: string): DiffResult {
 	const newNodes = parseHtml(newHtml);
 
 	const oldMap = buildNodeMap(oldNodes);
-	const newMap = buildNodeMap(newNodes);
+	const newVNodeMap = buildVNodeMap(newNodes);
 
 	const patches: DiffPatch[] = [];
 
 	// 変更または追加されたノードを検出
-	for (const [id, newNodeHtml] of newMap) {
-		const oldNodeHtml = oldMap.get(id);
+	for (const newNode of newNodes) {
+		const oldNodeHtml = oldMap.get(newNode.id);
 
 		if (oldNodeHtml === undefined) {
-			// 新規ノード
+			// 新規ノード - 親IDと順序を使用
 			patches.push({
 				type: "insert",
-				parentId: "__root__",
-				index: -1,
-				html: newNodeHtml,
+				parentId: newNode.parentId ?? "__root__",
+				index: newNode.order,
+				html: newNode.html,
 			});
-		} else if (oldNodeHtml !== newNodeHtml) {
+		} else if (oldNodeHtml !== newNode.html) {
 			// 変更されたノード
 			patches.push({
 				type: "replace",
-				id,
-				html: newNodeHtml,
+				id: newNode.id,
+				html: newNode.html,
 			});
 		}
 	}
 
 	// 削除されたノードを検出
 	for (const [id] of oldMap) {
-		if (!newMap.has(id)) {
+		if (!newVNodeMap.has(id)) {
 			patches.push({
 				type: "remove",
 				id,

@@ -109,6 +109,85 @@ describe("parseHtml", () => {
 		expect(ids).toContain("level2");
 		expect(ids).toContain("level3");
 	});
+
+	it("should calculate parentId for nested elements", () => {
+		const html = `<div id="parent">
+			<span id="child">Content</span>
+		</div>`;
+		const nodes = parseHtml(html);
+
+		const parent = nodes.find((n) => n.id === "parent");
+		const child = nodes.find((n) => n.id === "child");
+
+		expect(parent?.parentId).toBeNull();
+		expect(child?.parentId).toBe("parent");
+	});
+
+	it("should calculate parentId for deeply nested elements", () => {
+		const html = `<div id="grandparent">
+			<div id="parent">
+				<span id="child">Content</span>
+			</div>
+		</div>`;
+		const nodes = parseHtml(html);
+
+		const grandparent = nodes.find((n) => n.id === "grandparent");
+		const parent = nodes.find((n) => n.id === "parent");
+		const child = nodes.find((n) => n.id === "child");
+
+		expect(grandparent?.parentId).toBeNull();
+		expect(parent?.parentId).toBe("grandparent");
+		expect(child?.parentId).toBe("parent");
+	});
+
+	it("should calculate order for sibling elements", () => {
+		const html = `
+			<button id="first">First</button>
+			<button id="second">Second</button>
+			<button id="third">Third</button>
+		`;
+		const nodes = parseHtml(html);
+
+		const first = nodes.find((n) => n.id === "first");
+		const second = nodes.find((n) => n.id === "second");
+		const third = nodes.find((n) => n.id === "third");
+
+		expect(first?.order).toBe(0);
+		expect(second?.order).toBe(1);
+		expect(third?.order).toBe(2);
+	});
+
+	it("should calculate order for siblings within parent", () => {
+		const html = `<div id="parent">
+			<span id="child1">First</span>
+			<span id="child2">Second</span>
+		</div>`;
+		const nodes = parseHtml(html);
+
+		const parent = nodes.find((n) => n.id === "parent");
+		const child1 = nodes.find((n) => n.id === "child1");
+		const child2 = nodes.find((n) => n.id === "child2");
+
+		expect(parent?.order).toBe(0);
+		expect(child1?.order).toBe(0);
+		expect(child2?.order).toBe(1);
+	});
+
+	it("should handle widget container structure", () => {
+		const html = `<div id="widget_0-container" class="kt-slider-container">
+			<label for="widget_0">Speed: 50</label>
+			<input id="widget_0" type="range" min="0" max="100" value="50" />
+		</div>`;
+		const nodes = parseHtml(html);
+
+		const container = nodes.find((n) => n.id === "widget_0-container");
+		const input = nodes.find((n) => n.id === "widget_0");
+
+		expect(container?.parentId).toBeNull();
+		expect(input?.parentId).toBe("widget_0-container");
+		expect(container?.order).toBe(0);
+		expect(input?.order).toBe(0); // labelにはIDがないので
+	});
 });
 
 describe("buildNodeMap", () => {

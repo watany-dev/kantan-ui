@@ -12,6 +12,10 @@ export interface VNode {
 	tag: string;
 	/** このノードのHTML文字列全体 */
 	html: string;
+	/** 親要素のID（ルート要素の場合はnull） */
+	parentId: string | null;
+	/** 兄弟間の順序（0から開始） */
+	order: number;
 }
 
 /**
