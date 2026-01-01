@@ -41,5 +41,8 @@ export default defineConfig({
 		command: "bun run src/server.ts",
 		url: "http://localhost:3000",
 		reuseExistingServer: !process.env.CI,
+		timeout: 60000, // サーバー起動待ちのタイムアウト（CI環境で余裕を持たせる）
+		stdout: "pipe", // 出力をキャプチャ（デバッグ用）
+		stderr: "pipe",
 	},
 });
