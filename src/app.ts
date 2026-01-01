@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { type KantanConfig, type ResolvedKantanConfig, resolveConfig } from "./config";
+import { diff, toWebSocketPatches } from "./diff";
 import { type Script, rerun } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { createWebSocketHandler, websocket } from "./websocket";
@@ -358,16 +359,14 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 					const newHtml = rerun(script, { widgetId, value: data.value }, session.id);
 
 					// 差分を計算
-					// 注意: diff()は要素IDに基づいて差分を検出するが、kt.html()で
-					// 生成されるIDなし要素の変更は検出できない。そのため、安全のため
-					// HTMLが変更された場合は常にreplaceRootを使用する。
+					// diff()は要素IDに基づいて差分を検出する
+					// IDなし要素が多い場合はPATCH_THRESHOLDを超えてreplaceRootにフォールバック
 					let patches: Patch[];
-					if (session.lastHtml && session.lastHtml !== newHtml) {
-						patches = [{ type: "replaceRoot", html: newHtml }];
-					} else if (!session.lastHtml) {
-						patches = [{ type: "replaceRoot", html: newHtml }];
+					if (session.lastHtml) {
+						const diffResult = diff(session.lastHtml, newHtml);
+						patches = toWebSocketPatches(diffResult, newHtml);
 					} else {
-						patches = [];
+						patches = [{ type: "replaceRoot", html: newHtml }];
 					}
 
 					// HTML履歴を更新

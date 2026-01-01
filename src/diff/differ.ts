@@ -69,23 +69,27 @@ export function diff(oldHtml: string, newHtml: string): DiffResult {
 		}
 	}
 
+	// HTMLが異なる場合は変更があると判定（ID要素以外の変更も検出）
+	const htmlDiffers = oldHtml !== newHtml;
+
 	return {
 		patches,
-		hasChanges: patches.length > 0,
+		hasChanges: htmlDiffers,
 	};
 }
 
 /**
  * 差分パッチをWebSocketパッチ形式に変換
- * 差分が多すぎる場合はreplaceRootにフォールバック
+ * 差分が多すぎる場合やID追跡できない変更がある場合はreplaceRootにフォールバック
  */
 export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Patch[] {
 	if (!diffResult.hasChanges) {
 		return [];
 	}
 
-	// 差分が多すぎる場合はreplaceRootにフォールバック
-	if (diffResult.patches.length > PATCH_THRESHOLD) {
+	// ID追跡できない変更がある場合（hasChangesはtrueだがpatchesが空）
+	// または差分が多すぎる場合はreplaceRootにフォールバック
+	if (diffResult.patches.length === 0 || diffResult.patches.length > PATCH_THRESHOLD) {
 		return [{ type: "replaceRoot", html: fullHtml } satisfies ReplaceRootPatch];
 	}
 
