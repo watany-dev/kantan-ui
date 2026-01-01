@@ -5,6 +5,12 @@ import type { Session, SessionId, SessionState } from "./types";
 
 export class SessionManager {
 	private sessions = new Map<SessionId, Session>();
+	/**
+	 * WebSocket → SessionId のマッピング
+	 * Note: WSContextオブジェクトの参照等価性が保証されない可能性があるため、
+	 * セッション検索には使用せず、onClose時のクリーンアップ目的でのみ使用。
+	 * セッション検索にはクライアントから送信されるsessionIdを使用すること。
+	 */
 	private wsToSession = new Map<WSContext, SessionId>();
 	private sessionToWs = new Map<SessionId, Set<WSContext>>();
 	private config: Required<SessionConfig>;
@@ -87,7 +93,12 @@ export class SessionManager {
 		}
 	}
 
-	// WebSocket からセッションを取得
+	/**
+	 * WebSocket からセッションを取得
+	 * @deprecated WSContextの参照等価性が保証されないため、
+	 * クライアントから送信されるsessionIdを使用してgetSession()を呼び出すこと。
+	 * このメソッドはonClose時のクリーンアップ用途でのみ残している。
+	 */
 	getSessionByWebSocket(ws: WSContext): Session | undefined {
 		const sessionId = this.wsToSession.get(ws);
 		if (sessionId) {

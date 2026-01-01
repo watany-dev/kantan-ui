@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { type KantanConfig, type ResolvedKantanConfig, resolveConfig } from "./config";
+import { diff, toWebSocketPatches } from "./diff";
 import { type Script, rerun } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { createWebSocketHandler, websocket } from "./websocket";
@@ -330,13 +331,24 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 					};
 					ws.send(JSON.stringify(message));
 				} else if (data.type === "event") {
-					// セッションを取得（sessionIdを直接使用、WSContext比較の問題を回避）
-					const session = data.sessionId
-						? sessionManager.getSession(data.sessionId)
-						: sessionManager.getSessionByWebSocket(ws);
+					// セッションをsessionIdで取得
+					// Note: クライアントは常にsessionIdを送信するため、WSContext比較は不要
+					// wsToSessionはonClose時のクリーンアップ目的でのみ使用
+					if (!data.sessionId) {
+						console.error("Event received without sessionId");
+						const errorMessage: ServerMessage = {
+							type: "error",
+							error: {
+								code: "SESSION_ID_REQUIRED",
+								message: "sessionId is required for event messages.",
+							},
+						};
+						ws.send(JSON.stringify(errorMessage));
+						return;
+					}
+					const session = sessionManager.getSession(data.sessionId);
 					if (!session) {
-						console.error("Session not found for WebSocket");
-						// クライアントにエラー通知
+						console.error("Session not found:", data.sessionId);
 						const errorMessage: ServerMessage = {
 							type: "error",
 							error: {
@@ -358,16 +370,14 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 					const newHtml = rerun(script, { widgetId, value: data.value }, session.id);
 
 					// 差分を計算
-					// 注意: diff()は要素IDに基づいて差分を検出するが、kt.html()で
-					// 生成されるIDなし要素の変更は検出できない。そのため、安全のため
-					// HTMLが変更された場合は常にreplaceRootを使用する。
+					// diff()は要素IDに基づいて差分を検出する
+					// IDなし要素が多い場合はPATCH_THRESHOLDを超えてreplaceRootにフォールバック
 					let patches: Patch[];
-					if (session.lastHtml && session.lastHtml !== newHtml) {
-						patches = [{ type: "replaceRoot", html: newHtml }];
-					} else if (!session.lastHtml) {
-						patches = [{ type: "replaceRoot", html: newHtml }];
+					if (session.lastHtml) {
+						const diffResult = diff(session.lastHtml, newHtml);
+						patches = toWebSocketPatches(diffResult, newHtml);
 					} else {
-						patches = [];
+						patches = [{ type: "replaceRoot", html: newHtml }];
 					}
 
 					// HTML履歴を更新
