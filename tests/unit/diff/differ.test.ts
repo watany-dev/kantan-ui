@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	diff,
-	getContainerIdFromWidgetId,
-	getWidgetIdFromContainerId,
-	toWebSocketPatches,
-} from "../../../src/diff/differ";
+import { diff, toWebSocketPatches } from "../../../src/diff/differ";
 
 describe("diff", () => {
 	it("should detect no changes for identical HTML", () => {
@@ -159,19 +154,3 @@ describe("toWebSocketPatches", () => {
 	});
 });
 
-describe("container ID helpers", () => {
-	it("should extract widget id from container id", () => {
-		expect(getWidgetIdFromContainerId("widget_0-container")).toBe("widget_0");
-		expect(getWidgetIdFromContainerId("my-slider-container")).toBe("my-slider");
-	});
-
-	it("should return null for non-container id", () => {
-		expect(getWidgetIdFromContainerId("widget_0")).toBeNull();
-		expect(getWidgetIdFromContainerId("btn-1")).toBeNull();
-	});
-
-	it("should create container id from widget id", () => {
-		expect(getContainerIdFromWidgetId("widget_0")).toBe("widget_0-container");
-		expect(getContainerIdFromWidgetId("my-slider")).toBe("my-slider-container");
-	});
-});
