@@ -359,17 +359,16 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 					const newHtml = rerun(script, { widgetId, value: data.value }, session.id);
 
 					// 差分を計算
+					// 注意: diff()は要素IDに基づいて差分を検出するが、kt.html()で
+					// 生成されるIDなし要素の変更は検出できない。そのため、安全のため
+					// HTMLが変更された場合は常にreplaceRootを使用する。
 					let patches: Patch[];
-					if (session.lastHtml) {
-						const diffResult = diff(session.lastHtml, newHtml);
-						patches = toWebSocketPatches(diffResult, newHtml);
-						// 差分が検出されなくても、HTMLが変わっている場合はreplaceRootにフォールバック
-						// （idを持たない要素の変更を反映するため）
-						if (patches.length === 0 && session.lastHtml !== newHtml) {
-							patches = [{ type: "replaceRoot", html: newHtml }];
-						}
-					} else {
+					if (session.lastHtml && session.lastHtml !== newHtml) {
 						patches = [{ type: "replaceRoot", html: newHtml }];
+					} else if (!session.lastHtml) {
+						patches = [{ type: "replaceRoot", html: newHtml }];
+					} else {
+						patches = [];
 					}
 
 					// HTML履歴を更新

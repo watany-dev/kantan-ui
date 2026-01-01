@@ -128,14 +128,20 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should update text input value", async ({ page }) => {
+		const wsPromise = page.waitForEvent("websocket");
+
 		await page.goto("/");
 
-		// 初期表示を待つ
-		await expect(page.locator("#name_input")).toHaveValue("World");
+		const ws = await wsPromise;
+
+		// WebSocket接続が確立されるまで待つ（初期patchを受信するまで）
+		await new Promise<void>((resolve) => {
+			ws.on("framereceived", () => resolve());
+		});
 
 		const textInput = page.locator("#name_input");
 
-		// テキストを変更（inputイベントを発火させる）
+		// inputイベントを発火させる
 		await textInput.evaluate((el: HTMLInputElement) => {
 			el.value = "Alice";
 			el.dispatchEvent(new Event("input", { bubbles: true }));
@@ -146,10 +152,16 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should update selectbox value", async ({ page }) => {
+		const wsPromise = page.waitForEvent("websocket");
+
 		await page.goto("/");
 
-		// 初期表示を待つ
-		await expect(page.locator("#color_select")).toHaveValue("blue");
+		const ws = await wsPromise;
+
+		// WebSocket接続が確立されるまで待つ（初期patchを受信するまで）
+		await new Promise<void>((resolve) => {
+			ws.on("framereceived", () => resolve());
+		});
 
 		const selectbox = page.locator("#color_select");
 
