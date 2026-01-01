@@ -10,9 +10,16 @@ export default defineConfig({
 	retries: process.env.CI ? 2 : 0,
 	workers: 1,
 	reporter: "html",
+	/* タイムアウト設定の一元管理 */
+	timeout: 30000, // テスト全体のタイムアウト
+	expect: {
+		timeout: 10000, // WebSocket経由のUI更新を待つため長めに設定
+	},
 	use: {
 		baseURL: "http://localhost:3000",
 		trace: "on-first-retry",
+		actionTimeout: 5000, // クリック等のアクション
+		navigationTimeout: 15000, // ページ遷移
 	},
 	projects: [
 		{

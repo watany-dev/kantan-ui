@@ -9,7 +9,8 @@ test.use({ storageState: { cookies: [], origins: [] } });
  */
 async function waitForInitialRender(page: Page): Promise<void> {
 	// 初期HTMLがレンダリングされるまで待機（WebSocket経由のパッチ適用完了を意味する）
-	await expect(page.locator("#app h1.kt-title")).toBeVisible({ timeout: 10000 });
+	// タイムアウトはplaywright.config.tsのexpect.timeoutで一元管理
+	await expect(page.locator("#app h1.kt-title")).toBeVisible();
 }
 
 /**
@@ -103,7 +104,6 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		// replaceRootパッチによりUIが更新されることを確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
-			{ timeout: 10000 },
 		);
 	});
 
@@ -118,10 +118,9 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		// インクリメントボタンをクリック
 		await page.click("#btn_inc");
 
-		// カウントが増加したことを確認（リトライあり）
+		// カウントが増加したことを確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
-			{ timeout: 10000 },
 		);
 	});
 
@@ -139,8 +138,8 @@ test.describe("WebSocket connection and replaceRoot", () => {
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		});
 
-		// 値が反映されることを確認（リトライあり）
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75", { timeout: 10000 });
+		// 値が反映されることを確認
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75");
 	});
 
 	test("should update text input value", async ({ page }) => {
@@ -155,7 +154,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		});
 
 		// 結果セクションに反映されることを確認
-		await expect(page.locator("#app")).toContainText("Hello, Alice!", { timeout: 10000 });
+		await expect(page.locator("#app")).toContainText("Hello, Alice!");
 	});
 
 	test("should update selectbox value", async ({ page }) => {
@@ -170,7 +169,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		});
 
 		// 値が反映されることを確認（Session State Debugセクション）
-		await expect(page.locator("pre")).toContainText('"color": "green"', { timeout: 10000 });
+		await expect(page.locator("pre")).toContainText('"color": "green"');
 	});
 
 	test("should persist session state across page reload", async ({ page }) => {
@@ -180,7 +179,6 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		await page.click("#btn_inc");
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
-			{ timeout: 10000 },
 		);
 
 		// ページをリロード
@@ -189,7 +187,6 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		// セッションが維持されていることを確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
-			{ timeout: 10000 },
 		);
 	});
 });
