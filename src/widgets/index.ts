@@ -9,12 +9,3 @@ export {
 	setWidgetValue,
 	hasWidgetValue,
 } from "./registry";
-export type {
-	WidgetConfig,
-	WidgetState,
-	WidgetRenderResult,
-	ButtonConfig,
-	SliderConfig,
-	TextInputConfig,
-	SelectboxConfig,
-} from "./types";

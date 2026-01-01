@@ -15,6 +15,3 @@ export interface Session {
 	/** 前回レンダリングしたHTML（差分検出用） */
 	lastHtml?: string;
 }
-
-// SessionConfigはconfig/types.tsから再エクスポート
-export type { SessionConfig } from "../config/types";
