@@ -101,4 +101,3 @@ export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Pa
 		}
 	});
 }
-
