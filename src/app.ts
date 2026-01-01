@@ -109,15 +109,88 @@ function generateClientScript(config: ResolvedKantanConfig): string {
       }
 
       if (msg.type === "patch" && msg.patches) {
-        for (const patch of msg.patches) {
-          applyPatch(patch);
-        }
+        applyPatches(msg.patches);
       }
     };
 
     // Security check for HTML content
     function isUnsafeHtml(html) {
       return /<script[\\s\\S]*?>|javascript:|\\s+on\\w+\\s*=/i.test(html);
+    }
+
+    // Focus state management
+    function saveFocusState() {
+      const activeElement = document.activeElement;
+
+      if (!activeElement || activeElement === document.body) {
+        return {
+          elementId: null,
+          selectionStart: null,
+          selectionEnd: null,
+          scrollTop: 0,
+          scrollLeft: 0,
+        };
+      }
+
+      const state = {
+        elementId: activeElement.id || null,
+        selectionStart: null,
+        selectionEnd: null,
+        scrollTop: 0,
+        scrollLeft: 0,
+      };
+
+      // For text input elements, save cursor position
+      if (activeElement instanceof HTMLInputElement ||
+          activeElement instanceof HTMLTextAreaElement) {
+        state.selectionStart = activeElement.selectionStart;
+        state.selectionEnd = activeElement.selectionEnd;
+        state.scrollTop = activeElement.scrollTop;
+        state.scrollLeft = activeElement.scrollLeft;
+      }
+
+      return state;
+    }
+
+    function restoreFocusState(state) {
+      if (!state.elementId) return;
+
+      const element = document.getElementById(state.elementId);
+      if (!element) return;
+
+      // Restore focus
+      element.focus();
+
+      // For text input elements, restore cursor position
+      if ((element instanceof HTMLInputElement ||
+           element instanceof HTMLTextAreaElement) &&
+          state.selectionStart !== null) {
+        try {
+          element.setSelectionRange(
+            state.selectionStart,
+            state.selectionEnd ?? state.selectionStart
+          );
+          element.scrollTop = state.scrollTop;
+          element.scrollLeft = state.scrollLeft;
+        } catch (e) {
+          // Some input types (number, email, etc.) don't support setSelectionRange
+          console.debug("Could not restore selection range:", e);
+        }
+      }
+    }
+
+    // Apply patches with focus preservation
+    function applyPatches(patches) {
+      const focusState = saveFocusState();
+
+      for (const patch of patches) {
+        applyPatch(patch);
+      }
+
+      // Restore focus on the next frame (after DOM update completes)
+      requestAnimationFrame(() => {
+        restoreFocusState(focusState);
+      });
     }
 
     // Apply a single patch to the DOM

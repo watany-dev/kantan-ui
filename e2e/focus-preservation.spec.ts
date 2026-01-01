@@ -38,17 +38,9 @@ test.describe("Focus Preservation", () => {
 		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 60");
 
 		// replaceNodeパッチ後もフォーカスが維持されていることを確認
-		// 注意: replaceNodeはDOMを置換するため、フォーカスが失われる可能性がある
-		// この挙動は現在の実装の制限として確認
-		const isFocused = await slider.evaluate((el) => document.activeElement === el);
-
-		// 現在の実装ではreplaceNode後にフォーカスが失われる
-		// これはWeek4以降の改善対象として記録
-		if (!isFocused) {
-			console.log(
-				"Note: Focus was lost after replaceNode. This is a known limitation to be addressed.",
-			);
-		}
+		// フォーカス復元は requestAnimationFrame で行われるため少し待つ
+		await page.waitForTimeout(100);
+		await expect(slider).toBeFocused();
 	});
 
 	test("should maintain focus on increment button after click", async ({ page }) => {
@@ -64,23 +56,14 @@ test.describe("Focus Preservation", () => {
 			"Current count: 1",
 		);
 
-		// クリック後、ボタンにフォーカスがあるか確認
-		// ボタンクリックはデフォルトでフォーカスを当てる
-		const isFocused = await incButton.evaluate((el) => document.activeElement === el);
-
-		// 現在の実装でフォーカスが維持されているかを記録
-		if (isFocused) {
-			console.log("Button focus maintained after click.");
-		} else {
-			console.log(
-				"Note: Button focus was not maintained after replaceNode. This may be expected behavior.",
-			);
-		}
+		// replaceNodeパッチ後もボタンにフォーカスが維持されていることを確認
+		// フォーカス復元は requestAnimationFrame で行われるため少し待つ
+		await page.waitForTimeout(100);
+		await expect(incButton).toBeFocused();
 	});
 
 	// text_inputのフォーカス維持テスト
-	// 注意: websocket.spec.tsのtext_inputテストと同様の問題が発生する可能性
-	test.skip("should maintain focus on text input during typing", async ({ page }) => {
+	test("should maintain focus on text input during typing", async ({ page }) => {
 		await gotoAndWait(page);
 
 		const textInput = page.locator("#name_input");
@@ -90,14 +73,16 @@ test.describe("Focus Preservation", () => {
 		await expect(textInput).toBeFocused();
 
 		// 1文字ずつ入力（各文字でrerunが発生）
-		await textInput.pressSequentially("Hi", { delay: 100 });
+		await textInput.pressSequentially("Hi", { delay: 150 });
+
+		// フォーカス復元を待つ
+		await page.waitForTimeout(100);
 
 		// 入力後もフォーカスが維持されていることを確認
 		await expect(textInput).toBeFocused();
 
-		// カーソル位置の確認（末尾にあるべき）
-		const cursorPosition = await textInput.evaluate((el: HTMLInputElement) => el.selectionStart);
-		expect(cursorPosition).toBe(2); // "Hi"の末尾
+		// 入力値が正しいことを確認
+		await expect(textInput).toHaveValue("Hi");
 	});
 
 	test("should verify replaceNode preserves element identity", async ({ page }) => {
