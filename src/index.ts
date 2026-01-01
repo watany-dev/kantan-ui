@@ -78,14 +78,7 @@ export type {
 } from "./websocket/types";
 
 // Diff (for advanced use)
-export {
-	parseHtml,
-	buildNodeMap,
-	diff,
-	toWebSocketPatches,
-	getWidgetIdFromContainerId,
-	getContainerIdFromWidgetId,
-} from "./diff";
+export { parseHtml, buildNodeMap, diff, toWebSocketPatches } from "./diff";
 export type { VNode, DiffPatch, DiffResult } from "./diff/types";
 
 // kt - Declarative UI API

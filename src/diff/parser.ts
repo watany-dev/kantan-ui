@@ -13,7 +13,7 @@ export function parseHtml(html: string): VNode[] {
 	const idPattern = /<([a-z][a-z0-9]*)\s+([^>]*?)id="([^"]+)"([^>]*?)(\/?>)([\s\S]*?)(?:<\/\1>)?/gi;
 
 	for (const match of html.matchAll(idPattern)) {
-		const [fullMatch, tag, beforeId, id, afterId, closeTag] = match;
+		const [fullMatch, tag, _beforeId, id, _afterId, closeTag] = match;
 		const isSelfClosing = closeTag === "/>" || isSelfClosingTag(tag);
 
 		// 自己終了タグでない場合は終了タグまでのHTMLを取得
@@ -26,12 +26,9 @@ export function parseHtml(html: string): VNode[] {
 			}
 		}
 
-		const attributes = extractAttributes(`${beforeId} id="${id}" ${afterId}`);
-
 		nodes.push({
 			id,
 			tag,
-			attributes,
 			html: nodeHtml,
 		});
 	}
@@ -98,20 +95,6 @@ function findClosingTag(html: string, startPos: number, tag: string): number {
 	}
 
 	return -1;
-}
-
-/**
- * タグ文字列から属性を抽出
- */
-function extractAttributes(attrString: string): Record<string, string> {
-	const attrs: Record<string, string> = {};
-	const attrPattern = /([a-z][a-z0-9-]*)\s*=\s*"([^"]*)"/gi;
-
-	for (const match of attrString.matchAll(attrPattern)) {
-		attrs[match[1].toLowerCase()] = match[2];
-	}
-
-	return attrs;
 }
 
 /**

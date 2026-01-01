@@ -101,22 +101,3 @@ export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Pa
 		}
 	});
 }
-
-/**
- * コンテナIDからウィジェットIDを取得
- * 例: "widget_0-container" → "widget_0"
- */
-export function getWidgetIdFromContainerId(containerId: string): string | null {
-	if (containerId.endsWith("-container")) {
-		return containerId.slice(0, -"-container".length);
-	}
-	return null;
-}
-
-/**
- * ウィジェットIDからコンテナIDを取得
- * 例: "widget_0" → "widget_0-container"
- */
-export function getContainerIdFromWidgetId(widgetId: string): string {
-	return `${widgetId}-container`;
-}

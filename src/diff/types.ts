@@ -10,8 +10,6 @@ export interface VNode {
 	id: string;
 	/** HTMLタグ名 */
 	tag: string;
-	/** 属性のマップ */
-	attributes: Record<string, string>;
 	/** このノードのHTML文字列全体 */
 	html: string;
 }

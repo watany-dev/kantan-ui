@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { type KantanConfig, type ResolvedKantanConfig, resolveConfig } from "./config";
-import { diff, toWebSocketPatches } from "./diff";
 import { type Script, rerun } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { createWebSocketHandler, websocket } from "./websocket";

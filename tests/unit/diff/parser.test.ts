@@ -52,18 +52,6 @@ describe("parseHtml", () => {
 		expect(inputNode?.tag).toBe("input");
 	});
 
-	it("should extract attributes correctly", () => {
-		const html = '<input id="kt-1" type="range" min="0" max="100" value="50" class="kt-slider" />';
-		const nodes = parseHtml(html);
-
-		expect(nodes).toHaveLength(1);
-		expect(nodes[0].attributes.id).toBe("kt-1");
-		expect(nodes[0].attributes.type).toBe("range");
-		expect(nodes[0].attributes.min).toBe("0");
-		expect(nodes[0].attributes.max).toBe("100");
-		expect(nodes[0].attributes.class).toBe("kt-slider");
-	});
-
 	it("should ignore elements without id attribute", () => {
 		const html = `
 			<div class="wrapper">
