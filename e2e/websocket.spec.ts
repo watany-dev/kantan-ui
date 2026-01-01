@@ -1,7 +1,27 @@
-import { expect, test } from "@playwright/test";
+import { type Page, type WebSocket, expect, test } from "@playwright/test";
 
 // 各テストで空のストレージ状態を使用
 test.use({ storageState: { cookies: [], origins: [] } });
+
+/**
+ * WebSocket接続が確立され、初期パッチを受信するまで待機するヘルパー
+ * 手動のPromise待機ではなく、Playwrightのビルトイン機能を使用
+ */
+async function waitForInitialRender(page: Page): Promise<void> {
+	// 初期HTMLがレンダリングされるまで待機（WebSocket経由のパッチ適用完了を意味する）
+	await expect(page.locator("#app h1.kt-title")).toBeVisible({ timeout: 10000 });
+}
+
+/**
+ * WebSocket接続を取得し、初期レンダリング完了まで待機するヘルパー
+ */
+async function setupWebSocket(page: Page): Promise<WebSocket> {
+	const wsPromise = page.waitForEvent("websocket");
+	await page.goto("/");
+	const ws = await wsPromise;
+	await waitForInitialRender(page);
+	return ws;
+}
 
 test.describe("WebSocket connection and replaceRoot", () => {
 	test("should load initial HTML", async ({ page }) => {
@@ -40,16 +60,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should send event when button is clicked", async ({ page }) => {
-		const wsPromise = page.waitForEvent("websocket");
-
-		await page.goto("/");
-
-		const ws = await wsPromise;
-
-		// WebSocket接続が確立されるまで待つ（初期patchを受信するまで）
-		await new Promise<void>((resolve) => {
-			ws.on("framereceived", () => resolve());
-		});
+		const ws = await setupWebSocket(page);
 
 		// WebSocketメッセージを監視（eventタイプのみ）
 		const messagePromise = new Promise<string>((resolve) => {
@@ -65,8 +76,13 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		// ボタンをクリック
 		await page.click("#btn_inc");
 
-		// 送信されたメッセージを確認
-		const sentMessage = await messagePromise;
+		// 送信されたメッセージを確認（タイムアウト付き）
+		const sentMessage = await Promise.race([
+			messagePromise,
+			new Promise<never>((_, reject) =>
+				setTimeout(() => reject(new Error("WebSocket message timeout")), 5000),
+			),
+		]);
 		const parsed = JSON.parse(sentMessage);
 		expect(parsed.type).toBe("event");
 		expect(parsed.widgetId).toBe("btn_inc");
@@ -128,16 +144,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should update text input value", async ({ page }) => {
-		const wsPromise = page.waitForEvent("websocket");
-
-		await page.goto("/");
-
-		const ws = await wsPromise;
-
-		// WebSocket接続が確立されるまで待つ（初期patchを受信するまで）
-		await new Promise<void>((resolve) => {
-			ws.on("framereceived", () => resolve());
-		});
+		await setupWebSocket(page);
 
 		const textInput = page.locator("#name_input");
 
@@ -152,16 +159,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should update selectbox value", async ({ page }) => {
-		const wsPromise = page.waitForEvent("websocket");
-
-		await page.goto("/");
-
-		const ws = await wsPromise;
-
-		// WebSocket接続が確立されるまで待つ（初期patchを受信するまで）
-		await new Promise<void>((resolve) => {
-			ws.on("framereceived", () => resolve());
-		});
+		await setupWebSocket(page);
 
 		const selectbox = page.locator("#color_select");
 
