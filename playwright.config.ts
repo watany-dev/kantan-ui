@@ -20,20 +20,24 @@ export default defineConfig({
 		trace: "on-first-retry",
 		actionTimeout: 5000, // クリック等のアクション
 		navigationTimeout: 15000, // ページ遷移
+		/* 失敗時のデバッグ情報 */
+		video: "retain-on-failure",
+		screenshot: "only-on-failure",
 	},
 	projects: [
 		{
 			name: "chromium",
 			use: {
 				...devices["Desktop Chrome"],
-				// CI環境ではlaunchOptionsを省略してPlaywrightのデフォルトブラウザを使用
-				...(process.env.CI
-					? {}
+				launchOptions: process.env.CI
+					? {
+							// CI環境でのブラウザ安定化オプション
+							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+						}
 					: {
-							launchOptions: {
-								executablePath: chromiumPath,
-							},
-						}),
+							// ローカル環境ではキャッシュ済みのChromiumを使用
+							executablePath: chromiumPath,
+						},
 			},
 		},
 	],
