@@ -150,8 +150,18 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: bunx playwright install-deps
 
+      - name: Verify server can start
+        run: |
+          timeout 10 bun run src/server.ts &
+          sleep 3
+          curl -f http://localhost:3000 || (echo "Server health check failed" && exit 1)
+          pkill -f "bun run src/server.ts" || true
+
       - name: Run E2E tests
         run: bun run test:e2e
+        env:
+          CI: true
+          DEBUG: pw:webserver
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
