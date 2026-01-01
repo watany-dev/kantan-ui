@@ -63,7 +63,7 @@ if (session.lastHtml) {
 
 ---
 
-### 3. グローバル状態の整理（DI検討） 🟡 中優先度
+### 3. グローバル状態の整理（DI検討） 🟢 完了（ドキュメント化）
 
 **現状のグローバル変数**:
 
@@ -74,9 +74,21 @@ if (session.lastHtml) {
 | `src/kt/context.ts:38` | `currentRenderContext` | テスト分離困難 |
 | `src/session/manager.ts:115` | `globalSessionManager` | シングルトン |
 
-**対応方針**:
+**結論**: 現状のパターンはWeek4に十分
 
-#### Option A: Context Injection（推奨）
+現在の実装が安全な理由:
+1. `rerun()`は同期実行であり、スクリプト内でawaitは使用されない
+2. try/finallyで状態の設定/クリアを保証
+3. Node.js/Bunのシングルスレッドイベントループモデル
+4. テストはbeforeEach/afterEachで適切に分離されている
+
+**対応内容**:
+- `src/runtime/rerun.ts` に設計ノートをドキュメントとして追加
+- 将来の非同期スクリプト対応時にAsyncLocalStorage導入を検討
+
+**将来の対応方針** (非同期スクリプト対応時):
+
+#### Option A: Context Injection
 リクエストごとにコンテキストを生成し、依存を注入
 
 ```typescript
@@ -99,12 +111,6 @@ Node.js AsyncLocalStorageを使用してリクエストスコープの状態を�
 import { AsyncLocalStorage } from "node:async_hooks";
 const requestContext = new AsyncLocalStorage<RequestContext>();
 ```
-
-**ファイル**:
-- `src/context/request-context.ts`（新規）
-- `src/session/state.ts`（修正）
-- `src/widgets/registry.ts`（修正）
-- `src/kt/context.ts`（修正）
 
 ---
 

@@ -10,6 +10,27 @@ import { type RerunContext, clearContext, setContext } from "./context";
  */
 export type Script = () => string | undefined;
 
+/**
+ * グローバル状態管理についての設計ノート
+ *
+ * 現在の実装では以下のグローバル変数を使用:
+ * - currentSessionId (session/state.ts)
+ * - widgetCounter (widgets/registry.ts)
+ * - currentRenderContext (kt/context.ts)
+ * - globalSessionManager (session/manager.ts)
+ *
+ * この設計が安全な理由:
+ * 1. rerun()は同期実行であり、スクリプト内でawaitは使用されない
+ * 2. try/finallyで状態の設定/クリアを保証
+ * 3. Node.js/Bunのシングルスレッドイベントループモデル
+ *
+ * 将来の非同期スクリプト対応時:
+ * - AsyncLocalStorage の導入を検討
+ * - または RequestContext パターンでDI
+ *
+ * @see docs/impl/week4-preparation.md
+ */
+
 export function rerun(script: Script, event?: RerunContext["event"], sessionId?: string): string {
 	// レンダリングコンテキストを作成
 	const renderContext = new RenderContext();
