@@ -1,5 +1,5 @@
 // Auth
-export { basicAuth, timingSafeEqual } from "./auth";
+export { basicAuth, timingSafeEqual, bearerAuth, extractBearerToken } from "./auth";
 export type { BasicAuthOptions, BearerAuthOptions, BearerPayload } from "./auth";
 
 // Rate Limit
