@@ -20,6 +20,7 @@
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
 		"test:e2e": "playwright test",
+		"bench": "vitest bench",
 		"lint": "npx @biomejs/biome check .",
 		"lint:fix": "npx @biomejs/biome check --write .",
 		"format": "npx @biomejs/biome format --write .",
