@@ -1,3 +1,4 @@
+import { SessionStateError } from "./errors";
 import { getSessionManager } from "./manager";
 import type { SessionId, SessionState } from "./types";
 
@@ -24,8 +25,9 @@ export function createSessionState(): SessionState {
 		},
 		set(_target, prop: string, value: unknown) {
 			if (!currentSessionId) {
-				console.warn("session_state への書き込みは rerun 中のみ有効です");
-				return true;
+				throw new SessionStateError(
+					`session_state.${prop} への書き込みは rerun コンテキスト内でのみ有効です。kt.* API または rerun() 関数内で使用してください。`,
+				);
 			}
 			getSessionManager().setState(currentSessionId, prop, value);
 			return true;
@@ -95,8 +97,9 @@ export function createTypedSessionState<T extends Record<string, unknown>>(defau
 		},
 		set(_target, prop: string, value: unknown) {
 			if (!currentSessionId) {
-				console.warn("session_state への書き込みは rerun 中のみ有効です");
-				return true;
+				throw new SessionStateError(
+					`TypedSessionState.${prop} への書き込みは rerun コンテキスト内でのみ有効です。`,
+				);
 			}
 			getSessionManager().setState(currentSessionId, prop, value);
 			return true;

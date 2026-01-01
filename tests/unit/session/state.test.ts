@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { SessionStateError } from "../../../src/session/errors";
 import {
 	SessionManager,
 	resetSessionManager,
@@ -100,14 +101,20 @@ describe("session_state", () => {
 			expect(keys).toEqual([]);
 		});
 
-		it("should warn when setting value without session", () => {
-			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		it("should throw SessionStateError when setting value without session", () => {
 			const state = createSessionState();
 
-			state.counter = 100;
+			expect(() => {
+				state.counter = 100;
+			}).toThrow(SessionStateError);
+		});
 
-			expect(warnSpy).toHaveBeenCalledWith("session_state への書き込みは rerun 中のみ有効です");
-			warnSpy.mockRestore();
+		it("should include property name in error message", () => {
+			const state = createSessionState();
+
+			expect(() => {
+				state.myProperty = "value";
+			}).toThrow(/myProperty/);
 		});
 
 		it("should return undefined from getOwnPropertyDescriptor when property not in state", () => {
@@ -260,14 +267,20 @@ describe("session_state", () => {
 			expect(descriptor?.value).toBe(42);
 		});
 
-		it("should warn when setting value without session", () => {
-			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+		it("should throw SessionStateError when setting value without session", () => {
 			const state = createTypedSessionState(defaults);
 
-			state.counter = 100;
+			expect(() => {
+				state.counter = 100;
+			}).toThrow(SessionStateError);
+		});
 
-			expect(warnSpy).toHaveBeenCalledWith("session_state への書き込みは rerun 中のみ有効です");
-			warnSpy.mockRestore();
+		it("should include property name in TypedSessionState error message", () => {
+			const state = createTypedSessionState(defaults);
+
+			expect(() => {
+				state.name = "test";
+			}).toThrow(/name/);
 		});
 
 		it("should return false for 'in' check on non-default key with session but no state", () => {
