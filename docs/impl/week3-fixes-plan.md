@@ -529,3 +529,621 @@ test("should maintain cursor position in text input", async ({ page }) => {
 - [ ] ベンチマーク: 1000要素で500ms以下
 - [ ] E2E: フォーカス維持テストがパス
 - [ ] lint / type check エラーなし
+
+---
+
+# 優先度中の問題
+
+## 問題4: CSS の重複
+
+### 現状分析
+
+**ファイル**: `src/app.ts:247-258`
+
+```typescript
+const defaultStyles = `
+  .kt-button { padding: 8px 16px; cursor: pointer; }
+  .kt-slider-container { margin: 10px 0; }
+  .kt-slider { width: 200px; }
+  .kt-slider-label { display: block; margin-bottom: 4px; }
+  .kt-text-input-container { margin: 10px 0; }
+  .kt-text-input { padding: 8px; width: 200px; }
+  .kt-text-input-label { display: block; margin-bottom: 4px; }
+  .kt-selectbox-container { margin: 10px 0; }
+  .kt-selectbox { padding: 8px; }
+  .kt-selectbox-label { display: block; margin-bottom: 4px; }
+`;
+```
+
+**問題点**:
+- `*-container` クラスが全て `margin: 10px 0;` で同一
+- `*-label` クラスが全て `display: block; margin-bottom: 4px;` で同一
+- 新しいウィジェット追加時に同じパターンを繰り返す必要がある
+
+### 修正方針
+
+CSS クラスを統合し、共通スタイルを1つのルールにまとめる
+
+### 実装計画
+
+```typescript
+const defaultStyles = `
+  .kt-button { padding: 8px 16px; cursor: pointer; }
+
+  /* 共通コンテナスタイル */
+  .kt-slider-container,
+  .kt-text-input-container,
+  .kt-selectbox-container {
+    margin: 10px 0;
+  }
+
+  /* 共通ラベルスタイル */
+  .kt-slider-label,
+  .kt-text-input-label,
+  .kt-selectbox-label {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* 個別スタイル */
+  .kt-slider { width: 200px; }
+  .kt-text-input { padding: 8px; width: 200px; }
+  .kt-selectbox { padding: 8px; }
+`;
+```
+
+### 代替案: CSS変数を使用
+
+```typescript
+const defaultStyles = `
+  :root {
+    --kt-container-margin: 10px 0;
+    --kt-label-margin: 4px;
+    --kt-input-padding: 8px;
+    --kt-input-width: 200px;
+  }
+
+  .kt-button { padding: var(--kt-input-padding) 16px; cursor: pointer; }
+
+  [class$="-container"] { margin: var(--kt-container-margin); }
+  [class$="-label"] { display: block; margin-bottom: var(--kt-label-margin); }
+
+  .kt-slider { width: var(--kt-input-width); }
+  .kt-text-input { padding: var(--kt-input-padding); width: var(--kt-input-width); }
+  .kt-selectbox { padding: var(--kt-input-padding); }
+`;
+```
+
+### テスト計画
+
+1. E2Eテストで各ウィジェットの表示を確認
+2. ビジュアルリグレッションなし
+
+---
+
+## 問題5: ウィジェットラッピングの重複パターン
+
+### 現状分析
+
+**ファイル**: `src/kt/widgets.ts:18-83`
+
+4つのウィジェット関数がほぼ同一のパターンを持つ:
+
+```typescript
+export function button(label: string, config?: Partial<ButtonConfig>): boolean {
+  const ctx = requireRenderContext();
+  const id = generateWidgetId(config?.key);
+  const configWithId = { ...config, key: id };
+  const pressed = imperativeButton(label, configWithId);
+  ctx.append(renderButton(label, configWithId));
+  return pressed;
+}
+
+export function slider(...): number {
+  const ctx = requireRenderContext();
+  const id = generateWidgetId(config?.key);
+  const configWithId = { ...config, key: id };
+  const value = imperativeSlider(..., configWithId);
+  ctx.append(renderSlider(..., configWithId));
+  return value;
+}
+// text_input, selectbox も同様
+```
+
+**問題点**:
+- 4つの関数で `requireRenderContext()`, `generateWidgetId()`, `config` 展開が重複
+- 新しいウィジェット追加時に同じボイラープレートが必要
+
+### 修正方針
+
+ヘルパー関数を作成して共通パターンを抽出
+
+### 実装計画
+
+#### Step 1: 共通ヘルパーの作成
+
+```typescript
+// src/kt/widget-helper.ts
+
+import { generateWidgetId } from "../widgets/registry";
+import { requireRenderContext } from "./context";
+
+/**
+ * 宣言的ウィジェットのボイラープレートを処理するヘルパー
+ */
+export function wrapWidget<TConfig extends { key?: string }, TValue>(
+  config: Partial<TConfig> | undefined,
+  imperativeFn: (configWithId: Partial<TConfig> & { key: string }) => TValue,
+  renderFn: (configWithId: Partial<TConfig> & { key: string }) => string,
+): TValue {
+  const ctx = requireRenderContext();
+  const id = generateWidgetId(config?.key);
+  const configWithId = { ...config, key: id } as Partial<TConfig> & { key: string };
+  const value = imperativeFn(configWithId);
+  ctx.append(renderFn(configWithId));
+  return value;
+}
+```
+
+#### Step 2: ウィジェット関数のリファクタリング
+
+```typescript
+// src/kt/widgets.ts
+
+export function button(label: string, config?: Partial<ButtonConfig>): boolean {
+  return wrapWidget(
+    config,
+    (cfg) => imperativeButton(label, cfg),
+    (cfg) => renderButton(label, cfg),
+  );
+}
+
+export function slider(
+  label: string,
+  min: number,
+  max: number,
+  defaultValue?: number,
+  config?: Partial<SliderConfig>,
+): number {
+  return wrapWidget(
+    config,
+    (cfg) => imperativeSlider(label, min, max, defaultValue, cfg),
+    (cfg) => renderSlider(label, min, max,
+      imperativeSlider(label, min, max, defaultValue, cfg), cfg),
+  );
+}
+```
+
+**注意**: slider の場合、render に value が必要なため、少し工夫が必要
+
+#### 代替案: 完全なリファクタリングは見送り
+
+現状の重複は4箇所のみで、ヘルパー関数を導入すると:
+- 型定義が複雑になる
+- 各ウィジェットの引数が異なるため、汎用化が難しい
+- コードの読みやすさが低下する可能性
+
+**推奨**: 現状維持とし、ウィジェット数が増えた時点で再検討
+
+### テスト計画
+
+既存のユニットテストとE2Eテストがパスすることを確認
+
+---
+
+## 問題6: initializeWidgetState の重複
+
+### 現状分析
+
+**ファイル**: `src/widgets/core.ts:35-91`
+
+3つの初期化関数が同一パターン:
+
+```typescript
+export function initializeSliderState(widgetId: string, min: number, defaultValue?: number): number {
+  const initial = defaultValue ?? min;
+  if (!hasWidgetValue(widgetId)) {
+    setWidgetValue(widgetId, initial);
+  }
+  return getWidgetValue<number>(widgetId, initial);
+}
+
+export function initializeTextInputState(widgetId: string, defaultValue?: string): string {
+  const initial = defaultValue ?? "";
+  if (!hasWidgetValue(widgetId)) {
+    setWidgetValue(widgetId, initial);
+  }
+  return getWidgetValue<string>(widgetId, initial);
+}
+
+export function initializeSelectboxState(widgetId: string, options: string[], defaultValue?: string): string {
+  const initial = defaultValue ?? options[0] ?? "";
+  if (!hasWidgetValue(widgetId)) {
+    setWidgetValue(widgetId, initial);
+  }
+  return getWidgetValue<string>(widgetId, initial);
+}
+```
+
+**問題点**:
+- `if (!hasWidgetValue) { setWidgetValue }` パターンが3回重複
+- 新しいウィジェットタイプ追加時に同じパターンを繰り返す
+
+### 修正方針
+
+ジェネリックな `initializeWidgetState<T>` ヘルパーを作成
+
+### 実装計画
+
+#### Step 1: ジェネリックヘルパーの作成
+
+```typescript
+// src/widgets/core.ts
+
+/**
+ * ウィジェットの状態を初期化するジェネリックヘルパー
+ * 状態が存在しない場合のみ初期値を設定し、現在値を返す
+ */
+function initializeWidgetState<T>(widgetId: string, initialValue: T): T {
+  if (!hasWidgetValue(widgetId)) {
+    setWidgetValue(widgetId, initialValue);
+  }
+  return getWidgetValue<T>(widgetId, initialValue);
+}
+```
+
+#### Step 2: 既存関数のリファクタリング
+
+```typescript
+export function initializeSliderState(
+  widgetId: string,
+  min: number,
+  defaultValue?: number,
+): number {
+  return initializeWidgetState(widgetId, defaultValue ?? min);
+}
+
+export function initializeTextInputState(
+  widgetId: string,
+  defaultValue?: string,
+): string {
+  return initializeWidgetState(widgetId, defaultValue ?? "");
+}
+
+export function initializeSelectboxState(
+  widgetId: string,
+  options: string[],
+  defaultValue?: string,
+): string {
+  return initializeWidgetState(widgetId, defaultValue ?? options[0] ?? "");
+}
+```
+
+### メリット
+
+- コード重複を削減
+- 新しいウィジェット追加時は `initializeWidgetState()` を呼ぶだけ
+- 初期化ロジックの一元管理
+
+### テスト計画
+
+1. 既存のウィジェットテストがパス
+2. ジェネリックヘルパーのユニットテスト追加
+
+---
+
+## 問題7: Getter に隠れた副作用
+
+### 現状分析
+
+**ファイル**: `src/session/state.ts:81-94`
+
+```typescript
+get(_target, prop: string) {
+  if (!currentSessionId) {
+    return defaults[prop as keyof T];
+  }
+  const state = getSessionManager().getState(currentSessionId);
+  const value = state?.[prop];
+  // 値が未設定ならデフォルト値を設定して返す
+  if (value === undefined && prop in defaults) {
+    const defaultValue = defaults[prop as keyof T];
+    getSessionManager().setState(currentSessionId, prop, defaultValue);  // ← 副作用!
+    return defaultValue;
+  }
+  return value;
+}
+```
+
+**問題点**:
+- プロパティを読むだけで状態が変更される
+- 「最小驚きの原則」に違反
+- デバッグ時に予期しない状態変更が発生する可能性
+
+### 修正方針
+
+**オプション比較**:
+
+| オプション | Pros | Cons |
+|------------|------|------|
+| A: 副作用を削除 | 純粋なgetter | デフォルト値が永続化されない |
+| B: 明示的な初期化API | 意図が明確 | API追加が必要 |
+| C: ドキュメント追加のみ | 変更なし | 驚きが残る |
+
+**推奨**: オプションA（副作用を削除）
+
+理由:
+- getter は読み取り専用であるべき
+- デフォルト値はメモリ上のみで、必要時に永続化は呼び出し側で行う
+
+### 実装計画
+
+```typescript
+get(_target, prop: string) {
+  if (!currentSessionId) {
+    return defaults[prop as keyof T];
+  }
+  const state = getSessionManager().getState(currentSessionId);
+  const value = state?.[prop];
+
+  // 値が未設定ならデフォルト値を返す（状態は変更しない）
+  if (value === undefined && prop in defaults) {
+    return defaults[prop as keyof T];
+  }
+  return value;
+}
+```
+
+### 代替案: 明示的な初期化メソッド
+
+```typescript
+export function initializeTypedSessionState<T>(state: T, defaults: T): void {
+  for (const key of Object.keys(defaults) as (keyof T)[]) {
+    if (state[key] === undefined) {
+      state[key] = defaults[key];
+    }
+  }
+}
+```
+
+### 互換性への影響
+
+- 現在の挙動に依存しているコードがある場合は破壊的変更
+- ただし、現時点では `createTypedSessionState` の利用は限定的
+
+### テスト計画
+
+1. getter が状態を変更しないことを確認
+2. デフォルト値が正しく返されることを確認
+3. 明示的に set した値が優先されることを確認
+
+---
+
+# 優先度低の問題
+
+## 問題8: ドキュメントと実装の不整合（大文字タグ）
+
+### 現状分析
+
+**ドキュメント**: `docs/diff-module.md`
+> 大文字タグ名: `<DIV>` - 正規表現が小文字のみ対応
+
+**実装**: `src/diff/parser.ts:60`
+```typescript
+const idPattern = /<([a-z][a-z0-9]*)\s+...>/gi;
+//                                         ^^ i フラグ
+```
+
+**問題点**:
+- `i` フラグにより `[a-z]` は実際には大文字もマッチする
+- ドキュメントが実装と矛盾している
+- テストカバレッジがない
+
+### 修正方針
+
+ドキュメントを修正して実装と一致させる
+
+### 実装計画
+
+#### Step 1: テストを追加して挙動を確認
+
+```typescript
+// tests/unit/diff/parser.test.ts
+describe("uppercase tags", () => {
+  it("should parse uppercase tag names", () => {
+    const html = '<DIV id="test">content</DIV>';
+    const nodes = parseHtml(html);
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0].tag).toBe("DIV");
+  });
+
+  it("should parse mixed case tag names", () => {
+    const html = '<Div id="test">content</Div>';
+    const nodes = parseHtml(html);
+    expect(nodes).toHaveLength(1);
+  });
+});
+```
+
+#### Step 2: ドキュメント修正
+
+```markdown
+<!-- docs/diff-module.md -->
+| 大文字タグ名 | `<DIV>` - 対応済み（正規表現 `i` フラグにより大文字小文字を無視） |
+```
+
+---
+
+## 問題9: 未使用の正規表現キャプチャグループ
+
+### 現状分析
+
+**ファイル**: `src/diff/parser.ts:73`
+
+```typescript
+const [fullMatch, tag, _beforeId, id, _afterId, closeTag] = match;
+//                     ^^^^^^^^^      ^^^^^^^^  未使用
+```
+
+**問題点**:
+- グループ 2 (`_beforeId`) と 4 (`_afterId`) はキャプチャされるが使用されていない
+- 非キャプチャグループ `(?:...)` に変更可能
+
+### 修正方針
+
+正規表現を最適化して不要なキャプチャを削除
+
+### 実装計画
+
+```typescript
+// 修正前
+const idPattern = /<([a-z][a-z0-9]*)\s+([^>]*?)id="([^"]+)"([^>]*?)(\/?>)([\s\S]*?)(?:<\/\1>)?/gi;
+
+// 修正後（非キャプチャグループを使用）
+const idPattern = /<([a-z][a-z0-9]*)\s+(?:[^>]*?)id="([^"]+)"(?:[^>]*?)(\/?>)([\s\S]*?)(?:<\/\1>)?/gi;
+
+// 分割使用
+const [fullMatch, tag, id, closeTag] = match;
+```
+
+### 注意
+
+- 正規表現の変更は慎重にテストが必要
+- パフォーマンスへの影響は軽微
+
+---
+
+## 問題10: 型バリデーションのギャップ
+
+### 現状分析
+
+**ファイル**: `src/widgets/registry.ts:45-55`
+
+```typescript
+const validator = getTypeValidator(defaultValue);
+if (validator && !validator(value)) {
+  console.warn(...);
+  return defaultValue;
+}
+return value as T;  // ← validator が null の場合、unsafe なキャスト
+```
+
+**問題点**:
+- `getTypeValidator` はプリミティブ型（string, number, boolean）のみ対応
+- オブジェクト型や配列型の場合、`validator = null` となりキャストがunsafe
+- 型安全性が部分的に欠如
+
+### 修正方針
+
+**オプション比較**:
+
+| オプション | Pros | Cons |
+|------------|------|------|
+| A: 型制約を追加 | 完全な型安全性 | APIの制限 |
+| B: 警告を追加 | 非破壊的 | 問題を先送り |
+| C: 現状維持 | 変更なし | リスクが残る |
+
+**推奨**: オプションB（警告を追加）+ 将来的にオプションA
+
+### 実装計画
+
+#### Step 1: 非プリミティブ型への警告追加
+
+```typescript
+export function getWidgetValue<T>(widgetId: string, defaultValue: T): T {
+  const sessionId = getCurrentSessionId();
+  if (!sessionId) return defaultValue;
+
+  const state = getSessionManager().getState(sessionId);
+  if (!state || !(widgetId in state)) {
+    return defaultValue;
+  }
+
+  const value = state[widgetId];
+  const validator = getTypeValidator(defaultValue);
+
+  if (validator) {
+    // プリミティブ型: バリデーション実行
+    if (!validator(value)) {
+      console.warn(
+        `Type mismatch for widget "${widgetId}": expected ${typeof defaultValue}, got ${typeof value}. Using default value.`,
+      );
+      return defaultValue;
+    }
+  } else if (process.env.NODE_ENV === "development") {
+    // 非プリミティブ型: 開発時のみ警告
+    console.debug(
+      `Widget "${widgetId}" uses non-primitive type. Type validation skipped.`,
+    );
+  }
+
+  return value as T;
+}
+```
+
+#### Step 2: ジェネリック型の制約追加（将来）
+
+```typescript
+// 将来的にプリミティブ型のみに制限する場合
+type WidgetValue = string | number | boolean;
+
+export function getWidgetValue<T extends WidgetValue>(
+  widgetId: string,
+  defaultValue: T,
+): T {
+  // ...
+}
+```
+
+---
+
+# 優先度別 実装順序（完全版）
+
+## 高優先度（クリティカル）
+
+| 順番 | 問題 | 複雑度 | ファイル |
+|------|------|--------|----------|
+| 1 | Silent Failure | 低 | errors.ts, state.ts |
+| 2 | O(k³) 計算量 | 中 | parser.ts |
+| 3 | フォーカス消失 | 高 | app.ts |
+
+## 中優先度
+
+| 順番 | 問題 | 複雑度 | ファイル |
+|------|------|--------|----------|
+| 4 | CSS 重複 | 低 | app.ts |
+| 5 | initializeWidgetState 重複 | 低 | core.ts |
+| 6 | Getter 副作用 | 中 | state.ts |
+| 7 | ウィジェットラッピング | - | 見送り |
+
+## 低優先度
+
+| 順番 | 問題 | 複雑度 | ファイル |
+|------|------|--------|----------|
+| 8 | ドキュメント不整合 | 低 | diff-module.md |
+| 9 | 正規表現最適化 | 低 | parser.ts |
+| 10 | 型バリデーション | 低 | registry.ts |
+
+---
+
+# 成功基準（完全版）
+
+## 高優先度
+- [ ] SessionStateError が rerun 外で正しくスローされる
+- [ ] buildNodeTree が O(k²) で動作する（ベンチマーク確認）
+- [ ] E2E フォーカス維持テストがパス
+
+## 中優先度
+- [ ] CSS サイズが削減される
+- [ ] initializeWidgetState がジェネリック化される
+- [ ] getter が副作用を持たない
+
+## 低優先度
+- [ ] ドキュメントが実装と一致する
+- [ ] 大文字タグのテストカバレッジ追加
+- [ ] 非プリミティブ型の警告が開発時に表示される
+
+## 全体
+- [ ] 全ての既存テストがパス
+- [ ] lint / type check エラーなし
+- [ ] bun run ci が成功
