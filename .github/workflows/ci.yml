@@ -24,6 +24,23 @@ jobs:
       - name: Run linter
         run: bun run lint
 
+  dead-code:
+    name: Dead Code Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Check for dead code
+        run: bun run dead-code
+
   build:
     name: Build
     runs-on: ubuntu-latest
