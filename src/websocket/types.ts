@@ -23,7 +23,7 @@ export interface ServerMessage {
 	patches?: Patch[];
 	sessionId?: string; // 新規セッションID通知
 	error?: {
-		code: "SESSION_NOT_FOUND" | "INVALID_MESSAGE" | "UNKNOWN";
+		code: "SESSION_NOT_FOUND" | "SESSION_ID_REQUIRED" | "INVALID_MESSAGE" | "UNKNOWN";
 		message: string;
 	};
 }

@@ -331,13 +331,24 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 					};
 					ws.send(JSON.stringify(message));
 				} else if (data.type === "event") {
-					// セッションを取得（sessionIdを直接使用、WSContext比較の問題を回避）
-					const session = data.sessionId
-						? sessionManager.getSession(data.sessionId)
-						: sessionManager.getSessionByWebSocket(ws);
+					// セッションをsessionIdで取得
+					// Note: クライアントは常にsessionIdを送信するため、WSContext比較は不要
+					// wsToSessionはonClose時のクリーンアップ目的でのみ使用
+					if (!data.sessionId) {
+						console.error("Event received without sessionId");
+						const errorMessage: ServerMessage = {
+							type: "error",
+							error: {
+								code: "SESSION_ID_REQUIRED",
+								message: "sessionId is required for event messages.",
+							},
+						};
+						ws.send(JSON.stringify(errorMessage));
+						return;
+					}
+					const session = sessionManager.getSession(data.sessionId);
 					if (!session) {
-						console.error("Session not found for WebSocket");
-						// クライアントにエラー通知
+						console.error("Session not found:", data.sessionId);
 						const errorMessage: ServerMessage = {
 							type: "error",
 							error: {

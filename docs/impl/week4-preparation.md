@@ -114,31 +114,22 @@ const requestContext = new AsyncLocalStorage<RequestContext>();
 
 ---
 
-### 4. WSContext比較問題の調査・修正 🟡 中優先度
+### 4. WSContext比較問題の調査・修正 🟢 完了
 
-**現状**: `src/app.ts:111-114` でワークアラウンド
+**結論**: sessionIdベースの管理を正式な方式として採用
 
-```typescript
-// セッションを取得（sessionIdを直接使用、WSContext比較の問題を回避）
-const session = data.sessionId
-  ? sessionManager.getSession(data.sessionId)
-  : sessionManager.getSessionByWebSocket(ws);
-```
+**実施内容**:
+1. `src/app.ts`: eventメッセージでsessionIdを必須とし、フォールバックを削除
+2. `src/session/manager.ts`:
+   - `wsToSession`にクリーンアップ専用の旨をコメント追加
+   - `getSessionByWebSocket()`を@deprecatedとしてマーク
 
-**調査項目**:
-1. BunのWSContextオブジェクトの参照等価性
-2. Mapキーとしての振る舞い
-3. onMessage内でのwsオブジェクトの同一性
+**設計決定**:
+- クライアントは常にsessionIdを送信するため、WSContext比較は不要
+- `wsToSession`はonClose時のクリーンアップ目的でのみ維持
+- `getSessionByWebSocket()`は後方互換のため残すが、新規使用は非推奨
 
-**仮説**:
-- WSContextは毎回新しいオブジェクトが渡される可能性
-- WeakMapではなくMapを使用している問題
-
-**対応方針**:
-- sessionIdベースの管理に完全移行（ワークアラウンドを正式な方式に）
-- `wsToSession` Mapは削除し、`sessionId -> Set<WSContext>` で管理
-
-**ファイル**: `src/session/manager.ts`
+**ファイル**: `src/app.ts`, `src/session/manager.ts`
 
 ---
 
