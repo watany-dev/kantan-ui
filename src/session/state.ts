@@ -26,8 +26,7 @@ export function createSessionState(): SessionState {
 		set(_target, prop: string, value: unknown) {
 			if (!currentSessionId) {
 				throw new SessionStateError(
-					`session_state.${prop} への書き込みは rerun コンテキスト内でのみ有効です。` +
-						`kt.* API または rerun() 関数内で使用してください。`,
+					`session_state.${prop} への書き込みは rerun コンテキスト内でのみ有効です。kt.* API または rerun() 関数内で使用してください。`,
 				);
 			}
 			getSessionManager().setState(currentSessionId, prop, value);
