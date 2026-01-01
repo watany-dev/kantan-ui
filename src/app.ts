@@ -246,15 +246,26 @@ function generateClientScript(config: ResolvedKantanConfig): string {
 
 const defaultStyles = `
   .kt-button { padding: 8px 16px; cursor: pointer; }
-  .kt-slider-container { margin: 10px 0; }
+
+  /* 共通コンテナスタイル */
+  .kt-slider-container,
+  .kt-text-input-container,
+  .kt-selectbox-container {
+    margin: 10px 0;
+  }
+
+  /* 共通ラベルスタイル */
+  .kt-slider-label,
+  .kt-text-input-label,
+  .kt-selectbox-label {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* 個別スタイル */
   .kt-slider { width: 200px; }
-  .kt-slider-label { display: block; margin-bottom: 4px; }
-  .kt-text-input-container { margin: 10px 0; }
   .kt-text-input { padding: 8px; width: 200px; }
-  .kt-text-input-label { display: block; margin-bottom: 4px; }
-  .kt-selectbox-container { margin: 10px 0; }
   .kt-selectbox { padding: 8px; }
-  .kt-selectbox-label { display: block; margin-bottom: 4px; }
 `;
 
 export function createApp(script: Script, userConfig?: KantanConfig) {
