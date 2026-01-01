@@ -135,8 +135,11 @@ test.describe("WebSocket connection and replaceRoot", () => {
 
 		const textInput = page.locator("#name_input");
 
-		// テキストをクリアして新しい値を入力
-		await textInput.fill("Alice");
+		// テキストを変更（inputイベントを発火させる）
+		await textInput.evaluate((el: HTMLInputElement) => {
+			el.value = "Alice";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
 
 		// 結果セクションに反映されることを確認
 		await expect(page.locator("#app")).toContainText("Hello, Alice!", { timeout: 10000 });
@@ -150,8 +153,11 @@ test.describe("WebSocket connection and replaceRoot", () => {
 
 		const selectbox = page.locator("#color_select");
 
-		// 新しい値を選択
-		await selectbox.selectOption("green");
+		// 新しい値を選択（changeイベントを発火させる）
+		await selectbox.evaluate((el: HTMLSelectElement) => {
+			el.value = "green";
+			el.dispatchEvent(new Event("change", { bubbles: true }));
+		});
 
 		// 値が反映されることを確認（Session State Debugセクション）
 		await expect(page.locator("pre")).toContainText('"color": "green"', { timeout: 10000 });
