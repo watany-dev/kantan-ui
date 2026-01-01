@@ -180,15 +180,15 @@ describe("session_state", () => {
 			expect(state.name).toBe("World");
 		});
 
-		it("should auto-initialize values on first access", () => {
+		it("should return default values without modifying session state", () => {
 			const session = manager.createSession();
 			setCurrentSessionId(session.id);
 
 			const state = createTypedSessionState(defaults);
 
-			// First access should set default value
+			// Accessing a default value should return it without setting it in session state
 			expect(state.counter).toBe(0);
-			expect(manager.getState(session.id)?.counter).toBe(0);
+			expect(manager.getState(session.id)?.counter).toBeUndefined();
 		});
 
 		it("should get stored value instead of default", () => {
