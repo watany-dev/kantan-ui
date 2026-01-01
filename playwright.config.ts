@@ -10,23 +10,34 @@ export default defineConfig({
 	retries: process.env.CI ? 2 : 0,
 	workers: 1,
 	reporter: "html",
+	/* タイムアウト設定の一元管理 */
+	timeout: 30000, // テスト全体のタイムアウト
+	expect: {
+		timeout: 10000, // WebSocket経由のUI更新を待つため長めに設定
+	},
 	use: {
 		baseURL: "http://localhost:3000",
 		trace: "on-first-retry",
+		actionTimeout: 5000, // クリック等のアクション
+		navigationTimeout: 15000, // ページ遷移
+		/* 失敗時のデバッグ情報 */
+		video: "retain-on-failure",
+		screenshot: "only-on-failure",
 	},
 	projects: [
 		{
 			name: "chromium",
 			use: {
 				...devices["Desktop Chrome"],
-				// CI環境ではlaunchOptionsを省略してPlaywrightのデフォルトブラウザを使用
-				...(process.env.CI
-					? {}
+				launchOptions: process.env.CI
+					? {
+							// CI環境でのブラウザ安定化オプション
+							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+						}
 					: {
-							launchOptions: {
-								executablePath: chromiumPath,
-							},
-						}),
+							// ローカル環境ではキャッシュ済みのChromiumを使用
+							executablePath: chromiumPath,
+						},
 			},
 		},
 	],
@@ -34,5 +45,8 @@ export default defineConfig({
 		command: "bun run src/server.ts",
 		url: "http://localhost:3000",
 		reuseExistingServer: !process.env.CI,
+		timeout: 60000, // サーバー起動待ちのタイムアウト（CI環境で余裕を持たせる）
+		stdout: "pipe", // 出力をキャプチャ（デバッグ用）
+		stderr: "pipe",
 	},
 });

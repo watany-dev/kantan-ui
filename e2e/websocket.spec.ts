@@ -1,11 +1,42 @@
-import { expect, test } from "@playwright/test";
+import { type Page, type WebSocket, expect, test } from "@playwright/test";
 
 // 各テストで空のストレージ状態を使用
 test.use({ storageState: { cookies: [], origins: [] } });
 
+/**
+ * WebSocket接続が確立され、初期パッチを受信するまで待機するヘルパー
+ * 手動のPromise待機ではなく、Playwrightのビルトイン機能を使用
+ */
+async function waitForInitialRender(page: Page): Promise<void> {
+	// 初期HTMLがレンダリングされるまで待機（WebSocket経由のパッチ適用完了を意味する）
+	// タイムアウトはplaywright.config.tsのexpect.timeoutで一元管理
+	await expect(page.locator("#app h1.kt-title")).toBeVisible();
+}
+
+/**
+ * ページに遷移し、初期レンダリング完了まで待機するヘルパー
+ * WebSocketオブジェクトが不要なテスト向け
+ */
+async function gotoAndWait(page: Page): Promise<void> {
+	await page.goto("/");
+	await waitForInitialRender(page);
+}
+
+/**
+ * WebSocket接続を取得し、初期レンダリング完了まで待機するヘルパー
+ * WebSocketメッセージの検証が必要なテスト向け
+ */
+async function setupWebSocket(page: Page): Promise<WebSocket> {
+	const wsPromise = page.waitForEvent("websocket");
+	await page.goto("/");
+	const ws = await wsPromise;
+	await waitForInitialRender(page);
+	return ws;
+}
+
 test.describe("WebSocket connection and replaceRoot", () => {
 	test("should load initial HTML", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// 初期HTMLの確認（新しいデモアプリ）
 		await expect(page.locator("#app h1.kt-title")).toHaveText("kantan-ui Demo");
@@ -13,7 +44,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should have buttons that can trigger sendEvent", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// カウンターボタンが存在することを確認
 		const incButton = page.locator("#btn_inc");
@@ -40,16 +71,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should send event when button is clicked", async ({ page }) => {
-		const wsPromise = page.waitForEvent("websocket");
-
-		await page.goto("/");
-
-		const ws = await wsPromise;
-
-		// WebSocket接続が確立されるまで待つ（初期patchを受信するまで）
-		await new Promise<void>((resolve) => {
-			ws.on("framereceived", () => resolve());
-		});
+		const ws = await setupWebSocket(page);
 
 		// WebSocketメッセージを監視（eventタイプのみ）
 		const messagePromise = new Promise<string>((resolve) => {
@@ -65,8 +87,13 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		// ボタンをクリック
 		await page.click("#btn_inc");
 
-		// 送信されたメッセージを確認
-		const sentMessage = await messagePromise;
+		// 送信されたメッセージを確認（タイムアウト付き）
+		const sentMessage = await Promise.race([
+			messagePromise,
+			new Promise<never>((_, reject) =>
+				setTimeout(() => reject(new Error("WebSocket message timeout")), 5000),
+			),
+		]);
 		const parsed = JSON.parse(sentMessage);
 		expect(parsed.type).toBe("event");
 		expect(parsed.widgetId).toBe("btn_inc");
@@ -74,7 +101,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should receive replaceRoot patch from server", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// 初期カウントを確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
@@ -87,12 +114,11 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		// replaceRootパッチによりUIが更新されることを確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
-			{ timeout: 10000 },
 		);
 	});
 
 	test("should update counter when increment button is clicked", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// 初期カウント確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
@@ -102,17 +128,16 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		// インクリメントボタンをクリック
 		await page.click("#btn_inc");
 
-		// カウントが増加したことを確認（リトライあり）
+		// カウントが増加したことを確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
-			{ timeout: 10000 },
 		);
 	});
 
 	test("should update slider value", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
-		// 初期表示を待つ
+		// 初期表示を確認
 		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 50");
 
 		const slider = page.locator("#volume_slider");
@@ -123,21 +148,12 @@ test.describe("WebSocket connection and replaceRoot", () => {
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		});
 
-		// 値が反映されることを確認（リトライあり）
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75", { timeout: 10000 });
+		// 値が反映されることを確認
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75");
 	});
 
 	test("should update text input value", async ({ page }) => {
-		const wsPromise = page.waitForEvent("websocket");
-
-		await page.goto("/");
-
-		const ws = await wsPromise;
-
-		// WebSocket接続が確立されるまで待つ（初期patchを受信するまで）
-		await new Promise<void>((resolve) => {
-			ws.on("framereceived", () => resolve());
-		});
+		await setupWebSocket(page);
 
 		const textInput = page.locator("#name_input");
 
@@ -148,20 +164,11 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		});
 
 		// 結果セクションに反映されることを確認
-		await expect(page.locator("#app")).toContainText("Hello, Alice!", { timeout: 10000 });
+		await expect(page.locator("#app")).toContainText("Hello, Alice!");
 	});
 
 	test("should update selectbox value", async ({ page }) => {
-		const wsPromise = page.waitForEvent("websocket");
-
-		await page.goto("/");
-
-		const ws = await wsPromise;
-
-		// WebSocket接続が確立されるまで待つ（初期patchを受信するまで）
-		await new Promise<void>((resolve) => {
-			ws.on("framereceived", () => resolve());
-		});
+		await setupWebSocket(page);
 
 		const selectbox = page.locator("#color_select");
 
@@ -172,26 +179,25 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		});
 
 		// 値が反映されることを確認（Session State Debugセクション）
-		await expect(page.locator("pre")).toContainText('"color": "green"', { timeout: 10000 });
+		await expect(page.locator("pre")).toContainText('"color": "green"');
 	});
 
 	test("should persist session state across page reload", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// カウンターを増やす
 		await page.click("#btn_inc");
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
-			{ timeout: 10000 },
 		);
 
 		// ページをリロード
 		await page.reload();
+		await waitForInitialRender(page);
 
 		// セッションが維持されていることを確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
-			{ timeout: 10000 },
 		);
 	});
 });
