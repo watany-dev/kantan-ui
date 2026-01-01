@@ -191,3 +191,44 @@ Week1の技術的負債「ハードコードされた値」は既に解消済み
 ---
 
 *次のステップ: Week4（ストリーミング更新 + Abort + 直列化）*
+
+---
+
+## Week4で対応すべき制限事項
+
+準備作業中に発見された以下の制限事項は、Week4で対応が必要：
+
+### 1. フォーカス喪失問題 🔴 高優先度
+
+**現象**: `replaceNode`/`replaceRoot`パッチ適用後にフォーカスが失われる
+
+**確認方法**: `e2e/focus-preservation.spec.ts` を参照
+
+**影響**:
+- スライダー操作後にフォーカスが失われる
+- ボタンクリック後にフォーカスが失われる
+- テキスト入力中にフォーカスが失われる可能性
+
+**対応案**:
+1. パッチ適用前にアクティブ要素のIDとカーソル位置を保存
+2. パッチ適用後にフォーカスを復元
+3. `morphdom`や`idiomorph`のようなDOM morphingライブラリの検討
+
+### 2. text_input/selectbox E2Eテストの不安定性 🟡 中優先度
+
+**現象**: Playwrightの`fill()`/`selectOption()`と`replaceRoot`の競合
+
+**スキップ中のテスト**:
+- `e2e/websocket.spec.ts`: "should update text input value"
+- `e2e/websocket.spec.ts`: "should update selectbox value"
+- `e2e/focus-preservation.spec.ts`: "should maintain focus on text input during typing"
+
+**仮説**:
+- `replaceRoot`が入力要素を置換する際、イベントが正しく送信されない
+- スライダー（`input`イベント）は動作するが、`change`イベントに問題がある可能性
+
+**調査項目**:
+1. イベント発火タイミングとDOM置換のタイミング
+2. debounce/throttleの必要性
+3. クライアント側のイベントハンドリング改善
+
