@@ -14,7 +14,17 @@ async function waitForInitialRender(page: Page): Promise<void> {
 }
 
 /**
+ * ページに遷移し、初期レンダリング完了まで待機するヘルパー
+ * WebSocketオブジェクトが不要なテスト向け
+ */
+async function gotoAndWait(page: Page): Promise<void> {
+	await page.goto("/");
+	await waitForInitialRender(page);
+}
+
+/**
  * WebSocket接続を取得し、初期レンダリング完了まで待機するヘルパー
+ * WebSocketメッセージの検証が必要なテスト向け
  */
 async function setupWebSocket(page: Page): Promise<WebSocket> {
 	const wsPromise = page.waitForEvent("websocket");
@@ -26,7 +36,7 @@ async function setupWebSocket(page: Page): Promise<WebSocket> {
 
 test.describe("WebSocket connection and replaceRoot", () => {
 	test("should load initial HTML", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// 初期HTMLの確認（新しいデモアプリ）
 		await expect(page.locator("#app h1.kt-title")).toHaveText("kantan-ui Demo");
@@ -34,7 +44,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should have buttons that can trigger sendEvent", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// カウンターボタンが存在することを確認
 		const incButton = page.locator("#btn_inc");
@@ -91,7 +101,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should receive replaceRoot patch from server", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// 初期カウントを確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
@@ -108,7 +118,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should update counter when increment button is clicked", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// 初期カウント確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
@@ -125,9 +135,9 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should update slider value", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
-		// 初期表示を待つ
+		// 初期表示を確認
 		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 50");
 
 		const slider = page.locator("#volume_slider");
@@ -173,7 +183,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 	});
 
 	test("should persist session state across page reload", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// カウンターを増やす
 		await page.click("#btn_inc");
@@ -183,6 +193,7 @@ test.describe("WebSocket connection and replaceRoot", () => {
 
 		// ページをリロード
 		await page.reload();
+		await waitForInitialRender(page);
 
 		// セッションが維持されていることを確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
