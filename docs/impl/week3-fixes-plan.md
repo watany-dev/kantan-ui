@@ -1128,22 +1128,48 @@ export function getWidgetValue<T extends WidgetValue>(
 
 # 成功基準（完全版）
 
-## 高優先度
-- [ ] SessionStateError が rerun 外で正しくスローされる
-- [ ] buildNodeTree が O(k²) で動作する（ベンチマーク確認）
+## 実装状況（2026-01-02 更新）
+
+### 高優先度
+- [x] SessionStateError が rerun 外で正しくスローされる
+  - `src/session/errors.ts`: SessionStateErrorクラス追加
+  - `src/session/state.ts`: set時に例外スロー
+- [x] buildNodeTree が O(k²) で動作する（ベンチマーク確認）
+  - `src/diff/parser.ts`: `buildParentMap()` + `groupSiblings()` でO(k²)に改善
 - [ ] E2E フォーカス維持テストがパス
+  - 未実装: `e2e/focus-preservation.spec.ts` で「known limitation」として記録
+  - `applyPatch` でのフォーカス保存・復元機能が必要
 
-## 中優先度
-- [ ] CSS サイズが削減される
+### 中優先度
+- [x] CSS サイズが削減される
+  - `src/app.ts`: セレクタをグループ化して重複削減
 - [ ] initializeWidgetState がジェネリック化される
-- [ ] getter が副作用を持たない
+  - 未実装: `src/widgets/core.ts` の3関数がまだ重複パターン
+- [x] getter が副作用を持たない
+  - `src/session/state.ts`: デフォルト値返却時に状態変更しない
+- [x] ウィジェットラッピング重複が解消される
+  - `src/kt/widget-helper.ts`: `wrapWidget()` ヘルパー導入
 
-## 低優先度
+### 低優先度
 - [ ] ドキュメントが実装と一致する
-- [ ] 大文字タグのテストカバレッジ追加
+  - 未修正: `docs/diff-module.md` の大文字タグの記述が実装と不整合
+  - 実装は `/gi` フラグで大文字対応済み
+- [ ] 未使用キャプチャグループの最適化
+  - 未修正: `src/diff/parser.ts:74` の `_beforeId`, `_afterId`
 - [ ] 非プリミティブ型の警告が開発時に表示される
+  - 未実装: `src/widgets/registry.ts` に開発時警告なし
+
+## 残課題サマリー
+
+| # | 問題 | 対象ファイル | 複雑度 |
+|---|------|--------------|--------|
+| 3 | フォーカス消失 | `src/app.ts` (client) | 高 |
+| 6 | initializeWidgetState重複 | `src/widgets/core.ts` | 低 |
+| 8 | ドキュメント不整合 | `docs/diff-module.md` | 低 |
+| 9 | 未使用キャプチャグループ | `src/diff/parser.ts` | 低 |
+| 10 | 型バリデーション警告 | `src/widgets/registry.ts` | 低 |
 
 ## 全体
-- [ ] 全ての既存テストがパス
-- [ ] lint / type check エラーなし
-- [ ] bun run ci が成功
+- [x] 全ての既存テストがパス
+- [x] lint / type check エラーなし
+- [x] bun run ci が成功
