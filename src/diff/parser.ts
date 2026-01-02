@@ -63,8 +63,7 @@ export function parseHtml(html: string): VNode[] {
 
 	for (const match of html.matchAll(idPattern)) {
 		// タイムアウトチェック（ReDoS対策）
-		/* istanbul ignore next */
-		if (performance.now() - startTime > PARSER_LIMITS.MAX_PARSE_TIME_MS) {
+		if (/* istanbul ignore next */ performance.now() - startTime > PARSER_LIMITS.MAX_PARSE_TIME_MS) {
 			throw new Error(`Parse timeout: exceeded ${PARSER_LIMITS.MAX_PARSE_TIME_MS}ms`);
 		}
 
@@ -77,8 +76,11 @@ export function parseHtml(html: string): VNode[] {
 
 		// 必須フィールドの存在チェック（TypeScript noUncheckedIndexedAccess対応）
 		// 正規表現がマッチすれば値は常に存在するが、型安全のためのガード
-		/* istanbul ignore next */
-		if (tag === undefined || id === undefined || closeTag === undefined) {
+		if (
+			/* istanbul ignore next */ tag === undefined ||
+			/* istanbul ignore next */ id === undefined ||
+			/* istanbul ignore next */ closeTag === undefined
+		) {
 			continue;
 		}
 
@@ -244,8 +246,7 @@ function findClosingTag(html: string, startPos: number, tag: string, startTime: 
 
 	while (depth > 0 && pos < html.length) {
 		// タイムアウトチェック（ReDoS対策）
-		/* istanbul ignore next */
-		if (performance.now() - startTime > PARSER_LIMITS.MAX_PARSE_TIME_MS) {
+		if (/* istanbul ignore next */ performance.now() - startTime > PARSER_LIMITS.MAX_PARSE_TIME_MS) {
 			throw new Error(`Parse timeout: exceeded ${PARSER_LIMITS.MAX_PARSE_TIME_MS}ms`);
 		}
 
