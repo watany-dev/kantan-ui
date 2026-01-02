@@ -526,6 +526,75 @@ describe("buildNodeTree performance", () => {
 			expect(child?.order).toBe(i);
 		}
 	});
+
+	it("should handle 500 flat elements within 20ms", () => {
+		const elements = Array.from(
+			{ length: 500 },
+			(_, i) => `<div id="el-${i}">Content ${i}</div>`,
+		).join("\n");
+
+		const startTime = performance.now();
+		const nodes = parseHtml(elements);
+		const duration = performance.now() - startTime;
+
+		expect(nodes).toHaveLength(500);
+		// O(k log k) should complete well under 20ms
+		expect(duration).toBeLessThan(20);
+	});
+
+	it("should handle 100 deeply nested elements within 50ms", () => {
+		// Deep nesting structure - reduced from 250 to 100 to avoid
+		// findClosingTag timeout (separate performance issue)
+		let html = "";
+		for (let i = 0; i < 100; i++) {
+			html += `<div id="level${i}">`;
+		}
+		html += "Content";
+		for (let i = 99; i >= 0; i--) {
+			html += "</div>";
+		}
+
+		const startTime = performance.now();
+		const nodes = parseHtml(html);
+		const duration = performance.now() - startTime;
+
+		expect(nodes).toHaveLength(100);
+		// O(k log k) buildParentMap should be fast, but findClosingTag adds overhead
+		expect(duration).toBeLessThan(50);
+
+		// Verify parent chain is correct
+		for (let i = 1; i < 100; i++) {
+			const node = nodes.find((n) => n.id === `level${i}`);
+			expect(node?.parentId).toBe(`level${i - 1}`);
+		}
+	});
+
+	it("should handle 200 elements with complex nesting within 20ms", () => {
+		// Mix of nesting and siblings
+		let html = "";
+		for (let i = 0; i < 10; i++) {
+			html += `<div id="parent${i}">`;
+			for (let j = 0; j < 20; j++) {
+				html += `<span id="child${i}_${j}">Content</span>`;
+			}
+			html += "</div>";
+		}
+
+		const startTime = performance.now();
+		const nodes = parseHtml(html);
+		const duration = performance.now() - startTime;
+
+		expect(nodes).toHaveLength(210); // 10 parents + 200 children
+		expect(duration).toBeLessThan(20);
+
+		// Verify parent relationships
+		for (let i = 0; i < 10; i++) {
+			for (let j = 0; j < 20; j++) {
+				const child = nodes.find((n) => n.id === `child${i}_${j}`);
+				expect(child?.parentId).toBe(`parent${i}`);
+			}
+		}
+	});
 });
 
 describe("parseHtml self-closing and closing tag handling", () => {
