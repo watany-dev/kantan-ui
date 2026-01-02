@@ -80,13 +80,20 @@ function generateClientScript(config: ResolvedKantanConfig): string {
       ws.send(JSON.stringify({ type: "init", sessionId }));
     };
 
-    // フォーカス状態を保存
+    // フォーカス状態を保存（スクロール位置含む）
     function saveFocusState() {
+      const state = {
+        id: null,
+        selectionStart: null,
+        selectionEnd: null,
+        scrollX: window.scrollX,
+        scrollY: window.scrollY
+      };
       const active = document.activeElement;
       if (!active || active === document.body) {
-        return null;
+        return state;
       }
-      const state = { id: active.id, selectionStart: null, selectionEnd: null };
+      state.id = active.id;
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
         try {
           state.selectionStart = active.selectionStart;
@@ -97,10 +104,22 @@ function generateClientScript(config: ResolvedKantanConfig): string {
     }
 
     // フォーカス状態を復元
-    function restoreFocusState(state) {
-      if (!state || !state.id) return;
+    function restoreFocusState(state, retryCount) {
+      if (!state) return;
+      // スクロール位置を復元
+      if (state.scrollX !== undefined && state.scrollY !== undefined) {
+        window.scrollTo(state.scrollX, state.scrollY);
+      }
+      // フォーカスを復元
+      if (!state.id) return;
       const el = document.getElementById(state.id);
-      if (!el) return;
+      if (!el) {
+        // 要素がまだ存在しない場合、短い遅延後にリトライ
+        if (retryCount < 3) {
+          setTimeout(() => restoreFocusState(state, retryCount + 1), 10);
+        }
+        return;
+      }
       el.focus();
       if ((el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)
           && state.selectionStart !== null) {
@@ -143,7 +162,10 @@ function generateClientScript(config: ResolvedKantanConfig): string {
         for (const patch of msg.patches) {
           applyPatch(patch);
         }
-        requestAnimationFrame(() => restoreFocusState(focusState));
+        // 同期的に復元を試みる
+        restoreFocusState(focusState, 0);
+        // バックアップとしてrAFでも復元を試みる
+        requestAnimationFrame(() => restoreFocusState(focusState, 0));
       }
     };
 
