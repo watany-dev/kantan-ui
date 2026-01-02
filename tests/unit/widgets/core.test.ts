@@ -168,5 +168,10 @@ describe("widgets/core", () => {
 			const value = initializeSelectboxState("select-3", ["a", "b", "c"], "a");
 			expect(value).toBe("c");
 		});
+
+		it("should initialize with empty string when options array is empty", () => {
+			const value = initializeSelectboxState("select-empty", []);
+			expect(value).toBe("");
+		});
 	});
 });
