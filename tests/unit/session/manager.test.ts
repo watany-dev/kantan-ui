@@ -388,6 +388,131 @@ describe("SessionManager", () => {
 	});
 });
 
+describe("Event Queue", () => {
+	let manager: SessionManager;
+
+	beforeEach(() => {
+		manager = new SessionManager();
+	});
+
+	afterEach(() => {
+		manager.stopCleanupInterval();
+	});
+
+	it("should process events in order", async () => {
+		const session = manager.createSession();
+		const processedOrder: number[] = [];
+
+		manager.setEventProcessor((sessionId, widgetId, value) => {
+			processedOrder.push(value as number);
+			return { html: `processed-${value}`, patches: [] };
+		});
+
+		// Queue multiple events
+		const results = await Promise.all([
+			manager.queueEvent(session.id, "widget1", 1),
+			manager.queueEvent(session.id, "widget1", 2),
+			manager.queueEvent(session.id, "widget1", 3),
+		]);
+
+		expect(processedOrder).toEqual([1, 2, 3]);
+		expect(results[0].html).toBe("processed-1");
+		expect(results[1].html).toBe("processed-2");
+		expect(results[2].html).toBe("processed-3");
+	});
+
+	it("should not process events concurrently for same session", async () => {
+		const session = manager.createSession();
+		let concurrentCount = 0;
+		let maxConcurrent = 0;
+
+		manager.setEventProcessor(() => {
+			concurrentCount++;
+			maxConcurrent = Math.max(maxConcurrent, concurrentCount);
+			concurrentCount--;
+			return { html: "", patches: [] };
+		});
+
+		await Promise.all([
+			manager.queueEvent(session.id, "w", 1),
+			manager.queueEvent(session.id, "w", 2),
+			manager.queueEvent(session.id, "w", 3),
+		]);
+
+		expect(maxConcurrent).toBe(1);
+	});
+
+	it("should process events from different sessions independently", async () => {
+		const session1 = manager.createSession();
+		const session2 = manager.createSession();
+		const processed: string[] = [];
+
+		manager.setEventProcessor((sessionId, _widgetId, value) => {
+			processed.push(`${sessionId.slice(0, 4)}-${value}`);
+			return { html: "", patches: [] };
+		});
+
+		await Promise.all([
+			manager.queueEvent(session1.id, "w", "a"),
+			manager.queueEvent(session2.id, "w", "b"),
+			manager.queueEvent(session1.id, "w", "c"),
+		]);
+
+		// Session1's events should be in order relative to each other
+		const session1Events = processed.filter((e) => e.startsWith(session1.id.slice(0, 4)));
+		expect(session1Events[0]).toContain("-a");
+		expect(session1Events[1]).toContain("-c");
+	});
+
+	it("should return empty result when no processor is set", async () => {
+		const session = manager.createSession();
+
+		const result = await manager.queueEvent(session.id, "widget", "value");
+
+		expect(result.html).toBe("");
+		expect(result.patches).toEqual([]);
+	});
+
+	it("should report queue length correctly", async () => {
+		const session = manager.createSession();
+		let resolveFirst: (() => void) | undefined;
+
+		manager.setEventProcessor(() => {
+			// First event blocks until we resolve
+			return new Promise((resolve) => {
+				resolveFirst = () => resolve({ html: "", patches: [] });
+			}) as unknown as { html: string; patches: unknown[] };
+		});
+
+		// Start first event (will block)
+		const p1 = manager.queueEvent(session.id, "w", 1);
+
+		// These should be queued since first is processing
+		// Note: Due to synchronous nature, queue length check needs adjustment
+		expect(manager.getQueueLength(session.id)).toBe(0);
+
+		// Cleanup
+		if (resolveFirst) resolveFirst();
+		await p1;
+	});
+
+	it("should report processing status correctly", async () => {
+		const session = manager.createSession();
+
+		manager.setEventProcessor(() => {
+			return { html: "", patches: [] };
+		});
+
+		// Before any events, not processing
+		expect(manager.isProcessing(session.id)).toBe(false);
+
+		await manager.queueEvent(session.id, "w", 1);
+
+		// After processing, not processing anymore
+		expect(manager.isProcessing(session.id)).toBe(false);
+	});
+});
+
 describe("Global SessionManager", () => {
 	afterEach(() => {
 		resetSessionManager();

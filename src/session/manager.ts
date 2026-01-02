@@ -1,7 +1,14 @@
 import type { WSContext } from "hono/ws";
 import { DEFAULT_SESSION_CONFIG } from "../config";
 import type { SessionConfig } from "../config/types";
-import type { Session, SessionId, SessionState } from "./types";
+import type { EventProcessResult, EventQueueItem, Session, SessionId, SessionState } from "./types";
+
+// イベント処理コールバックの型
+export type EventProcessor = (
+	sessionId: SessionId,
+	widgetId: string,
+	value: unknown,
+) => EventProcessResult;
 
 export class SessionManager {
 	private sessions = new Map<SessionId, Session>();
@@ -15,6 +22,11 @@ export class SessionManager {
 	private sessionToWs = new Map<SessionId, Set<WSContext>>();
 	private config: Required<SessionConfig>;
 	private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+
+	// イベントキュー関連
+	private eventQueues = new Map<SessionId, EventQueueItem[]>();
+	private processingFlags = new Map<SessionId, boolean>();
+	private eventProcessor: EventProcessor | null = null;
 
 	constructor(config: SessionConfig = {}) {
 		this.config = {
@@ -150,6 +162,88 @@ export class SessionManager {
 	// セッション数を取得
 	getSessionCount(): number {
 		return this.sessions.size;
+	}
+
+	// イベント処理コールバックを設定
+	setEventProcessor(processor: EventProcessor): void {
+		this.eventProcessor = processor;
+	}
+
+	// イベントをキューに追加して処理結果を待つ
+	queueEvent(sessionId: SessionId, widgetId: string, value: unknown): Promise<EventProcessResult> {
+		return new Promise((resolve) => {
+			const item: EventQueueItem = {
+				widgetId,
+				value,
+				timestamp: Date.now(),
+				resolve,
+			};
+
+			// キューがなければ作成
+			if (!this.eventQueues.has(sessionId)) {
+				this.eventQueues.set(sessionId, []);
+			}
+
+			// キューに追加
+			const queue = this.eventQueues.get(sessionId);
+			if (queue) {
+				queue.push(item);
+			}
+
+			// 処理を開始
+			this.processEventQueue(sessionId);
+		});
+	}
+
+	// イベントキューを処理
+	private processEventQueue(sessionId: SessionId): void {
+		// 既に処理中なら何もしない
+		if (this.processingFlags.get(sessionId)) {
+			return;
+		}
+
+		const queue = this.eventQueues.get(sessionId);
+		if (!queue || queue.length === 0) {
+			return;
+		}
+
+		// 処理中フラグを立てる
+		this.processingFlags.set(sessionId, true);
+
+		// キューから取り出して処理
+		const item = queue.shift();
+		if (!item) {
+			this.processingFlags.set(sessionId, false);
+			return;
+		}
+
+		try {
+			if (this.eventProcessor) {
+				const result = this.eventProcessor(sessionId, item.widgetId, item.value);
+				item.resolve(result);
+			} else {
+				item.resolve({ html: "", patches: [] });
+			}
+		} finally {
+			// 処理中フラグを下ろす
+			this.processingFlags.set(sessionId, false);
+
+			// 次のイベントを処理
+			if (queue.length > 0) {
+				// 同期的に次を処理（イベントループで分離）
+				queueMicrotask(() => this.processEventQueue(sessionId));
+			}
+		}
+	}
+
+	// キューの長さを取得（テスト用）
+	getQueueLength(sessionId: SessionId): number {
+		return this.eventQueues.get(sessionId)?.length ?? 0;
+	}
+
+	// 処理中かどうかを取得（テスト用）
+	isProcessing(sessionId: SessionId): boolean {
+		return this.processingFlags.get(sessionId) ?? false;
 	}
 }
 
