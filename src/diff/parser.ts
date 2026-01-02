@@ -21,6 +21,61 @@ export const PARSER_LIMITS = {
 const VALID_ID_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_-]*$/;
 
 /**
+ * 自己終了タグのSet（O(1)ルックアップ）
+ */
+const SELF_CLOSING_TAGS = new Set([
+	"input",
+	"br",
+	"hr",
+	"img",
+	"meta",
+	"link",
+	"area",
+	"base",
+	"col",
+	"embed",
+	"param",
+	"source",
+	"track",
+	"wbr",
+]);
+
+/**
+ * RegExpキャッシュ（タグ名→正規表現）
+ * findClosingTagで毎回RegExpを生成するコストを削減
+ */
+const openTagRegexCache = new Map<string, RegExp>();
+const closeTagRegexCache = new Map<string, RegExp>();
+
+/**
+ * 開始タグ用の正規表現を取得（キャッシュ付き）
+ */
+function getOpenTagRegex(tag: string): RegExp {
+	const key = tag.toLowerCase();
+	let regex = openTagRegexCache.get(key);
+	if (!regex) {
+		regex = new RegExp(`<${tag}[\\s>]`, "gi");
+		openTagRegexCache.set(key, regex);
+	}
+	regex.lastIndex = 0;
+	return regex;
+}
+
+/**
+ * 終了タグ用の正規表現を取得（キャッシュ付き）
+ */
+function getCloseTagRegex(tag: string): RegExp {
+	const key = tag.toLowerCase();
+	let regex = closeTagRegexCache.get(key);
+	if (!regex) {
+		regex = new RegExp(`</${tag}>`, "gi");
+		closeTagRegexCache.set(key, regex);
+	}
+	regex.lastIndex = 0;
+	return regex;
+}
+
+/**
  * IDが有効な形式かを検証
  */
 export function isValidId(id: string): boolean {
@@ -210,33 +265,19 @@ function buildNodeTree(parsedNodes: ParsedNode[]): VNode[] {
 
 /**
  * 自己終了タグかどうかを判定
+ * O(1)ルックアップ（Setを使用）
  */
 function isSelfClosingTag(tag: string): boolean {
-	const selfClosingTags = [
-		"input",
-		"br",
-		"hr",
-		"img",
-		"meta",
-		"link",
-		"area",
-		"base",
-		"col",
-		"embed",
-		"param",
-		"source",
-		"track",
-		"wbr",
-	];
-	return selfClosingTags.includes(tag.toLowerCase());
+	return SELF_CLOSING_TAGS.has(tag.toLowerCase());
 }
 
 /**
  * 対応する終了タグの位置を探す（ネストを考慮）
+ * RegExpキャッシュを使用してパフォーマンスを向上
  */
 function findClosingTag(html: string, startPos: number, tag: string, startTime: number): number {
-	const openTag = new RegExp(`<${tag}[\\s>]`, "gi");
-	const closeTag = new RegExp(`</${tag}>`, "gi");
+	const openTag = getOpenTagRegex(tag);
+	const closeTag = getCloseTagRegex(tag);
 
 	let depth = 1;
 	let pos = startPos;
