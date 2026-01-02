@@ -1,18 +1,31 @@
 import type {
 	ClientConfig,
+	CookieConfig,
 	KantanConfig,
 	ResolvedKantanConfig,
-	SessionConfig,
+	ResolvedSessionConfig,
 	StreamingConfig,
 } from "./types";
 
 /**
+ * Cookie設定のデフォルト値
+ */
+export const DEFAULT_COOKIE_CONFIG: Required<CookieConfig> = {
+	httpOnly: true,
+	secure: "auto",
+	sameSite: "Lax",
+	path: "/",
+};
+
+/**
  * セッション設定のデフォルト値
  */
-export const DEFAULT_SESSION_CONFIG: Required<SessionConfig> = {
+export const DEFAULT_SESSION_CONFIG: ResolvedSessionConfig = {
 	sessionKey: "kt-session-id",
 	ttl: 30 * 60 * 1000, // 30分
 	cleanupInterval: 60 * 1000, // 1分
+	scope: "tab", // デフォルトは現状維持（localStorage使用）
+	cookie: DEFAULT_COOKIE_CONFIG,
 };
 
 /**
@@ -49,6 +62,11 @@ export function resolveConfig(config?: KantanConfig): ResolvedKantanConfig {
 		session: {
 			...DEFAULT_SESSION_CONFIG,
 			...config?.session,
+			// cookieはネストしてマージ
+			cookie: {
+				...DEFAULT_COOKIE_CONFIG,
+				...config?.session?.cookie,
+			},
 		},
 		client: {
 			...DEFAULT_CLIENT_CONFIG,

@@ -2,8 +2,13 @@ import { Hono } from "hono";
 import { type KantanConfig, type ResolvedKantanConfig, resolveConfig } from "./config";
 import { diff, toWebSocketPatches } from "./diff";
 import { type Script, rerun } from "./runtime";
-import { SessionManager, setSessionManager } from "./session";
-import { createWebSocketHandler, websocket } from "./websocket";
+import {
+	SessionManager,
+	buildSetCookieHeader,
+	parseSessionCookie,
+	setSessionManager,
+} from "./session";
+import { upgradeWebSocket, websocket } from "./websocket";
 import type { Patch } from "./websocket/types";
 import { type ClientMessage, type ServerMessage, isClientMessage } from "./websocket/types";
 
@@ -16,14 +21,16 @@ function generateNonce(): string {
 
 // クライアントスクリプトを生成（設定値を注入）
 function generateClientScript(config: ResolvedKantanConfig): string {
+	const isBrowserScope = config.session.scope === "browser";
+
 	return `
-  let sessionId = localStorage.getItem("${config.session.sessionKey}");
+  ${isBrowserScope ? "// scope='browser': セッションはCookieで管理（HttpOnly）" : `let sessionId = localStorage.getItem("${config.session.sessionKey}");`}
   let ws = null;
   let reconnectAttempts = 0;
   const maxReconnectAttempts = ${config.client.maxReconnectAttempts};
   const baseReconnectDelay = ${config.client.baseReconnectDelay};
   const maxReconnectDelay = ${config.client.maxReconnectDelay};
-  const sessionKey = "${config.session.sessionKey}";
+  ${isBrowserScope ? "" : `const sessionKey = "${config.session.sessionKey}";`}
 
   // 接続状態インジケーターを作成
   function createConnectionIndicator() {
@@ -77,7 +84,7 @@ function generateClientScript(config: ResolvedKantanConfig): string {
       reconnectAttempts = 0;
       updateConnectionStatus("connected");
       // 初期化メッセージを送信
-      ws.send(JSON.stringify({ type: "init", sessionId }));
+      ${isBrowserScope ? `ws.send(JSON.stringify({ type: "init" }));` : `ws.send(JSON.stringify({ type: "init", sessionId }));`}
     };
 
     // フォーカス状態を保存（スクロール位置含む）
@@ -143,19 +150,22 @@ function generateClientScript(config: ResolvedKantanConfig): string {
         console.error("Server error:", msg.error?.code, msg.error?.message);
         if (msg.error?.code === "SESSION_NOT_FOUND") {
           // セッションをクリアして再接続
-          localStorage.removeItem(sessionKey);
+          ${isBrowserScope ? `// scope='browser': Cookieはサーバー側で管理
+          ws.close();
+          // ページリロードでCookieを再設定
+          location.reload();` : `localStorage.removeItem(sessionKey);
           sessionId = null;
           ws.close();
-          connect();
+          connect();`}
         }
         return;
       }
 
-      // セッションID を保存
+      ${isBrowserScope ? `// scope='browser': セッションIDはCookieで管理（クライアントでは保存しない）` : `// セッションID を保存
       if (msg.sessionId) {
         sessionId = msg.sessionId;
         localStorage.setItem(sessionKey, sessionId);
-      }
+      }`}
 
       if (msg.type === "patch" && msg.patches) {
         const focusState = saveFocusState();
@@ -267,7 +277,7 @@ function generateClientScript(config: ResolvedKantanConfig): string {
   // イベント送信用のグローバル関数
   window.sendEvent = (widgetId, value) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ type: "event", widgetId, value, sessionId }));
+      ${isBrowserScope ? `ws.send(JSON.stringify({ type: "event", widgetId, value }));` : `ws.send(JSON.stringify({ type: "event", widgetId, value, sessionId }));`}
     } else {
       console.warn("WebSocket not connected, event not sent");
     }
@@ -331,8 +341,42 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 
 	// ルートページ（HTMLを返す）
 	app.get("/", (c) => {
-		// 初期表示はセッションなしで rerun
-		const initialHtml = rerun(script);
+		let sessionId: string | undefined;
+
+		// scope='browser'の場合、Cookieでセッション管理
+		if (config.session.scope === "browser") {
+			const cookieHeader = c.req.header("cookie");
+			const cookieSessionId = parseSessionCookie(cookieHeader, config.session.sessionKey);
+
+			if (cookieSessionId) {
+				const existing = sessionManager.getSession(cookieSessionId);
+				if (existing) {
+					sessionId = existing.id;
+				} else {
+					// セッション期限切れ → 新規作成
+					const session = sessionManager.createSession();
+					sessionId = session.id;
+				}
+			} else {
+				// Cookie なし → 新規作成
+				const session = sessionManager.createSession();
+				sessionId = session.id;
+			}
+
+			// Cookie設定（新規または更新）
+			const setCookieHeader = buildSetCookieHeader(
+				config.session.sessionKey,
+				sessionId,
+				config.session.cookie,
+				Math.floor(config.session.ttl / 1000),
+				c.req.url,
+			);
+			c.header("Set-Cookie", setCookieHeader);
+		}
+
+		// 初期表示はセッションなしで rerun（scope='tab'の場合）
+		// scope='browser'の場合はセッションIDを渡す
+		const initialHtml = rerun(script, undefined, sessionId);
 		const nonce = generateNonce();
 
 		// Set CSP header to prevent XSS attacks
@@ -361,107 +405,117 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 	// WebSocket エンドポイント
 	app.get(
 		"/ws",
-		createWebSocketHandler({
-			onOpen: (_evt, _ws) => {
-				console.log("WebSocket connected");
-			},
-			onMessage: (event, ws) => {
-				let parsed: unknown;
-				try {
-					parsed = JSON.parse(event.data.toString());
-				} catch (err) {
-					console.error("Failed to parse client message:", err);
-					return;
-				}
+		upgradeWebSocket((c) => {
+			// scope='browser'の場合、Cookieからセッション取得
+			const cookieSessionId =
+				config.session.scope === "browser"
+					? parseSessionCookie(c.req.header("cookie"), config.session.sessionKey)
+					: undefined;
 
-				if (!isClientMessage(parsed)) {
-					console.error("Invalid client message format");
-					return;
-				}
-				const data: ClientMessage = parsed;
-
-				if (data.type === "init") {
-					// セッションを取得または作成
-					const session = sessionManager.getOrCreateSession(data.sessionId);
-					sessionManager.associateWebSocket(ws, session.id);
-
-					// 初期HTMLを生成して保存
-					const html = rerun(script, undefined, session.id);
-					session.lastHtml = html;
-
-					const message: ServerMessage = {
-						type: "patch",
-						patches: [{ type: "replaceRoot", html }],
-						sessionId: session.id,
-					};
-					ws.send(JSON.stringify(message));
-				} else if (data.type === "event") {
-					// セッションをsessionIdで取得
-					// Note: クライアントは常にsessionIdを送信するため、WSContext比較は不要
-					// wsToSessionはonClose時のクリーンアップ目的でのみ使用
-					if (!data.sessionId) {
-						console.error("Event received without sessionId");
-						const errorMessage: ServerMessage = {
-							type: "error",
-							error: {
-								code: "SESSION_ID_REQUIRED",
-								message: "sessionId is required for event messages.",
-							},
-						};
-						ws.send(JSON.stringify(errorMessage));
-						return;
-					}
-					const session = sessionManager.getSession(data.sessionId);
-					if (!session) {
-						console.error("Session not found:", data.sessionId);
-						const errorMessage: ServerMessage = {
-							type: "error",
-							error: {
-								code: "SESSION_NOT_FOUND",
-								message: "Session not found. Please refresh or reconnect.",
-							},
-						};
-						ws.send(JSON.stringify(errorMessage));
+			return {
+				onOpen: (_evt, _ws) => {
+					console.log("WebSocket connected");
+				},
+				onMessage: (event, ws) => {
+					let parsed: unknown;
+					try {
+						parsed = JSON.parse(event.data.toString());
+					} catch (err) {
+						console.error("Failed to parse client message:", err);
 						return;
 					}
 
-					// Widget の値を更新
-					if (data.widgetId && data.value !== undefined) {
-						sessionManager.setState(session.id, data.widgetId, data.value);
+					if (!isClientMessage(parsed)) {
+						console.error("Invalid client message format");
+						return;
 					}
+					const data: ClientMessage = parsed;
 
-					// rerun を実行
-					const widgetId = data.widgetId ?? "";
-					const newHtml = rerun(script, { widgetId, value: data.value }, session.id);
+					if (data.type === "init") {
+						// 優先順位: Cookie (browser) > メッセージ (tab)
+						const requestedSessionId = cookieSessionId ?? data.sessionId;
+						const session = sessionManager.getOrCreateSession(requestedSessionId);
+						sessionManager.associateWebSocket(ws, session.id);
 
-					// 差分を計算
-					// diff()は要素IDに基づいて差分を検出する
-					// IDなし要素が多い場合はPATCH_THRESHOLDを超えてreplaceRootにフォールバック
-					let patches: Patch[];
-					if (session.lastHtml) {
-						const diffResult = diff(session.lastHtml, newHtml);
-						patches = toWebSocketPatches(diffResult, newHtml);
-					} else {
-						patches = [{ type: "replaceRoot", html: newHtml }];
-					}
+						// 初期HTMLを生成して保存
+						const html = rerun(script, undefined, session.id);
+						session.lastHtml = html;
 
-					// HTML履歴を更新
-					session.lastHtml = newHtml;
-
-					// パッチを送信（変更がある場合のみ）
-					if (patches.length > 0) {
+						// scope='tab'の場合のみsessionIdをクライアントに返す
 						const message: ServerMessage = {
 							type: "patch",
-							patches,
+							patches: [{ type: "replaceRoot", html }],
+							sessionId: config.session.scope === "tab" ? session.id : undefined,
 						};
 						ws.send(JSON.stringify(message));
+					} else if (data.type === "event") {
+						// セッションをsessionIdで取得
+						// scope='browser': Cookieから取得したID、scope='tab': メッセージから取得したID
+						const eventSessionId = cookieSessionId ?? data.sessionId;
+						if (!eventSessionId) {
+							console.error("Event received without sessionId");
+							const errorMessage: ServerMessage = {
+								type: "error",
+								error: {
+									code: "SESSION_ID_REQUIRED",
+									message: "sessionId is required for event messages.",
+								},
+							};
+							ws.send(JSON.stringify(errorMessage));
+							return;
+						}
+						const session = sessionManager.getSession(eventSessionId);
+						if (!session) {
+							console.error("Session not found:", eventSessionId);
+							const errorMessage: ServerMessage = {
+								type: "error",
+								error: {
+									code: "SESSION_NOT_FOUND",
+									message: "Session not found. Please refresh or reconnect.",
+								},
+							};
+							ws.send(JSON.stringify(errorMessage));
+							return;
+						}
+
+						// Widget の値を更新
+						if (data.widgetId && data.value !== undefined) {
+							sessionManager.setState(session.id, data.widgetId, data.value);
+						}
+
+						// rerun を実行
+						const widgetId = data.widgetId ?? "";
+						const newHtml = rerun(script, { widgetId, value: data.value }, session.id);
+
+						// 差分を計算
+						// diff()は要素IDに基づいて差分を検出する
+						// IDなし要素が多い場合はPATCH_THRESHOLDを超えてreplaceRootにフォールバック
+						let patches: Patch[];
+						if (session.lastHtml) {
+							const diffResult = diff(session.lastHtml, newHtml);
+							patches = toWebSocketPatches(diffResult, newHtml);
+						} else {
+							patches = [{ type: "replaceRoot", html: newHtml }];
+						}
+
+						// HTML履歴を更新
+						session.lastHtml = newHtml;
+
+						// パッチを送信（変更がある場合のみ）
+						if (patches.length > 0) {
+							const message: ServerMessage = {
+								type: "patch",
+								patches,
+							};
+							ws.send(JSON.stringify(message));
+						}
 					}
-				}
-			},
-			onClose: (_evt, ws) => {
-				sessionManager.removeWebSocket(ws);
-				console.log("WebSocket disconnected");
-			},
+				},
+				onClose: (_evt, ws) => {
+					sessionManager.removeWebSocket(ws);
+					console.log("WebSocket disconnected");
+				},
+			};
 		}),
 	);
 
