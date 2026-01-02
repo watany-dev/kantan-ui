@@ -33,6 +33,7 @@ HTML (new) ─┘                           ├─> diff() ─> DiffResult ─> 
 | 自己終了タグ | `<input id="x" />` | input, br, img等 |
 | ネストされた要素 | 親子関係を自動検出 | 最も近い包含親を特定 |
 | 標準的なHTML5タグ | div, span, button等 | 大文字・小文字両対応 |
+| 大文字タグ名 | `<DIV>`, `<Div>` | 正規表現の`i`フラグで対応 |
 
 ### 非サポート
 
