@@ -1,34 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { AbortError, isAbortError } from "../../../src/runtime/abort";
+import { createAbortError, isAbortError } from "../../../src/runtime/abort";
 
-describe("AbortError", () => {
-	it("should create error with default message", () => {
-		const error = new AbortError();
+describe("createAbortError", () => {
+	it("should create DOMException with default message", () => {
+		const error = createAbortError();
 
 		expect(error.message).toBe("Operation was aborted");
 		expect(error.name).toBe("AbortError");
 	});
 
-	it("should create error with custom message", () => {
-		const error = new AbortError("Custom abort message");
+	it("should create DOMException with custom message", () => {
+		const error = createAbortError("Custom abort message");
 
 		expect(error.message).toBe("Custom abort message");
 		expect(error.name).toBe("AbortError");
 	});
 
-	it("should be instanceof Error", () => {
-		const error = new AbortError();
+	it("should be instanceof DOMException", () => {
+		const error = createAbortError();
 
-		expect(error).toBeInstanceOf(Error);
-		expect(error).toBeInstanceOf(AbortError);
+		expect(error).toBeInstanceOf(DOMException);
 	});
 });
 
 describe("isAbortError", () => {
-	it("should return true for AbortError", () => {
-		const error = new AbortError();
+	it("should return true for createAbortError result", () => {
+		const error = createAbortError();
 
 		expect(isAbortError(error)).toBe(true);
+	});
+
+	it("should return true for DOMException with AbortError name", () => {
+		const error = new DOMException("test", "AbortError");
+
+		expect(isAbortError(error)).toBe(true);
+	});
+
+	it("should return false for DOMException with different name", () => {
+		const error = new DOMException("test", "NotFoundError");
+
+		expect(isAbortError(error)).toBe(false);
 	});
 
 	it("should return false for regular Error", () => {
