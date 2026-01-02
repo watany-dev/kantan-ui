@@ -294,6 +294,25 @@ describe("SessionManager", () => {
 			consoleSpy.mockRestore();
 			vi.useRealTimers();
 		});
+
+		it("should not log when cleanup removes zero sessions via interval", () => {
+			vi.useFakeTimers();
+			const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+			const manager = new SessionManager({ ttl: 10000, cleanupInterval: 1000 });
+			manager.createSession(); // Active session, won't be cleaned
+
+			// Trigger cleanup interval
+			vi.advanceTimersByTime(1000);
+
+			// Cleanup was called but no sessions were removed
+			expect(manager.getSessionCount()).toBe(1);
+			expect(consoleSpy).not.toHaveBeenCalled();
+
+			manager.stopCleanupInterval();
+			consoleSpy.mockRestore();
+			vi.useRealTimers();
+		});
 	});
 
 	describe("getSessionCount", () => {
