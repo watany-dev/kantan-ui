@@ -105,9 +105,9 @@ function restoreFocusState(state) {
 
 ### 成果物
 
-- [ ] `src/app.ts` のフォーカス復元ロジック改善
-- [ ] `src/app.ts` のスクロール位置保存・復元
-- [ ] `e2e/focus-preservation.spec.ts` の全テストパス
+- [x] `src/app.ts` のフォーカス復元ロジック改善
+- [x] `src/app.ts` のスクロール位置保存・復元
+- [x] `e2e/focus-preservation.spec.ts` の全テストパス
 
 ---
 
@@ -214,10 +214,10 @@ describe("Event Queue", () => {
 
 ### 成果物
 
-- [ ] `src/session/types.ts` にEventQueue型追加
-- [ ] `src/session/manager.ts` にキュー処理メソッド追加
-- [ ] `src/app.ts` でイベントキュー使用
-- [ ] `tests/session/queue.test.ts` 作成
+- [x] `src/session/types.ts` にEventQueue型追加
+- [x] `src/session/manager.ts` にキュー処理メソッド追加
+- [x] `src/app.ts` でイベントキュー使用
+- [x] `tests/session/queue.test.ts` 作成
 
 ---
 
@@ -305,11 +305,11 @@ describe("Abort", () => {
 
 ### 成果物
 
-- [ ] `src/runtime/abort.ts` 作成（AbortError等）
-- [ ] `src/runtime/rerun.ts` にシグナル対応追加
-- [ ] `src/session/types.ts` にAbortController追加
-- [ ] `src/app.ts` でAbort処理実装
-- [ ] `tests/runtime/abort.test.ts` 作成
+- [x] `src/runtime/abort.ts` 作成（AbortError等）
+- [x] `src/runtime/rerun.ts` にシグナル対応追加
+- [x] `src/session/types.ts` にAbortController追加
+- [x] `src/app.ts` でAbort処理実装
+- [x] `tests/runtime/abort.test.ts` 作成
 
 ---
 
@@ -405,10 +405,10 @@ if (msg.partial) {
 
 ### 成果物
 
-- [ ] `src/kt/context.ts` にフラッシュ機能追加
-- [ ] `src/config/types.ts` にストリーミング設定追加
-- [ ] `src/app.ts` にストリーミング基盤実装（無効状態）
-- [ ] ストリーミングのユニットテスト
+- [x] `src/kt/context.ts` にフラッシュ機能追加
+- [x] `src/config/types.ts` にストリーミング設定追加
+- [x] `src/app.ts` にストリーミング基盤実装（無効状態）
+- [x] ストリーミングのユニットテスト
 
 ---
 
@@ -454,9 +454,9 @@ await page.waitForSelector('[data-kt-value="60"]');
 
 ### 成果物
 
-- [ ] `e2e/helpers.ts` 作成
-- [ ] スキップ中のテストを有効化
-- [ ] 全E2Eテストの安定実行
+- [x] `e2e/helpers.ts` 作成
+- [ ] スキップ中のテストを有効化 ← Week5で対応（`evaluate()` 問題）
+- [x] 全E2Eテストの安定実行（2件スキップあり）
 
 ---
 
@@ -496,15 +496,15 @@ Day 9-10: バッファ + 全体確認
 
 ### 必須
 
-- [ ] フォーカス維持テストがパス
-- [ ] イベント順序保証のテストがパス
-- [ ] `bun run ci` が成功
+- [x] フォーカス維持テストがパス
+- [x] イベント順序保証のテストがパス
+- [x] `bun run ci` が成功
 
 ### 望ましい
 
-- [ ] Abort機能が動作
-- [ ] ストリーミング基盤が実装済み
-- [ ] 全E2Eテストがパス（スキップなし）
+- [x] Abort機能が動作
+- [x] ストリーミング基盤が実装済み
+- [ ] 全E2Eテストがパス（スキップなし）← 2件スキップ（Week5で対応）
 
 ---
 
@@ -523,9 +523,22 @@ Day 9-10: バッファ + 全体確認
 
 Week4完了後、以下をWeek5で対応:
 
-1. **再接続・順序保証**: シーケンス番号管理、多重タブ対応
+### 高優先度
+
+1. **E2Eテスト `evaluate()` 問題の調査・修正**
+   - Playwright の `evaluate()` でディスパッチしたイベントが `#app` の event delegation に到達しない
+   - text input / selectbox の E2E テストが現在スキップ中
+   - 調査観点:
+     - `isTrusted` プロパティの影響
+     - Event constructor オプション（`composed: true` 等）
+     - event delegation の実装改善
+
 2. **ストリーミング有効化**: Phase 2として実際の送信を有効化
-3. **パフォーマンス最適化**: イベントデバウンス、バッチパッチ
+
+### 中優先度
+
+3. **再接続・順序保証**: シーケンス番号管理、多重タブ対応
+4. **パフォーマンス最適化**: イベントデバウンス、バッチパッチ
 
 ---
 
