@@ -57,7 +57,9 @@ export function parseHtml(html: string): VNode[] {
 
 	// id="xxx" を持つ要素を抽出する正規表現
 	// 自己終了タグ（<input ... />）と通常タグ（<div>...</div>）の両方に対応
-	const idPattern = /<([a-z][a-z0-9]*)\s+([^>]*?)id="([^"]+)"([^>]*?)(\/?>)([\s\S]*?)(?:<\/\1>)?/gi;
+	// 非キャプチャグループ (?:...) を使用して未使用グループを最適化
+	const idPattern =
+		/<([a-z][a-z0-9]*)\s+(?:[^>]*?)id="([^"]+)"(?:[^>]*?)(\/?>)([\s\S]*?)(?:<\/\1>)?/gi;
 
 	for (const match of html.matchAll(idPattern)) {
 		// タイムアウトチェック（ReDoS対策）
@@ -71,7 +73,7 @@ export function parseHtml(html: string): VNode[] {
 			throw new Error(`Element count exceeds limit: ${PARSER_LIMITS.MAX_ELEMENTS}`);
 		}
 
-		const [fullMatch, tag, _beforeId, id, _afterId, closeTag] = match;
+		const [fullMatch, tag, id, closeTag] = match;
 
 		// IDバリデーション（不正なIDはスキップ）
 		if (!isValidId(id)) {
