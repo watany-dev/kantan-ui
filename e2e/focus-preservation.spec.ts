@@ -72,6 +72,9 @@ test.describe("Focus Preservation", () => {
 		await textInput.focus();
 		await expect(textInput).toBeFocused();
 
+		// 既存の値をクリアしてから入力
+		await textInput.clear();
+
 		// 1文字ずつ入力（各文字でrerunが発生）
 		await textInput.pressSequentially("Hi", { delay: 150 });
 
