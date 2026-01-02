@@ -110,32 +110,43 @@ export function parseHtml(html: string): VNode[] {
 }
 
 /**
- * 各ノードの親IDを事前計算してマップを返す O(k²)
+ * 各ノードの親IDを事前計算してマップを返す O(k log k)
  * 親は「そのノードを包含する最も小さい要素」
+ *
+ * アルゴリズム:
+ * 1. ノードをstartPosでソート
+ * 2. スタックで「現在の親候補チェーン」を管理
+ * 3. 各ノードについて、スタックから包含しない要素をpop
+ * 4. スタックトップが最小の包含親
  */
 function buildParentMap(parsedNodes: ParsedNode[]): Map<string, string | null> {
 	const parentMap = new Map<string, string | null>();
 
-	for (const node of parsedNodes) {
-		let parentId: string | null = null;
-		let smallestContainerSize = Number.POSITIVE_INFINITY;
+	if (parsedNodes.length === 0) {
+		return parentMap;
+	}
 
-		for (const potentialParent of parsedNodes) {
-			if (potentialParent.id === node.id) continue;
+	// Step 1: startPosでソート O(k log k)
+	const sorted = [...parsedNodes].sort((a, b) => a.startPos - b.startPos);
 
-			const containsNode =
-				potentialParent.startPos < node.startPos && potentialParent.endPos > node.endPos;
+	// Step 2: スタック走査 O(k)
+	// スタック不変条件: endPosが降順（大→小）
+	const stack: ParsedNode[] = [];
 
-			if (containsNode) {
-				const containerSize = potentialParent.endPos - potentialParent.startPos;
-				if (containerSize < smallestContainerSize) {
-					smallestContainerSize = containerSize;
-					parentId = potentialParent.id;
-				}
-			}
+	for (const node of sorted) {
+		// スタックから「このノードを包含しない」要素を除去
+		// 包含条件: parent.startPos < node.startPos && parent.endPos > node.endPos
+		// startPosでソート済みなので、startPos条件は自動的に満たされる
+		// endPos条件のみチェック: parent.endPos > node.endPos
+		while (stack.length > 0 && stack[stack.length - 1].endPos <= node.endPos) {
+			stack.pop();
 		}
 
-		parentMap.set(node.id, parentId);
+		// スタックトップが最小の包含親（なければnull）
+		parentMap.set(node.id, stack.length > 0 ? stack[stack.length - 1].id : null);
+
+		// 自身をスタックに追加（将来の子ノードの親候補）
+		stack.push(node);
 	}
 
 	return parentMap;
