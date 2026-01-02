@@ -80,6 +80,36 @@ function generateClientScript(config: ResolvedKantanConfig): string {
       ws.send(JSON.stringify({ type: "init", sessionId }));
     };
 
+    // フォーカス状態を保存
+    function saveFocusState() {
+      const active = document.activeElement;
+      if (!active || active === document.body) {
+        return null;
+      }
+      const state = { id: active.id, selectionStart: null, selectionEnd: null };
+      if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+        try {
+          state.selectionStart = active.selectionStart;
+          state.selectionEnd = active.selectionEnd;
+        } catch (e) { /* 一部のinput typeでは取得不可 */ }
+      }
+      return state;
+    }
+
+    // フォーカス状態を復元
+    function restoreFocusState(state) {
+      if (!state || !state.id) return;
+      const el = document.getElementById(state.id);
+      if (!el) return;
+      el.focus();
+      if ((el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)
+          && state.selectionStart !== null) {
+        try {
+          el.setSelectionRange(state.selectionStart, state.selectionEnd);
+        } catch (e) { /* 一部のinput typeでは設定不可 */ }
+      }
+    }
+
     ws.onmessage = (e) => {
       let msg;
       try {
@@ -109,9 +139,11 @@ function generateClientScript(config: ResolvedKantanConfig): string {
       }
 
       if (msg.type === "patch" && msg.patches) {
+        const focusState = saveFocusState();
         for (const patch of msg.patches) {
           applyPatch(patch);
         }
+        requestAnimationFrame(() => restoreFocusState(focusState));
       }
     };
 
