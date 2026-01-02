@@ -150,22 +150,30 @@ function generateClientScript(config: ResolvedKantanConfig): string {
         console.error("Server error:", msg.error?.code, msg.error?.message);
         if (msg.error?.code === "SESSION_NOT_FOUND") {
           // セッションをクリアして再接続
-          ${isBrowserScope ? `// scope='browser': Cookieはサーバー側で管理
+          ${
+						isBrowserScope
+							? `// scope='browser': Cookieはサーバー側で管理
           ws.close();
           // ページリロードでCookieを再設定
-          location.reload();` : `localStorage.removeItem(sessionKey);
+          location.reload();`
+							: `localStorage.removeItem(sessionKey);
           sessionId = null;
           ws.close();
-          connect();`}
+          connect();`
+					}
         }
         return;
       }
 
-      ${isBrowserScope ? `// scope='browser': セッションIDはCookieで管理（クライアントでは保存しない）` : `// セッションID を保存
+      ${
+				isBrowserScope
+					? `// scope='browser': セッションIDはCookieで管理（クライアントでは保存しない）`
+					: `// セッションID を保存
       if (msg.sessionId) {
         sessionId = msg.sessionId;
         localStorage.setItem(sessionKey, sessionId);
-      }`}
+      }`
+			}
 
       if (msg.type === "patch" && msg.patches) {
         const focusState = saveFocusState();

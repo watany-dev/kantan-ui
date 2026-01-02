@@ -7,10 +7,7 @@ import {
 
 describe("parseSessionCookie", () => {
 	it("should parse cookie from header", () => {
-		const result = parseSessionCookie(
-			"kt-session-id=abc123; other=value",
-			"kt-session-id",
-		);
+		const result = parseSessionCookie("kt-session-id=abc123; other=value", "kt-session-id");
 		expect(result).toBe("abc123");
 	});
 
@@ -20,10 +17,7 @@ describe("parseSessionCookie", () => {
 	});
 
 	it("should parse cookie in the middle of header", () => {
-		const result = parseSessionCookie(
-			"foo=bar; kt-session-id=middle123; baz=qux",
-			"kt-session-id",
-		);
+		const result = parseSessionCookie("foo=bar; kt-session-id=middle123; baz=qux", "kt-session-id");
 		expect(result).toBe("middle123");
 	});
 
@@ -55,10 +49,7 @@ describe("parseSessionCookie", () => {
 
 	it("should not match partial key names", () => {
 		// kt-session-id-extra というキーがあっても kt-session-id にはマッチしない
-		const result = parseSessionCookie(
-			"kt-session-id-extra=wrong; kt-session-id=correct",
-			"kt-session-id",
-		);
+		const result = parseSessionCookie("kt-session-id-extra=wrong; kt-session-id=correct", "kt-session-id");
 		expect(result).toBe("correct");
 	});
 
@@ -79,9 +70,7 @@ describe("resolveSecure", () => {
 	});
 
 	it("should return true for https with auto (with path)", () => {
-		expect(resolveSecure("https://example.com/path/to/page", "auto")).toBe(
-			true,
-		);
+		expect(resolveSecure("https://example.com/path/to/page", "auto")).toBe(true);
 	});
 
 	it("should return false for http with auto (with port)", () => {

@@ -11,9 +11,7 @@ import { expect, test } from "@playwright/test";
  */
 
 test.describe("Session Scope: browser", () => {
-	test.skip("should set HttpOnly cookie on initial page load", async ({
-		page,
-	}) => {
+	test.skip("should set HttpOnly cookie on initial page load", async ({ page }) => {
 		// この テストは scope='browser' で設定されたアプリが必要
 		await page.goto("/");
 
@@ -25,34 +23,26 @@ test.describe("Session Scope: browser", () => {
 		expect(sessionCookie?.sameSite).toBe("Lax");
 	});
 
-	test.skip("should maintain session across page reloads", async ({
-		page,
-	}) => {
+	test.skip("should maintain session across page reloads", async ({ page }) => {
 		// scope='browser' の場合、ページリロードしてもセッションが維持される
 		await page.goto("/");
 
 		// 初回Cookieを取得
 		const cookiesBefore = await page.context().cookies();
-		const sessionIdBefore = cookiesBefore.find(
-			(c) => c.name === "kt-session-id",
-		)?.value;
+		const sessionIdBefore = cookiesBefore.find((c) => c.name === "kt-session-id")?.value;
 
 		// ページリロード
 		await page.reload();
 
 		// リロード後のCookieを取得
 		const cookiesAfter = await page.context().cookies();
-		const sessionIdAfter = cookiesAfter.find(
-			(c) => c.name === "kt-session-id",
-		)?.value;
+		const sessionIdAfter = cookiesAfter.find((c) => c.name === "kt-session-id")?.value;
 
 		// セッションIDが同じであることを確認
 		expect(sessionIdAfter).toBe(sessionIdBefore);
 	});
 
-	test.skip("should share session across multiple tabs", async ({
-		context,
-	}) => {
+	test.skip("should share session across multiple tabs", async ({ context }) => {
 		// scope='browser' の場合、複数タブで同じセッションを共有
 		const page1 = await context.newPage();
 		const page2 = await context.newPage();
@@ -61,25 +51,19 @@ test.describe("Session Scope: browser", () => {
 
 		// Page1のCookieを取得
 		const cookies1 = await context.cookies();
-		const sessionId1 = cookies1.find(
-			(c) => c.name === "kt-session-id",
-		)?.value;
+		const sessionId1 = cookies1.find((c) => c.name === "kt-session-id")?.value;
 
 		await page2.goto("/");
 
 		// Page2のCookieを取得（同じコンテキストなので同じCookie）
 		const cookies2 = await context.cookies();
-		const sessionId2 = cookies2.find(
-			(c) => c.name === "kt-session-id",
-		)?.value;
+		const sessionId2 = cookies2.find((c) => c.name === "kt-session-id")?.value;
 
 		// 両タブで同じセッションID
 		expect(sessionId2).toBe(sessionId1);
 	});
 
-	test.skip("should not expose sessionId to client JavaScript", async ({
-		page,
-	}) => {
+	test.skip("should not expose sessionId to client JavaScript", async ({ page }) => {
 		// scope='browser' の場合、HttpOnly CookieなのでJSからアクセス不可
 		await page.goto("/");
 
@@ -109,9 +93,7 @@ test.describe("Session Scope: tab (default)", () => {
 
 		expect(sessionId).toBeTruthy();
 		// UUIDフォーマットのチェック
-		expect(sessionId).toMatch(
-			/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-		);
+		expect(sessionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
 	});
 
 	test("should have independent sessions per tab", async ({ context }) => {
@@ -132,12 +114,8 @@ test.describe("Session Scope: tab (default)", () => {
 		});
 
 		// 各タブのセッションIDを取得
-		const sessionId1 = await page1.evaluate(() =>
-			localStorage.getItem("kt-session-id"),
-		);
-		const sessionId2 = await page2.evaluate(() =>
-			localStorage.getItem("kt-session-id"),
-		);
+		const sessionId1 = await page1.evaluate(() => localStorage.getItem("kt-session-id"));
+		const sessionId2 = await page2.evaluate(() => localStorage.getItem("kt-session-id"));
 
 		// 異なるタブでは異なるセッションID（localStorageは共有だが、WebSocketで新規作成される）
 		// 注意: 実際の動作はlocalStorageが共有されるため、同じIDになる可能性がある
