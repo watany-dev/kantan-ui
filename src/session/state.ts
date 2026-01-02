@@ -87,11 +87,9 @@ export function createTypedSessionState<T extends Record<string, unknown>>(defau
 			}
 			const state = getSessionManager().getState(currentSessionId);
 			const value = state?.[prop];
-			// 値が未設定ならデフォルト値を設定して返す
+			// 値が未設定ならデフォルト値を返す（状態は変更しない）
 			if (value === undefined && prop in defaults) {
-				const defaultValue = defaults[prop as keyof T];
-				getSessionManager().setState(currentSessionId, prop, defaultValue);
-				return defaultValue;
+				return defaults[prop as keyof T];
 			}
 			return value;
 		},
