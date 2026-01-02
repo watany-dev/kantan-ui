@@ -1,26 +1,8 @@
 import { type Page, type WebSocket, expect, test } from "@playwright/test";
+import { gotoAndWait, selectWithRerun, typeWithRerun, waitForInitialRender } from "./helpers";
 
 // 各テストで空のストレージ状態を使用
 test.use({ storageState: { cookies: [], origins: [] } });
-
-/**
- * WebSocket接続が確立され、初期パッチを受信するまで待機するヘルパー
- * 手動のPromise待機ではなく、Playwrightのビルトイン機能を使用
- */
-async function waitForInitialRender(page: Page): Promise<void> {
-	// 初期HTMLがレンダリングされるまで待機（WebSocket経由のパッチ適用完了を意味する）
-	// タイムアウトはplaywright.config.tsのexpect.timeoutで一元管理
-	await expect(page.locator("#app h1.kt-title")).toBeVisible();
-}
-
-/**
- * ページに遷移し、初期レンダリング完了まで待機するヘルパー
- * WebSocketオブジェクトが不要なテスト向け
- */
-async function gotoAndWait(page: Page): Promise<void> {
-	await page.goto("/");
-	await waitForInitialRender(page);
-}
 
 /**
  * WebSocket接続を取得し、初期レンダリング完了まで待機するヘルパー
@@ -152,30 +134,33 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75");
 	});
 
-	// TODO: These tests are skipped due to a race condition between Playwright's fill/selectOption
-	// and the replaceRoot mechanism. When replaceRoot replaces the input element mid-interaction,
-	// the event may not be properly sent. This needs further investigation.
-	// See: https://github.com/watany-dev/kantan-ui/issues (to be filed)
+	// TODO: These tests are skipped due to evaluate()-based event dispatch not
+	// triggering WebSocket sends. The event delegation on #app doesn't receive
+	// events dispatched via evaluate(). Investigation needed for a proper fix.
+	// Tracked for Week5+ improvements.
 	test.skip("should update text input value", async ({ page }) => {
 		await gotoAndWait(page);
 
-		// テキスト入力フィールドをクリックしてフォーカス
-		await page.click("#name_input");
+		const textInput = page.locator("#name_input");
 
-		// 既存のテキストをクリアして新しいテキストを入力
-		await page.fill("#name_input", "Alice");
+		await textInput.evaluate((el: HTMLInputElement) => {
+			el.value = "Alice";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
 
-		// 結果セクションに反映されることを確認
 		await expect(page.locator("#app")).toContainText("Hello, Alice!");
 	});
 
 	test.skip("should update selectbox value", async ({ page }) => {
 		await gotoAndWait(page);
 
-		// セレクトボックスで新しい値を選択
-		await page.selectOption("#color_select", "green");
+		const select = page.locator("#color_select");
 
-		// 値が反映されることを確認（Session State Debugセクション）
+		await select.evaluate((el: HTMLSelectElement) => {
+			el.value = "green";
+			el.dispatchEvent(new Event("change", { bubbles: true }));
+		});
+
 		await expect(page.locator("pre")).toContainText('"color": "green"');
 	});
 
