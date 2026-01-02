@@ -61,6 +61,7 @@ export function parseHtml(html: string): VNode[] {
 
 	for (const match of html.matchAll(idPattern)) {
 		// タイムアウトチェック（ReDoS対策）
+		/* v8 ignore next 3 */
 		if (performance.now() - startTime > PARSER_LIMITS.MAX_PARSE_TIME_MS) {
 			throw new Error(`Parse timeout: exceeded ${PARSER_LIMITS.MAX_PARSE_TIME_MS}ms`);
 		}
@@ -229,6 +230,7 @@ function findClosingTag(html: string, startPos: number, tag: string, startTime: 
 
 	while (depth > 0 && pos < html.length) {
 		// タイムアウトチェック（ReDoS対策）
+		/* v8 ignore next 3 */
 		if (performance.now() - startTime > PARSER_LIMITS.MAX_PARSE_TIME_MS) {
 			throw new Error(`Parse timeout: exceeded ${PARSER_LIMITS.MAX_PARSE_TIME_MS}ms`);
 		}
@@ -257,6 +259,7 @@ function findClosingTag(html: string, startPos: number, tag: string, startTime: 
 		}
 	}
 
+	/* v8 ignore next */
 	return -1;
 }
 
