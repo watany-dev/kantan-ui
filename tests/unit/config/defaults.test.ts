@@ -3,6 +3,7 @@ import {
 	DEFAULT_CLIENT_CONFIG,
 	DEFAULT_CONFIG,
 	DEFAULT_SESSION_CONFIG,
+	DEFAULT_STREAMING_CONFIG,
 	resolveConfig,
 } from "../../../src/config";
 
@@ -35,10 +36,21 @@ describe("Config Defaults", () => {
 		});
 	});
 
+	describe("DEFAULT_STREAMING_CONFIG", () => {
+		it("should be disabled by default", () => {
+			expect(DEFAULT_STREAMING_CONFIG.enabled).toBe(false);
+		});
+
+		it("should have correct default flush threshold", () => {
+			expect(DEFAULT_STREAMING_CONFIG.flushThreshold).toBe(3);
+		});
+	});
+
 	describe("DEFAULT_CONFIG", () => {
-		it("should contain session and client configs", () => {
+		it("should contain session, client, and streaming configs", () => {
 			expect(DEFAULT_CONFIG.session).toEqual(DEFAULT_SESSION_CONFIG);
 			expect(DEFAULT_CONFIG.client).toEqual(DEFAULT_CLIENT_CONFIG);
+			expect(DEFAULT_CONFIG.streaming).toEqual(DEFAULT_STREAMING_CONFIG);
 		});
 	});
 });
@@ -49,6 +61,7 @@ describe("resolveConfig", () => {
 
 		expect(resolved.session).toEqual(DEFAULT_SESSION_CONFIG);
 		expect(resolved.client).toEqual(DEFAULT_CLIENT_CONFIG);
+		expect(resolved.streaming).toEqual(DEFAULT_STREAMING_CONFIG);
 	});
 
 	it("should return defaults when empty config provided", () => {
@@ -56,6 +69,7 @@ describe("resolveConfig", () => {
 
 		expect(resolved.session).toEqual(DEFAULT_SESSION_CONFIG);
 		expect(resolved.client).toEqual(DEFAULT_CLIENT_CONFIG);
+		expect(resolved.streaming).toEqual(DEFAULT_STREAMING_CONFIG);
 	});
 
 	it("should override session config values", () => {
@@ -86,7 +100,19 @@ describe("resolveConfig", () => {
 		expect(resolved.client.maxReconnectDelay).toBe(DEFAULT_CLIENT_CONFIG.maxReconnectDelay);
 	});
 
-	it("should override both session and client configs", () => {
+	it("should override streaming config values", () => {
+		const resolved = resolveConfig({
+			streaming: {
+				enabled: true,
+				flushThreshold: 5,
+			},
+		});
+
+		expect(resolved.streaming.enabled).toBe(true);
+		expect(resolved.streaming.flushThreshold).toBe(5);
+	});
+
+	it("should override all config sections", () => {
 		const resolved = resolveConfig({
 			session: {
 				sessionKey: "my-session",
@@ -98,6 +124,10 @@ describe("resolveConfig", () => {
 				baseReconnectDelay: 2000,
 				maxReconnectDelay: 60000,
 			},
+			streaming: {
+				enabled: true,
+				flushThreshold: 10,
+			},
 		});
 
 		expect(resolved.session.sessionKey).toBe("my-session");
@@ -106,6 +136,8 @@ describe("resolveConfig", () => {
 		expect(resolved.client.maxReconnectAttempts).toBe(3);
 		expect(resolved.client.baseReconnectDelay).toBe(2000);
 		expect(resolved.client.maxReconnectDelay).toBe(60000);
+		expect(resolved.streaming.enabled).toBe(true);
+		expect(resolved.streaming.flushThreshold).toBe(10);
 	});
 
 	it("should not mutate the original config", () => {

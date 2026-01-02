@@ -1,4 +1,10 @@
-import type { ClientConfig, KantanConfig, ResolvedKantanConfig, SessionConfig } from "./types";
+import type {
+	ClientConfig,
+	KantanConfig,
+	ResolvedKantanConfig,
+	SessionConfig,
+	StreamingConfig,
+} from "./types";
 
 /**
  * セッション設定のデフォルト値
@@ -19,11 +25,20 @@ export const DEFAULT_CLIENT_CONFIG: Required<ClientConfig> = {
 };
 
 /**
+ * ストリーミング設定のデフォルト値
+ */
+export const DEFAULT_STREAMING_CONFIG: Required<StreamingConfig> = {
+	enabled: false, // Phase 1では無効
+	flushThreshold: 3,
+};
+
+/**
  * 全設定のデフォルト値
  */
 export const DEFAULT_CONFIG: ResolvedKantanConfig = {
 	session: DEFAULT_SESSION_CONFIG,
 	client: DEFAULT_CLIENT_CONFIG,
+	streaming: DEFAULT_STREAMING_CONFIG,
 };
 
 /**
@@ -38,6 +53,10 @@ export function resolveConfig(config?: KantanConfig): ResolvedKantanConfig {
 		client: {
 			...DEFAULT_CLIENT_CONFIG,
 			...config?.client,
+		},
+		streaming: {
+			...DEFAULT_STREAMING_CONFIG,
+			...config?.streaming,
 		},
 	};
 }

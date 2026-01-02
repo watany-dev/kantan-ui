@@ -6,6 +6,20 @@ export interface SessionState {
 	[key: string]: unknown;
 }
 
+// イベントキューアイテム
+export interface EventQueueItem {
+	widgetId: string;
+	value: unknown;
+	timestamp: number;
+	resolve: (result: EventProcessResult) => void;
+}
+
+// イベント処理結果
+export interface EventProcessResult {
+	html: string;
+	patches: unknown[];
+}
+
 // セッション情報
 export interface Session {
 	id: SessionId;

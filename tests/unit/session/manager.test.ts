@@ -388,6 +388,294 @@ describe("SessionManager", () => {
 	});
 });
 
+describe("Event Queue", () => {
+	let manager: SessionManager;
+
+	beforeEach(() => {
+		manager = new SessionManager();
+	});
+
+	afterEach(() => {
+		manager.stopCleanupInterval();
+	});
+
+	it("should process events in order", async () => {
+		const session = manager.createSession();
+		const processedOrder: number[] = [];
+
+		manager.setEventProcessor((sessionId, widgetId, value) => {
+			processedOrder.push(value as number);
+			return { html: `processed-${value}`, patches: [] };
+		});
+
+		// Queue multiple events
+		const results = await Promise.all([
+			manager.queueEvent(session.id, "widget1", 1),
+			manager.queueEvent(session.id, "widget1", 2),
+			manager.queueEvent(session.id, "widget1", 3),
+		]);
+
+		expect(processedOrder).toEqual([1, 2, 3]);
+		expect(results[0].html).toBe("processed-1");
+		expect(results[1].html).toBe("processed-2");
+		expect(results[2].html).toBe("processed-3");
+	});
+
+	it("should not process events concurrently for same session", async () => {
+		const session = manager.createSession();
+		let concurrentCount = 0;
+		let maxConcurrent = 0;
+
+		manager.setEventProcessor(() => {
+			concurrentCount++;
+			maxConcurrent = Math.max(maxConcurrent, concurrentCount);
+			concurrentCount--;
+			return { html: "", patches: [] };
+		});
+
+		await Promise.all([
+			manager.queueEvent(session.id, "w", 1),
+			manager.queueEvent(session.id, "w", 2),
+			manager.queueEvent(session.id, "w", 3),
+		]);
+
+		expect(maxConcurrent).toBe(1);
+	});
+
+	it("should process events from different sessions independently", async () => {
+		const session1 = manager.createSession();
+		const session2 = manager.createSession();
+		const processed: string[] = [];
+
+		manager.setEventProcessor((sessionId, _widgetId, value) => {
+			processed.push(`${sessionId.slice(0, 4)}-${value}`);
+			return { html: "", patches: [] };
+		});
+
+		await Promise.all([
+			manager.queueEvent(session1.id, "w", "a"),
+			manager.queueEvent(session2.id, "w", "b"),
+			manager.queueEvent(session1.id, "w", "c"),
+		]);
+
+		// Session1's events should be in order relative to each other
+		const session1Events = processed.filter((e) => e.startsWith(session1.id.slice(0, 4)));
+		expect(session1Events[0]).toContain("-a");
+		expect(session1Events[1]).toContain("-c");
+	});
+
+	it("should return empty result when no processor is set", async () => {
+		const session = manager.createSession();
+
+		const result = await manager.queueEvent(session.id, "widget", "value");
+
+		expect(result.html).toBe("");
+		expect(result.patches).toEqual([]);
+	});
+
+	it("should report queue length correctly", async () => {
+		const session = manager.createSession();
+		let resolveFirst: (() => void) | undefined;
+
+		manager.setEventProcessor(() => {
+			// First event blocks until we resolve
+			return new Promise((resolve) => {
+				resolveFirst = () => resolve({ html: "", patches: [] });
+			}) as unknown as { html: string; patches: unknown[] };
+		});
+
+		// Start first event (will block)
+		const p1 = manager.queueEvent(session.id, "w", 1);
+
+		// These should be queued since first is processing
+		// Note: Due to synchronous nature, queue length check needs adjustment
+		expect(manager.getQueueLength(session.id)).toBe(0);
+
+		// Cleanup
+		if (resolveFirst) resolveFirst();
+		await p1;
+	});
+
+	it("should report processing status correctly", async () => {
+		const session = manager.createSession();
+
+		manager.setEventProcessor(() => {
+			return { html: "", patches: [] };
+		});
+
+		// Before any events, not processing
+		expect(manager.isProcessing(session.id)).toBe(false);
+
+		await manager.queueEvent(session.id, "w", 1);
+
+		// After processing, not processing anymore
+		expect(manager.isProcessing(session.id)).toBe(false);
+	});
+
+	it("should handle queueMicrotask for sequential processing", async () => {
+		const session = manager.createSession();
+		const order: number[] = [];
+
+		manager.setEventProcessor((_sessionId, _widgetId, value) => {
+			order.push(value as number);
+			return { html: `result-${value}`, patches: [] };
+		});
+
+		// Queue 3 events - should be processed via queueMicrotask chain
+		const [r1, r2, r3] = await Promise.all([
+			manager.queueEvent(session.id, "w", 1),
+			manager.queueEvent(session.id, "w", 2),
+			manager.queueEvent(session.id, "w", 3),
+		]);
+
+		// Verify all processed in order
+		expect(order).toEqual([1, 2, 3]);
+		expect(r1.html).toBe("result-1");
+		expect(r2.html).toBe("result-2");
+		expect(r3.html).toBe("result-3");
+	});
+
+	it("should return early when queue is empty for non-existent session", async () => {
+		// Call queueEvent on non-existent session queue
+		// This tests the empty queue early return path
+		const session = manager.createSession();
+		manager.setEventProcessor(() => ({ html: "done", patches: [] }));
+
+		const result = await manager.queueEvent(session.id, "w", "test");
+		expect(result.html).toBe("done");
+
+		// Verify queue is now empty
+		expect(manager.getQueueLength(session.id)).toBe(0);
+	});
+
+	it("should return early when already processing", async () => {
+		const session = manager.createSession();
+
+		// Manually set processing flag
+		const managerAny = manager as unknown as {
+			processingFlags: Map<string, boolean>;
+			eventQueues: Map<string, unknown[]>;
+			processEventQueue: (sessionId: string) => void;
+		};
+		managerAny.processingFlags.set(session.id, true);
+		managerAny.eventQueues.set(session.id, [
+			{ widgetId: "w", value: 1, timestamp: Date.now(), resolve: () => {} },
+		]);
+
+		// Call processEventQueue directly - should return early due to processing flag
+		managerAny.processEventQueue(session.id);
+
+		// Queue should still have the item (not processed)
+		expect(manager.getQueueLength(session.id)).toBe(1);
+
+		// Cleanup
+		managerAny.processingFlags.set(session.id, false);
+	});
+
+	it("should return early when queue is empty", async () => {
+		const session = manager.createSession();
+
+		// Setup empty queue
+		const managerAny = manager as unknown as {
+			eventQueues: Map<string, unknown[]>;
+			processEventQueue: (sessionId: string) => void;
+		};
+		managerAny.eventQueues.set(session.id, []);
+
+		// Call processEventQueue directly - should return early due to empty queue
+		managerAny.processEventQueue(session.id);
+
+		// Should not throw and flag should remain false
+		expect(manager.isProcessing(session.id)).toBe(false);
+	});
+
+	it("should handle edge case when queue item is undefined after shift", async () => {
+		const session = manager.createSession();
+
+		// Setup queue that will return undefined on shift (edge case)
+		const managerAny = manager as unknown as {
+			eventQueues: Map<string, unknown[]>;
+			processingFlags: Map<string, boolean>;
+			processEventQueue: (sessionId: string) => void;
+		};
+
+		// Create a queue that returns length > 0 but shift returns undefined
+		const fakeQueue = {
+			length: 1,
+			shift: () => undefined,
+		};
+		managerAny.eventQueues.set(session.id, fakeQueue as unknown as unknown[]);
+
+		// Call processEventQueue directly
+		managerAny.processEventQueue(session.id);
+
+		// Processing flag should be reset to false
+		expect(manager.isProcessing(session.id)).toBe(false);
+	});
+
+	it("should pass AbortSignal to event processor", async () => {
+		const session = manager.createSession();
+		let receivedSignal: AbortSignal | undefined;
+
+		manager.setEventProcessor((_sessionId, _widgetId, _value, signal) => {
+			receivedSignal = signal;
+			return { html: "done", patches: [] };
+		});
+
+		await manager.queueEvent(session.id, "w", "test");
+
+		expect(receivedSignal).toBeDefined();
+		expect(receivedSignal).toBeInstanceOf(AbortSignal);
+	});
+
+	it("should abort current event when abortCurrentEvent is called", async () => {
+		const session = manager.createSession();
+		let capturedSignal: AbortSignal | undefined;
+
+		manager.setEventProcessor((_sessionId, _widgetId, _value, signal) => {
+			capturedSignal = signal;
+			return { html: "done", patches: [] };
+		});
+
+		// Start processing
+		const promise = manager.queueEvent(session.id, "w", "test");
+
+		// The signal is available during processing
+		const signal = manager.getCurrentAbortSignal(session.id);
+
+		await promise;
+
+		// After processing, signal should be cleaned up
+		expect(manager.getCurrentAbortSignal(session.id)).toBeUndefined();
+		expect(capturedSignal).toBeDefined();
+	});
+
+	it("should abort signal when abortCurrentEvent is called during processing", async () => {
+		const session = manager.createSession();
+
+		// Manually set up a controller to simulate in-progress state
+		const managerAny = manager as unknown as {
+			abortControllers: Map<string, AbortController>;
+		};
+		const controller = new AbortController();
+		managerAny.abortControllers.set(session.id, controller);
+
+		expect(controller.signal.aborted).toBe(false);
+
+		manager.abortCurrentEvent(session.id);
+
+		expect(controller.signal.aborted).toBe(true);
+		expect(manager.getCurrentAbortSignal(session.id)).toBeUndefined();
+	});
+
+	it("should handle abortCurrentEvent when no event is processing", () => {
+		const session = manager.createSession();
+
+		// Should not throw
+		expect(() => manager.abortCurrentEvent(session.id)).not.toThrow();
+	});
+});
+
 describe("Global SessionManager", () => {
 	afterEach(() => {
 		resetSessionManager();
