@@ -8,6 +8,7 @@ export type EventProcessor = (
 	sessionId: SessionId,
 	widgetId: string,
 	value: unknown,
+	signal?: AbortSignal,
 ) => EventProcessResult;
 
 export class SessionManager {
@@ -27,6 +28,7 @@ export class SessionManager {
 	private eventQueues = new Map<SessionId, EventQueueItem[]>();
 	private processingFlags = new Map<SessionId, boolean>();
 	private eventProcessor: EventProcessor | null = null;
+	private abortControllers = new Map<SessionId, AbortController>();
 
 	constructor(config: SessionConfig = {}) {
 		this.config = {
@@ -195,6 +197,20 @@ export class SessionManager {
 		});
 	}
 
+	// 処理中のイベントを中断
+	abortCurrentEvent(sessionId: SessionId): void {
+		const controller = this.abortControllers.get(sessionId);
+		if (controller) {
+			controller.abort();
+			this.abortControllers.delete(sessionId);
+		}
+	}
+
+	// 現在のAbortSignalを取得（テスト用）
+	getCurrentAbortSignal(sessionId: SessionId): AbortSignal | undefined {
+		return this.abortControllers.get(sessionId)?.signal;
+	}
+
 	// イベントキューを処理
 	private processEventQueue(sessionId: SessionId): void {
 		// 既に処理中なら何もしない
@@ -217,14 +233,21 @@ export class SessionManager {
 			return;
 		}
 
+		// AbortControllerを作成
+		const controller = new AbortController();
+		this.abortControllers.set(sessionId, controller);
+
 		try {
 			if (this.eventProcessor) {
-				const result = this.eventProcessor(sessionId, item.widgetId, item.value);
+				const result = this.eventProcessor(sessionId, item.widgetId, item.value, controller.signal);
 				item.resolve(result);
 			} else {
 				item.resolve({ html: "", patches: [] });
 			}
 		} finally {
+			// AbortControllerをクリーンアップ
+			this.abortControllers.delete(sessionId);
+
 			// 処理中フラグを下ろす
 			this.processingFlags.set(sessionId, false);
 

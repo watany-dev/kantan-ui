@@ -612,6 +612,68 @@ describe("Event Queue", () => {
 		// Processing flag should be reset to false
 		expect(manager.isProcessing(session.id)).toBe(false);
 	});
+
+	it("should pass AbortSignal to event processor", async () => {
+		const session = manager.createSession();
+		let receivedSignal: AbortSignal | undefined;
+
+		manager.setEventProcessor((_sessionId, _widgetId, _value, signal) => {
+			receivedSignal = signal;
+			return { html: "done", patches: [] };
+		});
+
+		await manager.queueEvent(session.id, "w", "test");
+
+		expect(receivedSignal).toBeDefined();
+		expect(receivedSignal).toBeInstanceOf(AbortSignal);
+	});
+
+	it("should abort current event when abortCurrentEvent is called", async () => {
+		const session = manager.createSession();
+		let capturedSignal: AbortSignal | undefined;
+
+		manager.setEventProcessor((_sessionId, _widgetId, _value, signal) => {
+			capturedSignal = signal;
+			return { html: "done", patches: [] };
+		});
+
+		// Start processing
+		const promise = manager.queueEvent(session.id, "w", "test");
+
+		// The signal is available during processing
+		const signal = manager.getCurrentAbortSignal(session.id);
+
+		await promise;
+
+		// After processing, signal should be cleaned up
+		expect(manager.getCurrentAbortSignal(session.id)).toBeUndefined();
+		expect(capturedSignal).toBeDefined();
+	});
+
+	it("should abort signal when abortCurrentEvent is called during processing", async () => {
+		const session = manager.createSession();
+
+		// Manually set up a controller to simulate in-progress state
+		const managerAny = manager as unknown as {
+			abortControllers: Map<string, AbortController>;
+		};
+		const controller = new AbortController();
+		managerAny.abortControllers.set(session.id, controller);
+
+		expect(controller.signal.aborted).toBe(false);
+
+		manager.abortCurrentEvent(session.id);
+
+		expect(controller.signal.aborted).toBe(true);
+		expect(manager.getCurrentAbortSignal(session.id)).toBeUndefined();
+	});
+
+	it("should handle abortCurrentEvent when no event is processing", () => {
+		const session = manager.createSession();
+
+		// Should not throw
+		expect(() => manager.abortCurrentEvent(session.id)).not.toThrow();
+	});
 });
 
 describe("Global SessionManager", () => {
