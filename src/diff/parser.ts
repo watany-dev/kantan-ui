@@ -75,7 +75,9 @@ export function parseHtml(html: string): VNode[] {
 
 		const [fullMatch, tag, id, closeTag] = match;
 
-		// 必須フィールドの存在チェック
+		// 必須フィールドの存在チェック（TypeScript noUncheckedIndexedAccess対応）
+		// 正規表現がマッチすれば値は常に存在するが、型安全のためのガード
+		/* v8 ignore next 3 */
 		if (tag === undefined || id === undefined || closeTag === undefined) {
 			continue;
 		}
