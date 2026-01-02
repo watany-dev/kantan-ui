@@ -7,6 +7,17 @@ import { getContext } from "../runtime/context";
 import { getWidgetValue, hasWidgetValue, setWidgetValue } from "./registry";
 
 /**
+ * ウィジェット状態を初期化する共通ヘルパー
+ * 状態が存在しない場合のみ初期値を設定し、現在値を返す
+ */
+function initializeWidgetState<T>(widgetId: string, initialValue: T): T {
+	if (!hasWidgetValue(widgetId)) {
+		setWidgetValue(widgetId, initialValue);
+	}
+	return getWidgetValue<T>(widgetId, initialValue);
+}
+
+/**
  * ボタンが押されたかどうかを判定
  */
 export function isButtonPressed(widgetId: string): boolean {
@@ -37,13 +48,7 @@ export function initializeSliderState(
 	min: number,
 	defaultValue?: number,
 ): number {
-	const initial = defaultValue ?? min;
-
-	if (!hasWidgetValue(widgetId)) {
-		setWidgetValue(widgetId, initial);
-	}
-
-	return getWidgetValue<number>(widgetId, initial);
+	return initializeWidgetState(widgetId, defaultValue ?? min);
 }
 
 /**
@@ -51,13 +56,7 @@ export function initializeSliderState(
  * 初期値をstateに保存し、現在値を返す
  */
 export function initializeTextInputState(widgetId: string, defaultValue?: string): string {
-	const initial = defaultValue ?? "";
-
-	if (!hasWidgetValue(widgetId)) {
-		setWidgetValue(widgetId, initial);
-	}
-
-	return getWidgetValue<string>(widgetId, initial);
+	return initializeWidgetState(widgetId, defaultValue ?? "");
 }
 
 /**
@@ -81,11 +80,5 @@ export function initializeSelectboxState(
 	options: string[],
 	defaultValue?: string,
 ): string {
-	const initial = defaultValue ?? options[0] ?? "";
-
-	if (!hasWidgetValue(widgetId)) {
-		setWidgetValue(widgetId, initial);
-	}
-
-	return getWidgetValue<string>(widgetId, initial);
+	return initializeWidgetState(widgetId, defaultValue ?? options[0] ?? "");
 }

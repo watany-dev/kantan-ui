@@ -52,6 +52,11 @@ export function getWidgetValue<T>(widgetId: string, defaultValue: T): T {
 		return defaultValue;
 	}
 
+	// 非プリミティブ型の場合は開発時に警告
+	if (!validator && typeof defaultValue === "object" && defaultValue !== null) {
+		console.debug(`[dev] Widget "${widgetId}" uses non-primitive type. Type validation skipped.`);
+	}
+
 	return value as T;
 }
 
