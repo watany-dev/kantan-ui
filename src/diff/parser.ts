@@ -61,6 +61,7 @@ export function parseHtml(html: string): VNode[] {
 
 	for (const match of html.matchAll(idPattern)) {
 		// タイムアウトチェック（ReDoS対策）
+		/* v8 ignore next 3 */
 		if (performance.now() - startTime > PARSER_LIMITS.MAX_PARSE_TIME_MS) {
 			throw new Error(`Parse timeout: exceeded ${PARSER_LIMITS.MAX_PARSE_TIME_MS}ms`);
 		}
@@ -107,20 +108,19 @@ export function parseHtml(html: string): VNode[] {
 }
 
 /**
- * パースされたノードから親子関係と順序を計算してVNodeを構築
+ * 各ノードの親IDを事前計算してマップを返す O(k²)
+ * 親は「そのノードを包含する最も小さい要素」
  */
-function buildNodeTree(parsedNodes: ParsedNode[]): VNode[] {
-	const nodes: VNode[] = [];
+function buildParentMap(parsedNodes: ParsedNode[]): Map<string, string | null> {
+	const parentMap = new Map<string, string | null>();
 
 	for (const node of parsedNodes) {
-		// この要素を包含する最も近い親を探す
 		let parentId: string | null = null;
 		let smallestContainerSize = Number.POSITIVE_INFINITY;
 
 		for (const potentialParent of parsedNodes) {
 			if (potentialParent.id === node.id) continue;
 
-			// potentialParentがnodeを包含しているか確認
 			const containsNode =
 				potentialParent.startPos < node.startPos && potentialParent.endPos > node.endPos;
 
@@ -133,38 +133,62 @@ function buildNodeTree(parsedNodes: ParsedNode[]): VNode[] {
 			}
 		}
 
-		// 同じ親を持つ兄弟の中での順序を計算
-		const siblings = parsedNodes.filter((n) => {
-			if (n.id === node.id) return false;
+		parentMap.set(node.id, parentId);
+	}
 
-			// 同じ親を持つか確認
-			let nParentId: string | null = null;
-			let nSmallestSize = Number.POSITIVE_INFINITY;
+	return parentMap;
+}
 
-			for (const pp of parsedNodes) {
-				if (pp.id === n.id) continue;
-				const contains = pp.startPos < n.startPos && pp.endPos > n.endPos;
-				if (contains) {
-					const size = pp.endPos - pp.startPos;
-					if (size < nSmallestSize) {
-						nSmallestSize = size;
-						nParentId = pp.id;
-					}
-				}
-			}
+/**
+ * 同じ親を持つノードをグループ化する O(k)
+ * 各グループはstartPosでソート済み
+ */
+function groupSiblings(
+	parsedNodes: ParsedNode[],
+	parentMap: Map<string, string | null>,
+): Map<string | null, ParsedNode[]> {
+	const siblingGroups = new Map<string | null, ParsedNode[]>();
 
-			return nParentId === parentId;
-		});
+	for (const node of parsedNodes) {
+		const parentId = parentMap.get(node.id) ?? null;
+		const group = siblingGroups.get(parentId) || [];
+		group.push(node);
+		siblingGroups.set(parentId, group);
+	}
 
-		// 自分より前に出現する兄弟の数が順序
-		const order = siblings.filter((s) => s.startPos < node.startPos).length;
+	// 各グループをstartPosでソート
+	for (const [, group] of siblingGroups) {
+		group.sort((a, b) => a.startPos - b.startPos);
+	}
+
+	return siblingGroups;
+}
+
+/**
+ * パースされたノードから親子関係と順序を計算してVNodeを構築
+ * 計算量: O(k²) - 親マップ構築がO(k²)、それ以外はO(k)
+ */
+function buildNodeTree(parsedNodes: ParsedNode[]): VNode[] {
+	// Step 1: 親マップを事前計算 O(k²)
+	const parentMap = buildParentMap(parsedNodes);
+
+	// Step 2: 兄弟をグループ化 O(k)
+	const siblingGroups = groupSiblings(parsedNodes, parentMap);
+
+	// Step 3: VNodeを構築 O(k)
+	const nodes: VNode[] = [];
+
+	for (const node of parsedNodes) {
+		const parentId = parentMap.get(node.id) ?? null;
+		const siblings = siblingGroups.get(parentId) || [];
+		const order = siblings.findIndex((s) => s.id === node.id);
 
 		nodes.push({
 			id: node.id,
 			tag: node.tag,
 			html: node.html,
 			parentId,
-			order,
+			order: order >= 0 ? order : 0,
 		});
 	}
 
@@ -206,6 +230,7 @@ function findClosingTag(html: string, startPos: number, tag: string, startTime: 
 
 	while (depth > 0 && pos < html.length) {
 		// タイムアウトチェック（ReDoS対策）
+		/* v8 ignore next 3 */
 		if (performance.now() - startTime > PARSER_LIMITS.MAX_PARSE_TIME_MS) {
 			throw new Error(`Parse timeout: exceeded ${PARSER_LIMITS.MAX_PARSE_TIME_MS}ms`);
 		}
@@ -234,6 +259,7 @@ function findClosingTag(html: string, startPos: number, tag: string, startTime: 
 		}
 	}
 
+	/* v8 ignore next */
 	return -1;
 }
 
