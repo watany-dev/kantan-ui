@@ -1151,8 +1151,8 @@ export function getWidgetValue<T extends WidgetValue>(
   - `src/kt/widget-helper.ts`: `wrapWidget()` ヘルパー導入
 
 ### 低優先度
-- [ ] ドキュメントが実装と一致する
-  - 未修正: `docs/diff-module.md` の大文字タグの記述が実装と不整合
+- [x] ドキュメントが実装と一致する
+  - 修正済み: `docs/diff-module.md` の大文字タグの記述を更新
   - 実装は `/gi` フラグで大文字対応済み
 - [ ] 未使用キャプチャグループの最適化
   - 未修正: `src/diff/parser.ts:74` の `_beforeId`, `_afterId`
@@ -1165,7 +1165,6 @@ export function getWidgetValue<T extends WidgetValue>(
 |---|------|--------------|--------|
 | 3 | フォーカス消失 | `src/app.ts` (client) | 高 |
 | 6 | initializeWidgetState重複 | `src/widgets/core.ts` | 低 |
-| 8 | ドキュメント不整合 | `docs/diff-module.md` | 低 |
 | 9 | 未使用キャプチャグループ | `src/diff/parser.ts` | 低 |
 | 10 | 型バリデーション警告 | `src/widgets/registry.ts` | 低 |
 

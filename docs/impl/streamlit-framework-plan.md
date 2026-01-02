@@ -12,24 +12,25 @@ Hono を土台に Streamlit 風（操作のたびに rerun・サーバ側 state�
 
 ## 現在のリポジトリ状況
 
-### 実装済み（Week 1-2 完了）
+### 実装済み（Week 1-3 完了）
 
 - Honoの基本セットアップ (`src/index.ts`)
 - テストインフラ（Vitest + Playwright）
 - CI/CDパイプライン（lint, build, test, e2e, security）
 - 開発原則ドキュメント (`claude.md`)
 - **WebSocket接続** (`src/websocket/`)
-- **セッション管理** (`src/session/`) - session_state実装済み
+- **セッション管理** (`src/session/`) - session_state, createTypedSessionState実装済み
 - **基本Widget** (`src/widgets/`) - button, slider, text_input, selectbox
 - **rerunサイクル** (`src/runtime/`)
-- **replaceRootによる全量更新**
+- **宣言的Widget API** (`src/kt/`) - kt.button, kt.slider, kt.write等
+- **差分更新プロトコル** (`src/diff/`) - replaceNode, removeNode, insertNode
+- **設定の外部化** (`src/config/`) - セッションTTL、再接続設定等
 
 ### 未実装
 
-- **宣言的Widget API**（現状は手動HTML生成が必要）
-- 差分更新プロトコル（replaceNode）
-- レイアウトコンポーネント
+- レイアウトコンポーネント（columns, sidebar等）
 - ストリーミング更新・Abort機能
+- フォーカス維持機能（replaceNode後のフォーカス復元）
 
 ## 技術選定
 
@@ -172,46 +173,32 @@ function slider(label: string, min: number, max: number, defaultVal: number): nu
 
 ---
 
-### Week 2.5: 宣言的API設計 🎯 次のフェーズ
+### Week 2.5: 宣言的API設計 ✅ 完了
 
 **目標**: Streamlit風の宣言的APIを実現し、手動HTML生成を不要にする
 
-#### 課題（現状の問題点）
-
-現在のAPIは低レベルで、Streamlitの直感的な書き方ができない：
-
-```typescript
-// 現状: 手動でHTML生成 + widgetIdチェックが必要
-const script = () => {
-  const context = getContext();
-  if (context?.event?.widgetId === "btn") {
-    session_state.count++;
-  }
-  return `<button id="btn" onclick="sendEvent('btn', 'clicked')">Click</button>`;
-};
-```
-
 #### タスク
 
-- [ ] **レンダリングコンテキストの導入**
+- [x] **レンダリングコンテキストの導入** (`src/kt/context.ts`)
   - スクリプト実行中にHTMLを自動収集
   - widgetが呼ばれると自動的にHTMLがバッファに追加
   - 最後にバッファを結合して返す
 
-- [ ] **宣言的Widget APIの実装**
+- [x] **宣言的Widget APIの実装** (`src/kt/widgets.ts`)
   - `kt.button(label)` → HTMLを自動出力 + 押されたらtrue
   - `kt.slider(label, min, max, default)` → HTMLを自動出力 + 現在値を返す
   - `kt.text_input(label)` → HTMLを自動出力 + 現在値を返す
   - `kt.selectbox(label, options)` → HTMLを自動出力 + 選択値を返す
 
-- [ ] **出力用APIの実装**
+- [x] **出力用APIの実装** (`src/kt/output.ts`)
   - `kt.write(content)` → テキスト/HTML出力
-  - `kt.markdown(text)` → Markdown出力
   - `kt.title(text)` → タイトル出力
   - `kt.header(text)` / `kt.subheader(text)`
+  - `kt.html(rawHtml)` → 生HTML出力
+  - ~~`kt.markdown(text)`~~ → 未実装（将来対応）
 
-- [ ] **既存widgetのリファクタリング**
-  - 内部で `renderXxx` を呼び、バッファに追加
+- [x] **既存widgetのリファクタリング** (`src/kt/widget-helper.ts`)
+  - `wrapWidget()` ヘルパーでボイラープレートを共通化
   - 戻り値は値のみ（HTMLは自動出力）
 
 #### 目指すAPI
@@ -292,40 +279,45 @@ export const kt = {
 
 ---
 
-### Week 2.6: 既存実装の改善
+### Week 2.6: 既存実装の改善 ✅ 完了
 
 **目標**: Week 2.5のAPIを踏まえ、既存コードを整理・最適化
 
 #### タスク
 
-- [ ] 不要になった低レベルAPIの整理
-- [ ] エラーハンドリングの強化
-- [ ] 型定義の改善（より厳密な型）
-- [ ] ドキュメント更新（README、サンプルコード）
-- [ ] パフォーマンス最適化（不要な再レンダリング防止）
+- [x] 不要になった低レベルAPIの整理（未使用connections削除）
+- [x] エラーハンドリングの強化（JSON.parse try-catch、SessionStateError）
+- [x] 型定義の改善（型ガード関数、createTypedSessionState）
+- [x] パフォーマンス最適化（CSS重複削減、ウィジェットラッピング共通化）
+- [x] 設定の外部化（`src/config/`）
 
 ---
 
-### Week 3: 差分更新（replaceNode）
+### Week 3: 差分更新（replaceNode） ✅ 完了
 
 **目標**: 部分置換による効率的な更新
 
 #### タスク
 
-- [ ] 仮想DOMツリーの生成
+- [x] HTMLパーサーの実装 (`src/diff/parser.ts`)
   - 各要素にユニークIDを付与
-  - ツリー構造の保持
-- [ ] 差分検出アルゴリズム
+  - 親子関係・順序の計算（O(k²)）
+- [x] 差分検出アルゴリズム (`src/diff/differ.ts`)
   - 前回のツリーとの比較
   - 変更されたノードの特定
-- [ ] `replaceNode(id, html)` の実装
-  - 特定ノードのみを置換
-- [ ] プロトコル拡張
+- [x] パッチプロトコル (`src/websocket/types.ts`)
+  - `replaceNode`, `removeNode`, `insertNode` 実装
+  - `app.ts`で差分更新を統合
+- [x] セキュリティ対策
+  - パーサー制限（サイズ、要素数、タイムアウト）
+  - クライアント側XSSチェック
 
 ```typescript
 type Patch =
   | { type: "replaceRoot"; html: string }
-  | { type: "replaceNode"; id: string; html: string };
+  | { type: "replaceNode"; id: string; html: string }
+  | { type: "removeNode"; id: string }
+  | { type: "insertNode"; parentId: string; index: number; html: string };
 ```
 
 ### Week 4: ストリーミング更新 + Abort + 直列化
@@ -464,17 +456,17 @@ type Patch =
 
 ## 次のアクション
 
-1. **Week 2.5 開始**: 宣言的API設計
-   - `src/kt/` ディレクトリの作成
-   - レンダリングコンテキストの実装
-   - `kt` オブジェクトの実装（button, slider, text_input, selectbox）
-   - 出力系API（write, title, header）の実装
-2. 既存デモアプリを新APIで書き直し
-3. ユニットテスト・E2Eテストの追加
-4. **Week 2.6**: 既存実装の改善とドキュメント更新
-5. **Week 3**: 差分更新（replaceNode）へ進む
+1. **Week 4 開始**: ストリーミング更新 + Abort + 直列化
+   - ストリーミング更新の実装
+   - AbortController による中断機能
+   - イベントキューと順序保証
+2. **フォーカス維持機能**: replaceNode後のフォーカス復元
+   - パッチ適用前にフォーカス状態を保存
+   - パッチ適用後にフォーカスを復元
+3. **レイアウトシステム**: `kt.columns()`, `kt.sidebar()` など
+4. **データ表示Widget**: `kt.dataframe()`, `kt.chart()`
 
 ---
 
-*最終更新: 2025-12-29*
-*リポジトリバージョン: v0.0.1（Week 1-2 完了）*
+*最終更新: 2026-01-02*
+*リポジトリバージョン: v0.0.2（Week 1-3 完了）*
