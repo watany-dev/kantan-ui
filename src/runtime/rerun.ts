@@ -42,8 +42,11 @@ export function rerun(script: Script, event?: RerunContext["event"], sessionId?:
 		// セッションIDを設定
 		setCurrentSessionId(sessionId ?? null);
 
-		// コンテキストを設定
-		setContext({ event, sessionId });
+		// コンテキストを設定（undefinedの場合はプロパティを省略）
+		const ctx: RerunContext = {};
+		if (event !== undefined) ctx.event = event;
+		if (sessionId !== undefined) ctx.sessionId = sessionId;
+		setContext(ctx);
 
 		// レンダリングコンテキストを設定
 		setRenderContext(renderContext);

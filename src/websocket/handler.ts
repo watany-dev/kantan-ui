@@ -11,10 +11,18 @@ export interface WebSocketHandlers {
 }
 
 export function createWebSocketHandler(handlers: WebSocketHandlers) {
-	return upgradeWebSocket(() => ({
-		onOpen: handlers.onOpen,
-		onMessage: handlers.onMessage,
-		onClose: handlers.onClose,
-		onError: handlers.onError,
-	}));
+	return upgradeWebSocket(() => {
+		// exactOptionalPropertyTypes対応: undefinedの場合はプロパティを省略
+		const events: {
+			onOpen?: (evt: Event, ws: WSContext) => void;
+			onMessage?: (message: MessageEvent, ws: WSContext) => void;
+			onClose?: (evt: CloseEvent, ws: WSContext) => void;
+			onError?: (error: Event, ws: WSContext) => void;
+		} = {};
+		if (handlers.onOpen) events.onOpen = handlers.onOpen;
+		if (handlers.onMessage) events.onMessage = handlers.onMessage;
+		if (handlers.onClose) events.onClose = handlers.onClose;
+		if (handlers.onError) events.onError = handlers.onError;
+		return events;
+	});
 }

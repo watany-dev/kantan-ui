@@ -75,6 +75,11 @@ export function parseHtml(html: string): VNode[] {
 
 		const [fullMatch, tag, id, closeTag] = match;
 
+		// 必須フィールドの存在チェック
+		if (tag === undefined || id === undefined || closeTag === undefined) {
+			continue;
+		}
+
 		// IDバリデーション（不正なIDはスキップ）
 		if (!isValidId(id)) {
 			continue;
@@ -84,12 +89,12 @@ export function parseHtml(html: string): VNode[] {
 		const startPos = match.index ?? 0;
 
 		// 自己終了タグでない場合は終了タグまでのHTMLを取得
-		let nodeHtml = fullMatch;
-		let endPos = startPos + fullMatch.length;
+		let nodeHtml = fullMatch ?? "";
+		let endPos = startPos + (fullMatch?.length ?? 0);
 
 		if (!isSelfClosing && closeTag === ">" && match.index !== undefined) {
 			// 終了タグを探す（ネストを考慮した簡易版）
-			const endTagPos = findClosingTag(html, match.index + fullMatch.length, tag, startTime);
+			const endTagPos = findClosingTag(html, match.index + (fullMatch?.length ?? 0), tag, startTime);
 			if (endTagPos !== -1) {
 				nodeHtml = html.substring(match.index, endTagPos);
 				endPos = endTagPos;
