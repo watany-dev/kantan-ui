@@ -94,7 +94,12 @@ export function parseHtml(html: string): VNode[] {
 
 		if (!isSelfClosing && closeTag === ">" && match.index !== undefined) {
 			// 終了タグを探す（ネストを考慮した簡易版）
-			const endTagPos = findClosingTag(html, match.index + (fullMatch?.length ?? 0), tag, startTime);
+			const endTagPos = findClosingTag(
+				html,
+				match.index + (fullMatch?.length ?? 0),
+				tag,
+				startTime,
+			);
 			if (endTagPos !== -1) {
 				nodeHtml = html.substring(match.index, endTagPos);
 				endPos = endTagPos;
