@@ -3,7 +3,6 @@ export {
 	getSessionManager,
 	setSessionManager,
 	resetSessionManager,
-	type EventProcessor,
 } from "./manager";
 export {
 	session_state,
@@ -11,4 +10,3 @@ export {
 	getCurrentSessionId,
 	createTypedSessionState,
 } from "./state";
-export type { EventQueueItem, EventProcessResult } from "./types";
