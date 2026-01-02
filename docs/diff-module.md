@@ -32,7 +32,7 @@ HTML (new) ─┘                           ├─> diff() ─> DiffResult ─> 
 | id属性を持つ要素 | `<div id="widget_0">` | 主要な追跡対象 |
 | 自己終了タグ | `<input id="x" />` | input, br, img等 |
 | ネストされた要素 | 親子関係を自動検出 | 最も近い包含親を特定 |
-| 標準的なHTML5タグ | div, span, button等 | 小文字タグ名のみ |
+| 標準的なHTML5タグ | div, span, button等 | 大文字・小文字両対応 |
 
 ### 非サポート
 
@@ -42,7 +42,6 @@ HTML (new) ─┘                           ├─> diff() ─> DiffResult ─> 
 | カスタム要素 | `<my-component>` - タグパターン非対応 |
 | HTMLコメント | `<!-- comment -->` - 無視される |
 | CDATAセクション | パース対象外 |
-| 大文字タグ名 | `<DIV>` - 正規表現が小文字のみ対応 |
 
 ## 制限事項
 
