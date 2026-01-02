@@ -6,6 +6,8 @@ export interface KantanConfig {
 	session?: SessionConfig;
 	/** クライアント関連の設定 */
 	client?: ClientConfig;
+	/** ストリーミング関連の設定 */
+	streaming?: StreamingConfig;
 }
 
 /**
@@ -33,9 +35,20 @@ export interface ClientConfig {
 }
 
 /**
+ * ストリーミング設定
+ */
+export interface StreamingConfig {
+	/** ストリーミングを有効にするかどうか（デフォルト: false） */
+	enabled?: boolean;
+	/** フラッシュしきい値（何要素ごとにフラッシュするか、デフォルト: 3） */
+	flushThreshold?: number;
+}
+
+/**
  * 全ての設定が必須のバージョン（内部使用）
  */
 export interface ResolvedKantanConfig {
 	session: Required<SessionConfig>;
 	client: Required<ClientConfig>;
+	streaming: Required<StreamingConfig>;
 }
