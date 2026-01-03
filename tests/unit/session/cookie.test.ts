@@ -49,7 +49,10 @@ describe("parseSessionCookie", () => {
 
 	it("should not match partial key names", () => {
 		// kt-session-id-extra というキーがあっても kt-session-id にはマッチしない
-		const result = parseSessionCookie("kt-session-id-extra=wrong; kt-session-id=correct", "kt-session-id");
+		const result = parseSessionCookie(
+			"kt-session-id-extra=wrong; kt-session-id=correct",
+			"kt-session-id",
+		);
 		expect(result).toBe("correct");
 	});
 
