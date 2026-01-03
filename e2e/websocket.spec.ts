@@ -183,3 +183,105 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		);
 	});
 });
+
+test.describe("applyPatch behavior", () => {
+	test("should handle multiple rapid updates without errors", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const incButton = page.locator("#btn_inc");
+
+		// 高速連続クリック（各クリックでパッチが発生）
+		for (let i = 0; i < 5; i++) {
+			await incButton.click();
+		}
+
+		// 最終的な値が正しいことを確認
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 5",
+		);
+
+		// UIが正常に機能していることを確認
+		await expect(incButton).toBeVisible();
+		await expect(incButton).toBeEnabled();
+	});
+
+	test("should maintain DOM integrity after slider value change", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const slider = page.locator("#volume_slider");
+		const sliderLabel = page.locator(".kt-slider-label");
+
+		// 初期値を確認
+		await expect(sliderLabel).toContainText("Volume: 50");
+
+		// スライダーを操作
+		await slider.evaluate((el: HTMLInputElement) => {
+			el.value = "75";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+
+		// パッチ適用後のDOM整合性を確認
+		await expect(sliderLabel).toContainText("Volume: 75");
+
+		// スライダー要素が正しく存在することを確認
+		await expect(slider).toBeVisible();
+		await expect(slider).toHaveAttribute("type", "range");
+		await expect(slider).toHaveAttribute("id", "volume_slider");
+	});
+
+	test("should maintain widget functionality after DOM update", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const incButton = page.locator("#btn_inc");
+		const decButton = page.locator("#btn_dec");
+		const resetButton = page.locator("#btn_reset");
+
+		// インクリメント
+		await incButton.click();
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// デクリメント（DOM更新後もボタンが機能することを確認）
+		await decButton.click();
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 0",
+		);
+
+		// 再度インクリメント
+		await incButton.click();
+		await incButton.click();
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 2",
+		);
+
+		// リセット
+		await resetButton.click();
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 0",
+		);
+	});
+
+	test("should handle concurrent widget interactions", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// 異なるウィジェットを連続操作
+		const incButton = page.locator("#btn_inc");
+		const slider = page.locator("#volume_slider");
+
+		// ボタンクリック
+		await incButton.click();
+
+		// スライダー操作（ボタンのパッチ適用直後）
+		await slider.evaluate((el: HTMLInputElement) => {
+			el.value = "80";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+
+		// 両方の変更が反映されていることを確認
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 80");
+	});
+});
