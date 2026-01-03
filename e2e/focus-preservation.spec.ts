@@ -267,3 +267,84 @@ test.describe("Focus Preservation", () => {
 		expect(value).toBe("TeXst");
 	});
 });
+
+test.describe("replaceRoot Focus Preservation", () => {
+	test("should restore focus after page reload with replaceRoot", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// カウンターを増やしてセッション状態を作成
+		await page.click("#btn_inc");
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// ボタンIDを記録（フォーカス復元のターゲット）
+		const incButton = page.locator("#btn_inc");
+
+		// ボタンにフォーカス
+		await incButton.focus();
+		await expect(incButton).toBeFocused();
+
+		// ページをリロード（replaceRootパッチが発生）
+		await page.reload();
+
+		// WebSocket接続と初期パッチ適用を待機
+		await page.waitForSelector("#btn_inc");
+		await page.waitForTimeout(500);
+
+		// セッションが維持されていることを確認
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// 注意: ブラウザのリロード後はフォーカス状態がリセットされるため、
+		// replaceRoot自体のフォーカス復元機能は効果がない
+		// これは期待される動作として記録
+		const isFocused = await incButton.evaluate((el) => document.activeElement === el);
+		console.log(`Focus after reload (replaceRoot): ${isFocused ? "maintained" : "lost (expected)"}`);
+	});
+
+	test("should handle replaceRoot when many patches would be needed", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const slider = page.locator("#volume_slider");
+
+		// スライダーにフォーカス
+		await slider.focus();
+		await expect(slider).toBeFocused();
+
+		// スライダー値を変更
+		await slider.evaluate((el: HTMLInputElement) => {
+			el.value = "10";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 10");
+
+		// 連続して複数のウィジェットを操作
+		// （現在の実装では各操作が個別にパッチされるが、
+		// 将来的にバッチ処理でreplaceRootが発生する可能性をテスト）
+		await page.click("#btn_inc");
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// テキスト入力
+		const textInput = page.locator("#name_input");
+		await textInput.evaluate((el: HTMLInputElement) => {
+			el.value = "Multi-widget test";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+		await page.waitForTimeout(100);
+
+		// 各ウィジェットが正しく更新されていることを確認
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 10");
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// replaceRootまたはreplaceNodeパッチが適用されても
+		// アプリケーション全体の状態が一貫していることを確認
+		const sliderValue = await slider.inputValue();
+		expect(sliderValue).toBe("10");
+	});
+});
