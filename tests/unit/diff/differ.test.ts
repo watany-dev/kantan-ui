@@ -205,6 +205,85 @@ describe("toWebSocketPatches", () => {
 	});
 });
 
+describe("toWebSocketPatches edge cases", () => {
+	it("should return replaceRoot when hasChanges is true but patches is empty", () => {
+		// ID追跡できない変更（例：IDを持たない要素のみの変更）
+		const result = { patches: [], hasChanges: true };
+		const fullHtml = "<div>full html</div>";
+		const wsPatches = toWebSocketPatches(result, fullHtml);
+
+		expect(wsPatches).toHaveLength(1);
+		expect(wsPatches[0]).toEqual({
+			type: "replaceRoot",
+			html: fullHtml,
+		});
+	});
+
+	it("should handle exactly PATCH_THRESHOLD (10) patches without fallback", () => {
+		// ちょうど10個のパッチはフォールバックしない
+		const patches = Array.from({ length: 10 }, (_, i) => ({
+			type: "replace" as const,
+			id: `btn-${i}`,
+			html: `<button>Button ${i}</button>`,
+		}));
+		const result = { patches, hasChanges: true };
+		const fullHtml = "<div>full html</div>";
+		const wsPatches = toWebSocketPatches(result, fullHtml);
+
+		expect(wsPatches).toHaveLength(10);
+		expect(wsPatches[0].type).toBe("replaceNode");
+	});
+
+	it("should fallback at PATCH_THRESHOLD + 1 (11) patches", () => {
+		// 11個のパッチでフォールバック
+		const patches = Array.from({ length: 11 }, (_, i) => ({
+			type: "replace" as const,
+			id: `btn-${i}`,
+			html: `<button>Button ${i}</button>`,
+		}));
+		const result = { patches, hasChanges: true };
+		const fullHtml = "<div>full html</div>";
+		const wsPatches = toWebSocketPatches(result, fullHtml);
+
+		expect(wsPatches).toHaveLength(1);
+		expect(wsPatches[0].type).toBe("replaceRoot");
+	});
+
+	it("should handle mixed patch types", () => {
+		const result = {
+			patches: [
+				{ type: "replace" as const, id: "a", html: "<div>A</div>" },
+				{ type: "remove" as const, id: "b" },
+				{ type: "insert" as const, parentId: "__root__", index: 0, html: "<div>C</div>" },
+			],
+			hasChanges: true,
+		};
+		const wsPatches = toWebSocketPatches(result, "<div>full</div>");
+
+		expect(wsPatches).toHaveLength(3);
+		expect(wsPatches[0].type).toBe("replaceNode");
+		expect(wsPatches[1].type).toBe("removeNode");
+		expect(wsPatches[2].type).toBe("insertNode");
+	});
+
+	it("should preserve patch order", () => {
+		const result = {
+			patches: [
+				{ type: "replace" as const, id: "first", html: "<div>First</div>" },
+				{ type: "replace" as const, id: "second", html: "<div>Second</div>" },
+				{ type: "replace" as const, id: "third", html: "<div>Third</div>" },
+			],
+			hasChanges: true,
+		};
+		const wsPatches = toWebSocketPatches(result, "<div>full</div>");
+
+		expect(wsPatches).toHaveLength(3);
+		expect((wsPatches[0] as { id: string }).id).toBe("first");
+		expect((wsPatches[1] as { id: string }).id).toBe("second");
+		expect((wsPatches[2] as { id: string }).id).toBe("third");
+	});
+});
+
 describe("diff edge cases", () => {
 	it("should detect element reordering as replace patches", () => {
 		const oldHtml = `
