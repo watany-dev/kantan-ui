@@ -1,5 +1,5 @@
 import { type Page, type WebSocket, expect, test } from "@playwright/test";
-import { gotoAndWait, selectWithRerun, typeWithRerun, waitForInitialRender } from "./helpers";
+import { gotoAndWait, waitForInitialRender } from "./helpers";
 
 // 各テストで空のストレージ状態を使用
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -134,34 +134,34 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75");
 	});
 
-	// TODO: These tests are skipped due to evaluate()-based event dispatch not
-	// triggering WebSocket sends. The event delegation on #app doesn't receive
-	// events dispatched via evaluate(). Investigation needed for a proper fix.
-	// Tracked for Week5+ improvements.
-	test.skip("should update text input value", async ({ page }) => {
+	test("should update text input value", async ({ page }) => {
 		await gotoAndWait(page);
 
 		const textInput = page.locator("#name_input");
 
+		// evaluate()でイベントを発火
 		await textInput.evaluate((el: HTMLInputElement) => {
 			el.value = "Alice";
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		});
 
-		await expect(page.locator("#app")).toContainText("Hello, Alice!");
+		// UIが更新されるか確認（Results セクションにIDを追加したため動作する）
+		await expect(page.locator("#results-card")).toContainText("Hello, Alice!");
 	});
 
-	test.skip("should update selectbox value", async ({ page }) => {
+	test("should update selectbox value", async ({ page }) => {
 		await gotoAndWait(page);
 
 		const select = page.locator("#color_select");
 
+		// selectboxを操作（changeイベントを発火させる）
 		await select.evaluate((el: HTMLSelectElement) => {
 			el.value = "green";
 			el.dispatchEvent(new Event("change", { bubbles: true }));
 		});
 
-		await expect(page.locator("pre")).toContainText('"color": "green"');
+		// UIが更新されるか確認
+		await expect(page.locator("#debug-state")).toContainText('"color": "green"');
 	});
 
 	test("should persist session state across page reload", async ({ page }) => {

@@ -50,7 +50,8 @@ const script = () => {
 		state.counter = 0;
 	}
 
-	kt.write(`Current count: ${state.counter}`);
+	// IDを付与してdiffアルゴリズムが変更を検出できるようにする
+	kt.html(`<div id="counter-display" class="kt-write">Current count: ${state.counter}</div>`);
 
 	kt.divider();
 
@@ -77,8 +78,9 @@ const script = () => {
 	kt.header("Results");
 
 	// カスタムHTMLで結果を表示（スタイル付き）
+	// 注: IDを付与することで diff アルゴリズムが変更を検出できる
 	kt.html(`
-		<div style="background: linear-gradient(135deg, ${color} 0%, ${color}88 100%);
+		<div id="results-card" style="background: linear-gradient(135deg, ${color} 0%, ${color}88 100%);
 		            color: white; padding: 20px; border-radius: 8px; margin: 10px 0;">
 			<h2 style="margin: 0 0 10px 0;">Hello, ${escapeHtml(name)}!</h2>
 			<p style="margin: 0;">Volume: ${volume}%</p>
@@ -93,7 +95,7 @@ const script = () => {
 	// ===== Debug Section =====
 	kt.subheader("Session State (Debug)");
 	kt.html(`
-		<pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;">
+		<pre id="debug-state" style="background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;">
 ${escapeHtml(
 	JSON.stringify(
 		{
