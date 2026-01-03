@@ -768,3 +768,79 @@ describe("isSelfClosingTag coverage", () => {
 		expect(nodes[0].tag).toBe("INPUT");
 	});
 });
+
+describe("parseHtml boundary values", () => {
+	it("should handle HTML at MAX_HTML_SIZE - 1 byte", () => {
+		// MAX_HTML_SIZE - 1 バイトのHTMLを生成
+		const targetSize = PARSER_LIMITS.MAX_HTML_SIZE - 1;
+		const prefix = '<div id="boundary">';
+		const suffix = "</div>";
+		const contentLength = targetSize - prefix.length - suffix.length;
+		const content = "a".repeat(contentLength);
+		const html = `${prefix}${content}${suffix}`;
+
+		expect(html.length).toBe(targetSize);
+		expect(() => parseHtml(html)).not.toThrow();
+
+		const nodes = parseHtml(html);
+		expect(nodes).toHaveLength(1);
+		expect(nodes[0].id).toBe("boundary");
+	});
+
+	it("should handle exactly MAX_ELEMENTS - 1 elements", () => {
+		const numElements = PARSER_LIMITS.MAX_ELEMENTS - 1;
+		const elements = Array.from(
+			{ length: numElements },
+			(_, i) => `<div id="el-${i}">C</div>`,
+		).join("");
+
+		expect(() => parseHtml(elements)).not.toThrow();
+
+		const nodes = parseHtml(elements);
+		expect(nodes).toHaveLength(numElements);
+	});
+
+	it("should handle ID at MAX_ID_LENGTH - 1 characters", () => {
+		const idLength = PARSER_LIMITS.MAX_ID_LENGTH - 1;
+		const id = `a${"b".repeat(idLength - 1)}`;
+		const html = `<div id="${id}">Content</div>`;
+
+		expect(id.length).toBe(idLength);
+		expect(isValidId(id)).toBe(true);
+
+		const nodes = parseHtml(html);
+		expect(nodes).toHaveLength(1);
+		expect(nodes[0].id).toBe(id);
+	});
+
+	it("should handle ID at exactly MAX_ID_LENGTH", () => {
+		const id = `a${"b".repeat(PARSER_LIMITS.MAX_ID_LENGTH - 1)}`;
+		const html = `<div id="${id}">Content</div>`;
+
+		expect(id.length).toBe(PARSER_LIMITS.MAX_ID_LENGTH);
+		expect(isValidId(id)).toBe(true);
+
+		const nodes = parseHtml(html);
+		expect(nodes).toHaveLength(1);
+	});
+
+	it("should reject ID exceeding MAX_ID_LENGTH by 1", () => {
+		const id = `a${"b".repeat(PARSER_LIMITS.MAX_ID_LENGTH)}`;
+		expect(id.length).toBe(PARSER_LIMITS.MAX_ID_LENGTH + 1);
+		expect(isValidId(id)).toBe(false);
+	});
+
+	it("should throw at exactly MAX_HTML_SIZE", () => {
+		const html = "a".repeat(PARSER_LIMITS.MAX_HTML_SIZE + 1);
+		expect(() => parseHtml(html)).toThrow(/HTML size exceeds limit/);
+	});
+
+	it("should throw at exactly MAX_ELEMENTS", () => {
+		const elements = Array.from(
+			{ length: PARSER_LIMITS.MAX_ELEMENTS + 1 },
+			(_, i) => `<div id="el-${i}">C</div>`,
+		).join("");
+
+		expect(() => parseHtml(elements)).toThrow(/Element count exceeds limit/);
+	});
+});
