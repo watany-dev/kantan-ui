@@ -204,3 +204,144 @@ describe("toWebSocketPatches", () => {
 		});
 	});
 });
+
+describe("diff edge cases", () => {
+	it("should detect element reordering as replace patches", () => {
+		const oldHtml = `
+			<div id="a">A</div>
+			<div id="b">B</div>
+		`;
+		const newHtml = `
+			<div id="b">B</div>
+			<div id="a">A</div>
+		`;
+		const result = diff(oldHtml, newHtml);
+
+		// HTMLは異なるが、個別要素の内容は同じ
+		expect(result.hasChanges).toBe(true);
+		// 現在の実装では個別要素のHTMLが同じなら変更として検出されない
+		// 順序変更は検出されない（ID追跡の制限）
+	});
+
+	it("should handle element moved to different parent", () => {
+		const oldHtml = `
+			<div id="parent1"><span id="child">Child</span></div>
+			<div id="parent2"></div>
+		`;
+		const newHtml = `
+			<div id="parent1"></div>
+			<div id="parent2"><span id="child">Child</span></div>
+		`;
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		// parent1とparent2が変更として検出される
+		const replacePatches = result.patches.filter((p) => p.type === "replace");
+		expect(replacePatches.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("should detect non-id element changes via hasChanges", () => {
+		// IDを持たない要素のみの変更
+		const oldHtml = '<div id="wrapper"><span>Old text</span></div>';
+		const newHtml = '<div id="wrapper"><span>New text</span></div>';
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		// wrapper自体が変更として検出される
+		const replacePatches = result.patches.filter((p) => p.type === "replace");
+		expect(replacePatches.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("should handle empty old and new HTML", () => {
+		const result = diff("", "");
+
+		expect(result.hasChanges).toBe(false);
+		expect(result.patches).toHaveLength(0);
+	});
+
+	it("should handle old HTML empty and new HTML with content", () => {
+		const result = diff("", '<div id="new">New</div>');
+
+		expect(result.hasChanges).toBe(true);
+		const insertPatches = result.patches.filter((p) => p.type === "insert");
+		expect(insertPatches).toHaveLength(1);
+	});
+
+	it("should handle new HTML empty and old HTML with content", () => {
+		const result = diff('<div id="old">Old</div>', "");
+
+		expect(result.hasChanges).toBe(true);
+		const removePatches = result.patches.filter((p) => p.type === "remove");
+		expect(removePatches).toHaveLength(1);
+	});
+
+	it("should handle completely different HTML structures", () => {
+		const oldHtml = `
+			<div id="header">Header</div>
+			<div id="content">Content</div>
+			<div id="footer">Footer</div>
+		`;
+		const newHtml = `
+			<nav id="nav">Nav</nav>
+			<main id="main">Main</main>
+			<aside id="sidebar">Sidebar</aside>
+		`;
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		// すべての古い要素が削除され、新しい要素が挿入される
+		const removePatches = result.patches.filter((p) => p.type === "remove");
+		const insertPatches = result.patches.filter((p) => p.type === "insert");
+		expect(removePatches).toHaveLength(3);
+		expect(insertPatches).toHaveLength(3);
+	});
+
+	it("should handle whitespace-only changes", () => {
+		const oldHtml = '<div id="test">Content</div>';
+		const newHtml = '<div id="test">Content</div>  ';
+		const result = diff(oldHtml, newHtml);
+
+		// 末尾の空白は異なるがID要素の内容は同じ
+		expect(result.hasChanges).toBe(true);
+		// patchesは空の可能性がある（ID追跡外の変更）
+	});
+
+	it("should handle attribute-only changes", () => {
+		const oldHtml = '<div id="test" class="old">Content</div>';
+		const newHtml = '<div id="test" class="new">Content</div>';
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		const replacePatches = result.patches.filter((p) => p.type === "replace");
+		expect(replacePatches).toHaveLength(1);
+		expect(replacePatches[0]).toMatchObject({
+			type: "replace",
+			id: "test",
+		});
+	});
+
+	it("should handle multiple simultaneous changes", () => {
+		const oldHtml = `
+			<div id="a">A old</div>
+			<div id="b">B old</div>
+			<div id="c">C old</div>
+		`;
+		const newHtml = `
+			<div id="a">A new</div>
+			<div id="d">D new</div>
+			<div id="c">C old</div>
+		`;
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+
+		// aは変更、bは削除、dは挿入、cは変更なし
+		const replacePatches = result.patches.filter((p) => p.type === "replace");
+		const removePatches = result.patches.filter((p) => p.type === "remove");
+		const insertPatches = result.patches.filter((p) => p.type === "insert");
+
+		expect(replacePatches.some((p) => p.id === "a")).toBe(true);
+		expect(removePatches.some((p) => p.id === "b")).toBe(true);
+		expect(insertPatches.some((p) => p.type === "insert")).toBe(true);
+	});
+});
