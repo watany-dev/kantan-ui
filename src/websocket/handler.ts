@@ -3,7 +3,7 @@ import type { WSContext } from "hono/ws";
 
 export const { upgradeWebSocket, websocket } = createBunWebSocket();
 
-export interface WebSocketHandlers {
+interface WebSocketHandlers {
 	onOpen?: (evt: Event, ws: WSContext) => void;
 	onMessage?: (message: MessageEvent, ws: WSContext) => void;
 	onClose?: (evt: CloseEvent, ws: WSContext) => void;
