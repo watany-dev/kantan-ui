@@ -119,4 +119,57 @@ test.describe("Focus Preservation", () => {
 		const id = await slider.getAttribute("id");
 		expect(id).toBe("volume_slider");
 	});
+
+	test("should preserve scroll position after button click", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// ページをスクロール可能にするためにビューポートを小さく設定
+		await page.setViewportSize({ width: 800, height: 300 });
+
+		// ページを下にスクロール
+		await page.evaluate(() => window.scrollTo(0, 100));
+
+		// スクロール位置を確認
+		const initialScrollY = await page.evaluate(() => window.scrollY);
+		expect(initialScrollY).toBeGreaterThan(0);
+
+		// ボタンをクリック（rerunが発生）
+		await page.click("#btn_inc");
+
+		// カウントが増加したことを確認
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// スクロール位置が維持されていることを確認
+		const afterScrollY = await page.evaluate(() => window.scrollY);
+		expect(afterScrollY).toBe(initialScrollY);
+	});
+
+	test("should preserve scroll position after slider change", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// ビューポートを小さく設定
+		await page.setViewportSize({ width: 800, height: 300 });
+
+		// ページを下にスクロール
+		await page.evaluate(() => window.scrollTo(0, 50));
+
+		const initialScrollY = await page.evaluate(() => window.scrollY);
+		expect(initialScrollY).toBeGreaterThan(0);
+
+		// スライダーを操作
+		const slider = page.locator("#volume_slider");
+		await slider.evaluate((el: HTMLInputElement) => {
+			el.value = "80";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+
+		// 値が反映されることを確認
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 80");
+
+		// スクロール位置が維持されていることを確認
+		const afterScrollY = await page.evaluate(() => window.scrollY);
+		expect(afterScrollY).toBe(initialScrollY);
+	});
 });
