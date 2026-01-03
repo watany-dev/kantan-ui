@@ -424,3 +424,61 @@ describe("diff edge cases", () => {
 		expect(insertPatches.some((p) => p.type === "insert")).toBe(true);
 	});
 });
+
+describe("diff error handling", () => {
+	it("should handle malformed HTML gracefully", () => {
+		const malformedHtml = '<div id="broken"<span>Malformed';
+		const normalHtml = '<div id="normal">Normal</div>';
+
+		// 不正なHTMLでもクラッシュしない
+		expect(() => diff(malformedHtml, normalHtml)).not.toThrow();
+		expect(() => diff(normalHtml, malformedHtml)).not.toThrow();
+	});
+
+	it("should handle HTML with only whitespace", () => {
+		const result = diff("   \n\t  ", "   \n\t  ");
+
+		expect(result.hasChanges).toBe(false);
+		expect(result.patches).toHaveLength(0);
+	});
+
+	it("should handle very long single-line HTML", () => {
+		const longContent = "a".repeat(10000);
+		const oldHtml = `<div id="long">${longContent}</div>`;
+		const newHtml = `<div id="long">${longContent}b</div>`;
+
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		expect(result.patches).toHaveLength(1);
+	});
+
+	it("should handle HTML with special regex characters in content", () => {
+		const oldHtml = '<div id="regex">Content with $1 and \\d+</div>';
+		const newHtml = '<div id="regex">Content with $2 and \\w+</div>';
+
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+	});
+
+	it("should handle HTML with unicode characters", () => {
+		const oldHtml = '<div id="unicode">日本語テキスト</div>';
+		const newHtml = '<div id="unicode">日本語テキスト更新</div>';
+
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		const replacePatches = result.patches.filter((p) => p.type === "replace");
+		expect(replacePatches).toHaveLength(1);
+	});
+
+	it("should handle HTML with emoji", () => {
+		const oldHtml = '<div id="emoji">Hello 👋</div>';
+		const newHtml = '<div id="emoji">Hello 🎉</div>';
+
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+	});
+});

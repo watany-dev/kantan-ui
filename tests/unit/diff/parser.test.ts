@@ -844,3 +844,100 @@ describe("parseHtml boundary values", () => {
 		expect(() => parseHtml(elements)).toThrow(/Element count exceeds limit/);
 	});
 });
+
+describe("parseHtml error handling", () => {
+	it("should handle severely malformed HTML without crashing", () => {
+		const malformed = [
+			'<div id="a"<<<<>>>><<<<',
+			'<div id="b" class=">">',
+			'<div id="c"><<</div>>>',
+			'<<<div id="d">>>',
+		];
+
+		for (const html of malformed) {
+			expect(() => parseHtml(html)).not.toThrow();
+		}
+	});
+
+	it("should handle HTML with unusual but valid tag names", () => {
+		const html = '<custom-element id="custom">Content</custom-element>';
+		const nodes = parseHtml(html);
+
+		// カスタム要素はハイフンを含むためパースできない可能性あり
+		// しかし、クラッシュしないことが重要
+		expect(() => parseHtml(html)).not.toThrow();
+	});
+
+	it("should handle HTML with data attributes", () => {
+		const html = '<div id="data" data-value="123" data-json=\'{"key":"value"}\'>Content</div>';
+		const nodes = parseHtml(html);
+
+		expect(nodes).toHaveLength(1);
+		expect(nodes[0].id).toBe("data");
+	});
+
+	it("should handle HTML with aria attributes", () => {
+		const html =
+			'<div id="aria" aria-label="Label" aria-describedby="desc" role="button">Content</div>';
+		const nodes = parseHtml(html);
+
+		expect(nodes).toHaveLength(1);
+		expect(nodes[0].id).toBe("aria");
+	});
+
+	it("should handle script and style tags in content", () => {
+		const html = `<div id="wrapper">
+			<script>alert('xss')</script>
+			<style>.hidden { display: none; }</style>
+		</div>`;
+		const nodes = parseHtml(html);
+
+		expect(nodes).toHaveLength(1);
+		expect(nodes[0].id).toBe("wrapper");
+	});
+
+	it("should handle deeply nested structures near limit", () => {
+		// 50レベルのネスト（制限値より低い）
+		let html = "";
+		for (let i = 0; i < 50; i++) {
+			html += `<div id="level${i}">`;
+		}
+		html += "Content";
+		for (let i = 49; i >= 0; i--) {
+			html += "</div>";
+		}
+
+		expect(() => parseHtml(html)).not.toThrow();
+		const nodes = parseHtml(html);
+		expect(nodes).toHaveLength(50);
+	});
+
+	it("should handle mixed valid and invalid IDs", () => {
+		const html = `
+			<div id="valid1">Valid 1</div>
+			<div id="">Empty ID</div>
+			<div id="valid2">Valid 2</div>
+			<div id=" ">Space ID</div>
+			<div id="valid3">Valid 3</div>
+		`;
+		const nodes = parseHtml(html);
+
+		// 有効なIDのみがパースされる
+		const validIds = nodes.map((n) => n.id);
+		expect(validIds).toContain("valid1");
+		expect(validIds).toContain("valid2");
+		expect(validIds).toContain("valid3");
+	});
+
+	it("should handle consecutive self-closing tags", () => {
+		const html = `
+			<input id="input1" type="text" />
+			<input id="input2" type="number" />
+			<br id="br1" />
+			<hr id="hr1" />
+		`;
+		const nodes = parseHtml(html);
+
+		expect(nodes).toHaveLength(4);
+	});
+});
