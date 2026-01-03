@@ -246,7 +246,7 @@ test.describe("Focus Preservation", () => {
 		// 文字を追加（カーソル位置に挿入するシミュレーション）
 		await textInput.evaluate((el: HTMLInputElement) => {
 			const pos = el.selectionStart ?? 0;
-			el.value = el.value.slice(0, pos) + "X" + el.value.slice(pos);
+			el.value = `${el.value.slice(0, pos)}X${el.value.slice(pos)}`;
 			el.setSelectionRange(pos + 1, pos + 1);
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		});
@@ -301,7 +301,9 @@ test.describe("replaceRoot Focus Preservation", () => {
 		// replaceRoot自体のフォーカス復元機能は効果がない
 		// これは期待される動作として記録
 		const isFocused = await incButton.evaluate((el) => document.activeElement === el);
-		console.log(`Focus after reload (replaceRoot): ${isFocused ? "maintained" : "lost (expected)"}`);
+		console.log(
+			`Focus after reload (replaceRoot): ${isFocused ? "maintained" : "lost (expected)"}`,
+		);
 	});
 
 	test("should handle replaceRoot when many patches would be needed", async ({ page }) => {

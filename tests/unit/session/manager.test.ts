@@ -712,9 +712,7 @@ describe("Event Queue", () => {
 			throw new Error("Test error message");
 		});
 
-		await expect(manager.queueEvent(session.id, "w", "test")).rejects.toThrow(
-			"Test error message",
-		);
+		await expect(manager.queueEvent(session.id, "w", "test")).rejects.toThrow("Test error message");
 	});
 
 	it("should handle multiple consecutive errors", async () => {
