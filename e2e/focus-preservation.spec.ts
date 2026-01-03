@@ -5,7 +5,9 @@ import { gotoAndWait, waitForFocus } from "./helpers";
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe("Focus Preservation", () => {
-	test("should maintain focus on slider after value change", async ({ page }) => {
+	// このテストはフォーカス復元機能が実装されるまでfixme
+	// Week3 remaining-tasks-plan.md Task 1で対応予定
+	test.fixme("should maintain focus on slider after value change", async ({ page }) => {
 		await gotoAndWait(page);
 
 		const slider = page.locator("#volume_slider");
@@ -24,20 +26,12 @@ test.describe("Focus Preservation", () => {
 		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 60");
 
 		// replaceNodeパッチ後もフォーカスが維持されていることを確認
-		// 注意: replaceNodeはDOMを置換するため、フォーカスが失われる可能性がある
-		// この挙動は現在の実装の制限として確認
-		const isFocused = await slider.evaluate((el) => document.activeElement === el);
-
-		// 現在の実装ではreplaceNode後にフォーカスが失われる
-		// これはWeek4以降の改善対象として記録
-		if (!isFocused) {
-			console.log(
-				"Note: Focus was lost after replaceNode. This is a known limitation to be addressed.",
-			);
-		}
+		// フォーカス復元には少し時間がかかる可能性がある
+		const isFocused = await waitForFocus(slider, 2000);
+		expect(isFocused).toBe(true);
 	});
 
-	test("should maintain focus on increment button after click", async ({ page }) => {
+	test("should update DOM correctly after button click", async ({ page }) => {
 		await gotoAndWait(page);
 
 		const incButton = page.locator("#btn_inc");
@@ -50,18 +44,15 @@ test.describe("Focus Preservation", () => {
 			"Current count: 1",
 		);
 
-		// クリック後、ボタンにフォーカスがあるか確認
-		// ボタンクリックはデフォルトでフォーカスを当てる
-		const isFocused = await incButton.evaluate((el) => document.activeElement === el);
+		// ボタンが引き続き操作可能であることを確認
+		await expect(incButton).toBeVisible();
+		await expect(incButton).toBeEnabled();
 
-		// 現在の実装でフォーカスが維持されているかを記録
-		if (isFocused) {
-			console.log("Button focus maintained after click.");
-		} else {
-			console.log(
-				"Note: Button focus was not maintained after replaceNode. This may be expected behavior.",
-			);
-		}
+		// 複数回クリックしても正しく動作することを確認
+		await incButton.click();
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 2",
+		);
 	});
 
 	test("should maintain focus on text input during typing", async ({ page }) => {
