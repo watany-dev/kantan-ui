@@ -173,12 +173,13 @@ export class SessionManager {
 
 	// イベントをキューに追加して処理結果を待つ
 	queueEvent(sessionId: SessionId, widgetId: string, value: unknown): Promise<EventProcessResult> {
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			const item: EventQueueItem = {
 				widgetId,
 				value,
 				timestamp: Date.now(),
 				resolve,
+				reject,
 			};
 
 			// キューがなければ作成
@@ -244,6 +245,9 @@ export class SessionManager {
 			} else {
 				item.resolve({ html: "", patches: [] });
 			}
+		} catch (error) {
+			// エラーが発生した場合はrejectして、次のイベント処理を継続
+			item.reject(error instanceof Error ? error : new Error(String(error)));
 		} finally {
 			// AbortControllerをクリーンアップ
 			this.abortControllers.delete(sessionId);

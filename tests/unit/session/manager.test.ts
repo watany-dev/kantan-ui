@@ -674,6 +674,81 @@ describe("Event Queue", () => {
 		// Should not throw
 		expect(() => manager.abortCurrentEvent(session.id)).not.toThrow();
 	});
+
+	it("should continue processing queue when processor throws error", async () => {
+		const session = manager.createSession();
+		const processedValues: unknown[] = [];
+		let callCount = 0;
+
+		manager.setEventProcessor((_sessionId, _widgetId, value) => {
+			callCount++;
+			if (callCount === 2) {
+				throw new Error("Simulated processor error");
+			}
+			processedValues.push(value);
+			return { html: `result-${value}`, patches: [] };
+		});
+
+		// Queue 3 events - second one will throw
+		const results = await Promise.allSettled([
+			manager.queueEvent(session.id, "w", 1),
+			manager.queueEvent(session.id, "w", 2),
+			manager.queueEvent(session.id, "w", 3),
+		]);
+
+		// First and third should succeed, second should reject
+		expect(results[0].status).toBe("fulfilled");
+		expect(results[1].status).toBe("rejected");
+		expect(results[2].status).toBe("fulfilled");
+
+		// Values 1 and 3 should be processed
+		expect(processedValues).toEqual([1, 3]);
+	});
+
+	it("should reject with error when processor throws", async () => {
+		const session = manager.createSession();
+
+		manager.setEventProcessor(() => {
+			throw new Error("Test error message");
+		});
+
+		await expect(manager.queueEvent(session.id, "w", "test")).rejects.toThrow(
+			"Test error message",
+		);
+	});
+
+	it("should handle multiple consecutive errors", async () => {
+		const session = manager.createSession();
+		let callCount = 0;
+		const processedValues: unknown[] = [];
+
+		manager.setEventProcessor((_sessionId, _widgetId, value) => {
+			callCount++;
+			// First 3 events throw errors
+			if (callCount <= 3) {
+				throw new Error(`Error ${callCount}`);
+			}
+			processedValues.push(value);
+			return { html: "success", patches: [] };
+		});
+
+		const results = await Promise.allSettled([
+			manager.queueEvent(session.id, "w", "a"),
+			manager.queueEvent(session.id, "w", "b"),
+			manager.queueEvent(session.id, "w", "c"),
+			manager.queueEvent(session.id, "w", "d"),
+			manager.queueEvent(session.id, "w", "e"),
+		]);
+
+		// First 3 should reject, last 2 should succeed
+		expect(results[0].status).toBe("rejected");
+		expect(results[1].status).toBe("rejected");
+		expect(results[2].status).toBe("rejected");
+		expect(results[3].status).toBe("fulfilled");
+		expect(results[4].status).toBe("fulfilled");
+
+		expect(processedValues).toEqual(["d", "e"]);
+	});
 });
 
 describe("Global SessionManager", () => {
