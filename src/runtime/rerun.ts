@@ -1,6 +1,7 @@
 import { RenderContext, setRenderContext } from "../kt/context";
 import { setCurrentSessionId } from "../session/state";
 import { resetWidgetCounter } from "../widgets/registry";
+import { AbortError } from "./abort";
 import { type RerunContext, clearContext, setContext } from "./context";
 
 /**
@@ -31,7 +32,17 @@ export type Script = () => string | undefined;
  * @see docs/impl/week4-preparation.md
  */
 
-export function rerun(script: Script, event?: RerunContext["event"], sessionId?: string): string {
+export function rerun(
+	script: Script,
+	event?: RerunContext["event"],
+	sessionId?: string,
+	signal?: AbortSignal,
+): string {
+	// シグナルがabortされていたら早期リターン
+	if (signal?.aborted) {
+		throw new AbortError("Rerun was aborted");
+	}
+
 	// レンダリングコンテキストを作成
 	const renderContext = new RenderContext();
 

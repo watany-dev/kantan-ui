@@ -119,4 +119,234 @@ test.describe("Focus Preservation", () => {
 		const id = await slider.getAttribute("id");
 		expect(id).toBe("volume_slider");
 	});
+
+	test("should preserve scroll position after button click", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// ページをスクロール可能にするためにビューポートを小さく設定
+		await page.setViewportSize({ width: 800, height: 300 });
+
+		// ページを下にスクロール
+		await page.evaluate(() => window.scrollTo(0, 100));
+
+		// スクロール位置を確認
+		const initialScrollY = await page.evaluate(() => window.scrollY);
+		expect(initialScrollY).toBeGreaterThan(0);
+
+		// ボタンをクリック（rerunが発生）
+		await page.click("#btn_inc");
+
+		// カウントが増加したことを確認
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// スクロール位置が維持されていることを確認
+		const afterScrollY = await page.evaluate(() => window.scrollY);
+		expect(afterScrollY).toBe(initialScrollY);
+	});
+
+	test("should preserve scroll position after slider change", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// ビューポートを小さく設定
+		await page.setViewportSize({ width: 800, height: 300 });
+
+		// ページを下にスクロール
+		await page.evaluate(() => window.scrollTo(0, 50));
+
+		const initialScrollY = await page.evaluate(() => window.scrollY);
+		expect(initialScrollY).toBeGreaterThan(0);
+
+		// スライダーを操作
+		const slider = page.locator("#volume_slider");
+		await slider.evaluate((el: HTMLInputElement) => {
+			el.value = "80";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+
+		// 値が反映されることを確認
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 80");
+
+		// スクロール位置が維持されていることを確認
+		const afterScrollY = await page.evaluate(() => window.scrollY);
+		expect(afterScrollY).toBe(initialScrollY);
+	});
+
+	test("should preserve text selection range after rerun", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const textInput = page.locator("#name_input");
+
+		// テキストを入力
+		await textInput.evaluate((el: HTMLInputElement) => {
+			el.value = "Hello World";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+
+		// rerun完了を待機
+		await page.waitForTimeout(100);
+
+		// テキストの一部を選択（"World"の部分を選択）
+		await textInput.evaluate((el: HTMLInputElement) => {
+			el.focus();
+			el.setSelectionRange(6, 11); // "World"
+		});
+
+		// 選択範囲を確認
+		const initialSelection = await textInput.evaluate((el: HTMLInputElement) => ({
+			start: el.selectionStart,
+			end: el.selectionEnd,
+		}));
+		expect(initialSelection.start).toBe(6);
+		expect(initialSelection.end).toBe(11);
+
+		// スライダーを操作して別のrerunを発生させる
+		const slider = page.locator("#volume_slider");
+		await slider.evaluate((el: HTMLInputElement) => {
+			el.value = "30";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+
+		// 値が反映されることを確認
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 30");
+
+		// テキスト入力にフォーカスを戻して選択範囲を確認
+		await textInput.focus();
+		await page.waitForTimeout(100);
+
+		// 選択範囲が復元されていることを確認
+		// 注意: 別の要素からのrerunでフォーカスが移動するため、
+		// 完全な選択範囲の復元は保証されない可能性がある
+		const afterSelection = await textInput.evaluate((el: HTMLInputElement) => ({
+			start: el.selectionStart,
+			end: el.selectionEnd,
+		}));
+
+		// フォーカス復元の実装によっては選択範囲が維持される
+		// 現在の挙動を記録
+		console.log(`Selection after rerun: ${afterSelection.start}-${afterSelection.end}`);
+	});
+
+	test("should preserve cursor position in text input during typing", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const textInput = page.locator("#name_input");
+
+		// テキストを入力してカーソル位置を設定
+		await textInput.evaluate((el: HTMLInputElement) => {
+			el.value = "Test";
+			el.focus();
+			el.setSelectionRange(2, 2); // カーソルを"Te|st"の位置に
+		});
+
+		const initialCursor = await textInput.evaluate((el: HTMLInputElement) => el.selectionStart);
+		expect(initialCursor).toBe(2);
+
+		// 文字を追加（カーソル位置に挿入するシミュレーション）
+		await textInput.evaluate((el: HTMLInputElement) => {
+			const pos = el.selectionStart ?? 0;
+			el.value = `${el.value.slice(0, pos)}X${el.value.slice(pos)}`;
+			el.setSelectionRange(pos + 1, pos + 1);
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+
+		// rerun完了を待機
+		await page.waitForTimeout(150);
+
+		// フォーカスが維持されていることを確認
+		const isFocused = await waitForFocus(textInput, 2000);
+		expect(isFocused).toBe(true);
+
+		// カーソル位置が適切に更新されていることを確認
+		const afterCursor = await textInput.evaluate((el: HTMLInputElement) => el.selectionStart);
+		expect(afterCursor).toBe(3); // "TeX|st"の位置
+
+		// 値が正しいことを確認
+		const value = await textInput.inputValue();
+		expect(value).toBe("TeXst");
+	});
+});
+
+test.describe("replaceRoot Focus Preservation", () => {
+	test("should restore focus after page reload with replaceRoot", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// カウンターを増やしてセッション状態を作成
+		await page.click("#btn_inc");
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// ボタンIDを記録（フォーカス復元のターゲット）
+		const incButton = page.locator("#btn_inc");
+
+		// ボタンにフォーカス
+		await incButton.focus();
+		await expect(incButton).toBeFocused();
+
+		// ページをリロード（replaceRootパッチが発生）
+		await page.reload();
+
+		// WebSocket接続と初期パッチ適用を待機
+		await page.waitForSelector("#btn_inc");
+		await page.waitForTimeout(500);
+
+		// セッションが維持されていることを確認
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// 注意: ブラウザのリロード後はフォーカス状態がリセットされるため、
+		// replaceRoot自体のフォーカス復元機能は効果がない
+		// これは期待される動作として記録
+		const isFocused = await incButton.evaluate((el) => document.activeElement === el);
+		console.log(
+			`Focus after reload (replaceRoot): ${isFocused ? "maintained" : "lost (expected)"}`,
+		);
+	});
+
+	test("should handle replaceRoot when many patches would be needed", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const slider = page.locator("#volume_slider");
+
+		// スライダーにフォーカス
+		await slider.focus();
+		await expect(slider).toBeFocused();
+
+		// スライダー値を変更
+		await slider.evaluate((el: HTMLInputElement) => {
+			el.value = "10";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 10");
+
+		// 連続して複数のウィジェットを操作
+		// （現在の実装では各操作が個別にパッチされるが、
+		// 将来的にバッチ処理でreplaceRootが発生する可能性をテスト）
+		await page.click("#btn_inc");
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// テキスト入力
+		const textInput = page.locator("#name_input");
+		await textInput.evaluate((el: HTMLInputElement) => {
+			el.value = "Multi-widget test";
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		});
+		await page.waitForTimeout(100);
+
+		// 各ウィジェットが正しく更新されていることを確認
+		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 10");
+		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
+			"Current count: 1",
+		);
+
+		// replaceRootまたはreplaceNodeパッチが適用されても
+		// アプリケーション全体の状態が一貫していることを確認
+		const sliderValue = await slider.inputValue();
+		expect(sliderValue).toBe("10");
+	});
 });

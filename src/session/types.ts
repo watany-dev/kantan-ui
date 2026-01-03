@@ -12,6 +12,7 @@ export interface EventQueueItem {
 	value: unknown;
 	timestamp: number;
 	resolve: (result: EventProcessResult) => void;
+	reject: (error: Error) => void;
 }
 
 // イベント処理結果

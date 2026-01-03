@@ -124,6 +124,124 @@ describe("diff", () => {
 		);
 		expect(containerChange).toBeDefined();
 	});
+
+	it("should detect attribute-only changes", () => {
+		const oldHtml = '<input id="input-1" type="text" value="old" />';
+		const newHtml = '<input id="input-1" type="text" value="new" />';
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		expect(result.patches).toHaveLength(1);
+		expect(result.patches[0]).toMatchObject({
+			type: "replace",
+			id: "input-1",
+		});
+	});
+
+	it("should detect class attribute changes", () => {
+		const oldHtml = '<div id="box" class="active">Content</div>';
+		const newHtml = '<div id="box" class="inactive">Content</div>';
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		expect(result.patches).toHaveLength(1);
+		expect(result.patches[0]).toMatchObject({
+			type: "replace",
+			id: "box",
+		});
+	});
+
+	it("should detect changes in deeply nested structure (3 levels)", () => {
+		const oldHtml = `
+			<div id="level1">
+				<div id="level2">
+					<div id="level3">
+						<span id="deep-content">Old Text</span>
+					</div>
+				</div>
+			</div>
+		`;
+		const newHtml = `
+			<div id="level1">
+				<div id="level2">
+					<div id="level3">
+						<span id="deep-content">New Text</span>
+					</div>
+				</div>
+			</div>
+		`;
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		// 変更が検出される（最も具体的な変更箇所）
+		const deepChange = result.patches.find((p) => p.id === "deep-content" || p.id === "level3");
+		expect(deepChange).toBeDefined();
+	});
+
+	it("should handle changes at multiple nesting levels", () => {
+		const oldHtml = `
+			<section id="section1">
+				<article id="article1">
+					<p id="para1">Paragraph 1</p>
+				</article>
+				<article id="article2">
+					<p id="para2">Paragraph 2</p>
+				</article>
+			</section>
+		`;
+		const newHtml = `
+			<section id="section1">
+				<article id="article1">
+					<p id="para1">Modified Paragraph 1</p>
+				</article>
+				<article id="article2">
+					<p id="para2">Modified Paragraph 2</p>
+				</article>
+			</section>
+		`;
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		// 複数の変更が検出される
+		expect(result.patches.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("should detect data attribute changes", () => {
+		const oldHtml = '<button id="btn" data-count="5">Click</button>';
+		const newHtml = '<button id="btn" data-count="10">Click</button>';
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		expect(result.patches).toHaveLength(1);
+		expect(result.patches[0]).toMatchObject({
+			type: "replace",
+			id: "btn",
+		});
+	});
+
+	it("should handle self-closing tags correctly", () => {
+		const oldHtml = '<div id="container"><img id="img1" src="old.jpg" /><br /></div>';
+		const newHtml = '<div id="container"><img id="img1" src="new.jpg" /><br /></div>';
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		// imgまたはcontainerの変更が検出される
+		const imgChange = result.patches.find((p) => p.id === "img1" || p.id === "container");
+		expect(imgChange).toBeDefined();
+	});
+
+	it("should detect element tag type changes as replace", () => {
+		const oldHtml = '<span id="elem">Content</span>';
+		const newHtml = '<div id="elem">Content</div>';
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+		expect(result.patches).toHaveLength(1);
+		expect(result.patches[0]).toMatchObject({
+			type: "replace",
+			id: "elem",
+		});
+	});
 });
 
 describe("toWebSocketPatches", () => {
