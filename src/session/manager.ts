@@ -1,6 +1,6 @@
 import type { WSContext } from "hono/ws";
 import { DEFAULT_SESSION_CONFIG } from "../config";
-import type { SessionConfig } from "../config/types";
+import type { ResolvedSessionConfig, SessionConfig } from "../config/types";
 import type { EventProcessResult, EventQueueItem, Session, SessionId, SessionState } from "./types";
 
 // イベント処理コールバックの型
@@ -21,7 +21,7 @@ export class SessionManager {
 	 */
 	private wsToSession = new Map<WSContext, SessionId>();
 	private sessionToWs = new Map<SessionId, Set<WSContext>>();
-	private config: Required<SessionConfig>;
+	private config: ResolvedSessionConfig;
 	private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
 
 	// イベントキュー関連
@@ -32,9 +32,12 @@ export class SessionManager {
 
 	constructor(config: SessionConfig = {}) {
 		this.config = {
-			sessionKey: config.sessionKey ?? DEFAULT_SESSION_CONFIG.sessionKey,
-			ttl: config.ttl ?? DEFAULT_SESSION_CONFIG.ttl,
-			cleanupInterval: config.cleanupInterval ?? DEFAULT_SESSION_CONFIG.cleanupInterval,
+			...DEFAULT_SESSION_CONFIG,
+			...config,
+			cookie: {
+				...DEFAULT_SESSION_CONFIG.cookie,
+				...config.cookie,
+			},
 		};
 
 		// 定期的なクリーンアップを開始
@@ -42,7 +45,7 @@ export class SessionManager {
 	}
 
 	// 設定を取得
-	getConfig(): Required<SessionConfig> {
+	getConfig(): ResolvedSessionConfig {
 		return this.config;
 	}
 

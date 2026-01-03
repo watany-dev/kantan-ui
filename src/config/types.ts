@@ -20,6 +20,33 @@ export interface SessionConfig {
 	ttl?: number;
 	/** クリーンアップ間隔（ミリ秒） */
 	cleanupInterval?: number;
+	/**
+	 * セッションスコープ
+	 * - 'tab': タブごとに独立したセッション（デフォルト、localStorage使用）
+	 * - 'browser': ブラウザ全体で共有（Cookie使用、HttpOnly）
+	 */
+	scope?: "tab" | "browser";
+	/** scope='browser'時のCookie設定 */
+	cookie?: CookieConfig;
+}
+
+/**
+ * Cookie設定（scope='browser'時に使用）
+ */
+export interface CookieConfig {
+	/** HttpOnly属性（デフォルト: true） */
+	httpOnly?: boolean;
+	/**
+	 * Secure属性
+	 * - true: 常にSecure
+	 * - false: 常に非Secure
+	 * - 'auto': リクエストプロトコルに応じて自動判定（デフォルト）
+	 */
+	secure?: boolean | "auto";
+	/** SameSite属性（デフォルト: 'Lax'） */
+	sameSite?: "Strict" | "Lax" | "None";
+	/** Path属性（デフォルト: '/'） */
+	path?: string;
 }
 
 /**
@@ -45,10 +72,21 @@ export interface StreamingConfig {
 }
 
 /**
+ * 解決済みセッション設定（内部使用）
+ */
+export interface ResolvedSessionConfig {
+	sessionKey: string;
+	ttl: number;
+	cleanupInterval: number;
+	scope: "tab" | "browser";
+	cookie: Required<CookieConfig>;
+}
+
+/**
  * 全ての設定が必須のバージョン（内部使用）
  */
 export interface ResolvedKantanConfig {
-	session: Required<SessionConfig>;
+	session: ResolvedSessionConfig;
 	client: Required<ClientConfig>;
 	streaming: Required<StreamingConfig>;
 }

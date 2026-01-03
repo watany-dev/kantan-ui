@@ -10,3 +10,4 @@ export {
 	getCurrentSessionId,
 	createTypedSessionState,
 } from "./state";
+export { parseSessionCookie, buildSetCookieHeader } from "./cookie";
