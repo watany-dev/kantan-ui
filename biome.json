@@ -9,7 +9,8 @@
 			"recommended": true,
 			"complexity": {
 				"recommended": true,
-				"noExcessiveCognitiveComplexity": "warn"
+				"noExcessiveCognitiveComplexity": "warn",
+				"noUselessFragments": "error"
 			},
 			"correctness": {
 				"recommended": true
