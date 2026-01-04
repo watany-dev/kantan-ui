@@ -43,6 +43,7 @@ export default defineConfig({
 				"**/session-scope-browser.spec.ts",
 				"**/streaming.spec.ts",
 				"**/patch-operations.spec.ts",
+				"**/error-handling.spec.ts",
 			],
 		},
 		{
@@ -90,6 +91,21 @@ export default defineConfig({
 			},
 			testMatch: "**/patch-operations.spec.ts",
 		},
+		{
+			name: "chromium-error-test",
+			use: {
+				...devices["Desktop Chrome"],
+				baseURL: "http://localhost:3004",
+				launchOptions: process.env.CI
+					? {
+							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+						}
+					: {
+							executablePath: chromiumPath,
+						},
+			},
+			testMatch: "**/error-handling.spec.ts",
+		},
 	],
 	webServer: [
 		{
@@ -119,6 +135,14 @@ export default defineConfig({
 		{
 			command: "bun run src/server-patch-test.ts",
 			url: "http://localhost:3003",
+			reuseExistingServer: !process.env.CI,
+			timeout: 60000,
+			stdout: "pipe",
+			stderr: "pipe",
+		},
+		{
+			command: "bun run src/server-error-test.ts",
+			url: "http://localhost:3004",
 			reuseExistingServer: !process.env.CI,
 			timeout: 60000,
 			stdout: "pipe",
