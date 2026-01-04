@@ -99,41 +99,33 @@ export class SessionManager {
 	private sendPingToAll(): void {
 		const now = Date.now();
 		const pingMessage = JSON.stringify({ type: "ping" });
+		const timeoutThreshold = this.pingInterval + this.pongTimeout;
+		const deadConnections: WSContext[] = [];
 
-		for (const [_sessionId, connections] of this.sessionToWs) {
-			const deadConnections: WSContext[] = [];
-
-			for (const ws of connections) {
-				// タイムアウトチェック
-				// lastPong + pingInterval + pongTimeout < now ならタイムアウト
-				// これにより、接続開始から pingInterval 後に ping を送信し、
-				// さらに pongTimeout 経過しても pong が来なければタイムアウト
-				const lastPong = this.wsLastPong.get(ws);
-				if (lastPong !== undefined && now - lastPong > this.pingInterval + this.pongTimeout) {
-					// タイムアウト - 接続を切断
-					deadConnections.push(ws);
-					try {
-						ws.close();
-					} catch (_e) {
-						// 既に切断されている場合は無視
-					}
-					continue;
-				}
-
-				// ping送信
+		// 全接続を直接イテレート
+		for (const [ws, lastPong] of this.wsLastPong) {
+			// タイムアウトチェック
+			if (now - lastPong > timeoutThreshold) {
+				deadConnections.push(ws);
 				try {
-					ws.send(pingMessage);
+					ws.close();
 				} catch (_e) {
-					deadConnections.push(ws);
+					// 既に切断されている場合は無視
 				}
+				continue;
 			}
 
-			// 切断された接続を削除
-			for (const ws of deadConnections) {
-				connections.delete(ws);
-				this.wsToSession.delete(ws);
-				this.wsLastPong.delete(ws);
+			// ping送信
+			try {
+				ws.send(pingMessage);
+			} catch (_e) {
+				deadConnections.push(ws);
 			}
+		}
+
+		// 切断された接続をクリーンアップ
+		for (const ws of deadConnections) {
+			this.removeWebSocket(ws);
 		}
 	}
 
@@ -214,6 +206,7 @@ export class SessionManager {
 			}
 			this.wsToSession.delete(ws);
 		}
+		this.wsLastPong.delete(ws);
 	}
 
 	// セッションに紐づく全WebSocket接続を取得
