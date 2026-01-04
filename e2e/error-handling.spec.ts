@@ -68,3 +68,28 @@ test.describe("Error Handling - WebSocket Reconnection", () => {
 		await expect(page.locator("#counter-display")).toContainText("Counter: 1");
 	});
 });
+
+test.describe("Error Handling - Error Resilience", () => {
+	test("Application does not crash on rapid interactions", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// 高速連続クリックでアプリがクラッシュしないことを確認
+		const incButton = page.locator("#btn_inc");
+		for (let i = 0; i < 10; i++) {
+			await incButton.click();
+		}
+
+		// UIが正常であることを確認
+		await expect(page.locator("#counter-display")).toContainText("Counter: 10");
+		await expect(incButton).toBeEnabled();
+	});
+
+	test("Health endpoint responds correctly", async ({ page }) => {
+		// ヘルスチェックエンドポイントが正常に応答することを確認
+		const response = await page.request.get("/health");
+		expect(response.ok()).toBeTruthy();
+
+		const body = await response.json();
+		expect(body.status).toBe("ok");
+	});
+});
