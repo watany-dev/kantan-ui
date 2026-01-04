@@ -24,7 +24,7 @@ export function isClientMessage(data: unknown): data is ClientMessage {
 export interface ServerMessage {
 	type: "patch" | "session" | "error" | "ping";
 	patches?: Patch[];
-	sessionId?: string; // 新規セッションID通知
+	sessionId?: string | undefined; // 新規セッションID通知
 	/** ストリーミング中の部分更新かどうか */
 	partial?: boolean;
 	/** パッチのシーケンス番号（再接続時の再同期用） */
