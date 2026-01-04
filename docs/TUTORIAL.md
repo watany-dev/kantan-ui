@@ -153,7 +153,7 @@ kt.write(`選択された年齢: ${age}`);
 - 第1引数: ラベル
 - 第2引数: 最小値
 - 第3引数: 最大値
-- 第4引数: デフォルト値
+- 第4引数: デフォルト値（省略時はmin値）
 - オプション: `{ key, step }`
 
 ```typescript
@@ -161,7 +161,12 @@ const volume = kt.slider("音量", 0, 100, 50, {
   key: "volume_slider",
   step: 5
 });
+
+// デフォルト値を省略すると最小値が使われる
+const brightness = kt.slider("明るさ", 0, 100);  // デフォルトは0
 ```
+
+**注意**: `min > max`や範囲外の`defaultValue`を指定するとエラーになります。
 
 ### テキスト入力
 
@@ -192,9 +197,16 @@ kt.write(`選択された色: ${color}`);
 
 パラメータ:
 - 第1引数: ラベル
-- 第2引数: 選択肢の配列
-- 第3引数: デフォルト値
+- 第2引数: 選択肢の配列（空配列は不可）
+- 第3引数: デフォルト値（省略時は最初のオプション）
 - オプション: `{ key }`
+
+```typescript
+// デフォルト値を省略すると最初のオプションが選択される
+const size = kt.selectbox("サイズ", ["S", "M", "L"]);  // デフォルトは"S"
+```
+
+**注意**: 空の配列や、選択肢に存在しない`defaultValue`を指定するとエラーになります。
 
 ---
 
@@ -282,15 +294,15 @@ const script = () => {
   kt.header(`カウント: ${state.count}`);
 
   // 増減ボタン
-  if (kt.button("➕ 増加", { key: "inc" })) {
+  if (kt.button("+ 増加", { key: "inc" })) {
     state.count++;
   }
 
-  if (kt.button("➖ 減少", { key: "dec" })) {
+  if (kt.button("- 減少", { key: "dec" })) {
     state.count--;
   }
 
-  if (kt.button("🔄 リセット", { key: "reset" })) {
+  if (kt.button("リセット", { key: "reset" })) {
     state.count = 0;
   }
 
@@ -373,10 +385,9 @@ const script = () => {
     kt.write("タスクがありません。");
   } else {
     for (const todo of state.todos) {
-      const status = todo.done ? "✅" : "⬜";
-      const text = todo.done ? `~~${todo.text}~~` : todo.text;
-
-      kt.write(`${status} ${text}`);
+      // 完了状態をアイコンで表示
+      const status = todo.done ? "[完了]" : "[未完了]";
+      kt.write(`${status} ${todo.text}`);
 
       // 完了/未完了の切り替え
       if (kt.button(todo.done ? "未完了に戻す" : "完了", {
