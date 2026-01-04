@@ -5,7 +5,12 @@ import { expect } from "@playwright/test";
  * WebSocket接続が確立され、初期パッチを受信するまで待機するヘルパー
  */
 export async function waitForInitialRender(page: Page): Promise<void> {
+	// まずタイトルが表示されるのを待つ（HTTP応答）
 	await expect(page.locator("#app h1.kt-title")).toBeVisible();
+	// WebSocket接続が完了するまで待つ（接続インジケーターが"Connected"になる）
+	await expect(page.locator("#kt-connection-status")).toContainText("Connected", {
+		timeout: 10000,
+	});
 }
 
 /**

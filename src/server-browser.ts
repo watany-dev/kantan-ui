@@ -1,16 +1,14 @@
+/**
+ * Browser Scope デモサーバー
+ *
+ * scope='browser' 設定でセッションをCookieで管理するデモ。
+ * E2Eテスト用に別ポート(3001)で起動。
+ */
 import { createApp } from "./app";
 import { kt } from "./kt";
 import { createTypedSessionState } from "./session";
 import { escapeHtml } from "./utils/html";
 
-/**
- * 型安全なセッションステート定義
- *
- * createTypedSessionState<T>() を使うことで:
- * - 型アサーション不要で型安全にアクセス可能
- * - デフォルト値の自動初期化
- * - IDEの補完が効く
- */
 type AppState = {
 	counter: number;
 };
@@ -19,54 +17,38 @@ const state = createTypedSessionState<AppState>({
 	counter: 0,
 });
 
-/**
- * デモスクリプト - 宣言的API (kt.*) を使用
- *
- * kt.* APIを使うと、HTMLを手動で生成する必要がなく、
- * Streamlitのように直感的にUIを構築できます。
- */
 const script = () => {
-	// タイトル
-	kt.title("kantan-ui Demo");
-	kt.write("Streamlit風の宣言的APIで構築されたデモアプリです。");
+	kt.title("kantan-ui Demo (Browser Scope)");
+	kt.write("scope='browser' でセッションをCookie管理しています。");
 
 	kt.divider();
 
-	// ===== Counter Section =====
 	kt.header("Counter");
 
-	// インクリメントボタン（型アサーション不要！）
 	if (kt.button("+ Increment", { key: "btn_inc" })) {
 		state.counter++;
 	}
 
-	// デクリメントボタン
 	if (kt.button("- Decrement", { key: "btn_dec" })) {
 		state.counter = Math.max(0, state.counter - 1);
 	}
 
-	// リセットボタン
 	if (kt.button("Reset", { key: "btn_reset" })) {
 		state.counter = 0;
 	}
 
-	// IDを付与してdiffアルゴリズムが変更を検出できるようにする
 	kt.html(`<div id="counter-display" class="kt-write">Current count: ${state.counter}</div>`);
 
 	kt.divider();
 
-	// ===== Input Widgets Section =====
 	kt.header("Input Widgets");
 
-	// テキスト入力
 	kt.subheader("Text Input");
 	const name = kt.text_input("Your Name", "World", { key: "name_input" });
 
-	// スライダー
 	kt.subheader("Slider");
 	const volume = kt.slider("Volume", 0, 100, 50, { key: "volume_slider" });
 
-	// セレクトボックス
 	kt.subheader("Selectbox");
 	const color = kt.selectbox("Color Theme", ["blue", "green", "red", "purple"], "blue", {
 		key: "color_select",
@@ -74,11 +56,8 @@ const script = () => {
 
 	kt.divider();
 
-	// ===== Results Section =====
 	kt.header("Results");
 
-	// カスタムHTMLで結果を表示（スタイル付き）
-	// 注: IDを付与することで diff アルゴリズムが変更を検出できる
 	kt.html(`
 		<div id="results-card" style="background: linear-gradient(135deg, ${color} 0%, ${color}88 100%);
 		            color: white; padding: 20px; border-radius: 8px; margin: 10px 0;">
@@ -92,7 +71,6 @@ const script = () => {
 
 	kt.divider();
 
-	// ===== Debug Section =====
 	kt.subheader("Session State (Debug)");
 	kt.html(`
 		<pre id="debug-state" style="background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;">
@@ -111,13 +89,21 @@ ${escapeHtml(
 		</pre>
 	`);
 
-	// 宣言的APIを使用する場合はundefinedを返す（HTMLはバッファから自動取得）
 	return undefined;
 };
 
-const { app, websocket } = createApp(script);
+// scope='browser' でアプリを作成
+const { app, websocket } = createApp(script, {
+	session: {
+		scope: "browser",
+	},
+});
 
-export default {
+// ポート3001で起動
+const server = Bun.serve({
+	port: 3001,
 	fetch: app.fetch,
 	websocket,
-};
+});
+
+console.log(`Browser-scope server running at http://localhost:${server.port}`);

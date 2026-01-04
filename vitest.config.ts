@@ -17,6 +17,8 @@ export default defineConfig({
 				"tests",
 				"*.config.ts",
 				"src/server.ts",
+				"src/server-browser.ts",
+				"src/server-streaming.ts",
 				"src/app.ts",
 				"src/websocket/handler.ts",
 				"src/**/index.ts",
