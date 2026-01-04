@@ -749,6 +749,418 @@ describe("Event Queue", () => {
 	});
 });
 
+describe("Multi-tab support", () => {
+	let manager: SessionManager;
+
+	beforeEach(() => {
+		manager = new SessionManager();
+	});
+
+	afterEach(() => {
+		manager.stopCleanupInterval();
+	});
+
+	it("should support multiple WebSocket connections per session", () => {
+		const session = manager.createSession();
+		const mockWs1 = { send: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+		const mockWs2 = { send: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+
+		manager.associateWebSocket(mockWs1, session.id);
+		manager.associateWebSocket(mockWs2, session.id);
+
+		const connections = manager.getConnections(session.id);
+		expect(connections.size).toBe(2);
+		expect(connections.has(mockWs1)).toBe(true);
+		expect(connections.has(mockWs2)).toBe(true);
+	});
+
+	it("should broadcast message to all connections", () => {
+		const session = manager.createSession();
+		const mockWs1 = { send: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+		const mockWs2 = { send: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+
+		manager.associateWebSocket(mockWs1, session.id);
+		manager.associateWebSocket(mockWs2, session.id);
+
+		const message = JSON.stringify({ type: "patch", patches: [] });
+		manager.broadcast(session.id, message);
+
+		expect(mockWs1.send).toHaveBeenCalledWith(message);
+		expect(mockWs2.send).toHaveBeenCalledWith(message);
+	});
+
+	it("should not broadcast to unrelated sessions", () => {
+		const session1 = manager.createSession();
+		const session2 = manager.createSession();
+		const mockWs1 = { send: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+		const mockWs2 = { send: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+
+		manager.associateWebSocket(mockWs1, session1.id);
+		manager.associateWebSocket(mockWs2, session2.id);
+
+		const message = JSON.stringify({ type: "patch", patches: [] });
+		manager.broadcast(session1.id, message);
+
+		expect(mockWs1.send).toHaveBeenCalledWith(message);
+		expect(mockWs2.send).not.toHaveBeenCalled();
+	});
+
+	it("should remove dead connections on broadcast", () => {
+		const session = manager.createSession();
+		const mockWs1 = { send: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+		const mockWs2 = {
+			send: vi.fn().mockImplementation(() => {
+				throw new Error("Connection closed");
+			}),
+		} as unknown as Parameters<typeof manager.associateWebSocket>[0];
+
+		manager.associateWebSocket(mockWs1, session.id);
+		manager.associateWebSocket(mockWs2, session.id);
+
+		const message = JSON.stringify({ type: "patch", patches: [] });
+		manager.broadcast(session.id, message);
+
+		// mockWs1 should receive the message
+		expect(mockWs1.send).toHaveBeenCalledWith(message);
+		// mockWs2 was called but threw
+		expect(mockWs2.send).toHaveBeenCalledWith(message);
+
+		// mockWs2 should be removed from connections
+		const connections = manager.getConnections(session.id);
+		expect(connections.size).toBe(1);
+		expect(connections.has(mockWs1)).toBe(true);
+		expect(connections.has(mockWs2)).toBe(false);
+	});
+
+	it("should handle broadcast to non-existent session", () => {
+		// Should not throw
+		expect(() => manager.broadcast("non-existent", "message")).not.toThrow();
+	});
+
+	it("should return empty Set for non-existent session connections", () => {
+		const connections = manager.getConnections("non-existent");
+		expect(connections.size).toBe(0);
+	});
+
+	it("should handle connection close gracefully", () => {
+		const session = manager.createSession();
+		const mockWs1 = { send: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+		const mockWs2 = { send: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+
+		manager.associateWebSocket(mockWs1, session.id);
+		manager.associateWebSocket(mockWs2, session.id);
+
+		// Simulate one connection closing
+		manager.removeWebSocket(mockWs1);
+
+		const connections = manager.getConnections(session.id);
+		expect(connections.size).toBe(1);
+		expect(connections.has(mockWs2)).toBe(true);
+
+		// Broadcast should still work for remaining connection
+		const message = JSON.stringify({ type: "patch", patches: [] });
+		manager.broadcast(session.id, message);
+		expect(mockWs2.send).toHaveBeenCalledWith(message);
+	});
+});
+
+describe("Ping/Pong connection maintenance", () => {
+	let manager: SessionManager;
+
+	beforeEach(() => {
+		vi.useFakeTimers();
+		manager = new SessionManager();
+	});
+
+	afterEach(() => {
+		manager.stopCleanupInterval();
+		manager.stopPingInterval();
+		vi.useRealTimers();
+	});
+
+	it("should not start ping interval when pingInterval is 0", () => {
+		manager.startPingInterval(0, 10000);
+
+		// Advance time - should not affect anything
+		vi.advanceTimersByTime(1000);
+
+		// No errors should occur
+		expect(true).toBe(true);
+	});
+
+	it("should send ping to all connections", () => {
+		const session = manager.createSession();
+		const mockWs1 = { send: vi.fn(), close: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+		const mockWs2 = { send: vi.fn(), close: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+
+		manager.associateWebSocket(mockWs1, session.id);
+		manager.associateWebSocket(mockWs2, session.id);
+		manager.initializePong(mockWs1);
+		manager.initializePong(mockWs2);
+
+		// Start ping interval
+		manager.startPingInterval(5000, 10000);
+
+		// Advance time to trigger ping
+		vi.advanceTimersByTime(5000);
+
+		// Both connections should receive ping
+		expect(mockWs1.send).toHaveBeenCalledWith('{"type":"ping"}');
+		expect(mockWs2.send).toHaveBeenCalledWith('{"type":"ping"}');
+	});
+
+	it("should update lastPong on handlePong", () => {
+		const session = manager.createSession();
+		const mockWs = { send: vi.fn(), close: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+
+		manager.associateWebSocket(mockWs, session.id);
+		manager.initializePong(mockWs);
+
+		// Advance time and call handlePong
+		vi.advanceTimersByTime(5000);
+		manager.handlePong(mockWs);
+
+		// lastPong should be updated (we can't directly check, but we can verify no timeout)
+		manager.startPingInterval(1000, 2000);
+		vi.advanceTimersByTime(1000);
+
+		// Connection should still be alive
+		expect(manager.getConnections(session.id).has(mockWs)).toBe(true);
+	});
+
+	it("should disconnect timed out connections", () => {
+		const session = manager.createSession();
+		const mockWs = { send: vi.fn(), close: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+
+		manager.associateWebSocket(mockWs, session.id);
+		manager.initializePong(mockWs);
+
+		// Start ping interval with short timeout
+		// Timeout = pingInterval + pongTimeout = 1000 + 500 = 1500ms from lastPong
+		manager.startPingInterval(1000, 500);
+
+		// First ping sent at 1000ms
+		vi.advanceTimersByTime(1000);
+		expect(mockWs.send).toHaveBeenCalledWith('{"type":"ping"}');
+
+		// Connection still alive at first ping (1000ms < 1500ms)
+		expect(manager.getConnections(session.id).has(mockWs)).toBe(true);
+
+		// Second ping at 2000ms - now timed out (2000ms > 1500ms)
+		vi.advanceTimersByTime(1000);
+
+		// Connection should be closed
+		expect(mockWs.close).toHaveBeenCalled();
+		expect(manager.getConnections(session.id).has(mockWs)).toBe(false);
+	});
+
+	it("should remove dead connections on ping send failure", () => {
+		const session = manager.createSession();
+		const mockWs = {
+			send: vi.fn().mockImplementation(() => {
+				throw new Error("Connection closed");
+			}),
+			close: vi.fn(),
+		} as unknown as Parameters<typeof manager.associateWebSocket>[0];
+
+		manager.associateWebSocket(mockWs, session.id);
+		manager.initializePong(mockWs);
+
+		manager.startPingInterval(1000, 10000);
+		vi.advanceTimersByTime(1000);
+
+		// Connection should be removed after failed send
+		expect(manager.getConnections(session.id).has(mockWs)).toBe(false);
+	});
+
+	it("should not start ping interval multiple times", () => {
+		const session = manager.createSession();
+		const mockWs = { send: vi.fn(), close: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+
+		manager.associateWebSocket(mockWs, session.id);
+		manager.initializePong(mockWs);
+
+		// Start ping interval twice
+		manager.startPingInterval(1000, 5000);
+		manager.startPingInterval(500, 5000); // Should be ignored
+
+		vi.advanceTimersByTime(600);
+
+		// Should not have sent ping (interval is 1000, not 500)
+		expect(mockWs.send).not.toHaveBeenCalled();
+
+		vi.advanceTimersByTime(400);
+
+		// Now should send ping
+		expect(mockWs.send).toHaveBeenCalledWith('{"type":"ping"}');
+	});
+
+	it("should stop ping interval", () => {
+		const session = manager.createSession();
+		const mockWs = { send: vi.fn(), close: vi.fn() } as unknown as Parameters<
+			typeof manager.associateWebSocket
+		>[0];
+
+		manager.associateWebSocket(mockWs, session.id);
+		manager.initializePong(mockWs);
+
+		manager.startPingInterval(1000, 5000);
+		manager.stopPingInterval();
+
+		vi.advanceTimersByTime(2000);
+
+		// No ping should be sent
+		expect(mockWs.send).not.toHaveBeenCalled();
+	});
+});
+
+describe("Sequence number management", () => {
+	let manager: SessionManager;
+
+	beforeEach(() => {
+		manager = new SessionManager();
+	});
+
+	afterEach(() => {
+		manager.stopCleanupInterval();
+	});
+
+	it("should initialize session with lastSeq 0 and empty patchHistory", () => {
+		const session = manager.createSession();
+		expect(session.lastSeq).toBe(0);
+		expect(session.patchHistory).toEqual([]);
+	});
+
+	it("should increment lastSeq when adding patches", () => {
+		const session = manager.createSession();
+
+		const seq1 = manager.addPatchToHistory(session.id, [
+			{ type: "replaceRoot", html: "<div>1</div>" },
+		]);
+		expect(seq1).toBe(1);
+		expect(session.lastSeq).toBe(1);
+
+		const seq2 = manager.addPatchToHistory(session.id, [
+			{ type: "replaceRoot", html: "<div>2</div>" },
+		]);
+		expect(seq2).toBe(2);
+		expect(session.lastSeq).toBe(2);
+	});
+
+	it("should store patches in history", () => {
+		const session = manager.createSession();
+		const patches1 = [{ type: "replaceRoot", html: "<div>1</div>" }];
+		const patches2 = [{ type: "replaceNode", id: "test", html: "<span>2</span>" }];
+
+		manager.addPatchToHistory(session.id, patches1);
+		manager.addPatchToHistory(session.id, patches2);
+
+		expect(session.patchHistory.length).toBe(2);
+		expect(session.patchHistory[0].patches).toEqual(patches1);
+		expect(session.patchHistory[1].patches).toEqual(patches2);
+	});
+
+	it("should return empty array when client is up to date", () => {
+		const session = manager.createSession();
+		manager.addPatchToHistory(session.id, [{ type: "replaceRoot", html: "<div>1</div>" }]);
+
+		const missed = manager.getMissedPatches(session.id, 1);
+		expect(missed).toEqual([]);
+	});
+
+	it("should return missed patches when client is behind", () => {
+		const session = manager.createSession();
+		manager.addPatchToHistory(session.id, [{ type: "replaceRoot", html: "<div>1</div>" }]);
+		manager.addPatchToHistory(session.id, [{ type: "replaceNode", id: "a", html: "<div>2</div>" }]);
+		manager.addPatchToHistory(session.id, [{ type: "replaceNode", id: "b", html: "<div>3</div>" }]);
+
+		const missed = manager.getMissedPatches(session.id, 1);
+		expect(missed).toHaveLength(2);
+		expect(missed).toContainEqual({ type: "replaceNode", id: "a", html: "<div>2</div>" });
+		expect(missed).toContainEqual({ type: "replaceNode", id: "b", html: "<div>3</div>" });
+	});
+
+	it("should return null when gap is too large", () => {
+		const session = manager.createSession();
+
+		// Add 105 patches (exceeds MAX_PATCH_HISTORY of 100)
+		for (let i = 0; i < 105; i++) {
+			manager.addPatchToHistory(session.id, [{ type: "replaceRoot", html: `<div>${i}</div>` }]);
+		}
+
+		// Client at seq 0 should require full sync
+		const missed = manager.getMissedPatches(session.id, 0);
+		expect(missed).toBeNull();
+	});
+
+	it("should limit patch history size", () => {
+		const session = manager.createSession();
+
+		// Add 110 patches
+		for (let i = 0; i < 110; i++) {
+			manager.addPatchToHistory(session.id, [{ type: "replaceRoot", html: `<div>${i}</div>` }]);
+		}
+
+		// History should be capped at MAX_PATCH_HISTORY (100)
+		expect(session.patchHistory.length).toBe(100);
+		// Oldest entries should be removed
+		expect(session.patchHistory[0].seq).toBe(11); // First 10 removed
+	});
+
+	it("should return null for non-existent session", () => {
+		const missed = manager.getMissedPatches("non-existent", 0);
+		expect(missed).toBeNull();
+	});
+
+	it("should return 0 for non-existent session in getLastSeq", () => {
+		const lastSeq = manager.getLastSeq("non-existent");
+		expect(lastSeq).toBe(0);
+	});
+
+	it("should return current lastSeq", () => {
+		const session = manager.createSession();
+		manager.addPatchToHistory(session.id, [{ type: "replaceRoot", html: "<div>1</div>" }]);
+		manager.addPatchToHistory(session.id, [{ type: "replaceRoot", html: "<div>2</div>" }]);
+
+		expect(manager.getLastSeq(session.id)).toBe(2);
+	});
+
+	it("should return 0 when adding patches to non-existent session", () => {
+		const seq = manager.addPatchToHistory("non-existent", [
+			{ type: "replaceRoot", html: "<div>1</div>" },
+		]);
+		expect(seq).toBe(0);
+	});
+});
+
 describe("Global SessionManager", () => {
 	afterEach(() => {
 		resetSessionManager();

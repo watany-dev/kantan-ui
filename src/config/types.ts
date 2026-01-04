@@ -59,6 +59,10 @@ export interface ClientConfig {
 	baseReconnectDelay?: number;
 	/** 最大再接続遅延（ミリ秒） */
 	maxReconnectDelay?: number;
+	/** ping送信間隔（ミリ秒）。0で無効。 */
+	pingInterval?: number;
+	/** pong応答タイムアウト（ミリ秒）。この時間内にpongがなければ切断とみなす。 */
+	pongTimeout?: number;
 }
 
 /**

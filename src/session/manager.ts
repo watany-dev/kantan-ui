@@ -30,6 +30,12 @@ export class SessionManager {
 	private eventProcessor: EventProcessor | null = null;
 	private abortControllers = new Map<SessionId, AbortController>();
 
+	// ping/pong関連
+	private wsLastPong = new Map<WSContext, number>();
+	private pingIntervalId: ReturnType<typeof setInterval> | null = null;
+	private pingInterval = 0;
+	private pongTimeout = 0;
+
 	constructor(config: SessionConfig = {}) {
 		this.config = {
 			...DEFAULT_SESSION_CONFIG,
@@ -69,6 +75,78 @@ export class SessionManager {
 		}
 	}
 
+	// ping/pong接続維持を開始
+	startPingInterval(pingInterval: number, pongTimeout: number): void {
+		if (this.pingIntervalId || pingInterval <= 0) return;
+
+		this.pingInterval = pingInterval;
+		this.pongTimeout = pongTimeout;
+
+		this.pingIntervalId = setInterval(() => {
+			this.sendPingToAll();
+		}, pingInterval);
+	}
+
+	// ping/pong接続維持を停止
+	stopPingInterval(): void {
+		if (this.pingIntervalId) {
+			clearInterval(this.pingIntervalId);
+			this.pingIntervalId = null;
+		}
+	}
+
+	// すべての接続にpingを送信し、タイムアウトした接続を切断
+	private sendPingToAll(): void {
+		const now = Date.now();
+		const pingMessage = JSON.stringify({ type: "ping" });
+
+		for (const [_sessionId, connections] of this.sessionToWs) {
+			const deadConnections: WSContext[] = [];
+
+			for (const ws of connections) {
+				// タイムアウトチェック
+				// lastPong + pingInterval + pongTimeout < now ならタイムアウト
+				// これにより、接続開始から pingInterval 後に ping を送信し、
+				// さらに pongTimeout 経過しても pong が来なければタイムアウト
+				const lastPong = this.wsLastPong.get(ws);
+				if (lastPong !== undefined && now - lastPong > this.pingInterval + this.pongTimeout) {
+					// タイムアウト - 接続を切断
+					deadConnections.push(ws);
+					try {
+						ws.close();
+					} catch (_e) {
+						// 既に切断されている場合は無視
+					}
+					continue;
+				}
+
+				// ping送信
+				try {
+					ws.send(pingMessage);
+				} catch (_e) {
+					deadConnections.push(ws);
+				}
+			}
+
+			// 切断された接続を削除
+			for (const ws of deadConnections) {
+				connections.delete(ws);
+				this.wsToSession.delete(ws);
+				this.wsLastPong.delete(ws);
+			}
+		}
+	}
+
+	// pong受信時に呼び出す
+	handlePong(ws: WSContext): void {
+		this.wsLastPong.set(ws, Date.now());
+	}
+
+	// WebSocket接続時にlastPongを初期化
+	initializePong(ws: WSContext): void {
+		this.wsLastPong.set(ws, Date.now());
+	}
+
 	// セッションを生成
 	createSession(): Session {
 		const id = crypto.randomUUID();
@@ -77,6 +155,8 @@ export class SessionManager {
 			state: {},
 			createdAt: new Date(),
 			lastAccessedAt: new Date(),
+			lastSeq: 0,
+			patchHistory: [],
 		};
 		this.sessions.set(id, session);
 		this.sessionToWs.set(id, new Set());
@@ -136,6 +216,33 @@ export class SessionManager {
 		}
 	}
 
+	// セッションに紐づく全WebSocket接続を取得
+	getConnections(sessionId: SessionId): Set<WSContext> {
+		return this.sessionToWs.get(sessionId) ?? new Set();
+	}
+
+	// セッションに紐づく全WebSocket接続にメッセージをブロードキャスト
+	broadcast(sessionId: SessionId, message: string): void {
+		const connections = this.sessionToWs.get(sessionId);
+		if (!connections) return;
+
+		const deadConnections: WSContext[] = [];
+		for (const ws of connections) {
+			try {
+				ws.send(message);
+			} catch (e) {
+				// 送信に失敗した接続は後で削除
+				deadConnections.push(ws);
+			}
+		}
+
+		// 切断されたWebSocketを削除
+		for (const ws of deadConnections) {
+			connections.delete(ws);
+			this.wsToSession.delete(ws);
+		}
+	}
+
 	// セッションの state を取得
 	getState(sessionId: SessionId): SessionState | undefined {
 		return this.sessions.get(sessionId)?.state;
@@ -148,6 +255,61 @@ export class SessionManager {
 			session.state[key] = value;
 			session.lastAccessedAt = new Date();
 		}
+	}
+
+	// パッチ履歴の最大保持数
+	private static readonly MAX_PATCH_HISTORY = 100;
+
+	// パッチを履歴に追加し、新しいシーケンス番号を返す
+	addPatchToHistory(sessionId: SessionId, patches: unknown[]): number {
+		const session = this.sessions.get(sessionId);
+		if (!session) return 0;
+
+		session.lastSeq++;
+		const entry = {
+			seq: session.lastSeq,
+			patches,
+			timestamp: Date.now(),
+		};
+		session.patchHistory.push(entry);
+
+		// 古い履歴を削除
+		if (session.patchHistory.length > SessionManager.MAX_PATCH_HISTORY) {
+			session.patchHistory.shift();
+		}
+
+		return session.lastSeq;
+	}
+
+	// 欠損したパッチを取得
+	getMissedPatches(sessionId: SessionId, lastClientSeq: number): unknown[] | null {
+		const session = this.sessions.get(sessionId);
+		if (!session) return null;
+
+		// クライアントが最新の場合
+		if (lastClientSeq >= session.lastSeq) {
+			return [];
+		}
+
+		// 差分が大きすぎる場合はフル同期が必要（nullを返す）
+		if (session.lastSeq - lastClientSeq > SessionManager.MAX_PATCH_HISTORY) {
+			return null;
+		}
+
+		// 欠損パッチを収集
+		const missedPatches: unknown[] = [];
+		for (const entry of session.patchHistory) {
+			if (entry.seq > lastClientSeq) {
+				missedPatches.push(...entry.patches);
+			}
+		}
+
+		return missedPatches;
+	}
+
+	// 現在のシーケンス番号を取得
+	getLastSeq(sessionId: SessionId): number {
+		return this.sessions.get(sessionId)?.lastSeq ?? 0;
 	}
 
 	// 期限切れセッションをクリーンアップ

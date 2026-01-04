@@ -21,6 +21,13 @@ export interface EventProcessResult {
 	patches: unknown[];
 }
 
+// パッチ履歴エントリ
+export interface PatchHistoryEntry {
+	seq: number;
+	patches: unknown[];
+	timestamp: number;
+}
+
 // セッション情報
 export interface Session {
 	id: SessionId;
@@ -29,4 +36,8 @@ export interface Session {
 	lastAccessedAt: Date;
 	/** 前回レンダリングしたHTML（差分検出用） */
 	lastHtml?: string;
+	/** 最後のサーバーシーケンス番号 */
+	lastSeq: number;
+	/** パッチ履歴（再接続時の再同期用） */
+	patchHistory: PatchHistoryEntry[];
 }
