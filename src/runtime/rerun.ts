@@ -1,4 +1,4 @@
-import { RenderContext, setRenderContext } from "../kt/context";
+import { type FlushCallback, RenderContext, setRenderContext } from "../kt/context";
 import { setCurrentSessionId } from "../session/state";
 import { resetWidgetCounter } from "../widgets/registry";
 import { AbortError } from "./abort";
@@ -10,6 +10,16 @@ import { type RerunContext, clearContext, setContext } from "./context";
  * - undefined を返す: 宣言的API（kt.* を使用）
  */
 export type Script = () => string | undefined;
+
+/**
+ * ストリーミング設定
+ */
+export interface StreamingOptions {
+	/** フラッシュ時に呼び出されるコールバック */
+	onFlush: FlushCallback;
+	/** フラッシュしきい値（何要素ごとにフラッシュするか） */
+	flushThreshold: number;
+}
 
 /**
  * グローバル状態管理についての設計ノート
@@ -37,6 +47,7 @@ export function rerun(
 	event?: RerunContext["event"],
 	sessionId?: string,
 	signal?: AbortSignal,
+	streaming?: StreamingOptions,
 ): string {
 	// シグナルがabortされていたら早期リターン
 	if (signal?.aborted) {
@@ -45,6 +56,11 @@ export function rerun(
 
 	// レンダリングコンテキストを作成
 	const renderContext = new RenderContext();
+
+	// ストリーミングが有効な場合、フラッシュコールバックを設定
+	if (streaming) {
+		renderContext.setFlushCallback(streaming.onFlush, streaming.flushThreshold);
+	}
 
 	try {
 		// Widget カウンターをリセット

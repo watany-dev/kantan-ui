@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { type KantanConfig, type ResolvedKantanConfig, resolveConfig } from "./config";
 import { diff, toWebSocketPatches } from "./diff";
-import { type Script, rerun } from "./runtime";
+import { type Script, type StreamingOptions, rerun } from "./runtime";
 import {
 	SessionManager,
 	buildSetCookieHeader,
@@ -9,7 +9,7 @@ import {
 	setSessionManager,
 } from "./session";
 import { upgradeWebSocket, websocket } from "./websocket";
-import type { Patch } from "./websocket/types";
+import type { Patch, StreamAppendPatch } from "./websocket/types";
 import { type ClientMessage, type ServerMessage, isClientMessage } from "./websocket/types";
 
 // Generate a random nonce for CSP
@@ -176,14 +176,17 @@ function generateClientScript(config: ResolvedKantanConfig): string {
 			}
 
       if (msg.type === "patch" && msg.patches) {
-        const focusState = saveFocusState();
+        // ストリーミング中（partial=true）はフォーカス復元をスキップ
+        const focusState = msg.partial ? null : saveFocusState();
         for (const patch of msg.patches) {
           applyPatch(patch);
         }
-        // 同期的に復元を試みる
-        restoreFocusState(focusState, 0);
-        // バックアップとしてrAFでも復元を試みる
-        requestAnimationFrame(() => restoreFocusState(focusState, 0));
+        if (focusState) {
+          // 同期的に復元を試みる
+          restoreFocusState(focusState, 0);
+          // バックアップとしてrAFでも復元を試みる
+          requestAnimationFrame(() => restoreFocusState(focusState, 0));
+        }
       }
     };
 
@@ -247,6 +250,23 @@ function generateClientScript(config: ResolvedKantanConfig): string {
               } else {
                 parent.appendChild(newEl);
               }
+            }
+          }
+          break;
+        }
+
+        case "streamAppend": {
+          // ストリーミング更新: #appに部分HTMLを追加
+          if (isUnsafeHtml(patch.html)) {
+            console.error("Blocked potentially unsafe HTML content");
+            return;
+          }
+          const app = document.getElementById("app");
+          if (app) {
+            const temp = document.createElement("div");
+            temp.innerHTML = patch.html;
+            while (temp.firstChild) {
+              app.appendChild(temp.firstChild);
             }
           }
           break;
@@ -491,9 +511,31 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 							sessionManager.setState(session.id, data.widgetId, data.value);
 						}
 
+						// ストリーミング設定
+						const streamingOptions: StreamingOptions | undefined = config.streaming.enabled
+							? {
+									onFlush: (html, _itemCount) => {
+										// ストリーミング中の部分更新を送信
+										const streamMessage: ServerMessage = {
+											type: "patch",
+											patches: [{ type: "streamAppend", html }],
+											partial: true,
+										};
+										ws.send(JSON.stringify(streamMessage));
+									},
+									flushThreshold: config.streaming.flushThreshold,
+								}
+							: undefined;
+
 						// rerun を実行
 						const widgetId = data.widgetId ?? "";
-						const newHtml = rerun(script, { widgetId, value: data.value }, session.id);
+						const newHtml = rerun(
+							script,
+							{ widgetId, value: data.value },
+							session.id,
+							undefined,
+							streamingOptions,
+						);
 
 						// 差分を計算
 						// diff()は要素IDに基づいて差分を検出する
