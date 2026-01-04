@@ -14,7 +14,8 @@
 				"useOptionalChain": "error"
 			},
 			"correctness": {
-				"recommended": true
+				"recommended": true,
+				"noUnusedImports": "error"
 			},
 			"style": {
 				"recommended": true
