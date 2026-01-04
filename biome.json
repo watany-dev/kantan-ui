@@ -12,6 +12,9 @@
 			},
 			"correctness": {
 				"recommended": true
+			},
+			"style": {
+				"recommended": true
 			}
 		}
 	},
