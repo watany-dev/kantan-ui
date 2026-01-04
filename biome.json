@@ -27,7 +27,7 @@
 			},
 			"suspicious": {
 				"recommended": true,
-				"noExplicitAny": "warn",
+				"noExplicitAny": "error",
 				"useAwait": "warn"
 			},
 			"security": {
