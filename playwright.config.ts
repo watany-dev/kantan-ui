@@ -39,7 +39,7 @@ export default defineConfig({
 							executablePath: chromiumPath,
 						},
 			},
-			testIgnore: ["**/session-scope-browser.spec.ts"],
+			testIgnore: ["**/session-scope-browser.spec.ts", "**/streaming.spec.ts"],
 		},
 		{
 			name: "chromium-browser-scope",
@@ -56,6 +56,21 @@ export default defineConfig({
 			},
 			testMatch: "**/session-scope-browser.spec.ts",
 		},
+		{
+			name: "chromium-streaming",
+			use: {
+				...devices["Desktop Chrome"],
+				baseURL: "http://localhost:3002",
+				launchOptions: process.env.CI
+					? {
+							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+						}
+					: {
+							executablePath: chromiumPath,
+						},
+			},
+			testMatch: "**/streaming.spec.ts",
+		},
 	],
 	webServer: [
 		{
@@ -69,6 +84,14 @@ export default defineConfig({
 		{
 			command: "bun run src/server-browser.ts",
 			url: "http://localhost:3001",
+			reuseExistingServer: !process.env.CI,
+			timeout: 60000,
+			stdout: "pipe",
+			stderr: "pipe",
+		},
+		{
+			command: "bun run src/server-streaming.ts",
+			url: "http://localhost:3002",
 			reuseExistingServer: !process.env.CI,
 			timeout: 60000,
 			stdout: "pipe",

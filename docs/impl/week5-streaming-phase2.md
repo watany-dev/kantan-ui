@@ -102,12 +102,12 @@ case "streamAppend": {
 
 ## 実装ステップ
 
-1. [ ] `src/websocket/types.ts` に `streamAppend` パッチ追加
-2. [ ] `src/websocket/types.ts` の `ServerMessage` に `partial` フラグ追加
-3. [ ] `src/app.ts` でストリーミング設定時にflushCallback設定
-4. [ ] `src/app.ts` クライアントスクリプトに `streamAppend` 処理追加
-5. [ ] ユニットテスト作成
-6. [ ] E2Eテスト作成（ストリーミング有効時の動作確認）
+1. [x] `src/websocket/types.ts` に `streamAppend` パッチ追加
+2. [x] `src/websocket/types.ts` の `ServerMessage` に `partial` フラグ追加
+3. [x] `src/app.ts` でストリーミング設定時にflushCallback設定
+4. [x] `src/app.ts` クライアントスクリプトに `streamAppend` 処理追加
+5. [x] ユニットテスト作成
+6. [x] E2Eテスト作成（ストリーミング有効時の動作確認）
 
 ## テスト計画
 
@@ -126,3 +126,13 @@ case "streamAppend": {
 | 部分表示の不整合 | 最終パッチで完全な状態に収束させる |
 | フォーカス喪失 | ストリーミング中はフォーカス復元をスキップ |
 | 大量のWebSocketメッセージ | flushThreshold調整、デバウンス検討 |
+
+## 既知の制限事項
+
+### DOM重複問題
+ストリーミング中に`streamAppend`でHTMLを追加し、最終パッチが`replaceNode`の場合、
+一時的に同じIDを持つ要素が複数存在する可能性がある。
+
+**対策（Phase 3で検討）**:
+1. ストリーミング開始時に`#app`をクリアする`streamStart`パッチを導入
+2. または、ストリーミング専用コンテナを使用し、最終パッチで置換
