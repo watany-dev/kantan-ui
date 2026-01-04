@@ -215,18 +215,14 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 								error: {
 									code: "RATE_LIMITED",
 									message: "Too many requests. Please slow down.",
-									...(rateLimitResult.retryAfter !== undefined && {
-										retryAfter: rateLimitResult.retryAfter,
-									}),
+									retryAfter: rateLimitResult.retryAfter,
 								},
 							};
 							ws.send(JSON.stringify(errorMessage));
 							return;
 						}
 
-						// ボタンの "clicked" イベントは一時的なものなので、セッション状態に保存しない
-						// ボタンの判定は context.event.widgetId で行われるため、状態の永続化は不要
-						if (data.widgetId && data.value !== undefined && data.value !== "clicked") {
+						if (data.widgetId && data.value !== undefined) {
 							sessionManager.setState(session.id, data.widgetId, data.value);
 						}
 
