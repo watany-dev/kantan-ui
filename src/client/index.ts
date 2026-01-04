@@ -1,0 +1,1 @@
+export { generateClientScript } from "./script";
