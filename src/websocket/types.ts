@@ -12,11 +12,11 @@ export interface ClientMessage {
 export function isClientMessage(data: unknown): data is ClientMessage {
 	if (typeof data !== "object" || data === null) return false;
 	const msg = data as Record<string, unknown>;
-	if (msg["type"] !== "event" && msg["type"] !== "init" && msg["type"] !== "pong") return false;
+	if (msg.type !== "event" && msg.type !== "init" && msg.type !== "pong") return false;
 	// null も許可（localStorage.getItem が null を返す場合）
-	if (msg["widgetId"] != null && typeof msg["widgetId"] !== "string") return false;
-	if (msg["sessionId"] != null && typeof msg["sessionId"] !== "string") return false;
-	if (msg["lastSeq"] != null && typeof msg["lastSeq"] !== "number") return false;
+	if (msg.widgetId != null && typeof msg.widgetId !== "string") return false;
+	if (msg.sessionId != null && typeof msg.sessionId !== "string") return false;
+	if (msg.lastSeq != null && typeof msg.lastSeq !== "number") return false;
 	return true;
 }
 
