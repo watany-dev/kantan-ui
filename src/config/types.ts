@@ -8,6 +8,8 @@ export interface KantanConfig {
 	client?: ClientConfig;
 	/** ストリーミング関連の設定 */
 	streaming?: StreamingConfig;
+	/** セキュリティ関連の設定 */
+	security?: SecurityConfig;
 }
 
 /**
@@ -76,6 +78,18 @@ export interface StreamingConfig {
 }
 
 /**
+ * セキュリティ設定
+ */
+export interface SecurityConfig {
+	/** パッチ履歴の最大サイズ（バイト、デフォルト: 1MB） */
+	maxPatchSize?: number;
+	/** 1秒あたりの最大イベント数（デフォルト: 100） */
+	maxEventsPerSecond?: number;
+	/** レート制限超過時のクールダウン期間（ミリ秒、デフォルト: 1000） */
+	rateLimitCooldown?: number;
+}
+
+/**
  * 解決済みセッション設定（内部使用）
  */
 export interface ResolvedSessionConfig {
@@ -93,4 +107,5 @@ export interface ResolvedKantanConfig {
 	session: ResolvedSessionConfig;
 	client: Required<ClientConfig>;
 	streaming: Required<StreamingConfig>;
+	security: Required<SecurityConfig>;
 }

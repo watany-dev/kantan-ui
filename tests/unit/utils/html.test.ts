@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { escapeHtml } from "../../../src/utils/html";
+import { containsUnsafeHtml, escapeHtml } from "../../../src/utils/html";
 
 describe("escapeHtml", () => {
 	describe("XSS prevention", () => {
@@ -86,6 +86,168 @@ describe("escapeHtml", () => {
 		it("should escape multiple special characters", () => {
 			expect(escapeHtml('<div class="test">&</div>')).toBe(
 				"&lt;div class=&quot;test&quot;&gt;&amp;&lt;/div&gt;",
+			);
+		});
+	});
+});
+
+describe("containsUnsafeHtml", () => {
+	describe("safe HTML detection", () => {
+		it("should return false for safe HTML", () => {
+			expect(containsUnsafeHtml("<div>Hello</div>")).toBe(false);
+			expect(containsUnsafeHtml("<span class='test'>World</span>")).toBe(false);
+			expect(containsUnsafeHtml("<button id='btn'>Click</button>")).toBe(false);
+		});
+
+		it("should return false for text without HTML", () => {
+			expect(containsUnsafeHtml("Hello World")).toBe(false);
+			expect(containsUnsafeHtml("Test 123")).toBe(false);
+		});
+
+		it("should return false for escaped HTML", () => {
+			expect(containsUnsafeHtml("&lt;script&gt;alert(1)&lt;/script&gt;")).toBe(false);
+		});
+	});
+
+	describe("script tag detection", () => {
+		it("should detect basic script tag", () => {
+			expect(containsUnsafeHtml("<script>alert(1)</script>")).toBe(true);
+		});
+
+		it("should detect script tag with attributes", () => {
+			expect(containsUnsafeHtml('<script src="evil.js"></script>')).toBe(true);
+		});
+
+		it("should detect script tag with whitespace", () => {
+			expect(containsUnsafeHtml("<script \n>alert(1)</script>")).toBe(true);
+		});
+
+		it("should detect script tag case-insensitively", () => {
+			expect(containsUnsafeHtml("<SCRIPT>alert(1)</SCRIPT>")).toBe(true);
+			expect(containsUnsafeHtml("<ScRiPt>alert(1)</ScRiPt>")).toBe(true);
+		});
+	});
+
+	describe("javascript: URL detection", () => {
+		it("should detect javascript: URL", () => {
+			expect(containsUnsafeHtml('<a href="javascript:alert(1)">click</a>')).toBe(true);
+		});
+
+		it("should detect javascript: URL with space", () => {
+			expect(containsUnsafeHtml('<a href="javascript :alert(1)">click</a>')).toBe(true);
+		});
+
+		it("should detect javascript: URL case-insensitively", () => {
+			expect(containsUnsafeHtml('<a href="JAVASCRIPT:alert(1)">click</a>')).toBe(true);
+		});
+	});
+
+	describe("vbscript: URL detection", () => {
+		it("should detect vbscript: URL", () => {
+			expect(containsUnsafeHtml('<a href="vbscript:msgbox(1)">click</a>')).toBe(true);
+		});
+	});
+
+	describe("data: URL detection", () => {
+		it("should detect data: URL with base64", () => {
+			expect(containsUnsafeHtml('<a href="data:text/html;base64,PHNjcmlwdD4=">click</a>')).toBe(
+				true,
+			);
+		});
+
+		it("should not flag regular data URLs without base64", () => {
+			expect(containsUnsafeHtml('<img src="data:image/png,abc">')).toBe(false);
+		});
+	});
+
+	describe("event handler detection", () => {
+		it("should detect onclick handler", () => {
+			expect(containsUnsafeHtml('<div onclick="alert(1)">click</div>')).toBe(true);
+		});
+
+		it("should detect onerror handler", () => {
+			expect(containsUnsafeHtml('<img src="x" onerror="alert(1)">')).toBe(true);
+		});
+
+		it("should detect onload handler", () => {
+			expect(containsUnsafeHtml('<body onload="alert(1)">')).toBe(true);
+		});
+
+		it("should detect onmouseover handler", () => {
+			expect(containsUnsafeHtml('<div onmouseover="alert(1)">hover</div>')).toBe(true);
+		});
+
+		it("should detect handler with space before equals", () => {
+			expect(containsUnsafeHtml('<div onclick ="alert(1)">click</div>')).toBe(true);
+		});
+
+		it("should detect handler case-insensitively", () => {
+			expect(containsUnsafeHtml('<div ONCLICK="alert(1)">click</div>')).toBe(true);
+		});
+	});
+
+	describe("dangerous tag detection", () => {
+		it("should detect iframe tag", () => {
+			expect(containsUnsafeHtml('<iframe src="evil.html"></iframe>')).toBe(true);
+		});
+
+		it("should detect embed tag", () => {
+			expect(containsUnsafeHtml('<embed src="evil.swf">')).toBe(true);
+		});
+
+		it("should detect object tag", () => {
+			expect(containsUnsafeHtml('<object data="evil.swf"></object>')).toBe(true);
+		});
+
+		it("should detect base tag", () => {
+			expect(containsUnsafeHtml('<base href="http://evil.com/">')).toBe(true);
+		});
+
+		it("should detect form tag", () => {
+			expect(containsUnsafeHtml('<form action="http://evil.com/steal">')).toBe(true);
+		});
+
+		it("should detect meta tag", () => {
+			expect(
+				containsUnsafeHtml('<meta http-equiv="refresh" content="0;url=http://evil.com">'),
+			).toBe(true);
+		});
+
+		it("should detect link tag", () => {
+			expect(containsUnsafeHtml('<link rel="stylesheet" href="http://evil.com/style.css">')).toBe(
+				true,
+			);
+		});
+	});
+
+	describe("SVG/MathML XSS detection", () => {
+		it("should detect SVG with event handler", () => {
+			expect(containsUnsafeHtml('<svg onload="alert(1)">')).toBe(true);
+		});
+
+		it("should detect SVG with nested event handler", () => {
+			expect(containsUnsafeHtml('<svg><animate onbegin="alert(1)">')).toBe(true);
+		});
+
+		it("should detect MathML with event handler", () => {
+			expect(containsUnsafeHtml('<math onclick="alert(1)">')).toBe(true);
+		});
+
+		it("should allow safe SVG without event handlers", () => {
+			expect(
+				containsUnsafeHtml('<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>'),
+			).toBe(false);
+		});
+	});
+
+	describe("bypass attempt detection", () => {
+		it("should detect img onerror without quotes", () => {
+			expect(containsUnsafeHtml("<img src=x onerror=alert(1)>")).toBe(true);
+		});
+
+		it("should detect handler in any position", () => {
+			expect(containsUnsafeHtml('<div class="test" onclick="alert(1)" id="x">click</div>')).toBe(
+				true,
 			);
 		});
 	});

@@ -33,7 +33,7 @@ const defaultStyles = `
 
 export function createApp(script: Script, userConfig?: KantanConfig) {
 	const config = resolveConfig(userConfig);
-	const sessionManager = new SessionManager(config.session);
+	const sessionManager = new SessionManager(config.session, config.security);
 	setSessionManager(sessionManager);
 
 	// クライアントスクリプト生成（設定値を注入）
@@ -201,6 +201,21 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 								error: {
 									code: "SESSION_NOT_FOUND",
 									message: "Session not found. Please refresh or reconnect.",
+								},
+							};
+							ws.send(JSON.stringify(errorMessage));
+							return;
+						}
+
+						// レート制限チェック
+						const rateLimitResult = sessionManager.checkRateLimit(session.id);
+						if (!rateLimitResult.allowed) {
+							const errorMessage: ServerMessage = {
+								type: "error",
+								error: {
+									code: "RATE_LIMITED",
+									message: "Too many requests. Please slow down.",
+									retryAfter: rateLimitResult.retryAfter,
 								},
 							};
 							ws.send(JSON.stringify(errorMessage));

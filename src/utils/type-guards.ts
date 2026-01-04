@@ -58,3 +58,15 @@ export function assertType<T>(
 	}
 	return isValid;
 }
+
+/**
+ * UUID v4形式の検証（crypto.randomUUID()で生成される形式）
+ * RFC 4122準拠: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+ * - バージョン（4）は13文字目
+ * - バリアント（8, 9, a, b）は17文字目
+ */
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isUUID(value: unknown): value is string {
+	return typeof value === "string" && UUID_V4_REGEX.test(value);
+}

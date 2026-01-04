@@ -1,7 +1,24 @@
 import type { WSContext } from "hono/ws";
-import { DEFAULT_SESSION_CONFIG } from "../config";
-import type { ResolvedSessionConfig, SessionConfig } from "../config/types";
+import { DEFAULT_SECURITY_CONFIG, DEFAULT_SESSION_CONFIG } from "../config";
+import type { ResolvedSessionConfig, SecurityConfig, SessionConfig } from "../config/types";
+import { isUUID } from "../utils/type-guards";
 import type { EventProcessResult, EventQueueItem, Session, SessionId, SessionState } from "./types";
+
+/** レート制限の状態 */
+interface RateLimitState {
+	/** 現在のウィンドウでのイベント数 */
+	count: number;
+	/** ウィンドウの開始時刻（ミリ秒） */
+	windowStart: number;
+	/** クールダウン終了時刻（ミリ秒、制限中の場合） */
+	cooldownUntil: number;
+}
+
+/** レート制限結果 */
+export interface RateLimitResult {
+	allowed: boolean;
+	retryAfter?: number; // ミリ秒
+}
 
 // イベント処理コールバックの型
 export type EventProcessor = (
@@ -22,6 +39,7 @@ export class SessionManager {
 	private wsToSession = new Map<WSContext, SessionId>();
 	private sessionToWs = new Map<SessionId, Set<WSContext>>();
 	private config: ResolvedSessionConfig;
+	private securityConfig: Required<SecurityConfig>;
 	private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
 
 	// イベントキュー関連
@@ -36,7 +54,13 @@ export class SessionManager {
 	private pingInterval = 0;
 	private pongTimeout = 0;
 
-	constructor(config: SessionConfig = {}) {
+	// レート制限関連
+	private rateLimitStates = new Map<SessionId, RateLimitState>();
+
+	// Web標準 TextEncoder（バイトサイズ計算用）
+	private static readonly textEncoder = new TextEncoder();
+
+	constructor(config: SessionConfig = {}, securityConfig: SecurityConfig = {}) {
 		this.config = {
 			...DEFAULT_SESSION_CONFIG,
 			...config,
@@ -44,6 +68,10 @@ export class SessionManager {
 				...DEFAULT_SESSION_CONFIG.cookie,
 				...config.cookie,
 			},
+		};
+		this.securityConfig = {
+			...DEFAULT_SECURITY_CONFIG,
+			...securityConfig,
 		};
 
 		// 定期的なクリーンアップを開始
@@ -164,9 +192,18 @@ export class SessionManager {
 		return session;
 	}
 
+	/**
+	 * セッションIDの形式を検証
+	 * crypto.randomUUID()が生成するUUID v4形式のみを受け入れる
+	 */
+	isValidSessionId(id: unknown): id is SessionId {
+		return isUUID(id);
+	}
+
 	// セッションを取得または作成
 	getOrCreateSession(id?: SessionId): Session {
-		if (id) {
+		// セッションIDの形式を検証（UUID v4のみ受け入れ）
+		if (id && this.isValidSessionId(id)) {
 			const existing = this.getSession(id);
 			if (existing) return existing;
 		}
@@ -253,10 +290,32 @@ export class SessionManager {
 	// パッチ履歴の最大保持数
 	private static readonly MAX_PATCH_HISTORY = 100;
 
-	// パッチを履歴に追加し、新しいシーケンス番号を返す
+	/**
+	 * パッチのバイトサイズを計算（Web標準 TextEncoder使用）
+	 */
+	private getPatchSize(patches: unknown[]): number {
+		const json = JSON.stringify(patches);
+		return SessionManager.textEncoder.encode(json).length;
+	}
+
+	/**
+	 * パッチを履歴に追加し、新しいシーケンス番号を返す
+	 * @returns シーケンス番号。サイズ超過の場合は現在のシーケンス番号を返す（履歴に保存しない）
+	 */
 	addPatchToHistory(sessionId: SessionId, patches: unknown[]): number {
 		const session = this.sessions.get(sessionId);
 		if (!session) return 0;
+
+		// パッチサイズをチェック（Web標準 TextEncoderでバイトサイズを計算）
+		const patchSize = this.getPatchSize(patches);
+		if (patchSize > this.securityConfig.maxPatchSize) {
+			console.warn(
+				`Patch size ${patchSize} exceeds limit ${this.securityConfig.maxPatchSize}, skipping history`,
+			);
+			// 履歴には保存しないがシーケンス番号は進める
+			session.lastSeq++;
+			return session.lastSeq;
+		}
 
 		session.lastSeq++;
 		const entry = {
@@ -429,6 +488,62 @@ export class SessionManager {
 	// 処理中かどうかを取得（テスト用）
 	isProcessing(sessionId: SessionId): boolean {
 		return this.processingFlags.get(sessionId) ?? false;
+	}
+
+	/**
+	 * レート制限をチェック
+	 * スライディングウィンドウ方式で1秒あたりのイベント数を制限
+	 */
+	checkRateLimit(sessionId: SessionId): RateLimitResult {
+		const now = Date.now();
+		let state = this.rateLimitStates.get(sessionId);
+
+		if (!state) {
+			state = { count: 0, windowStart: now, cooldownUntil: 0 };
+			this.rateLimitStates.set(sessionId, state);
+		}
+
+		// クールダウン中かチェック
+		if (state.cooldownUntil > now) {
+			return {
+				allowed: false,
+				retryAfter: state.cooldownUntil - now,
+			};
+		}
+
+		// ウィンドウをリセット（1秒経過した場合）
+		if (now - state.windowStart >= 1000) {
+			state.count = 0;
+			state.windowStart = now;
+		}
+
+		// カウントをインクリメント
+		state.count++;
+
+		// 制限超過チェック
+		if (state.count > this.securityConfig.maxEventsPerSecond) {
+			state.cooldownUntil = now + this.securityConfig.rateLimitCooldown;
+			return {
+				allowed: false,
+				retryAfter: this.securityConfig.rateLimitCooldown,
+			};
+		}
+
+		return { allowed: true };
+	}
+
+	/**
+	 * レート制限状態をリセット（テスト用）
+	 */
+	resetRateLimit(sessionId: SessionId): void {
+		this.rateLimitStates.delete(sessionId);
+	}
+
+	/**
+	 * セキュリティ設定を取得
+	 */
+	getSecurityConfig(): Required<SecurityConfig> {
+		return this.securityConfig;
 	}
 }
 

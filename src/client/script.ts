@@ -46,6 +46,34 @@ function updateConnectionStatus(status, reconnectAttempts, maxReconnectAttempts)
 }`;
 
 /**
+ * XSS検出スクリプト
+ */
+const xssDetectionScript = `
+function isUnsafeHtml(html) {
+  var lowerHtml = html.toLowerCase();
+  if (!lowerHtml.includes("<") && !lowerHtml.includes("javascript") && !lowerHtml.includes("vbscript") && !lowerHtml.includes("data:")) {
+    return false;
+  }
+  var patterns = [
+    /<script[\\s\\S]*?>/i,
+    /\\bjavascript\\s*:/i,
+    /\\bvbscript\\s*:/i,
+    /\\bdata\\s*:[^,]*?base64/i,
+    /\\bon[a-z]+\\s*=/i,
+    /<iframe[\\s>]/i,
+    /<embed[\\s>]/i,
+    /<object[\\s>]/i,
+    /<base[\\s>]/i,
+    /<form[\\s>]/i,
+    /<meta[\\s>]/i,
+    /<link[\\s>]/i,
+    /<svg[\\s\\S]*?on[a-z]+\\s*=/i,
+    /<math[\\s\\S]*?on[a-z]+\\s*=/i
+  ];
+  return patterns.some(function(p) { return p.test(html); });
+}`;
+
+/**
  * フォーカス状態の保存・復元スクリプト
  */
 const focusManagementScript = `
@@ -98,10 +126,18 @@ const patchApplyScript = `
 function applyPatch(patch) {
   switch (patch.type) {
     case "replaceRoot": {
+      if (isUnsafeHtml(patch.html)) {
+        console.error("Blocked potentially unsafe HTML content");
+        return;
+      }
       document.getElementById("app").innerHTML = patch.html;
       break;
     }
     case "replaceNode": {
+      if (isUnsafeHtml(patch.html)) {
+        console.error("Blocked potentially unsafe HTML content");
+        return;
+      }
       const el = document.getElementById(patch.id);
       if (el) {
         const temp = document.createElement("div");
@@ -117,6 +153,10 @@ function applyPatch(patch) {
       break;
     }
     case "insertNode": {
+      if (isUnsafeHtml(patch.html)) {
+        console.error("Blocked potentially unsafe HTML content");
+        return;
+      }
       const parent = patch.parentId === "__root__"
         ? document.getElementById("app")
         : document.getElementById(patch.parentId);
@@ -135,6 +175,10 @@ function applyPatch(patch) {
       break;
     }
     case "streamAppend": {
+      if (isUnsafeHtml(patch.html)) {
+        console.error("Blocked potentially unsafe HTML content");
+        return;
+      }
       const app = document.getElementById("app");
       if (app) {
         const temp = document.createElement("div");
@@ -243,6 +287,9 @@ function connect() {
 						: "localStorage.removeItem(__KT_CONFIG__.sessionKey); sessionId = null; ws.close(); connect();"
 				}
       }
+      if (msg.error?.code === "RATE_LIMITED") {
+        console.warn("Rate limited, retry after:", msg.error?.retryAfter, "ms");
+      }
       return;
     }
 
@@ -308,6 +355,7 @@ setupEventDelegation(window.sendEvent);
 		configScript,
 		connectionIndicatorScript,
 		focusManagementScript,
+		xssDetectionScript,
 		patchApplyScript,
 		eventHandlingScript,
 		websocketScript,
