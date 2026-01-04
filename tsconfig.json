@@ -6,6 +6,7 @@
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
 		"types": ["bun"],
 		"strict": true,
+		"allowUnreachableCode": false,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitReturns": true,
 		"noUnusedLocals": true,
