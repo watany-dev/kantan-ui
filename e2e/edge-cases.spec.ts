@@ -15,14 +15,18 @@ test.describe("Edge Cases", () => {
 			el.value = "0";
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		});
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 0");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 0",
+		);
 
 		// 最大値に設定
 		await slider.evaluate((el: HTMLInputElement) => {
 			el.value = "100";
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		});
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 100");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 100",
+		);
 	});
 
 	test("text input handles empty string", async ({ page }) => {
@@ -95,7 +99,9 @@ test.describe("Edge Cases", () => {
 
 		// すべての変更が反映されている
 		await expect(page.locator("#counter-display")).toContainText("Current count: 1");
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 75",
+		);
 		await expect(page.locator("#results-card")).toContainText("Hello, Test!");
 	});
 });

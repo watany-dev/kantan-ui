@@ -23,7 +23,9 @@ test.describe("Focus Preservation", () => {
 		});
 
 		// 値が反映されることを確認（rerunが発生したことを意味する）
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 60");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 60",
+		);
 
 		// replaceNodeパッチ後もフォーカスが維持されていることを確認
 		// フォーカス復元には少し時間がかかる可能性がある
@@ -100,7 +102,9 @@ test.describe("Focus Preservation", () => {
 		});
 
 		// 値が反映されることを確認
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 75",
+		);
 
 		// 要素が存在し、正しい値を持っていることを確認
 		const newValue = await slider.inputValue();
@@ -157,7 +161,9 @@ test.describe("Focus Preservation", () => {
 		});
 
 		// 値が反映されることを確認
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 80");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 80",
+		);
 
 		// スクロール位置が維持されていることを確認
 		const afterScrollY = await page.evaluate(() => window.scrollY);
@@ -200,7 +206,9 @@ test.describe("Focus Preservation", () => {
 		});
 
 		// 値が反映されることを確認
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 30");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 30",
+		);
 
 		// テキスト入力にフォーカスを戻して選択範囲を確認
 		await textInput.focus();
@@ -311,7 +319,9 @@ test.describe("replaceRoot Focus Preservation", () => {
 			el.value = "10";
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		});
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 10");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 10",
+		);
 
 		// 連続して複数のウィジェットを操作
 		// （現在の実装では各操作が個別にパッチされるが、
@@ -330,7 +340,9 @@ test.describe("replaceRoot Focus Preservation", () => {
 		await page.waitForTimeout(100);
 
 		// 各ウィジェットが正しく更新されていることを確認
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 10");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 10",
+		);
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
 		);

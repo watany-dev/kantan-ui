@@ -66,6 +66,12 @@ const script = () => {
 	kt.subheader("Slider");
 	const volume = kt.slider("Volume", 0, 100, 50, { key: "volume_slider" });
 
+	// ステップ付きスライダー
+	const stepVolume = kt.slider("Volume (step=10)", 0, 100, 50, {
+		key: "step_slider",
+		step: 10,
+	});
+
 	// セレクトボックス
 	kt.subheader("Selectbox");
 	const color = kt.selectbox("Color Theme", ["blue", "green", "red", "purple"], "blue", {
@@ -102,6 +108,7 @@ ${escapeHtml(
 			counter: state.counter,
 			name,
 			volume,
+			stepVolume,
 			color,
 		},
 		null,

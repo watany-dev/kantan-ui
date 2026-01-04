@@ -50,7 +50,9 @@ test.describe("Keyboard Navigation", () => {
 		await slider.focus();
 
 		// 初期値確認
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 50");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 50",
+		);
 
 		// ArrowRightで増加
 		await page.keyboard.press("ArrowRight");
