@@ -49,7 +49,8 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 
 	// ルートページ
 	app.get("/", (c) => {
-		let sessionId: string | undefined;
+		let sessionId: string;
+		let isTemporarySession = false;
 
 		// scope='browser'の場合、Cookieでセッション管理
 		if (config.session.scope === "browser") {
@@ -75,9 +76,19 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 				secure: isSecure,
 				sameSite: config.session.cookie.sameSite,
 			});
+		} else {
+			// scope='tab'の場合、初期レンダリング用に一時セッションを作成
+			// WebSocket接続時に実際のセッションが作成される
+			sessionId = sessionManager.createSession().id;
+			isTemporarySession = true;
 		}
 
 		const initialHtml = rerun(script, undefined, sessionId);
+
+		// 一時セッションは初期レンダリング後に削除
+		if (isTemporarySession) {
+			sessionManager.deleteSession(sessionId);
+		}
 		const nonce = generateNonce();
 
 		// CSPヘッダー設定
