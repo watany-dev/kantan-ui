@@ -65,6 +65,12 @@ const script = () => {
 	kt.subheader("Text Input");
 	const name = kt.text_input("Your Name", "World", { key: "name_input" });
 
+	// maxLength付きテキスト入力（テスト用）
+	const shortName = kt.text_input("Short Name (max 5)", "", {
+		key: "short_input",
+		maxLength: 5,
+	});
+
 	// スライダー
 	kt.subheader("Slider");
 	const volume = kt.slider("Volume", 0, 100, 50, { key: "volume_slider" });
@@ -110,6 +116,7 @@ ${escapeHtml(
 		{
 			counter: state.counter,
 			name,
+			shortName,
 			volume,
 			stepVolume,
 			color,

@@ -39,6 +39,7 @@ export interface TextInputConfig {
 	placeholder?: string;
 	key?: string;
 	disabled?: boolean;
+	maxLength?: number;
 }
 
 export interface SelectboxConfig {

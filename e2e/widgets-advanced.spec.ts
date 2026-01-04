@@ -124,4 +124,26 @@ test.describe("Advanced Widget Behavior", () => {
 		// カウントが変わっていないことを確認
 		await expect(page.locator("#counter-display")).toContainText("Current count: 0");
 	});
+
+	test("text input has maxlength attribute", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const shortInput = page.locator("#short_input");
+
+		// maxlength属性が設定されている
+		await expect(shortInput).toHaveAttribute("maxlength", "5");
+	});
+
+	test("text input respects maxlength constraint", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const shortInput = page.locator("#short_input");
+
+		// 5文字以上入力しようとしても5文字に制限される
+		await shortInput.fill("ABCDEFGHIJ");
+
+		// 値が5文字に制限されている
+		const value = await shortInput.inputValue();
+		expect(value.length).toBeLessThanOrEqual(5);
+	});
 });

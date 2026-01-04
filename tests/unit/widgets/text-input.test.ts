@@ -104,5 +104,17 @@ describe("text_input", () => {
 
 			expect(html).not.toContain("disabled");
 		});
+
+		it("should render maxlength attribute when maxLength is provided", () => {
+			const html = renderTextInput("Name", "World", { maxLength: 10 });
+
+			expect(html).toContain('maxlength="10"');
+		});
+
+		it("should not render maxlength attribute when maxLength is not provided", () => {
+			const html = renderTextInput("Name", "World");
+
+			expect(html).not.toContain("maxlength");
+		});
 	});
 });
