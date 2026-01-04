@@ -861,7 +861,7 @@ describe("parseHtml error handling", () => {
 
 	it("should handle HTML with unusual but valid tag names", () => {
 		const html = '<custom-element id="custom">Content</custom-element>';
-		const nodes = parseHtml(html);
+		const _nodes = parseHtml(html);
 
 		// カスタム要素はハイフンを含むためパースできない可能性あり
 		// しかし、クラッシュしないことが重要
