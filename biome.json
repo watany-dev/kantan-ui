@@ -19,7 +19,8 @@
 				"noUnusedVariables": "error"
 			},
 			"style": {
-				"recommended": true
+				"recommended": true,
+				"useConst": "error"
 			},
 			"suspicious": {
 				"recommended": true,
