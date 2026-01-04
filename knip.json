@@ -2,5 +2,5 @@
 	"$schema": "https://unpkg.com/knip@5/schema.json",
 	"project": ["src/**/*.ts"],
 	"entry": ["src/runtime/index.ts", "src/config/index.ts"],
-	"ignore": ["src/server.ts"]
+	"ignore": ["src/server.ts", "src/server-browser.ts", "src/server-streaming.ts"]
 }
