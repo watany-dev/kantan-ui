@@ -281,7 +281,8 @@ describe("toWebSocketPatches", () => {
 		});
 	});
 
-	it("should convert insert patch to insertNode", () => {
+	it("should fallback to replaceRoot when insert patch exists", () => {
+		// insertパッチはインデックス計算の問題があるためreplaceRootにフォールバック
 		const result = {
 			patches: [
 				{
@@ -293,14 +294,13 @@ describe("toWebSocketPatches", () => {
 			],
 			hasChanges: true,
 		};
-		const patches = toWebSocketPatches(result, "<div>html</div>");
+		const fullHtml = "<div>html</div>";
+		const patches = toWebSocketPatches(result, fullHtml);
 
 		expect(patches).toHaveLength(1);
 		expect(patches[0]).toEqual({
-			type: "insertNode",
-			parentId: "__root__",
-			index: 0,
-			html: "<button>New</button>",
+			type: "replaceRoot",
+			html: fullHtml,
 		});
 	});
 
@@ -367,7 +367,8 @@ describe("toWebSocketPatches edge cases", () => {
 		expect(wsPatches[0].type).toBe("replaceRoot");
 	});
 
-	it("should handle mixed patch types", () => {
+	it("should fallback to replaceRoot when mixed patch types include insert", () => {
+		// insertパッチが含まれる場合はreplaceRootにフォールバック
 		const result = {
 			patches: [
 				{ type: "replace" as const, id: "a", html: "<div>A</div>" },
@@ -376,12 +377,31 @@ describe("toWebSocketPatches edge cases", () => {
 			],
 			hasChanges: true,
 		};
+		const fullHtml = "<div>full</div>";
+		const wsPatches = toWebSocketPatches(result, fullHtml);
+
+		// insertがあるためreplaceRootにフォールバック
+		expect(wsPatches).toHaveLength(1);
+		expect(wsPatches[0]).toEqual({
+			type: "replaceRoot",
+			html: fullHtml,
+		});
+	});
+
+	it("should handle mixed patch types without insert", () => {
+		// insertがなければ個別のパッチを適用
+		const result = {
+			patches: [
+				{ type: "replace" as const, id: "a", html: "<div>A</div>" },
+				{ type: "remove" as const, id: "b" },
+			],
+			hasChanges: true,
+		};
 		const wsPatches = toWebSocketPatches(result, "<div>full</div>");
 
-		expect(wsPatches).toHaveLength(3);
+		expect(wsPatches).toHaveLength(2);
 		expect(wsPatches[0].type).toBe("replaceNode");
 		expect(wsPatches[1].type).toBe("removeNode");
-		expect(wsPatches[2].type).toBe("insertNode");
 	});
 
 	it("should preserve patch order", () => {
@@ -540,6 +560,58 @@ describe("diff edge cases", () => {
 		expect(replacePatches.some((p) => p.id === "a")).toBe(true);
 		expect(removePatches.some((p) => p.id === "b")).toBe(true);
 		expect(insertPatches.some((p) => p.type === "insert")).toBe(true);
+	});
+});
+
+describe("diff with untracked elements (TODO-like scenario)", () => {
+	it("should fall back to replaceRoot when insert would be positioned incorrectly due to untracked siblings", () => {
+		// This simulates the TODO list bug:
+		// Old: [kt-write (no ID), btn-1]
+		// New: [kt-write (no ID), btn-1, kt-write (no ID), btn-2]
+		// The index for btn-2 is calculated as 1 (second tracked sibling)
+		// But client DOM has 4 elements, so insertBefore at index 1 is wrong
+		const oldHtml = `
+			<div class="kt-write">Task 1</div>
+			<button id="btn-1">Delete</button>
+		`;
+		const newHtml = `
+			<div class="kt-write">Task 1</div>
+			<button id="btn-1">Delete</button>
+			<div class="kt-write">Task 2</div>
+			<button id="btn-2">Delete</button>
+		`;
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+
+		// When there are untracked elements mixed with inserts,
+		// we should fall back to replaceRoot for safety
+		const wsPatches = toWebSocketPatches(result, newHtml);
+
+		// Should fall back to replaceRoot since index-based insertion
+		// would be incorrect with untracked elements
+		expect(wsPatches).toHaveLength(1);
+		expect(wsPatches[0].type).toBe("replaceRoot");
+	});
+
+	it("should handle TODO list with multiple items added", () => {
+		// Simulates adding items to an empty TODO list
+		const oldHtml = `<div class="kt-write">No tasks</div>`;
+		const newHtml = `
+			<div class="kt-write">[未完了] Task 1</div>
+			<button id="toggle_1">完了</button>
+			<button id="delete_1">削除</button>
+		`;
+		const result = diff(oldHtml, newHtml);
+
+		expect(result.hasChanges).toBe(true);
+
+		const wsPatches = toWebSocketPatches(result, newHtml);
+
+		// Should fall back to replaceRoot since we're adding tracked elements
+		// alongside untracked content changes
+		expect(wsPatches).toHaveLength(1);
+		expect(wsPatches[0].type).toBe("replaceRoot");
 	});
 });
 
