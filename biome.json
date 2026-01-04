@@ -20,6 +20,7 @@
 			},
 			"style": {
 				"recommended": true,
+				"noNonNullAssertion": "warn",
 				"useConst": "error",
 				"useTemplate": "error"
 			},
