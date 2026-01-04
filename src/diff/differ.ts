@@ -93,6 +93,15 @@ export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Pa
 		return [{ type: "replaceRoot", html: fullHtml } satisfies ReplaceRootPatch];
 	}
 
+	// insertパッチがある場合はreplaceRootにフォールバック
+	// insertのインデックスはID付き要素間の順序で計算されるが、
+	// クライアント側ではすべてのDOM子要素に対してインデックスを適用するため、
+	// ID無し要素が混在している場合に誤った位置に挿入される
+	const hasInsertPatches = diffResult.patches.some((p) => p.type === "insert");
+	if (hasInsertPatches) {
+		return [{ type: "replaceRoot", html: fullHtml } satisfies ReplaceRootPatch];
+	}
+
 	return diffResult.patches.map((p): Patch => {
 		switch (p.type) {
 			case "replace":
