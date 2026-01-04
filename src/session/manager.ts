@@ -1,10 +1,6 @@
 import type { WSContext } from "hono/ws";
 import { DEFAULT_SECURITY_CONFIG, DEFAULT_SESSION_CONFIG } from "../config";
-import type {
-	ResolvedSessionConfig,
-	SecurityConfig,
-	SessionConfig,
-} from "../config/types";
+import type { ResolvedSessionConfig, SecurityConfig, SessionConfig } from "../config/types";
 import { isUUID } from "../utils/type-guards";
 import type { EventProcessResult, EventQueueItem, Session, SessionId, SessionState } from "./types";
 
@@ -64,10 +60,7 @@ export class SessionManager {
 	// Web標準 TextEncoder（バイトサイズ計算用）
 	private static readonly textEncoder = new TextEncoder();
 
-	constructor(
-		config: SessionConfig = {},
-		securityConfig: SecurityConfig = {},
-	) {
+	constructor(config: SessionConfig = {}, securityConfig: SecurityConfig = {}) {
 		this.config = {
 			...DEFAULT_SESSION_CONFIG,
 			...config,

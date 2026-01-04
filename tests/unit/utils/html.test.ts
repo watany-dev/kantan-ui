@@ -208,9 +208,9 @@ describe("containsUnsafeHtml", () => {
 		});
 
 		it("should detect meta tag", () => {
-			expect(containsUnsafeHtml('<meta http-equiv="refresh" content="0;url=http://evil.com">')).toBe(
-				true,
-			);
+			expect(
+				containsUnsafeHtml('<meta http-equiv="refresh" content="0;url=http://evil.com">'),
+			).toBe(true);
 		});
 
 		it("should detect link tag", () => {
@@ -234,7 +234,9 @@ describe("containsUnsafeHtml", () => {
 		});
 
 		it("should allow safe SVG without event handlers", () => {
-			expect(containsUnsafeHtml('<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>')).toBe(false);
+			expect(
+				containsUnsafeHtml('<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>'),
+			).toBe(false);
 		});
 	});
 

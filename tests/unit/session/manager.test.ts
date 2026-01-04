@@ -1291,7 +1291,10 @@ describe("Security features", () => {
 		});
 
 		it("should block events exceeding rate limit", () => {
-			const customManager = new SessionManager({}, { maxEventsPerSecond: 5, rateLimitCooldown: 1000 });
+			const customManager = new SessionManager(
+				{},
+				{ maxEventsPerSecond: 5, rateLimitCooldown: 1000 },
+			);
 			const session = customManager.createSession();
 
 			// First 5 should be allowed
@@ -1329,7 +1332,10 @@ describe("Security features", () => {
 		});
 
 		it("should enforce cooldown period", () => {
-			const customManager = new SessionManager({}, { maxEventsPerSecond: 2, rateLimitCooldown: 2000 });
+			const customManager = new SessionManager(
+				{},
+				{ maxEventsPerSecond: 2, rateLimitCooldown: 2000 },
+			);
 			const session = customManager.createSession();
 
 			// Trigger rate limit
