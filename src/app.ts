@@ -230,6 +230,13 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 							sessionManager.setState(session.id, data.widgetId, data.value);
 						}
 
+						// デバッグログ：イベント処理を確認
+						console.log("[DEBUG] Event received:", {
+							widgetId: data.widgetId,
+							value: data.value,
+							sessionState: sessionManager.getState(session.id),
+						});
+
 						// ストリーミング設定
 						const streamingOptions: StreamingOptions | undefined = config.streaming.enabled
 							? {
