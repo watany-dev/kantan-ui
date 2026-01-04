@@ -21,7 +21,7 @@
 			},
 			"style": {
 				"recommended": true,
-				"noNonNullAssertion": "warn",
+				"noNonNullAssertion": "error",
 				"useConst": "error",
 				"useTemplate": "error"
 			},
