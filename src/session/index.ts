@@ -10,4 +10,6 @@ export {
 	getCurrentSessionId,
 	createTypedSessionState,
 } from "./state";
+// Note: Cookie操作にはhono/cookieを使用してください
+// parseSessionCookieとbuildSetCookieHeaderは後方互換性のために残しています
 export { parseSessionCookie, buildSetCookieHeader } from "./cookie";
