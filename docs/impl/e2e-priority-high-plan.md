@@ -202,6 +202,227 @@ src/
 
 ---
 
+## イテレーション設計
+
+各イテレーションでCI全通過を保証する。
+
+### Phase 1A: 出力APIテスト
+
+#### Iteration 1: 基本出力テスト
+
+**目標**: テストファイル作成 + kt.title(), kt.write() の基本検証
+
+**変更ファイル**:
+```
+e2e/output-api.spec.ts  # 新規作成
+```
+
+**テストケース**:
+- kt.title() が `<h1 class="kt-title">` を出力
+- kt.write() が `<div class="kt-write">` を出力
+- kt.write() で数値/真偽値が文字列化される
+
+**完了条件**: `bun run ci` 通過
+
+---
+
+#### Iteration 2: 見出し・区切りテスト
+
+**目標**: kt.header(), kt.subheader(), kt.divider() の検証
+
+**変更ファイル**:
+```
+e2e/output-api.spec.ts  # 追記
+src/script.ts           # テスト用出力追加（必要に応じて）
+```
+
+**テストケース**:
+- kt.header() が `<h2 class="kt-header">` を出力
+- kt.subheader() が `<h3 class="kt-subheader">` を出力
+- kt.divider() が `<hr class="kt-divider">` を出力
+
+**完了条件**: `bun run ci` 通過
+
+---
+
+#### Iteration 3: HTML出力・エスケープテスト
+
+**目標**: kt.html() 生出力とXSSエスケープの検証
+
+**変更ファイル**:
+```
+e2e/output-api.spec.ts  # 追記
+src/script.ts           # XSSテスト用出力追加
+```
+
+**テストケース**:
+- kt.html() がHTMLをエスケープせず出力
+- kt.write() で `<script>` がエスケープされる（XSS対策）
+
+**完了条件**: `bun run ci` 通過
+
+---
+
+### Phase 1B: 差分パッチテスト
+
+#### Iteration 4: パッチテスト用サーバー構築
+
+**目標**: 動的リスト管理アプリの作成とPlaywright設定
+
+**変更ファイル**:
+```
+src/server-patch-test.ts  # 新規作成
+playwright.config.ts      # プロジェクト追加
+```
+
+**サーバー要件**:
+- port: 3003
+- 機能: アイテム追加/削除ボタン
+- パッチ: insertNode, removeNode を発行
+
+**テストケース**: なし（インフラのみ）
+
+**完了条件**:
+- サーバーが起動する
+- `bun run ci` 通過
+
+---
+
+#### Iteration 5: removeNodeテスト
+
+**目標**: removeNodeパッチの動作検証
+
+**変更ファイル**:
+```
+e2e/patch-operations.spec.ts  # 新規作成
+```
+
+**テストケース**:
+- "Remove"ボタンで要素が削除される
+- 削除後のDOM整合性
+
+**完了条件**: `bun run ci` 通過
+
+---
+
+#### Iteration 6: insertNode・複合パッチテスト
+
+**目標**: insertNodeと複合パッチの動作検証
+
+**変更ファイル**:
+```
+e2e/patch-operations.spec.ts  # 追記
+```
+
+**テストケース**:
+- "Add"ボタンで要素が追加される
+- 追加→削除の連続操作
+- 操作後もウィジェットが正常動作
+
+**完了条件**: `bun run ci` 通過
+
+---
+
+### Phase 1C: エラーハンドリングテスト
+
+#### Iteration 7: エラーテスト用サーバー構築
+
+**目標**: エラー条件をシミュレートするサーバーの作成
+
+**変更ファイル**:
+```
+src/server-error-test.ts  # 新規作成
+playwright.config.ts      # プロジェクト追加
+```
+
+**サーバー要件**:
+- port: 3004
+- エンドポイント:
+  - `POST /test/disconnect` - WebSocket強制切断
+  - `POST /test/invalid-patch` - 不正パッチ送信
+  - `POST /test/expire-session` - セッション期限切れ
+
+**テストケース**: なし（インフラのみ）
+
+**完了条件**: `bun run ci` 通過
+
+---
+
+#### Iteration 8: WebSocket再接続テスト
+
+**目標**: 切断からの自動再接続と状態復元の検証
+
+**変更ファイル**:
+```
+e2e/error-handling.spec.ts  # 新規作成
+```
+
+**テストケース**:
+- WebSocket切断時に自動再接続が動作
+- 再接続後にセッション状態が復元
+- 再接続中に "Reconnecting..." 表示
+
+**完了条件**: `bun run ci` 通過
+
+---
+
+#### Iteration 9: エラー耐性テスト
+
+**目標**: 不正パッチ・セッション期限切れへの耐性検証
+
+**変更ファイル**:
+```
+e2e/error-handling.spec.ts  # 追記
+```
+
+**テストケース**:
+- 不正パッチ受信時にアプリがクラッシュしない
+- セッション期限切れで新規セッション開始
+
+**完了条件**: `bun run ci` 通過
+
+---
+
+## イテレーション一覧
+
+| # | Phase | 内容 | 新規テスト数 | 累計 |
+|---|-------|------|-------------|------|
+| 1 | 1A | title/write基本 | 3 | 3 |
+| 2 | 1A | header/subheader/divider | 3 | 6 |
+| 3 | 1A | html/エスケープ | 2 | 8 |
+| 4 | 1B | パッチサーバー構築 | 0 | 8 |
+| 5 | 1B | removeNode | 2 | 10 |
+| 6 | 1B | insertNode/複合 | 2 | 12 |
+| 7 | 1C | エラーサーバー構築 | 0 | 12 |
+| 8 | 1C | 再接続 | 3 | 15 |
+| 9 | 1C | エラー耐性 | 2 | 17 |
+
+**合計**: 9イテレーション、17テストケース
+
+---
+
+## コミットメッセージ規約
+
+各イテレーションのコミットメッセージ:
+
+```
+test(e2e): <簡潔な説明>
+
+- <変更点1>
+- <変更点2>
+```
+
+例:
+```
+test(e2e): add output API tests for kt.title and kt.write
+
+- Create e2e/output-api.spec.ts
+- Verify HTML structure and CSS classes
+```
+
+---
+
 ## 更新履歴
 
 - 2026-01-04: 初版作成
+- 2026-01-04: イテレーション設計追加
