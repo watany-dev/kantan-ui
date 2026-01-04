@@ -64,6 +64,9 @@ test.describe("Focus Preservation", () => {
 		await textInput.focus();
 		await expect(textInput).toBeFocused();
 
+		// 入力フィールドをクリア
+		await textInput.fill("");
+
 		// 1文字ずつevaluateで入力（各文字でrerunが発生）
 		const text = "Hi";
 		for (const char of text) {
