@@ -1192,3 +1192,217 @@ describe("Global SessionManager", () => {
 		expect(manager1).not.toBe(manager2);
 	});
 });
+
+describe("Security features", () => {
+	let manager: SessionManager;
+
+	beforeEach(() => {
+		vi.useFakeTimers();
+		manager = new SessionManager();
+	});
+
+	afterEach(() => {
+		manager.stopCleanupInterval();
+		vi.useRealTimers();
+	});
+
+	describe("Session ID validation", () => {
+		it("should validate correct UUID v4 format", () => {
+			expect(manager.isValidSessionId("123e4567-e89b-4d3c-8456-426614174000")).toBe(true);
+			expect(manager.isValidSessionId("550e8400-e29b-41d4-a716-446655440000")).toBe(true);
+		});
+
+		it("should reject invalid session IDs", () => {
+			expect(manager.isValidSessionId("invalid-id")).toBe(false);
+			expect(manager.isValidSessionId("")).toBe(false);
+			expect(manager.isValidSessionId(null)).toBe(false);
+			expect(manager.isValidSessionId(undefined)).toBe(false);
+			expect(manager.isValidSessionId(123)).toBe(false);
+		});
+
+		it("should reject non-v4 UUIDs", () => {
+			// Version 3 UUID
+			expect(manager.isValidSessionId("123e4567-e89b-3d3c-8456-426614174000")).toBe(false);
+			// Invalid variant
+			expect(manager.isValidSessionId("123e4567-e89b-4d3c-0456-426614174000")).toBe(false);
+		});
+
+		it("should create new session for invalid session ID in getOrCreateSession", () => {
+			const session = manager.getOrCreateSession("invalid-format");
+			expect(session).toBeDefined();
+			expect(manager.isValidSessionId(session.id)).toBe(true);
+		});
+
+		it("should return existing session for valid session ID", () => {
+			const created = manager.createSession();
+			const retrieved = manager.getOrCreateSession(created.id);
+			expect(retrieved.id).toBe(created.id);
+		});
+	});
+
+	describe("Patch size limit", () => {
+		it("should accept patches within size limit", () => {
+			const session = manager.createSession();
+			const smallPatch = [{ type: "replaceRoot", html: "<div>Hello</div>" }];
+
+			const seq = manager.addPatchToHistory(session.id, smallPatch);
+
+			expect(seq).toBe(1);
+			expect(session.patchHistory.length).toBe(1);
+		});
+
+		it("should reject patches exceeding size limit", () => {
+			const customManager = new SessionManager({}, { maxPatchSize: 100 });
+			const session = customManager.createSession();
+			const largePatch = [{ type: "replaceRoot", html: "x".repeat(200) }];
+
+			const seq = customManager.addPatchToHistory(session.id, largePatch);
+
+			// Sequence number is still incremented
+			expect(seq).toBe(1);
+			// But patch is not stored in history
+			expect(session.patchHistory.length).toBe(0);
+
+			customManager.stopCleanupInterval();
+		});
+
+		it("should use TextEncoder for accurate byte size calculation", () => {
+			const customManager = new SessionManager({}, { maxPatchSize: 50 });
+			const session = customManager.createSession();
+			// Multi-byte characters (日本語 = 9 bytes in UTF-8, 3 chars)
+			const unicodePatch = [{ type: "replaceRoot", html: "日本語" }];
+
+			// The JSON representation will be larger than the raw string
+			const seq = customManager.addPatchToHistory(session.id, unicodePatch);
+			expect(seq).toBe(1);
+
+			customManager.stopCleanupInterval();
+		});
+	});
+
+	describe("Rate limiting", () => {
+		it("should allow events within rate limit", () => {
+			const session = manager.createSession();
+
+			for (let i = 0; i < 10; i++) {
+				const result = manager.checkRateLimit(session.id);
+				expect(result.allowed).toBe(true);
+			}
+		});
+
+		it("should block events exceeding rate limit", () => {
+			const customManager = new SessionManager({}, { maxEventsPerSecond: 5, rateLimitCooldown: 1000 });
+			const session = customManager.createSession();
+
+			// First 5 should be allowed
+			for (let i = 0; i < 5; i++) {
+				const result = customManager.checkRateLimit(session.id);
+				expect(result.allowed).toBe(true);
+			}
+
+			// 6th should be blocked
+			const result = customManager.checkRateLimit(session.id);
+			expect(result.allowed).toBe(false);
+			expect(result.retryAfter).toBe(1000);
+
+			customManager.stopCleanupInterval();
+		});
+
+		it("should reset rate limit after window expires", () => {
+			const customManager = new SessionManager({}, { maxEventsPerSecond: 3 });
+			const session = customManager.createSession();
+
+			// Use up the limit
+			for (let i = 0; i < 3; i++) {
+				customManager.checkRateLimit(session.id);
+			}
+			expect(customManager.checkRateLimit(session.id).allowed).toBe(false);
+
+			// Advance time past the 1-second window
+			vi.advanceTimersByTime(1001);
+
+			// Should be allowed again
+			const result = customManager.checkRateLimit(session.id);
+			expect(result.allowed).toBe(true);
+
+			customManager.stopCleanupInterval();
+		});
+
+		it("should enforce cooldown period", () => {
+			const customManager = new SessionManager({}, { maxEventsPerSecond: 2, rateLimitCooldown: 2000 });
+			const session = customManager.createSession();
+
+			// Trigger rate limit
+			customManager.checkRateLimit(session.id);
+			customManager.checkRateLimit(session.id);
+			const blocked = customManager.checkRateLimit(session.id);
+			expect(blocked.allowed).toBe(false);
+
+			// Advance time but not past cooldown
+			vi.advanceTimersByTime(1500);
+			const stillBlocked = customManager.checkRateLimit(session.id);
+			expect(stillBlocked.allowed).toBe(false);
+			expect(stillBlocked.retryAfter).toBeLessThanOrEqual(500);
+
+			// Advance past cooldown
+			vi.advanceTimersByTime(600);
+			const allowed = customManager.checkRateLimit(session.id);
+			expect(allowed.allowed).toBe(true);
+
+			customManager.stopCleanupInterval();
+		});
+
+		it("should track rate limits per session", () => {
+			const customManager = new SessionManager({}, { maxEventsPerSecond: 2 });
+			const session1 = customManager.createSession();
+			const session2 = customManager.createSession();
+
+			// Exhaust session1's limit
+			customManager.checkRateLimit(session1.id);
+			customManager.checkRateLimit(session1.id);
+			expect(customManager.checkRateLimit(session1.id).allowed).toBe(false);
+
+			// Session2 should still be allowed
+			expect(customManager.checkRateLimit(session2.id).allowed).toBe(true);
+
+			customManager.stopCleanupInterval();
+		});
+
+		it("should reset rate limit state", () => {
+			const customManager = new SessionManager({}, { maxEventsPerSecond: 1 });
+			const session = customManager.createSession();
+
+			customManager.checkRateLimit(session.id);
+			expect(customManager.checkRateLimit(session.id).allowed).toBe(false);
+
+			customManager.resetRateLimit(session.id);
+
+			expect(customManager.checkRateLimit(session.id).allowed).toBe(true);
+
+			customManager.stopCleanupInterval();
+		});
+	});
+
+	describe("Security configuration", () => {
+		it("should use default security config", () => {
+			const config = manager.getSecurityConfig();
+			expect(config.maxPatchSize).toBe(1024 * 1024); // 1MB
+			expect(config.maxEventsPerSecond).toBe(100);
+			expect(config.rateLimitCooldown).toBe(1000);
+		});
+
+		it("should merge custom security config", () => {
+			const customManager = new SessionManager(
+				{},
+				{ maxPatchSize: 500000, maxEventsPerSecond: 50 },
+			);
+			const config = customManager.getSecurityConfig();
+
+			expect(config.maxPatchSize).toBe(500000);
+			expect(config.maxEventsPerSecond).toBe(50);
+			expect(config.rateLimitCooldown).toBe(1000); // Default value
+
+			customManager.stopCleanupInterval();
+		});
+	});
+});

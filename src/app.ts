@@ -8,8 +8,9 @@ import {
 	parseSessionCookie,
 	setSessionManager,
 } from "./session";
+import { generateIsUnsafeHtmlScript } from "./utils/html";
 import { upgradeWebSocket, websocket } from "./websocket";
-import type { Patch, StreamAppendPatch } from "./websocket/types";
+import type { Patch } from "./websocket/types";
 import { type ClientMessage, type ServerMessage, isClientMessage } from "./websocket/types";
 
 // Generate a random nonce for CSP
@@ -142,6 +143,9 @@ function generateClientScript(config: ResolvedKantanConfig): string {
       }
     }
 
+    // XSS検出関数（サーバーと同じロジック）
+    ${generateIsUnsafeHtmlScript()}
+
     ws.onmessage = (e) => {
       let msg;
       try {
@@ -174,6 +178,10 @@ function generateClientScript(config: ResolvedKantanConfig): string {
           connect();`
 					}
         }
+        // レート制限エラーの場合
+        if (msg.error?.code === "RATE_LIMITED") {
+          console.warn("Rate limited, retry after:", msg.error?.retryAfter, "ms");
+        }
         return;
       }
 
@@ -205,11 +213,6 @@ function generateClientScript(config: ResolvedKantanConfig): string {
         }
       }
     };
-
-    // Security check for HTML content
-    function isUnsafeHtml(html) {
-      return /<script[\\s\\S]*?>|javascript:|\\s+on\\w+\\s*=/i.test(html);
-    }
 
     // Apply a single patch to the DOM
     function applyPatch(patch) {
@@ -398,7 +401,7 @@ const defaultStyles = `
 
 export function createApp(script: Script, userConfig?: KantanConfig) {
 	const config = resolveConfig(userConfig);
-	const sessionManager = new SessionManager(config.session);
+	const sessionManager = new SessionManager(config.session, config.security);
 	setSessionManager(sessionManager);
 	const clientScript = generateClientScript(config);
 	const app = new Hono();
@@ -572,6 +575,21 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 								error: {
 									code: "SESSION_NOT_FOUND",
 									message: "Session not found. Please refresh or reconnect.",
+								},
+							};
+							ws.send(JSON.stringify(errorMessage));
+							return;
+						}
+
+						// レート制限チェック
+						const rateLimitResult = sessionManager.checkRateLimit(session.id);
+						if (!rateLimitResult.allowed) {
+							const errorMessage: ServerMessage = {
+								type: "error",
+								error: {
+									code: "RATE_LIMITED",
+									message: "Too many requests. Please slow down.",
+									retryAfter: rateLimitResult.retryAfter,
 								},
 							};
 							ws.send(JSON.stringify(errorMessage));

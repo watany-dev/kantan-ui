@@ -30,8 +30,15 @@ export interface ServerMessage {
 	/** パッチのシーケンス番号（再接続時の再同期用） */
 	seq?: number;
 	error?: {
-		code: "SESSION_NOT_FOUND" | "SESSION_ID_REQUIRED" | "INVALID_MESSAGE" | "UNKNOWN";
+		code:
+			| "SESSION_NOT_FOUND"
+			| "SESSION_ID_REQUIRED"
+			| "INVALID_MESSAGE"
+			| "RATE_LIMITED"
+			| "UNKNOWN";
 		message: string;
+		/** レート制限時: 再試行までのミリ秒 */
+		retryAfter?: number;
 	};
 }
 

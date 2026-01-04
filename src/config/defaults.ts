@@ -4,6 +4,7 @@ import type {
 	KantanConfig,
 	ResolvedKantanConfig,
 	ResolvedSessionConfig,
+	SecurityConfig,
 	StreamingConfig,
 } from "./types";
 
@@ -48,12 +49,22 @@ export const DEFAULT_STREAMING_CONFIG: Required<StreamingConfig> = {
 };
 
 /**
+ * セキュリティ設定のデフォルト値
+ */
+export const DEFAULT_SECURITY_CONFIG: Required<SecurityConfig> = {
+	maxPatchSize: 1024 * 1024, // 1MB
+	maxEventsPerSecond: 100,
+	rateLimitCooldown: 1000, // 1秒
+};
+
+/**
  * 全設定のデフォルト値
  */
 export const DEFAULT_CONFIG: ResolvedKantanConfig = {
 	session: DEFAULT_SESSION_CONFIG,
 	client: DEFAULT_CLIENT_CONFIG,
 	streaming: DEFAULT_STREAMING_CONFIG,
+	security: DEFAULT_SECURITY_CONFIG,
 };
 
 /**
@@ -77,6 +88,10 @@ export function resolveConfig(config?: KantanConfig): ResolvedKantanConfig {
 		streaming: {
 			...DEFAULT_STREAMING_CONFIG,
 			...config?.streaming,
+		},
+		security: {
+			...DEFAULT_SECURITY_CONFIG,
+			...config?.security,
 		},
 	};
 }
