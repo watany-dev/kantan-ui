@@ -49,7 +49,7 @@ Hono を土台に Streamlit 風（操作のたびに rerun・サーバ側 state�
 理由:
 - Hono の Bun 向け WebSocket 方式（`createBunWebSocket`）を活用
 - パフォーマンスと開発体験の最適化
-- `export default { fetch: app.fetch, websocket }` の形で起動
+- `export default createApp(script)` の形で起動
 
 ```typescript
 // 想定される起動形式
@@ -61,7 +61,7 @@ const app = new Hono();
 
 // ... ルート定義 ...
 
-export default { fetch: app.fetch, websocket };
+export default { fetch: app.fetch, websocket };  // createApp()を使えばこのボイラープレートは不要
 ```
 
 ## 実装戦略

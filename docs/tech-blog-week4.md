@@ -44,8 +44,7 @@ const script = () => {
 };
 
 // アプリを作成してエクスポート
-const { app, websocket } = createApp(script);
-export default { fetch: app.fetch, websocket };
+export default createApp(script);
 ```
 
 これだけで、リアルタイムに更新されるカウンターアプリが完成します。
@@ -190,7 +189,7 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
   // WebSocketエンドポイント
   app.get("/ws", createWebSocketHandler({...}));
 
-  return { app, websocket, shutdown };
+  return { fetch: app.fetch, websocket, shutdown, app };
 }
 ```
 

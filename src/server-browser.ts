@@ -93,7 +93,7 @@ ${escapeHtml(
 };
 
 // scope='browser' でアプリを作成
-const { app, websocket } = createApp(script, {
+const { fetch, websocket } = createApp(script, {
 	session: {
 		scope: "browser",
 	},
@@ -102,7 +102,7 @@ const { app, websocket } = createApp(script, {
 // ポート3001で起動
 const server = Bun.serve({
 	port: 3001,
-	fetch: app.fetch,
+	fetch,
 	websocket,
 });
 
