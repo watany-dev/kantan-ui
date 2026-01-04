@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { setContext } from "../../../src/runtime/context";
 import { getSessionManager, resetSessionManager, setCurrentSessionId } from "../../../src/session";
 import {

@@ -260,7 +260,7 @@ export class SessionManager {
 		for (const ws of connections) {
 			try {
 				ws.send(message);
-			} catch (e) {
+			} catch {
 				// 送信に失敗した接続は後で削除
 				deadConnections.push(ws);
 			}

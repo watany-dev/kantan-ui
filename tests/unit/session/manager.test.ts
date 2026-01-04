@@ -403,7 +403,7 @@ describe("Event Queue", () => {
 		const session = manager.createSession();
 		const processedOrder: number[] = [];
 
-		manager.setEventProcessor((sessionId, widgetId, value) => {
+		manager.setEventProcessor((_sessionId, _widgetId, value) => {
 			processedOrder.push(value as number);
 			return { html: `processed-${value}`, patches: [] };
 		});
@@ -572,7 +572,7 @@ describe("Event Queue", () => {
 		managerAny.processingFlags.set(session.id, false);
 	});
 
-	it("should return early when queue is empty", async () => {
+	it("should return early when queue is empty", () => {
 		const session = manager.createSession();
 
 		// Setup empty queue
@@ -641,7 +641,7 @@ describe("Event Queue", () => {
 		const promise = manager.queueEvent(session.id, "w", "test");
 
 		// The signal is available during processing
-		const signal = manager.getCurrentAbortSignal(session.id);
+		const _signal = manager.getCurrentAbortSignal(session.id);
 
 		await promise;
 
@@ -650,7 +650,7 @@ describe("Event Queue", () => {
 		expect(capturedSignal).toBeDefined();
 	});
 
-	it("should abort signal when abortCurrentEvent is called during processing", async () => {
+	it("should abort signal when abortCurrentEvent is called during processing", () => {
 		const session = manager.createSession();
 
 		// Manually set up a controller to simulate in-progress state

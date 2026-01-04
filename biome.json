@@ -8,7 +8,30 @@
 		"rules": {
 			"recommended": true,
 			"complexity": {
+				"recommended": true,
+				"noExcessiveCognitiveComplexity": "warn",
+				"noUselessFragments": "error",
+				"useOptionalChain": "error",
 				"useLiteralKeys": "off"
+			},
+			"correctness": {
+				"recommended": true,
+				"noUnusedImports": "error",
+				"noUnusedVariables": "error"
+			},
+			"style": {
+				"recommended": true,
+				"noNonNullAssertion": "error",
+				"useConst": "error",
+				"useTemplate": "error"
+			},
+			"suspicious": {
+				"recommended": true,
+				"noExplicitAny": "error",
+				"useAwait": "error"
+			},
+			"security": {
+				"recommended": true
 			}
 		}
 	},
