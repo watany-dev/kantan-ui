@@ -15,6 +15,9 @@
 			},
 			"style": {
 				"recommended": true
+			},
+			"suspicious": {
+				"recommended": true
 			}
 		}
 	},
