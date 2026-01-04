@@ -5,7 +5,7 @@ const chromiumPath = "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chro
 
 export default defineConfig({
 	testDir: "./e2e",
-	fullyParallel: false, // ファイル内テストは順次実行（セッション状態の分離のため）
+	fullyParallel: true, // 全テストを並列実行（各テストは独立したブラウザコンテキスト）
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
 	workers: 3, // 3プロジェクトを並列実行（各プロジェクトは別サーバー/ポート）
