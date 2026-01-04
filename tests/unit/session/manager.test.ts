@@ -403,7 +403,7 @@ describe("Event Queue", () => {
 		const session = manager.createSession();
 		const processedOrder: number[] = [];
 
-		manager.setEventProcessor((sessionId, widgetId, value) => {
+		manager.setEventProcessor((_sessionId, _widgetId, value) => {
 			processedOrder.push(value as number);
 			return { html: `processed-${value}`, patches: [] };
 		});
@@ -641,7 +641,7 @@ describe("Event Queue", () => {
 		const promise = manager.queueEvent(session.id, "w", "test");
 
 		// The signal is available during processing
-		const signal = manager.getCurrentAbortSignal(session.id);
+		const _signal = manager.getCurrentAbortSignal(session.id);
 
 		await promise;
 
