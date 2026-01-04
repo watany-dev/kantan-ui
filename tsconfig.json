@@ -7,6 +7,7 @@
 		"types": ["bun"],
 		"strict": true,
 		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitReturns": true,
 		"noUnusedLocals": true,
