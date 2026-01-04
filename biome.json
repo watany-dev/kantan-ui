@@ -18,7 +18,8 @@
 				"recommended": true
 			},
 			"suspicious": {
-				"recommended": true
+				"recommended": true,
+				"noExplicitAny": "warn"
 			},
 			"security": {
 				"recommended": true
