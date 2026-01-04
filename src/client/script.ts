@@ -206,7 +206,7 @@ const isBrowserScope = ${isBrowserScope};
 let ws = null;
 let reconnectAttempts = 0;
 let lastReceivedSeq = 0;
-${isBrowserScope ? "" : `let sessionId = localStorage.getItem(__KT_CONFIG__.sessionKey);`}
+${isBrowserScope ? "" : "let sessionId = localStorage.getItem(__KT_CONFIG__.sessionKey);"}
 
 function connect() {
   updateConnectionStatus("connecting", reconnectAttempts, __KT_CONFIG__.maxReconnectAttempts);
@@ -238,8 +238,8 @@ function connect() {
       if (msg.error?.code === "SESSION_NOT_FOUND") {
         ${
 					isBrowserScope
-						? `ws.close(); location.reload();`
-						: `localStorage.removeItem(__KT_CONFIG__.sessionKey); sessionId = null; ws.close(); connect();`
+						? "ws.close(); location.reload();"
+						: "localStorage.removeItem(__KT_CONFIG__.sessionKey); sessionId = null; ws.close(); connect();"
 				}
       }
       return;

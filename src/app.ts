@@ -113,9 +113,7 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 		"/ws",
 		upgradeWebSocket((c) => {
 			const cookieSessionId =
-				config.session.scope === "browser"
-					? getCookie(c, config.session.sessionKey)
-					: undefined;
+				config.session.scope === "browser" ? getCookie(c, config.session.sessionKey) : undefined;
 
 			return {
 				onOpen: (_evt, ws) => {
