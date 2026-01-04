@@ -210,7 +210,8 @@ ${isBrowserScope ? "" : "let sessionId = localStorage.getItem(__KT_CONFIG__.sess
 
 function connect() {
   updateConnectionStatus("connecting", reconnectAttempts, __KT_CONFIG__.maxReconnectAttempts);
-  ws = new WebSocket(\`ws://\${location.host}/ws\`);
+  const wsProtocol = location.protocol === "https:" ? "wss:" : "ws:";
+  ws = new WebSocket(\`\${wsProtocol}//\${location.host}/ws\`);
 
   ws.onopen = () => {
     console.log("Connected to server");
