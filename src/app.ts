@@ -215,7 +215,9 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 								error: {
 									code: "RATE_LIMITED",
 									message: "Too many requests. Please slow down.",
-									retryAfter: rateLimitResult.retryAfter,
+									...(rateLimitResult.retryAfter !== undefined && {
+										retryAfter: rateLimitResult.retryAfter,
+									}),
 								},
 							};
 							ws.send(JSON.stringify(errorMessage));
