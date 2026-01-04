@@ -18,6 +18,9 @@
 			},
 			"suspicious": {
 				"recommended": true
+			},
+			"security": {
+				"recommended": true
 			}
 		}
 	},
