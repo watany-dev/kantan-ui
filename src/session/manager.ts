@@ -214,6 +214,7 @@ export class SessionManager {
 			}
 			this.wsToSession.delete(ws);
 		}
+		this.wsLastPong.delete(ws);
 	}
 
 	// セッションに紐づく全WebSocket接続を取得
