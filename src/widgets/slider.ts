@@ -8,7 +8,7 @@ import type { SliderConfig } from "./types";
  * 現在の値を返す（初回はデフォルト値）
  */
 export function slider(
-	label: string,
+	_label: string,
 	min: number,
 	max: number,
 	defaultValue?: number,

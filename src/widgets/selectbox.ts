@@ -8,7 +8,7 @@ import type { SelectboxConfig } from "./types";
  * 選択された値を返す（初回はデフォルト値または最初のオプション）
  */
 export function selectbox(
-	label: string,
+	_label: string,
 	options: string[],
 	defaultValue?: string,
 	config?: Partial<SelectboxConfig>,

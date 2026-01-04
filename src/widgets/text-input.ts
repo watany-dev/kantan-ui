@@ -8,7 +8,7 @@ import type { TextInputConfig } from "./types";
  * 現在の入力値を返す（初回はデフォルト値）
  */
 export function text_input(
-	label: string,
+	_label: string,
 	defaultValue?: string,
 	config?: Partial<TextInputConfig>,
 ): string {

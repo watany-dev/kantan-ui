@@ -2,12 +2,14 @@ import type { SessionId } from "../session/types";
 
 export interface RerunContext {
 	// セッション情報
-	sessionId?: SessionId;
+	sessionId?: SessionId | undefined;
 	// 現在のイベント情報
-	event?: {
-		widgetId: string;
-		value: unknown;
-	};
+	event?:
+		| {
+				widgetId: string;
+				value: unknown;
+		  }
+		| undefined;
 }
 
 // スクリプト実行中のコンテキスト
