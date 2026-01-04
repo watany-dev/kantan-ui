@@ -572,7 +572,7 @@ describe("Event Queue", () => {
 		managerAny.processingFlags.set(session.id, false);
 	});
 
-	it("should return early when queue is empty", async () => {
+	it("should return early when queue is empty", () => {
 		const session = manager.createSession();
 
 		// Setup empty queue
@@ -650,7 +650,7 @@ describe("Event Queue", () => {
 		expect(capturedSignal).toBeDefined();
 	});
 
-	it("should abort signal when abortCurrentEvent is called during processing", async () => {
+	it("should abort signal when abortCurrentEvent is called during processing", () => {
 		const session = manager.createSession();
 
 		// Manually set up a controller to simulate in-progress state
