@@ -87,14 +87,8 @@ const script = () => {
   return undefined;
 };
 
-// アプリを作成
-const { app, websocket } = createApp(script);
-
-// サーバーをエクスポート
-export default {
-  fetch: app.fetch,
-  websocket,
-};
+// アプリを作成してエクスポート
+export default createApp(script);
 ```
 
 ### 実行
@@ -317,12 +311,7 @@ const script = () => {
   return undefined;
 };
 
-const { app, websocket } = createApp(script);
-
-export default {
-  fetch: app.fetch,
-  websocket,
-};
+export default createApp(script);
 ```
 
 ---
@@ -419,12 +408,7 @@ const script = () => {
   return undefined;
 };
 
-const { app, websocket } = createApp(script);
-
-export default {
-  fetch: app.fetch,
-  websocket,
-};
+export default createApp(script);
 ```
 
 ---
@@ -436,12 +420,13 @@ export default {
 ### 基本設定
 
 ```typescript
-const { app, websocket } = createApp(script, {
+const kantanApp = createApp(script, {
   session: {
     scope: "tab",        // "tab" または "browser"
     ttl: 24 * 60 * 60 * 1000,  // セッションの有効期限（24時間）
   },
 });
+export default kantanApp;
 ```
 
 ### セッションスコープ
@@ -487,7 +472,7 @@ const script = () => {
   return undefined;
 };
 
-const { app, websocket } = createApp(script, {
+export default createApp(script, {
   session: {
     sessionKey: "__my_app_session",
     ttl: 7 * 24 * 60 * 60 * 1000,  // 1週間
@@ -512,11 +497,6 @@ const { app, websocket } = createApp(script, {
     flushThreshold: 5,
   },
 });
-
-export default {
-  fetch: app.fetch,
-  websocket,
-};
 ```
 
 ---
@@ -604,8 +584,7 @@ const script = () => {
   return undefined;
 };
 
-const { app, websocket } = createApp(script);
-export default { fetch: app.fetch, websocket };
+export default createApp(script);
 ```
 
 シンプルで、型安全で、高速。これがkantan-uiです。

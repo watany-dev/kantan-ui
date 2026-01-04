@@ -115,9 +115,4 @@ ${escapeHtml(
 	return undefined;
 };
 
-const { app, websocket } = createApp(script);
-
-export default {
-	fetch: app.fetch,
-	websocket,
-};
+export default createApp(script);

@@ -305,5 +305,10 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 		sessionManager.stopPingInterval();
 	};
 
-	return { app, websocket, shutdown };
+	return {
+		fetch: app.fetch,
+		websocket,
+		shutdown,
+		app, // Honoインスタンス（拡張用）
+	};
 }
