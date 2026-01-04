@@ -378,6 +378,17 @@ export class SessionManager {
 		return cleaned;
 	}
 
+	// セッションを削除
+	deleteSession(id: SessionId): boolean {
+		const deleted = this.sessions.delete(id);
+		this.sessionToWs.delete(id);
+		this.eventQueues.delete(id);
+		this.processingFlags.delete(id);
+		this.rateLimitStates.delete(id);
+		this.abortControllers.delete(id);
+		return deleted;
+	}
+
 	// セッション数を取得
 	getSessionCount(): number {
 		return this.sessions.size;
