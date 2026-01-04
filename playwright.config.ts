@@ -16,7 +16,6 @@ export default defineConfig({
 		timeout: 10000, // WebSocket経由のUI更新を待つため長めに設定
 	},
 	use: {
-		baseURL: "http://localhost:3000",
 		trace: "on-first-retry",
 		actionTimeout: 5000, // クリック等のアクション
 		navigationTimeout: 15000, // ページ遷移
@@ -29,6 +28,7 @@ export default defineConfig({
 			name: "chromium",
 			use: {
 				...devices["Desktop Chrome"],
+				baseURL: "http://localhost:3000",
 				launchOptions: process.env.CI
 					? {
 							// CI環境でのブラウザ安定化オプション
@@ -39,14 +39,40 @@ export default defineConfig({
 							executablePath: chromiumPath,
 						},
 			},
+			testIgnore: ["**/session-scope-browser.spec.ts"],
+		},
+		{
+			name: "chromium-browser-scope",
+			use: {
+				...devices["Desktop Chrome"],
+				baseURL: "http://localhost:3001",
+				launchOptions: process.env.CI
+					? {
+							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+						}
+					: {
+							executablePath: chromiumPath,
+						},
+			},
+			testMatch: "**/session-scope-browser.spec.ts",
 		},
 	],
-	webServer: {
-		command: "bun run src/server.ts",
-		url: "http://localhost:3000",
-		reuseExistingServer: !process.env.CI,
-		timeout: 60000, // サーバー起動待ちのタイムアウト（CI環境で余裕を持たせる）
-		stdout: "pipe", // 出力をキャプチャ（デバッグ用）
-		stderr: "pipe",
-	},
+	webServer: [
+		{
+			command: "bun run src/server.ts",
+			url: "http://localhost:3000",
+			reuseExistingServer: !process.env.CI,
+			timeout: 60000,
+			stdout: "pipe",
+			stderr: "pipe",
+		},
+		{
+			command: "bun run src/server-browser.ts",
+			url: "http://localhost:3001",
+			reuseExistingServer: !process.env.CI,
+			timeout: 60000,
+			stdout: "pipe",
+			stderr: "pipe",
+		},
+	],
 });
