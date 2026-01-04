@@ -128,7 +128,15 @@ export function parseHtml(html: string): VNode[] {
 			throw new Error(`Element count exceeds limit: ${PARSER_LIMITS.MAX_ELEMENTS}`);
 		}
 
-		const [fullMatch, tag, id, closeTag] = match;
+		const fullMatch = match[0];
+		const tag = match[1];
+		const id = match[2];
+		const closeTag = match[3];
+
+		// 必須要素がない場合はスキップ
+		if (!fullMatch || !tag || !id || !closeTag) {
+			continue;
+		}
 
 		// IDバリデーション（不正なIDはスキップ）
 		if (!isValidId(id)) {
@@ -193,12 +201,14 @@ function buildParentMap(parsedNodes: ParsedNode[]): Map<string, string | null> {
 		// 包含条件: parent.startPos < node.startPos && parent.endPos > node.endPos
 		// startPosでソート済みなので、startPos条件は自動的に満たされる
 		// endPos条件のみチェック: parent.endPos > node.endPos
-		while (stack.length > 0 && stack[stack.length - 1].endPos <= node.endPos) {
+		let top = stack[stack.length - 1];
+		while (top && top.endPos <= node.endPos) {
 			stack.pop();
+			top = stack[stack.length - 1];
 		}
 
 		// スタックトップが最小の包含親（なければnull）
-		parentMap.set(node.id, stack.length > 0 ? stack[stack.length - 1].id : null);
+		parentMap.set(node.id, top?.id ?? null);
 
 		// 自身をスタックに追加（将来の子ノードの親候補）
 		stack.push(node);
