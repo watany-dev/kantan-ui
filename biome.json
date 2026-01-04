@@ -15,7 +15,8 @@
 			},
 			"correctness": {
 				"recommended": true,
-				"noUnusedImports": "error"
+				"noUnusedImports": "error",
+				"noUnusedVariables": "error"
 			},
 			"style": {
 				"recommended": true
