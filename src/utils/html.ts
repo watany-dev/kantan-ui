@@ -61,33 +61,3 @@ export function containsUnsafeHtml(html: string): boolean {
 
 	return unsafePatterns.some((pattern) => pattern.test(html));
 }
-
-/**
- * クライアント側で使用するXSS検出関数のソースコードを生成
- * サーバーとクライアントで同じロジックを使用するため
- */
-export function generateIsUnsafeHtmlScript(): string {
-	return `function isUnsafeHtml(html) {
-  var lowerHtml = html.toLowerCase();
-  if (!lowerHtml.includes("<") && !lowerHtml.includes("javascript") && !lowerHtml.includes("vbscript") && !lowerHtml.includes("data:")) {
-    return false;
-  }
-  var patterns = [
-    /<script[\\s\\S]*?>/i,
-    /\\bjavascript\\s*:/i,
-    /\\bvbscript\\s*:/i,
-    /\\bdata\\s*:[^,]*?base64/i,
-    /\\bon[a-z]+\\s*=/i,
-    /<iframe[\\s>]/i,
-    /<embed[\\s>]/i,
-    /<object[\\s>]/i,
-    /<base[\\s>]/i,
-    /<form[\\s>]/i,
-    /<meta[\\s>]/i,
-    /<link[\\s>]/i,
-    /<svg[\\s\\S]*?on[a-z]+\\s*=/i,
-    /<math[\\s\\S]*?on[a-z]+\\s*=/i
-  ];
-  return patterns.some(function(p) { return p.test(html); });
-}`;
-}
