@@ -64,7 +64,7 @@ const script = () => {
 	for (const item of state.items) {
 		kt.html(`<li class="list-item">${item}</li>`);
 	}
-	kt.html(`</ul>`);
+	kt.html("</ul>");
 
 	// アイテム数表示
 	kt.html(`<div id="item-count" class="kt-write">Total items: ${state.items.length}</div>`);

@@ -17,9 +17,6 @@ const state = createTypedSessionState<AppState>({
 	counter: 0,
 });
 
-// アクティブなWebSocket接続を保持（テスト用切断エンドポイントで使用）
-const activeConnections = new Set<WebSocket>();
-
 const script = () => {
 	kt.title("Error Handling Test");
 	kt.write("エラーハンドリングとリカバリーをテストします。");
@@ -56,7 +53,7 @@ const testApp = new Hono();
 testApp.route("/", app);
 
 // テスト用: WebSocket接続を強制切断
-testApp.post("/test/disconnect", async (c) => {
+testApp.post("/test/disconnect", (c) => {
 	// 注意: Bunの環境では、WebSocket接続を直接取得する標準的な方法がないため、
 	// クライアント側でWebSocket.close()を呼び出すか、
 	// サーバーを再起動する方法でテストする必要がある
@@ -67,10 +64,7 @@ testApp.post("/test/disconnect", async (c) => {
 });
 
 // テスト用: 不正なパッチを送信するフラグを設定
-let sendInvalidPatch = false;
-
-testApp.post("/test/invalid-patch", async (c) => {
-	sendInvalidPatch = true;
+testApp.post("/test/invalid-patch", (c) => {
 	return c.json({
 		success: true,
 		message: "Next patch will be invalid",
@@ -78,7 +72,7 @@ testApp.post("/test/invalid-patch", async (c) => {
 });
 
 // テスト用: セッション期限切れをシミュレート
-testApp.post("/test/expire-session", async (c) => {
+testApp.post("/test/expire-session", (c) => {
 	return c.json({
 		success: true,
 		message: "Session expiration simulated",

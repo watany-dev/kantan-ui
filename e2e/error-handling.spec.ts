@@ -24,13 +24,8 @@ test.describe("Error Handling - WebSocket Reconnection", () => {
 		await page.click("#btn_inc");
 		await expect(page.locator("#counter-display")).toContainText("Counter: 1");
 
-		// クライアント側でWebSocketを閉じる
-		await page.evaluate(() => {
-			// @ts-ignore - グローバルに露出されているWebSocket接続を閉じる
-			const wsElements = document.querySelectorAll("[data-ws-connected]");
-			// 代替: window.ktWebSocket?.close() のようなグローバル参照があれば使用
-			// ここではステータス表示を監視して再接続を確認
-		});
+		// 注: WebSocket切断のテストは、クライアント側で直接制御する必要がある
+		// ここでは接続ステータスの表示を確認することで、接続状態の監視が動作していることを検証
 
 		// 接続ステータスが表示されていることを確認（再接続中のステータス）
 		// 注: 実際の再接続テストはWebSocket接続を直接制御する必要がある
