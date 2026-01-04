@@ -31,6 +31,8 @@ function generateClientScript(config: ResolvedKantanConfig): string {
   const baseReconnectDelay = ${config.client.baseReconnectDelay};
   const maxReconnectDelay = ${config.client.maxReconnectDelay};
   ${isBrowserScope ? "" : `const sessionKey = "${config.session.sessionKey}";`}
+  // シーケンス番号（再接続時の再同期用）
+  let lastReceivedSeq = 0;
 
   // 接続状態インジケーターを作成
   function createConnectionIndicator() {
@@ -83,8 +85,12 @@ function generateClientScript(config: ResolvedKantanConfig): string {
       console.log("Connected to server");
       reconnectAttempts = 0;
       updateConnectionStatus("connected");
-      // 初期化メッセージを送信
-      ${isBrowserScope ? `ws.send(JSON.stringify({ type: "init" }));` : `ws.send(JSON.stringify({ type: "init", sessionId }));`}
+      // 初期化メッセージを送信（再接続時はlastSeqを含める）
+      ${
+				isBrowserScope
+					? `ws.send(JSON.stringify({ type: "init", lastSeq: lastReceivedSeq || undefined }));`
+					: `ws.send(JSON.stringify({ type: "init", sessionId, lastSeq: lastReceivedSeq || undefined }));`
+			}
     };
 
     // フォーカス状態を保存（スクロール位置含む）
@@ -145,6 +151,12 @@ function generateClientScript(config: ResolvedKantanConfig): string {
         return;
       }
 
+      // pingメッセージの処理
+      if (msg.type === "ping") {
+        ws.send(JSON.stringify({ type: "pong" }));
+        return;
+      }
+
       // エラーメッセージの処理
       if (msg.type === "error") {
         console.error("Server error:", msg.error?.code, msg.error?.message);
@@ -176,6 +188,10 @@ function generateClientScript(config: ResolvedKantanConfig): string {
 			}
 
       if (msg.type === "patch" && msg.patches) {
+        // シーケンス番号を保存（再接続時の再同期用）
+        if (msg.seq !== undefined) {
+          lastReceivedSeq = msg.seq;
+        }
         // ストリーミング中（partial=true）はフォーカス復元をスキップ
         const focusState = msg.partial ? null : saveFocusState();
         for (const patch of msg.patches) {
@@ -311,6 +327,25 @@ function generateClientScript(config: ResolvedKantanConfig): string {
     }
   };
 
+  // デバウンス用タイマー（widget IDごとに管理）
+  const debounceTimers = new Map();
+  const DEBOUNCE_DELAY = 50; // 50ms
+
+  // デバウンス付きイベント送信
+  function sendEventDebounced(widgetId, value) {
+    // 既存のタイマーをクリア
+    const existingTimer = debounceTimers.get(widgetId);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+    // 新しいタイマーを設定
+    const timer = setTimeout(() => {
+      window.sendEvent(widgetId, value);
+      debounceTimers.delete(widgetId);
+    }, DEBOUNCE_DELAY);
+    debounceTimers.set(widgetId, timer);
+  }
+
   // イベント委譲: data-kt-event 属性を持つ要素のイベントを処理
   document.getElementById("app").addEventListener("click", (e) => {
     const target = e.target.closest("[data-kt-event='click']");
@@ -323,7 +358,8 @@ function generateClientScript(config: ResolvedKantanConfig): string {
     const target = e.target;
     if (target.dataset && target.dataset.ktEvent === "input" && target.id) {
       const value = target.dataset.ktType === "number" ? Number(target.value) : target.value;
-      window.sendEvent(target.id, value);
+      // スライダー等の高頻度イベントをデバウンス
+      sendEventDebounced(target.id, value);
     }
   });
 
@@ -441,8 +477,10 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 					: undefined;
 
 			return {
-				onOpen: (_evt, _ws) => {
+				onOpen: (_evt, ws) => {
 					console.log("WebSocket connected");
+					// ping/pong用のタイムスタンプを初期化
+					sessionManager.initializePong(ws);
 				},
 				onMessage: (event, ws) => {
 					let parsed: unknown;
@@ -459,20 +497,54 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 					}
 					const data: ClientMessage = parsed;
 
+					if (data.type === "pong") {
+						// pong受信時にタイムスタンプを更新
+						sessionManager.handlePong(ws);
+						return;
+					}
+
 					if (data.type === "init") {
 						// 優先順位: Cookie (browser) > メッセージ (tab)
 						const requestedSessionId = cookieSessionId ?? data.sessionId;
 						const session = sessionManager.getOrCreateSession(requestedSessionId);
 						sessionManager.associateWebSocket(ws, session.id);
 
+						// 再接続でlastSeqが送られてきた場合
+						if (data.lastSeq !== undefined && data.lastSeq > 0) {
+							const missedPatches = sessionManager.getMissedPatches(session.id, data.lastSeq);
+							if (missedPatches !== null && missedPatches.length > 0) {
+								// 欠損パッチを再送
+								const message: ServerMessage = {
+									type: "patch",
+									patches: missedPatches as Patch[],
+									seq: sessionManager.getLastSeq(session.id),
+									sessionId: config.session.scope === "tab" ? session.id : undefined,
+								};
+								ws.send(JSON.stringify(message));
+								return;
+							}
+							if (missedPatches !== null && missedPatches.length === 0) {
+								// 最新状態 - 何もしない（接続維持のみ）
+								return;
+							}
+							// missedPatches === null の場合はフル同期が必要
+							// 下の処理でreplaceRootを送信
+						}
+
 						// 初期HTMLを生成して保存
 						const html = rerun(script, undefined, session.id);
 						session.lastHtml = html;
+
+						// パッチを履歴に追加（初期replaceRootも履歴に残す）
+						const seq = sessionManager.addPatchToHistory(session.id, [
+							{ type: "replaceRoot", html },
+						]);
 
 						// scope='tab'の場合のみsessionIdをクライアントに返す
 						const message: ServerMessage = {
 							type: "patch",
 							patches: [{ type: "replaceRoot", html }],
+							seq,
 							sessionId: config.session.scope === "tab" ? session.id : undefined,
 						};
 						ws.send(JSON.stringify(message));
@@ -515,13 +587,13 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 						const streamingOptions: StreamingOptions | undefined = config.streaming.enabled
 							? {
 									onFlush: (html, _itemCount) => {
-										// ストリーミング中の部分更新を送信
+										// ストリーミング中の部分更新を全接続にブロードキャスト
 										const streamMessage: ServerMessage = {
 											type: "patch",
 											patches: [{ type: "streamAppend", html }],
 											partial: true,
 										};
-										ws.send(JSON.stringify(streamMessage));
+										sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
 									},
 									flushThreshold: config.streaming.flushThreshold,
 								}
@@ -551,13 +623,16 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 						// HTML履歴を更新
 						session.lastHtml = newHtml;
 
-						// パッチを送信（変更がある場合のみ）
+						// パッチを全接続にブロードキャスト（変更がある場合のみ）
 						if (patches.length > 0) {
+							// パッチを履歴に追加してシーケンス番号を取得
+							const seq = sessionManager.addPatchToHistory(session.id, patches);
 							const message: ServerMessage = {
 								type: "patch",
 								patches,
+								seq,
 							};
-							ws.send(JSON.stringify(message));
+							sessionManager.broadcast(session.id, JSON.stringify(message));
 						}
 					}
 				},
@@ -569,8 +644,14 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 		}),
 	);
 
+	// ping/pong接続維持を開始（pingInterval > 0 の場合）
+	if (config.client.pingInterval > 0) {
+		sessionManager.startPingInterval(config.client.pingInterval, config.client.pongTimeout);
+	}
+
 	const shutdown = () => {
 		sessionManager.stopCleanupInterval();
+		sessionManager.stopPingInterval();
 	};
 
 	return { app, websocket, shutdown };

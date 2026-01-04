@@ -35,6 +35,8 @@ export const DEFAULT_CLIENT_CONFIG: Required<ClientConfig> = {
 	maxReconnectAttempts: 10,
 	baseReconnectDelay: 1000, // 1秒
 	maxReconnectDelay: 30000, // 30秒
+	pingInterval: 30000, // 30秒
+	pongTimeout: 10000, // 10秒
 };
 
 /**
