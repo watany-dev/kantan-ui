@@ -56,3 +56,48 @@ test.describe("Patch Operations - removeNode", () => {
 		await expect(page.locator("#item-count")).toContainText("Total items: 0");
 	});
 });
+
+test.describe("Patch Operations - insertNode and compound patches", () => {
+	test("Add Item button adds a new item to the list", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// 初期状態を確認（3アイテム）
+		const itemList = page.locator("#item-list li.list-item");
+		await expect(itemList).toHaveCount(3);
+
+		// アイテムを追加
+		await page.click("#btn_add");
+
+		// アイテムが追加されたことを確認
+		await expect(itemList).toHaveCount(4);
+		await expect(page.locator("#item-count")).toContainText("Total items: 4");
+
+		// 新しいアイテムの内容を確認
+		await expect(itemList.last()).toContainText("Item 4");
+	});
+
+	test("Add and remove operations work correctly in sequence", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const itemList = page.locator("#item-list li.list-item");
+		await expect(itemList).toHaveCount(3);
+
+		// 追加 → 削除 → 追加の連続操作
+		await page.click("#btn_add");
+		await expect(itemList).toHaveCount(4);
+
+		await page.click("#btn_remove");
+		await expect(itemList).toHaveCount(3);
+
+		await page.click("#btn_add");
+		await expect(itemList).toHaveCount(4);
+
+		// 最後に追加されたのはItem 5（Item 4は削除された）
+		await expect(itemList.last()).toContainText("Item 5");
+
+		// ボタンがすべて正常に機能することを確認
+		await expect(page.locator("#btn_add")).toBeEnabled();
+		await expect(page.locator("#btn_remove")).toBeEnabled();
+		await expect(page.locator("#btn_clear")).toBeEnabled();
+	});
+});
