@@ -74,3 +74,44 @@ test.describe("Output API - kt.header, kt.subheader, kt.divider", () => {
 		expect(count).toBeGreaterThanOrEqual(3);
 	});
 });
+
+test.describe("Output API - kt.html and XSS escaping", () => {
+	test("kt.html() outputs raw HTML without escaping", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// kt.html() が生のHTMLを出力することを確認
+		// デモアプリの results-card はkt.html()で出力されている
+		const resultsCard = page.locator("#results-card");
+		await expect(resultsCard).toBeVisible();
+
+		// HTMLの構造が保持されていることを確認
+		await expect(resultsCard.locator("h2")).toBeVisible();
+		await expect(resultsCard.locator("p")).toBeVisible();
+	});
+
+	test("user input is escaped to prevent XSS", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const textInput = page.locator("#name_input");
+
+		// XSSペイロードを入力
+		const xssPayload = '<script>alert("xss")</script>';
+		await textInput.evaluate((el: HTMLInputElement, payload: string) => {
+			el.value = payload;
+			el.dispatchEvent(new Event("input", { bubbles: true }));
+		}, xssPayload);
+
+		// 結果カードを確認（エスケープされているはず）
+		const resultsCard = page.locator("#results-card");
+
+		// scriptタグが実行可能な形で存在しないことを確認
+		const scriptTags = page.locator("#results-card script");
+		const scriptCount = await scriptTags.count();
+		expect(scriptCount).toBe(0);
+
+		// エスケープされたテキストが表示されることを確認
+		// escapeHtml により < は &lt; に変換されている
+		const h2Text = await resultsCard.locator("h2").textContent();
+		expect(h2Text).toContain("<script>");
+	});
+});
