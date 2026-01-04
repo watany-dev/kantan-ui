@@ -306,14 +306,6 @@ const script = () => {
     state.count = 0;
   }
 
-  kt.divider();
-
-  // スライダーで直接値を設定
-  const newValue = kt.slider("値を設定", -100, 100, state.count);
-  if (newValue !== state.count) {
-    state.count = newValue;
-  }
-
   return undefined;
 };
 
