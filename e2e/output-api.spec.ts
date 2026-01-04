@@ -38,3 +38,39 @@ test.describe("Output API - kt.title and kt.write", () => {
 		await expect(counterDisplay).toContainText("Current count: 1");
 	});
 });
+
+test.describe("Output API - kt.header, kt.subheader, kt.divider", () => {
+	test("kt.header() outputs h2 with kt-header class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// kt.header() が <h2 class="kt-header"> を出力することを確認
+		const headers = page.locator("h2.kt-header");
+		await expect(headers.first()).toBeVisible();
+
+		// "Counter" ヘッダーが存在することを確認
+		await expect(page.locator("h2.kt-header").filter({ hasText: "Counter" })).toBeVisible();
+	});
+
+	test("kt.subheader() outputs h3 with kt-subheader class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// kt.subheader() が <h3 class="kt-subheader"> を出力することを確認
+		const subheaders = page.locator("h3.kt-subheader");
+		await expect(subheaders.first()).toBeVisible();
+
+		// "Text Input" サブヘッダーが存在することを確認
+		await expect(page.locator("h3.kt-subheader").filter({ hasText: "Text Input" })).toBeVisible();
+	});
+
+	test("kt.divider() outputs hr with kt-divider class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// kt.divider() が <hr class="kt-divider"> を出力することを確認
+		const dividers = page.locator("hr.kt-divider");
+		await expect(dividers.first()).toBeVisible();
+
+		// 複数のdividerが存在することを確認
+		const count = await dividers.count();
+		expect(count).toBeGreaterThanOrEqual(3);
+	});
+});
