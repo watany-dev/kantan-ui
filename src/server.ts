@@ -50,6 +50,9 @@ const script = () => {
 		state.counter = 0;
 	}
 
+	// disabled状態のボタン（テスト用）
+	kt.button("Disabled Button", { key: "btn_disabled", disabled: true });
+
 	// IDを付与してdiffアルゴリズムが変更を検出できるようにする
 	kt.html(`<div id="counter-display" class="kt-write">Current count: ${state.counter}</div>`);
 

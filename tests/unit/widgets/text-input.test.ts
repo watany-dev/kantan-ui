@@ -92,5 +92,17 @@ describe("text_input", () => {
 			expect(html).not.toContain("<script>");
 			expect(html).toContain("&lt;script&gt;");
 		});
+
+		it("should render disabled attribute when disabled", () => {
+			const html = renderTextInput("Name", "World", { disabled: true });
+
+			expect(html).toContain("disabled");
+		});
+
+		it("should not render disabled attribute when not disabled", () => {
+			const html = renderTextInput("Name", "World", { disabled: false });
+
+			expect(html).not.toContain("disabled");
+		});
 	});
 });

@@ -28,6 +28,7 @@ export function renderSelectbox(
 	config?: Partial<SelectboxConfig>,
 ): string {
 	const id = generateWidgetId(config?.key);
+	const disabled = config?.disabled ? " disabled" : "";
 
 	const optionsHtml = options
 		.map(
@@ -38,7 +39,7 @@ export function renderSelectbox(
 
 	return `<div id="${id}-container" class="kt-selectbox-container">
   <label for="${id}" class="kt-selectbox-label">${escapeHtml(label)}</label>
-  <select id="${id}" data-kt-event="change" class="kt-selectbox">
+  <select id="${id}" data-kt-event="change" class="kt-selectbox"${disabled}>
     ${optionsHtml}
   </select>
 </div>`;

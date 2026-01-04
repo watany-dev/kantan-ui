@@ -97,4 +97,31 @@ test.describe("Advanced Widget Behavior", () => {
 		// debug-stateに反映される
 		await expect(page.locator("#debug-state")).toContainText(`"stepVolume": 80`);
 	});
+
+	test("disabled button has disabled attribute", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const disabledBtn = page.locator("#btn_disabled");
+
+		// disabled属性が設定されている
+		await expect(disabledBtn).toBeDisabled();
+		await expect(disabledBtn).toHaveText("Disabled Button");
+	});
+
+	test("disabled button does not trigger counter increment", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// 初期カウント確認
+		await expect(page.locator("#counter-display")).toContainText("Current count: 0");
+
+		// disabledボタンをクリック（force: trueで強制クリック）
+		const disabledBtn = page.locator("#btn_disabled");
+		await disabledBtn.click({ force: true });
+
+		// 少し待機
+		await page.waitForTimeout(200);
+
+		// カウントが変わっていないことを確認
+		await expect(page.locator("#counter-display")).toContainText("Current count: 0");
+	});
 });

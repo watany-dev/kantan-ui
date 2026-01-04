@@ -17,6 +17,7 @@ export function button(_label: string, config?: Partial<ButtonConfig>): boolean 
  */
 export function renderButton(label: string, config?: Partial<ButtonConfig>): string {
 	const id = generateWidgetId(config?.key);
+	const disabled = config?.disabled ? " disabled" : "";
 
-	return `<button id="${id}" data-kt-event="click" class="kt-button">${escapeHtml(label)}</button>`;
+	return `<button id="${id}" data-kt-event="click" class="kt-button"${disabled}>${escapeHtml(label)}</button>`;
 }

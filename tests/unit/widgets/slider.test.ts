@@ -126,5 +126,17 @@ describe("slider", () => {
 			expect(html).not.toContain("<script>");
 			expect(html).toContain("&lt;script&gt;");
 		});
+
+		it("should render disabled attribute when disabled", () => {
+			const html = renderSlider("Volume", 0, 100, 50, { disabled: true });
+
+			expect(html).toContain("disabled");
+		});
+
+		it("should not render disabled attribute when not disabled", () => {
+			const html = renderSlider("Volume", 0, 100, 50, { disabled: false });
+
+			expect(html).not.toContain("disabled");
+		});
 	});
 });
