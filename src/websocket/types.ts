@@ -76,7 +76,7 @@ export interface InsertNodePatch {
  * ストリーミング用の追加パッチ
  * rerun実行中に部分的なHTMLを追加する
  */
-export interface StreamAppendPatch {
+interface StreamAppendPatch {
 	type: "streamAppend";
 	html: string;
 }
