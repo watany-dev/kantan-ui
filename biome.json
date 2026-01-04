@@ -20,7 +20,8 @@
 			},
 			"style": {
 				"recommended": true,
-				"useConst": "error"
+				"useConst": "error",
+				"useTemplate": "error"
 			},
 			"suspicious": {
 				"recommended": true,
