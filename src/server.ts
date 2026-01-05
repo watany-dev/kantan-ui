@@ -107,6 +107,45 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Additional Widgets Section =====
+	kt.header("Additional Widgets");
+
+	// Checkbox
+	kt.subheader("Checkbox");
+	const agreed = kt.checkbox("I agree to the terms", false, { key: "agree_checkbox" });
+	const notifications = kt.checkbox("Enable notifications", true, {
+		key: "notifications_checkbox",
+	});
+
+	// Radio
+	kt.subheader("Radio");
+	const size = kt.radio("Size", ["S", "M", "L", "XL"], "M", { key: "size_radio" });
+
+	// Number Input
+	kt.subheader("Number Input");
+	const age = kt.number_input("Age", 0, 120, 25, { key: "age_input" });
+	const quantity = kt.number_input("Quantity", 1, 100, 1, { key: "quantity_input", step: 1 });
+
+	// Text Area
+	kt.subheader("Text Area");
+	const bio = kt.text_area("Bio", "Tell us about yourself...", {
+		key: "bio_textarea",
+		height: 100,
+	});
+
+	// Toggle
+	kt.subheader("Toggle");
+	const darkMode = kt.toggle("Dark Mode", false, { key: "darkmode_toggle" });
+	const autoSave = kt.toggle("Auto Save", true, { key: "autosave_toggle" });
+
+	// Multiselect
+	kt.subheader("Multiselect");
+	const tags = kt.multiselect("Tags", ["JavaScript", "TypeScript", "Python", "Rust", "Go"], [], {
+		key: "tags_multiselect",
+	});
+
+	kt.divider();
+
 	// ===== Debug Section =====
 	kt.subheader("Session State (Debug)");
 	kt.html(`
@@ -120,6 +159,15 @@ ${escapeHtml(
 			volume,
 			stepVolume,
 			color,
+			agreed,
+			notifications,
+			size,
+			age,
+			quantity,
+			bio,
+			darkMode,
+			autoSave,
+			tags,
 		},
 		null,
 		2,
