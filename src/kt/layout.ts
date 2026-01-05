@@ -1,3 +1,4 @@
+import { escapeHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
 
 // ============================================
@@ -106,4 +107,42 @@ export function columns(contents: Array<() => void>, config: ColumnsConfig = {})
 	});
 
 	ctx.append("</div>");
+}
+
+// ============================================
+// Expander API
+// ============================================
+
+export interface ExpanderConfig {
+	expanded?: boolean;
+}
+
+/**
+ * 展開/折りたたみ可能なセクション
+ *
+ * @param label - エキスパンダーのラベル
+ * @param content - 展開時に表示するコンテンツ
+ * @param config - オプション設定
+ *
+ * @example
+ * ```typescript
+ * kt.expander("See details", () => {
+ *   kt.write("Hidden content");
+ * });
+ *
+ * // デフォルトで展開
+ * kt.expander("Important notice", () => {
+ *   kt.write("Please read this!");
+ * }, { expanded: true });
+ * ```
+ */
+export function expander(label: string, content: () => void, config: ExpanderConfig = {}): void {
+	const ctx = requireRenderContext();
+	const openAttr = config.expanded ? " open" : "";
+
+	ctx.append(
+		`<details class="kt-expander"${openAttr}><summary class="kt-expander-header">${escapeHtml(label)}</summary><div class="kt-expander-content">`,
+	);
+	content();
+	ctx.append("</div></details>");
 }

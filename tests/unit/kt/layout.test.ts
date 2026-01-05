@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { columns, container } from "../../../src/kt/layout";
+import { columns, container, expander } from "../../../src/kt/layout";
 import { write } from "../../../src/kt/output";
 
 describe("Layout APIs", () => {
@@ -157,6 +157,73 @@ describe("Layout APIs", () => {
 		it("should throw error without render context", () => {
 			setRenderContext(null);
 			expect(() => columns([() => write("test")])).toThrow("RenderContext is not available");
+		});
+	});
+
+	describe("expander", () => {
+		it("should create details element with kt-expander class", () => {
+			expander("See details", () => {
+				write("Hidden content");
+			});
+			const html = ctx.getHtml();
+			expect(html).toContain("<details");
+			expect(html).toContain('class="kt-expander"');
+		});
+
+		it("should include label in summary element", () => {
+			expander("Click to expand", () => {
+				write("Content");
+			});
+			const html = ctx.getHtml();
+			expect(html).toContain("<summary");
+			expect(html).toContain("Click to expand");
+		});
+
+		it("should include content in expander body", () => {
+			expander("Details", () => {
+				write("Expanded content here");
+			});
+			const html = ctx.getHtml();
+			expect(html).toContain("Expanded content here");
+			expect(html).toContain('class="kt-expander-content"');
+		});
+
+		it("should escape HTML in label", () => {
+			expander('<script>alert("xss")</script>', () => {
+				write("Content");
+			});
+			const html = ctx.getHtml();
+			expect(html).toContain("&lt;script&gt;");
+		});
+
+		it("should add open attribute when expanded=true", () => {
+			expander(
+				"Expanded by default",
+				() => {
+					write("Content");
+				},
+				{ expanded: true },
+			);
+			const html = ctx.getHtml();
+			expect(html).toContain("<details");
+			expect(html).toContain(" open");
+		});
+
+		it("should not add open attribute by default", () => {
+			expander("Collapsed by default", () => {
+				write("Content");
+			});
+			const html = ctx.getHtml();
+			expect(html).not.toMatch(/<details[^>]*\sopen/);
+		});
+
+		it("should throw error without render context", () => {
+			setRenderContext(null);
+			expect(() =>
+				expander("Test", () => {
+					write("test");
+				}),
+			).toThrow("RenderContext is not available");
 		});
 	});
 });
