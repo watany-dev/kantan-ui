@@ -5,6 +5,7 @@ export { selectbox, renderSelectbox } from "./selectbox";
 export { checkbox, renderCheckbox } from "./checkbox";
 export { radio, renderRadio } from "./radio";
 export { number_input, renderNumberInput } from "./number-input";
+export { text_area } from "./text-area";
 export {
 	generateWidgetId,
 	resetWidgetCounter,

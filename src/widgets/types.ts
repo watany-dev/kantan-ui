@@ -75,3 +75,13 @@ export interface NumberInputConfig {
 	key?: string;
 	disabled?: boolean;
 }
+
+export interface TextAreaConfig {
+	label: string;
+	defaultValue?: string;
+	placeholder?: string;
+	height?: number;
+	maxChars?: number;
+	key?: string;
+	disabled?: boolean;
+}
