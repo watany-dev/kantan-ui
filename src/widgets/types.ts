@@ -65,3 +65,13 @@ export interface RadioConfig {
 	disabled?: boolean;
 	horizontal?: boolean;
 }
+
+export interface NumberInputConfig {
+	label: string;
+	min?: number;
+	max?: number;
+	defaultValue?: number;
+	step?: number;
+	key?: string;
+	disabled?: boolean;
+}

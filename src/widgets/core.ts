@@ -114,3 +114,36 @@ export function initializeRadioState(
 ): string {
 	return initializeWidgetState(widgetId, defaultValue ?? options[0] ?? "");
 }
+
+/**
+ * 数値入力のバリデーション
+ */
+export function validateNumberInput(min?: number, max?: number, defaultValue?: number): void {
+	if (min !== undefined && max !== undefined && min > max) {
+		throw new Error(`number_input: min (${min}) must be <= max (${max})`);
+	}
+	if (defaultValue !== undefined) {
+		if (min !== undefined && defaultValue < min) {
+			throw new Error(
+				`number_input: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
+			);
+		}
+		if (max !== undefined && defaultValue > max) {
+			throw new Error(
+				`number_input: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
+			);
+		}
+	}
+}
+
+/**
+ * 数値入力のstate管理
+ * 初期値をstateに保存し、現在値を返す
+ */
+export function initializeNumberInputState(
+	widgetId: string,
+	min?: number,
+	defaultValue?: number,
+): number {
+	return initializeWidgetState(widgetId, defaultValue ?? min ?? 0);
+}
