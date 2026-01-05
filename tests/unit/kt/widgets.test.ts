@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { button, checkbox, number_input, radio, selectbox, slider, text_area, text_input } from "../../../src/kt/widgets";
+import { button, checkbox, number_input, radio, selectbox, slider, text_area, text_input, toggle } from "../../../src/kt/widgets";
 import { clearContext, setContext } from "../../../src/runtime/context";
 import {
 	SessionManager,
@@ -271,6 +271,39 @@ describe("Declarative Widget APIs", () => {
 		});
 	});
 
+	describe("toggle", () => {
+		it("should append toggle HTML to buffer", () => {
+			toggle("Dark mode");
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-toggle-container"');
+			expect(html).toContain('type="checkbox"');
+			expect(html).toContain("Dark mode");
+			expect(html).toContain('class="kt-toggle-switch"');
+		});
+
+		it("should return false by default", () => {
+			const value = toggle("Dark mode");
+			expect(value).toBe(false);
+		});
+
+		it("should return true when defaultValue is true", () => {
+			const value = toggle("Dark mode", true);
+			expect(value).toBe(true);
+		});
+
+		it("should include checked when value is true", () => {
+			toggle("Dark mode", true);
+			const html = ctx.getHtml();
+			expect(html).toContain("checked");
+		});
+
+		it("should use custom key", () => {
+			toggle("Dark mode", false, { key: "my_toggle" });
+			const html = ctx.getHtml();
+			expect(html).toContain('id="my_toggle"');
+		});
+	});
+
 	describe("multiple widgets", () => {
 		it("should append multiple widgets in order", () => {
 			button("Click");
@@ -468,6 +501,26 @@ describe("Declarative Widget APIs", () => {
 			const value = text_area("Bio", "default", { key: "my_textarea" });
 
 			expect(value).toBe("custom bio");
+		});
+
+		it("toggle should use existing stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "widget_0", true);
+
+			const value = toggle("Dark mode", false);
+
+			expect(value).toBe(true);
+		});
+
+		it("toggle should use custom key with stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "my_toggle", true);
+
+			const value = toggle("Dark mode", false, { key: "my_toggle" });
+
+			expect(value).toBe(true);
 		});
 	});
 });

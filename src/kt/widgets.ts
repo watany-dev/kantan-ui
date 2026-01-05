@@ -6,6 +6,7 @@ import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/se
 import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
 import { text_area as imperativeTextArea, renderTextArea } from "../widgets/text-area";
 import { text_input as imperativeTextInput, renderTextInput } from "../widgets/text-input";
+import { toggle as imperativeToggle, renderToggle } from "../widgets/toggle";
 import type {
 	ButtonConfig,
 	CheckboxConfig,
@@ -15,6 +16,7 @@ import type {
 	SliderConfig,
 	TextAreaConfig,
 	TextInputConfig,
+	ToggleConfig,
 } from "../widgets/types";
 import { wrapWidget } from "./widget-helper";
 
@@ -145,5 +147,21 @@ export function text_area(
 		config,
 		(cfg) => imperativeTextArea(label, defaultValue, cfg),
 		(value, cfg) => renderTextArea(label, value, cfg),
+	);
+}
+
+/**
+ * トグルウィジェット（宣言的API）
+ * HTMLを自動出力し、トグル状態を返す
+ */
+export function toggle(
+	label: string,
+	defaultValue?: boolean,
+	config?: Partial<ToggleConfig>,
+): boolean {
+	return wrapWidget(
+		config,
+		(cfg) => imperativeToggle(label, defaultValue, cfg),
+		(value, cfg) => renderToggle(label, value, cfg),
 	);
 }
