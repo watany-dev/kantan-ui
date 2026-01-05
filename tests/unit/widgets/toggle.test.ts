@@ -6,7 +6,7 @@ import {
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
-import { toggle, renderToggle } from "../../../src/widgets/toggle";
+import { renderToggle, toggle } from "../../../src/widgets/toggle";
 
 describe("toggle", () => {
 	let manager: SessionManager;

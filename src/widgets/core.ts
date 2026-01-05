@@ -168,9 +168,6 @@ export function validateMultiselect(options: string[], defaultValue?: string[]):
  * マルチセレクトのstate管理
  * 初期値をstateに保存し、現在値を返す
  */
-export function initializeMultiselectState(
-	widgetId: string,
-	defaultValue?: string[],
-): string[] {
+export function initializeMultiselectState(widgetId: string, defaultValue?: string[]): string[] {
 	return initializeWidgetState(widgetId, defaultValue ?? []);
 }

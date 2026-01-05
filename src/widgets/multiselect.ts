@@ -35,9 +35,7 @@ export function renderMultiselect(
 		.map((opt) => {
 			const checked = value.includes(opt) ? " checked" : "";
 			const optionDisabled =
-				maxSelections !== undefined &&
-				value.length >= maxSelections &&
-				!value.includes(opt)
+				maxSelections !== undefined && value.length >= maxSelections && !value.includes(opt)
 					? " disabled"
 					: "";
 			return `<label class="kt-multiselect-option">

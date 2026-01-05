@@ -116,9 +116,7 @@ test.describe("New Widgets E2E", () => {
 			await textarea.fill("Hello, I am a developer.");
 			await textarea.blur(); // Trigger change event
 
-			await expect(page.locator("#debug-state")).toContainText(
-				'"bio": "Hello, I am a developer."',
-			);
+			await expect(page.locator("#debug-state")).toContainText('"bio": "Hello, I am a developer."');
 		});
 
 		test("text_area has configured height", async ({ page }) => {

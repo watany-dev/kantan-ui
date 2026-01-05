@@ -1,6 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { button, checkbox, multiselect, number_input, radio, selectbox, slider, text_area, text_input, toggle } from "../../../src/kt/widgets";
+import {
+	button,
+	checkbox,
+	multiselect,
+	number_input,
+	radio,
+	selectbox,
+	slider,
+	text_area,
+	text_input,
+	toggle,
+} from "../../../src/kt/widgets";
 import { clearContext, setContext } from "../../../src/runtime/context";
 import {
 	SessionManager,
@@ -340,9 +351,7 @@ describe("Declarative Widget APIs", () => {
 		});
 
 		it("should throw error for empty options", () => {
-			expect(() => multiselect("Tags", [])).toThrow(
-				"multiselect: options array must not be empty",
-			);
+			expect(() => multiselect("Tags", [])).toThrow("multiselect: options array must not be empty");
 		});
 
 		it("should throw error when defaultValue contains invalid option", () => {

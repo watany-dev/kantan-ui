@@ -5,8 +5,8 @@ import {
 	setSessionManager,
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
-import { resetWidgetCounter } from "../../../src/widgets/registry";
 import { multiselect, renderMultiselect } from "../../../src/widgets/multiselect";
+import { resetWidgetCounter } from "../../../src/widgets/registry";
 
 describe("multiselect", () => {
 	let manager: SessionManager;

@@ -1,5 +1,6 @@
 import { button as imperativeButton, renderButton } from "../widgets/button";
 import { checkbox as imperativeCheckbox, renderCheckbox } from "../widgets/checkbox";
+import { multiselect as imperativeMultiselect, renderMultiselect } from "../widgets/multiselect";
 import { number_input as imperativeNumberInput, renderNumberInput } from "../widgets/number-input";
 import { radio as imperativeRadio, renderRadio } from "../widgets/radio";
 import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/selectbox";
@@ -7,7 +8,6 @@ import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
 import { text_area as imperativeTextArea, renderTextArea } from "../widgets/text-area";
 import { text_input as imperativeTextInput, renderTextInput } from "../widgets/text-input";
 import { toggle as imperativeToggle, renderToggle } from "../widgets/toggle";
-import { multiselect as imperativeMultiselect, renderMultiselect } from "../widgets/multiselect";
 import type {
 	ButtonConfig,
 	CheckboxConfig,

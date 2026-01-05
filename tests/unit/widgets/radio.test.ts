@@ -5,8 +5,8 @@ import {
 	setSessionManager,
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
-import { resetWidgetCounter } from "../../../src/widgets/registry";
 import { radio, renderRadio } from "../../../src/widgets/radio";
+import { resetWidgetCounter } from "../../../src/widgets/registry";
 
 describe("radio", () => {
 	let manager: SessionManager;

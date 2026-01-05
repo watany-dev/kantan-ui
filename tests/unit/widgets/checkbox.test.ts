@@ -5,8 +5,8 @@ import {
 	setSessionManager,
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
-import { resetWidgetCounter } from "../../../src/widgets/registry";
 import { checkbox, renderCheckbox } from "../../../src/widgets/checkbox";
+import { resetWidgetCounter } from "../../../src/widgets/registry";
 
 describe("checkbox", () => {
 	let manager: SessionManager;

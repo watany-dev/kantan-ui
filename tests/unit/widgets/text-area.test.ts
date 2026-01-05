@@ -6,7 +6,7 @@ import {
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
-import { text_area, renderTextArea } from "../../../src/widgets/text-area";
+import { renderTextArea, text_area } from "../../../src/widgets/text-area";
 
 describe("text_area", () => {
 	let manager: SessionManager;
@@ -83,13 +83,13 @@ describe("text_area", () => {
 		it("should include height style when configured", () => {
 			const html = renderTextArea("Bio", "", { height: 200 });
 
-			expect(html).toContain('height: 200px');
+			expect(html).toContain("height: 200px");
 		});
 
 		it("should use default height of 100px", () => {
 			const html = renderTextArea("Bio", "");
 
-			expect(html).toContain('height: 100px');
+			expect(html).toContain("height: 100px");
 		});
 
 		it("should include placeholder attribute", () => {
