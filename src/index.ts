@@ -53,6 +53,8 @@ export {
 	renderNumberInput,
 	text_area,
 	renderTextArea,
+	toggle,
+	renderToggle,
 	generateWidgetId,
 	resetWidgetCounter,
 	getWidgetValue,
@@ -71,6 +73,7 @@ export type {
 	RadioConfig,
 	NumberInputConfig,
 	TextAreaConfig,
+	ToggleConfig,
 } from "./widgets/types";
 
 // WebSocket

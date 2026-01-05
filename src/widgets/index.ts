@@ -6,6 +6,7 @@ export { checkbox, renderCheckbox } from "./checkbox";
 export { radio, renderRadio } from "./radio";
 export { number_input, renderNumberInput } from "./number-input";
 export { text_area, renderTextArea } from "./text-area";
+export { toggle, renderToggle } from "./toggle";
 export {
 	generateWidgetId,
 	resetWidgetCounter,
