@@ -54,3 +54,56 @@ export function container(content: () => void, config: ContainerConfig = {}): vo
 	content();
 	ctx.append("</div>");
 }
+
+// ============================================
+// Columns API
+// ============================================
+
+export interface ColumnsConfig {
+	gap?: string;
+	ratios?: number[];
+}
+
+/**
+ * 複数カラムのレイアウトを作成
+ *
+ * @param contents - 各カラムに表示するコンテンツの配列
+ * @param config - オプション設定
+ *
+ * @example
+ * ```typescript
+ * // 基本的な2カラム
+ * kt.columns([
+ *   () => kt.write("Left"),
+ *   () => kt.write("Right"),
+ * ]);
+ *
+ * // 比率指定（1:2:1 = 25%:50%:25%）
+ * kt.columns(
+ *   [
+ *     () => kt.write("Sidebar"),
+ *     () => kt.write("Main content"),
+ *     () => kt.write("Sidebar"),
+ *   ],
+ *   { ratios: [1, 2, 1] }
+ * );
+ * ```
+ */
+export function columns(contents: Array<() => void>, config: ColumnsConfig = {}): void {
+	const ctx = requireRenderContext();
+	const gap = config.gap ?? "1rem";
+	const ratios = config.ratios ?? contents.map(() => 1);
+	const totalRatio = ratios.reduce((a, b) => a + b, 0);
+
+	ctx.append(`<div class="kt-columns" style="display: flex; gap: ${gap};">`);
+
+	contents.forEach((content, i) => {
+		const ratio = ratios[i] ?? 1;
+		const width = (ratio / totalRatio) * 100;
+		ctx.append(`<div class="kt-column" style="flex: 0 0 ${width}%;">`);
+		content();
+		ctx.append("</div>");
+	});
+
+	ctx.append("</div>");
+}

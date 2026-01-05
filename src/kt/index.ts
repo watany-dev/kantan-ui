@@ -48,6 +48,7 @@ export const kt = {
 
 	// Layout APIs
 	container: layout.container,
+	columns: layout.columns,
 
 	// Widget APIs
 	button: widgets.button,

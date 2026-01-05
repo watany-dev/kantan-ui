@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { container } from "../../../src/kt/layout";
+import { columns, container } from "../../../src/kt/layout";
 import { write } from "../../../src/kt/output";
 
 describe("Layout APIs", () => {
@@ -92,6 +92,71 @@ describe("Layout APIs", () => {
 					write("test");
 				}),
 			).toThrow("RenderContext is not available");
+		});
+	});
+
+	describe("columns", () => {
+		it("should create columns with kt-columns class", () => {
+			columns([() => write("Left"), () => write("Right")]);
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-columns"');
+			expect(html).toContain('class="kt-column"');
+		});
+
+		it("should create correct number of columns", () => {
+			columns([() => write("A"), () => write("B"), () => write("C")]);
+			const html = ctx.getHtml();
+			// 3つのカラムがあることを確認
+			const columnMatches = html.match(/class="kt-column"/g);
+			expect(columnMatches).toHaveLength(3);
+		});
+
+		it("should include content in each column", () => {
+			columns([() => write("Left content"), () => write("Right content")]);
+			const html = ctx.getHtml();
+			expect(html).toContain("Left content");
+			expect(html).toContain("Right content");
+		});
+
+		it("should use equal widths by default", () => {
+			columns([() => write("A"), () => write("B")]);
+			const html = ctx.getHtml();
+			// 50%ずつ
+			expect(html).toContain("flex: 0 0 50%");
+		});
+
+		it("should use custom ratios when provided", () => {
+			columns([() => write("Sidebar"), () => write("Main"), () => write("Sidebar")], {
+				ratios: [1, 2, 1],
+			});
+			const html = ctx.getHtml();
+			// 1:2:1 = 25%:50%:25%
+			expect(html).toContain("flex: 0 0 25%");
+			expect(html).toContain("flex: 0 0 50%");
+		});
+
+		it("should use custom gap when provided", () => {
+			columns([() => write("A"), () => write("B")], { gap: "2rem" });
+			const html = ctx.getHtml();
+			expect(html).toContain("gap: 2rem");
+		});
+
+		it("should use default gap when not provided", () => {
+			columns([() => write("A"), () => write("B")]);
+			const html = ctx.getHtml();
+			expect(html).toContain("gap: 1rem");
+		});
+
+		it("should handle single column", () => {
+			columns([() => write("Only one")]);
+			const html = ctx.getHtml();
+			expect(html).toContain("flex: 0 0 100%");
+			expect(html).toContain("Only one");
+		});
+
+		it("should throw error without render context", () => {
+			setRenderContext(null);
+			expect(() => columns([() => write("test")])).toThrow("RenderContext is not available");
 		});
 	});
 });
