@@ -209,6 +209,18 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Form Section =====
+	kt.header("Form");
+	kt.form("contact_form", () => {
+		kt.text_input("Name", "", { key: "form_name" });
+		kt.text_input("Email", "", { key: "form_email" });
+		if (kt.form_submit_button("Submit", { key: "form_submit" })) {
+			kt.success("Form submitted!");
+		}
+	});
+
+	kt.divider();
+
 	// ===== Debug Section =====
 	kt.subheader("Session State (Debug)");
 	kt.html(`
