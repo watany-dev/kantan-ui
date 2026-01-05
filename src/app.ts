@@ -4,6 +4,7 @@ import { html, raw } from "hono/html";
 import { generateClientScript } from "./client";
 import { type KantanConfig, resolveConfig } from "./config";
 import { diff, toWebSocketPatches } from "./diff";
+import { getPageConfig } from "./kt/config";
 import { type Script, type StreamingOptions, rerun } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { upgradeWebSocket, websocket } from "./websocket";
@@ -29,6 +30,8 @@ const defaultStyles = `
   .kt-slider { width: 200px; }
   .kt-text-input { padding: 8px; width: 200px; }
   .kt-selectbox { padding: 8px; }
+  .kt-layout-centered { max-width: 800px; margin: 0 auto; padding: 0 1rem; }
+  .kt-layout-wide { width: 100%; padding: 0 1rem; }
 `;
 
 export function createApp(script: Script, userConfig?: KantanConfig) {
@@ -97,6 +100,11 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 			`default-src 'self'; script-src 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:;`,
 		);
 
+		// PageConfig を取得
+		const pageConfig = getPageConfig();
+		const pageTitle = pageConfig.title ?? "kantan-ui";
+		const layoutClass = pageConfig.layout === "wide" ? "kt-layout-wide" : "kt-layout-centered";
+
 		// Honoのhtmlヘルパーを使用（raw()でエスケープを回避）
 		return c.html(
 			html`<!doctype html>
@@ -104,12 +112,12 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 					<head>
 						<meta charset="UTF-8" />
 						<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-						<title>kantan-ui</title>
+						<title>${pageTitle}</title>
 						<style>
 							${raw(defaultStyles)}
 						</style>
 					</head>
-					<body>
+					<body class="${layoutClass}">
 						<div id="app">${raw(initialHtml)}</div>
 						<script nonce="${nonce}">
 							${raw(clientScript)}
