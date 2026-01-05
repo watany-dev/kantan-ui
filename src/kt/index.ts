@@ -45,4 +45,5 @@ export const kt = {
 	number_input: widgets.number_input,
 	text_area: widgets.text_area,
 	toggle: widgets.toggle,
+	multiselect: widgets.multiselect,
 };

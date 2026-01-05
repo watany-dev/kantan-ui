@@ -7,9 +7,11 @@ import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
 import { text_area as imperativeTextArea, renderTextArea } from "../widgets/text-area";
 import { text_input as imperativeTextInput, renderTextInput } from "../widgets/text-input";
 import { toggle as imperativeToggle, renderToggle } from "../widgets/toggle";
+import { multiselect as imperativeMultiselect, renderMultiselect } from "../widgets/multiselect";
 import type {
 	ButtonConfig,
 	CheckboxConfig,
+	MultiselectConfig,
 	NumberInputConfig,
 	RadioConfig,
 	SelectboxConfig,
@@ -163,5 +165,22 @@ export function toggle(
 		config,
 		(cfg) => imperativeToggle(label, defaultValue, cfg),
 		(value, cfg) => renderToggle(label, value, cfg),
+	);
+}
+
+/**
+ * マルチセレクトウィジェット（宣言的API）
+ * HTMLを自動出力し、選択された値の配列を返す
+ */
+export function multiselect(
+	label: string,
+	options: string[],
+	defaultValue?: string[],
+	config?: Partial<MultiselectConfig>,
+): string[] {
+	return wrapWidget(
+		config,
+		(cfg) => imperativeMultiselect(label, options, defaultValue, cfg),
+		(value, cfg) => renderMultiselect(label, options, value, cfg),
 	);
 }

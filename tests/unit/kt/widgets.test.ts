@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { button, checkbox, number_input, radio, selectbox, slider, text_area, text_input, toggle } from "../../../src/kt/widgets";
+import { button, checkbox, multiselect, number_input, radio, selectbox, slider, text_area, text_input, toggle } from "../../../src/kt/widgets";
 import { clearContext, setContext } from "../../../src/runtime/context";
 import {
 	SessionManager,
@@ -304,6 +304,54 @@ describe("Declarative Widget APIs", () => {
 		});
 	});
 
+	describe("multiselect", () => {
+		it("should append multiselect HTML to buffer", () => {
+			multiselect("Tags", ["A", "B", "C"]);
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-multiselect-container"');
+			expect(html).toContain('type="checkbox"');
+			expect(html).toContain("Tags");
+			expect(html).toContain("A");
+			expect(html).toContain("B");
+			expect(html).toContain("C");
+		});
+
+		it("should return empty array by default", () => {
+			const value = multiselect("Tags", ["A", "B", "C"]);
+			expect(value).toEqual([]);
+		});
+
+		it("should return defaultValue when provided", () => {
+			const value = multiselect("Tags", ["A", "B", "C"], ["A", "C"]);
+			expect(value).toEqual(["A", "C"]);
+		});
+
+		it("should mark selected options as checked", () => {
+			multiselect("Tags", ["A", "B", "C"], ["A", "C"]);
+			const html = ctx.getHtml();
+			expect(html).toMatch(/value="A"[^>]*checked/);
+			expect(html).toMatch(/value="C"[^>]*checked/);
+		});
+
+		it("should use custom key", () => {
+			multiselect("Tags", ["A", "B"], [], { key: "my_multiselect" });
+			const html = ctx.getHtml();
+			expect(html).toContain('id="my_multiselect"');
+		});
+
+		it("should throw error for empty options", () => {
+			expect(() => multiselect("Tags", [])).toThrow(
+				"multiselect: options array must not be empty",
+			);
+		});
+
+		it("should throw error when defaultValue contains invalid option", () => {
+			expect(() => multiselect("Tags", ["A", "B"], ["C"])).toThrow(
+				'multiselect: defaultValue "C" must be one of the options',
+			);
+		});
+	});
+
 	describe("multiple widgets", () => {
 		it("should append multiple widgets in order", () => {
 			button("Click");
@@ -521,6 +569,26 @@ describe("Declarative Widget APIs", () => {
 			const value = toggle("Dark mode", false, { key: "my_toggle" });
 
 			expect(value).toBe(true);
+		});
+
+		it("multiselect should use existing stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "widget_0", ["B", "C"]);
+
+			const value = multiselect("Tags", ["A", "B", "C"], []);
+
+			expect(value).toEqual(["B", "C"]);
+		});
+
+		it("multiselect should use custom key with stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "my_multiselect", ["A", "C"]);
+
+			const value = multiselect("Tags", ["A", "B", "C"], [], { key: "my_multiselect" });
+
+			expect(value).toEqual(["A", "C"]);
 		});
 	});
 });
