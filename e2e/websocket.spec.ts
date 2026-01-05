@@ -120,7 +120,9 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		await gotoAndWait(page);
 
 		// 初期表示を確認
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 50");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 50",
+		);
 
 		const slider = page.locator("#volume_slider");
 
@@ -131,7 +133,9 @@ test.describe("WebSocket connection and replaceRoot", () => {
 		});
 
 		// 値が反映されることを確認
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 75");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 75",
+		);
 	});
 
 	test("should update text input value", async ({ page }) => {
@@ -209,7 +213,7 @@ test.describe("applyPatch behavior", () => {
 		await gotoAndWait(page);
 
 		const slider = page.locator("#volume_slider");
-		const sliderLabel = page.locator(".kt-slider-label");
+		const sliderLabel = page.locator("#volume_slider-container .kt-slider-label");
 
 		// 初期値を確認
 		await expect(sliderLabel).toContainText("Volume: 50");
@@ -282,6 +286,8 @@ test.describe("applyPatch behavior", () => {
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
 			"Current count: 1",
 		);
-		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 80");
+		await expect(page.locator("#volume_slider-container .kt-slider-label")).toContainText(
+			"Volume: 80",
+		);
 	});
 });

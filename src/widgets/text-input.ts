@@ -26,9 +26,11 @@ export function renderTextInput(
 ): string {
 	const id = generateWidgetId(config?.key);
 	const placeholder = config?.placeholder ?? "";
+	const disabled = config?.disabled ? " disabled" : "";
+	const maxLength = config?.maxLength ? ` maxlength="${config.maxLength}"` : "";
 
 	return `<div id="${id}-container" class="kt-text-input-container">
   <label for="${id}" class="kt-text-input-label">${escapeHtml(label)}</label>
-  <input type="text" id="${id}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" data-kt-event="input" class="kt-text-input" />
+  <input type="text" id="${id}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" data-kt-event="input" class="kt-text-input"${disabled}${maxLength} />
 </div>`;
 }

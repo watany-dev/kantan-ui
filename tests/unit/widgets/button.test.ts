@@ -79,5 +79,17 @@ describe("button", () => {
 
 			expect(html).toContain('id="my_button"');
 		});
+
+		it("should render disabled attribute when disabled", () => {
+			const html = renderButton("Click me", { disabled: true });
+
+			expect(html).toContain("disabled");
+		});
+
+		it("should not render disabled attribute when not disabled", () => {
+			const html = renderButton("Click me", { disabled: false });
+
+			expect(html).not.toContain("disabled");
+		});
 	});
 });

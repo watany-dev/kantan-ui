@@ -50,6 +50,9 @@ const script = () => {
 		state.counter = 0;
 	}
 
+	// disabled状態のボタン（テスト用）
+	kt.button("Disabled Button", { key: "btn_disabled", disabled: true });
+
 	// IDを付与してdiffアルゴリズムが変更を検出できるようにする
 	kt.html(`<div id="counter-display" class="kt-write">Current count: ${state.counter}</div>`);
 
@@ -62,9 +65,21 @@ const script = () => {
 	kt.subheader("Text Input");
 	const name = kt.text_input("Your Name", "World", { key: "name_input" });
 
+	// maxLength付きテキスト入力（テスト用）
+	const shortName = kt.text_input("Short Name (max 5)", "", {
+		key: "short_input",
+		maxLength: 5,
+	});
+
 	// スライダー
 	kt.subheader("Slider");
 	const volume = kt.slider("Volume", 0, 100, 50, { key: "volume_slider" });
+
+	// ステップ付きスライダー
+	const stepVolume = kt.slider("Volume (step=10)", 0, 100, 50, {
+		key: "step_slider",
+		step: 10,
+	});
 
 	// セレクトボックス
 	kt.subheader("Selectbox");
@@ -101,7 +116,9 @@ ${escapeHtml(
 		{
 			counter: state.counter,
 			name,
+			shortName,
 			volume,
+			stepVolume,
 			color,
 		},
 		null,

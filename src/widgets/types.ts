@@ -20,6 +20,7 @@ export interface WidgetRenderResult {
 export interface ButtonConfig {
 	label: string;
 	key?: string;
+	disabled?: boolean;
 }
 
 export interface SliderConfig {
@@ -29,6 +30,7 @@ export interface SliderConfig {
 	defaultValue?: number;
 	step?: number;
 	key?: string;
+	disabled?: boolean;
 }
 
 export interface TextInputConfig {
@@ -36,6 +38,8 @@ export interface TextInputConfig {
 	defaultValue?: string;
 	placeholder?: string;
 	key?: string;
+	disabled?: boolean;
+	maxLength?: number;
 }
 
 export interface SelectboxConfig {
@@ -43,4 +47,5 @@ export interface SelectboxConfig {
 	options: string[];
 	defaultValue?: string;
 	key?: string;
+	disabled?: boolean;
 }

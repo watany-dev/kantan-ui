@@ -119,5 +119,21 @@ describe("selectbox", () => {
 			expect(html).not.toContain("<script>");
 			expect(html).toContain("&lt;script&gt;");
 		});
+
+		it("should render disabled attribute when disabled", () => {
+			const html = renderSelectbox("Color", ["red", "green", "blue"], "red", {
+				disabled: true,
+			});
+
+			expect(html).toContain("disabled");
+		});
+
+		it("should not render disabled attribute when not disabled", () => {
+			const html = renderSelectbox("Color", ["red", "green", "blue"], "red", {
+				disabled: false,
+			});
+
+			expect(html).not.toContain("disabled");
+		});
 	});
 });
