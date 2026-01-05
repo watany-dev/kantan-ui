@@ -326,4 +326,124 @@ describe("session_state", () => {
 			expect(descriptor?.value).toBe("World");
 		});
 	});
+
+	describe("array and object mutation support", () => {
+		interface StateWithArray {
+			items: string[];
+			nested: { count: number };
+		}
+
+		const arrayDefaults: StateWithArray = {
+			items: [],
+			nested: { count: 0 },
+		};
+
+		it("should clone and store array on first access", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(arrayDefaults);
+
+			// First access should clone and store the array
+			const items = state.items;
+			expect(items).toEqual([]);
+
+			// Should be stored in session state
+			expect(manager.getState(session.id)?.items).toEqual([]);
+		});
+
+		it("should preserve array mutations in session state", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(arrayDefaults);
+
+			// Push to array
+			state.items.push("item1");
+			state.items.push("item2");
+
+			// Verify mutations are preserved
+			expect(state.items).toEqual(["item1", "item2"]);
+			expect(manager.getState(session.id)?.items).toEqual(["item1", "item2"]);
+		});
+
+		it("should not share arrays between sessions", () => {
+			const session1 = manager.createSession();
+			const session2 = manager.createSession();
+
+			// Use a single state proxy (as would happen in a real app)
+			const state = createTypedSessionState(arrayDefaults);
+
+			// Session 1: add item
+			setCurrentSessionId(session1.id);
+			state.items.push("session1-item");
+			expect(state.items).toEqual(["session1-item"]);
+
+			// Session 2: should have empty array (cloned separately)
+			setCurrentSessionId(session2.id);
+			expect(state.items).toEqual([]);
+
+			// Session 2 mutations should not affect session 1
+			state.items.push("session2-item");
+			expect(state.items).toEqual(["session2-item"]);
+
+			// Switch back to session 1 - should still have its own items
+			setCurrentSessionId(session1.id);
+			expect(state.items).toEqual(["session1-item"]);
+		});
+
+		it("should clone nested objects on first access", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(arrayDefaults);
+
+			// Access nested object
+			const nested = state.nested;
+			expect(nested).toEqual({ count: 0 });
+
+			// Modify nested object
+			nested.count = 42;
+
+			// Verify mutation is preserved
+			expect(state.nested.count).toBe(42);
+			expect(manager.getState(session.id)?.nested).toEqual({ count: 42 });
+		});
+
+		it("should not store primitive defaults in session state", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const primitiveDefaults = { counter: 0, name: "World" };
+			const state = createTypedSessionState(primitiveDefaults);
+
+			// Access primitives
+			expect(state.counter).toBe(0);
+			expect(state.name).toBe("World");
+
+			// Primitives should NOT be stored in session state
+			expect(manager.getState(session.id)?.counter).toBeUndefined();
+			expect(manager.getState(session.id)?.name).toBeUndefined();
+		});
+
+		it("should not mutate the original defaults object", () => {
+			const originalDefaults: StateWithArray = {
+				items: ["original"],
+				nested: { count: 100 },
+			};
+
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const state = createTypedSessionState(originalDefaults);
+
+			// Mutate through state
+			state.items.push("new-item");
+			state.nested.count = 999;
+
+			// Original defaults should be unchanged
+			expect(originalDefaults.items).toEqual(["original"]);
+			expect(originalDefaults.nested.count).toBe(100);
+		});
+	});
 });
