@@ -22,6 +22,7 @@
  */
 
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
+import * as feedback from "./feedback";
 import * as output from "./output";
 import * as widgets from "./widgets";
 
@@ -40,6 +41,9 @@ export const kt = {
 	error: output.error,
 	warning: output.warning,
 	info: output.info,
+
+	// Feedback APIs
+	progress: feedback.progress,
 
 	// Widget APIs
 	button: widgets.button,
