@@ -55,3 +55,55 @@ export interface DownloadButtonConfig {
 	mime?: string;
 	disabled?: boolean;
 }
+
+export interface CheckboxConfig {
+	label: string;
+	defaultValue?: boolean;
+	key?: string;
+	disabled?: boolean;
+}
+
+export interface RadioConfig {
+	label: string;
+	options: string[];
+	defaultValue?: string;
+	key?: string;
+	disabled?: boolean;
+	horizontal?: boolean;
+}
+
+export interface NumberInputConfig {
+	label: string;
+	min?: number;
+	max?: number;
+	defaultValue?: number;
+	step?: number;
+	key?: string;
+	disabled?: boolean;
+}
+
+export interface TextAreaConfig {
+	label: string;
+	defaultValue?: string;
+	placeholder?: string;
+	height?: number;
+	maxChars?: number;
+	key?: string;
+	disabled?: boolean;
+}
+
+export interface ToggleConfig {
+	label: string;
+	defaultValue?: boolean;
+	key?: string;
+	disabled?: boolean;
+}
+
+export interface MultiselectConfig {
+	label: string;
+	options: string[];
+	defaultValue?: string[];
+	key?: string;
+	maxSelections?: number;
+	disabled?: boolean;
+}

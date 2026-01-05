@@ -54,6 +54,12 @@ export const kt = {
 	text_input: widgets.text_input,
 	selectbox: widgets.selectbox,
 	download_button: widgets.download_button,
+	checkbox: widgets.checkbox,
+	radio: widgets.radio,
+	number_input: widgets.number_input,
+	text_area: widgets.text_area,
+	toggle: widgets.toggle,
+	multiselect: widgets.multiselect,
 
 	// Layout APIs
 	tabs: layout.tabs,

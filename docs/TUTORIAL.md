@@ -237,6 +237,121 @@ kt.download_button("Export JSON", jsonData, "export.json", {
 });
 ```
 
+### チェックボックス
+
+真偽値を選択するチェックボックスです。
+
+```typescript
+const agreed = kt.checkbox("利用規約に同意する", false);
+if (agreed) {
+  kt.write("同意いただきありがとうございます！");
+}
+```
+
+パラメータ:
+- 第1引数: ラベル
+- 第2引数: デフォルト値（省略時はfalse）
+- オプション: `{ key, disabled }`
+
+### トグル
+
+オン/オフを切り替えるスイッチスタイルのウィジェットです。
+
+```typescript
+const darkMode = kt.toggle("ダークモード", false);
+kt.write(`ダークモード: ${darkMode ? "オン" : "オフ"}`);
+```
+
+パラメータ:
+- 第1引数: ラベル
+- 第2引数: デフォルト値（省略時はfalse）
+- オプション: `{ key, disabled }`
+
+### ラジオボタン
+
+複数の選択肢から1つを選択します。
+
+```typescript
+const size = kt.radio("サイズ", ["S", "M", "L"], "M");
+kt.write(`選択されたサイズ: ${size}`);
+```
+
+パラメータ:
+- 第1引数: ラベル
+- 第2引数: 選択肢の配列
+- 第3引数: デフォルト値（省略時は最初のオプション）
+- オプション: `{ key, horizontal, disabled }`
+
+```typescript
+// 横並びレイアウト
+const color = kt.radio("色", ["赤", "青", "緑"], "青", { horizontal: true });
+```
+
+### 数値入力
+
+数値を入力するフィールドです。
+
+```typescript
+const age = kt.number_input("年齢", 0, 120, 25);
+kt.write(`年齢: ${age}歳`);
+```
+
+パラメータ:
+- 第1引数: ラベル
+- 第2引数: 最小値
+- 第3引数: 最大値
+- 第4引数: デフォルト値（省略時は最小値）
+- オプション: `{ key, step, disabled }`
+
+```typescript
+// ステップを指定
+const price = kt.number_input("価格", 0, 10000, 100, { step: 100 });
+```
+
+### テキストエリア
+
+複数行のテキストを入力するフィールドです。
+
+```typescript
+const bio = kt.text_area("自己紹介", "こんにちは！");
+kt.write(`入力内容: ${bio}`);
+```
+
+パラメータ:
+- 第1引数: ラベル
+- 第2引数: デフォルト値
+- オプション: `{ key, placeholder, rows, disabled }`
+
+```typescript
+// 行数を指定
+const description = kt.text_area("説明", "", {
+  placeholder: "説明を入力してください...",
+  rows: 5
+});
+```
+
+### マルチセレクト
+
+複数の選択肢から複数を選択できます。
+
+```typescript
+const tags = kt.multiselect("タグ", ["技術", "デザイン", "ビジネス"], []);
+kt.write(`選択されたタグ: ${tags.join(", ")}`);
+```
+
+パラメータ:
+- 第1引数: ラベル
+- 第2引数: 選択肢の配列
+- 第3引数: デフォルト値（選択された値の配列）
+- オプション: `{ key, maxSelections, disabled }`
+
+```typescript
+// 最大選択数を制限
+const skills = kt.multiselect("スキル", ["JS", "TS", "Python", "Go"], [], {
+  maxSelections: 3
+});
+```
+
 ---
 
 ## データ表示
@@ -688,7 +803,8 @@ export default createApp(script, {
 ### 現在利用可能な機能
 
 - ✅ テキスト出力（title, header, write, divider, html）
-- ✅ ウィジェット（button, slider, text_input, selectbox, download_button）
+- ✅ 基本ウィジェット（button, slider, text_input, selectbox, download_button）
+- ✅ フォームウィジェット（checkbox, toggle, radio, number_input, text_area, multiselect）
 - ✅ データ表示（table）
 - ✅ レイアウト（tabs）
 - ✅ ページ設定（set_page_config, rerun）
@@ -706,6 +822,7 @@ export default createApp(script, {
 - レイアウト: `kt.sidebar()`, `kt.columns()`
 - データウィジェット: `kt.dataframe()`, `kt.file_uploader()`
 - チャート: `kt.line_chart()`, `kt.bar_chart()`
+- 追加ウィジェット: `kt.date_input()`, `kt.time_input()`
 - プラグインシステム
 
 ### 関連ドキュメント

@@ -301,6 +301,77 @@ tab2(() => {
 
 TypeScriptらしいコールバックパターンを採用し、各タブ関数には`isActive`プロパティも付与されています。
 
+### 6. Streamlit互換ウィジェット
+
+Streamlitとの互換性を高めるため、6つの新しいウィジェットを実装しました。
+
+#### 新規ウィジェット
+
+| ウィジェット | API | 戻り値 |
+|-------------|-----|--------|
+| チェックボックス | `kt.checkbox("ラベル", false)` | `boolean` |
+| トグル | `kt.toggle("ラベル", false)` | `boolean` |
+| ラジオボタン | `kt.radio("ラベル", ["A", "B"], "A")` | `string` |
+| 数値入力 | `kt.number_input("ラベル", 0, 100, 50)` | `number` |
+| テキストエリア | `kt.text_area("ラベル", "")` | `string` |
+| マルチセレクト | `kt.multiselect("ラベル", ["A", "B"], [])` | `string[]` |
+
+#### 実装アーキテクチャ
+
+各ウィジェットは3層構造で実装されています：
+
+```
+1. 命令的API（src/widgets/*.ts）
+   - 状態の初期化と取得
+   - バリデーション
+
+2. レンダリング関数（render*）
+   - HTMLの生成
+   - XSS対策（エスケープ）
+
+3. 宣言的API（src/kt/widgets.ts）
+   - wrapWidgetによるラッピング
+   - コンテキストへの自動出力
+```
+
+#### クライアント側イベント処理
+
+異なる入力タイプを正しく処理するため、changeイベントハンドラを拡張しました：
+
+```javascript
+app.addEventListener("change", (e) => {
+  const target = e.target;
+  if (!target.dataset || target.dataset.ktEvent !== "change") return;
+
+  // チェックボックス: boolean値を送信
+  if (target.type === "checkbox" && target.id) {
+    sendEvent(target.id, target.checked);
+    return;
+  }
+
+  // ラジオボタン: nameをウィジェットIDとして使用
+  if (target.type === "radio" && target.name) {
+    sendEvent(target.name, target.value);
+    return;
+  }
+
+  // マルチセレクト: 選択された値の配列を送信
+  if (target.type === "checkbox" && target.name) {
+    const values = [...document.querySelectorAll(
+      `input[name="${target.name}"]:checked`
+    )].map(cb => cb.value);
+    sendEvent(target.name, values);
+    return;
+  }
+
+  // 数値入力: number型に変換
+  if (target.type === "number" && target.id) {
+    sendEvent(target.id, Number(target.value));
+    return;
+  }
+});
+```
+
 ## テスト
 
 Week5では610のテストがパスしており、以下のテストを追加しました：
@@ -327,6 +398,7 @@ Week5の実装により、kantan-uiは以下の点で強化されました：
 | table | 様々な形式のデータ表示 |
 | download_button | ファイルダウンロード提供 |
 | tabs | コンテンツの整理・切り替え |
+| Streamlit互換ウィジェット | checkbox, toggle, radio, number_input, text_area, multiselect |
 
 次のステップとして、Phase 3-B/Cで以下を検討しています：
 
@@ -334,6 +406,8 @@ Week5の実装により、kantan-uiは以下の点で強化されました：
 2. **レイアウトAPI**: `kt.sidebar()`, `kt.columns()`
 3. **データウィジェット**: `kt.dataframe()`, `kt.file_uploader()`
 4. **チャート**: `kt.line_chart()`, `kt.bar_chart()`
+5. **Cloudflare Workers対応**: エッジでの実行
+6. **追加ウィジェット**: `kt.date_input()`, `kt.time_input()`
 
 ---
 

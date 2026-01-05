@@ -82,3 +82,92 @@ export function initializeSelectboxState(
 ): string {
 	return initializeWidgetState(widgetId, defaultValue ?? options[0] ?? "");
 }
+
+/**
+ * チェックボックスのstate管理
+ * 初期値をstateに保存し、現在値を返す
+ */
+export function initializeCheckboxState(widgetId: string, defaultValue?: boolean): boolean {
+	return initializeWidgetState(widgetId, defaultValue ?? false);
+}
+
+/**
+ * ラジオボタンのバリデーション
+ */
+export function validateRadio(options: string[], defaultValue?: string): void {
+	if (!options || options.length === 0) {
+		throw new Error("radio: options array must not be empty");
+	}
+	if (defaultValue !== undefined && !options.includes(defaultValue)) {
+		throw new Error(`radio: defaultValue "${defaultValue}" must be one of the options`);
+	}
+}
+
+/**
+ * ラジオボタンのstate管理
+ * 初期値をstateに保存し、現在値を返す
+ */
+export function initializeRadioState(
+	widgetId: string,
+	options: string[],
+	defaultValue?: string,
+): string {
+	return initializeWidgetState(widgetId, defaultValue ?? options[0] ?? "");
+}
+
+/**
+ * 数値入力のバリデーション
+ */
+export function validateNumberInput(min?: number, max?: number, defaultValue?: number): void {
+	if (min !== undefined && max !== undefined && min > max) {
+		throw new Error(`number_input: min (${min}) must be <= max (${max})`);
+	}
+	if (defaultValue !== undefined) {
+		if (min !== undefined && defaultValue < min) {
+			throw new Error(
+				`number_input: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
+			);
+		}
+		if (max !== undefined && defaultValue > max) {
+			throw new Error(
+				`number_input: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
+			);
+		}
+	}
+}
+
+/**
+ * 数値入力のstate管理
+ * 初期値をstateに保存し、現在値を返す
+ */
+export function initializeNumberInputState(
+	widgetId: string,
+	min?: number,
+	defaultValue?: number,
+): number {
+	return initializeWidgetState(widgetId, defaultValue ?? min ?? 0);
+}
+
+/**
+ * マルチセレクトのバリデーション
+ */
+export function validateMultiselect(options: string[], defaultValue?: string[]): void {
+	if (!options || options.length === 0) {
+		throw new Error("multiselect: options array must not be empty");
+	}
+	if (defaultValue !== undefined) {
+		for (const value of defaultValue) {
+			if (!options.includes(value)) {
+				throw new Error(`multiselect: defaultValue "${value}" must be one of the options`);
+			}
+		}
+	}
+}
+
+/**
+ * マルチセレクトのstate管理
+ * 初期値をstateに保存し、現在値を返す
+ */
+export function initializeMultiselectState(widgetId: string, defaultValue?: string[]): string[] {
+	return initializeWidgetState(widgetId, defaultValue ?? []);
+}
