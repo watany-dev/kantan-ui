@@ -108,3 +108,53 @@ test.describe("Feedback API - Spinner", () => {
 		await expect(largeSpinner).toHaveCSS("width", "32px");
 	});
 });
+
+test.describe("Feedback API - Toast", () => {
+	test("kt.toast() creates toast with kt-toast class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const toasts = page.locator(".kt-toast");
+		await expect(toasts.first()).toBeVisible();
+
+		// 複数のトーストが存在することを確認
+		const count = await toasts.count();
+		expect(count).toBeGreaterThanOrEqual(4);
+	});
+
+	test("toast displays message text", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const firstToast = page.locator(".kt-toast").first();
+		await expect(firstToast).toContainText("Saved successfully!");
+	});
+
+	test("toast has type-specific classes", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// success (default)
+		await expect(page.locator(".kt-toast-success").first()).toBeVisible();
+
+		// info
+		await expect(page.locator(".kt-toast-info").first()).toBeVisible();
+
+		// warning
+		await expect(page.locator(".kt-toast-warning").first()).toBeVisible();
+
+		// error
+		await expect(page.locator(".kt-toast-error").first()).toBeVisible();
+	});
+
+	test("toast has data-duration attribute", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const firstToast = page.locator(".kt-toast").first();
+		await expect(firstToast).toHaveAttribute("data-duration", "4000");
+	});
+
+	test("toast displays icon", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const toastIcon = page.locator(".kt-toast-icon").first();
+		await expect(toastIcon).toBeVisible();
+	});
+});

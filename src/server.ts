@@ -171,6 +171,15 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Toast Section =====
+	kt.header("Toast");
+	kt.toast("Saved successfully!");
+	kt.toast("New update available", { type: "info" });
+	kt.toast("Please check your input", { type: "warning" });
+	kt.toast("Failed to connect", { type: "error" });
+
+	kt.divider();
+
 	// ===== Layout Section =====
 	kt.header("Layout");
 
