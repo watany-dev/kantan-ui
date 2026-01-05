@@ -1,11 +1,13 @@
 import { button as imperativeButton, renderButton } from "../widgets/button";
 import { checkbox as imperativeCheckbox, renderCheckbox } from "../widgets/checkbox";
+import { radio as imperativeRadio, renderRadio } from "../widgets/radio";
 import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/selectbox";
 import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
 import { text_input as imperativeTextInput, renderTextInput } from "../widgets/text-input";
 import type {
 	ButtonConfig,
 	CheckboxConfig,
+	RadioConfig,
 	SelectboxConfig,
 	SliderConfig,
 	TextInputConfig,
@@ -88,5 +90,22 @@ export function checkbox(
 		config,
 		(cfg) => imperativeCheckbox(label, defaultValue, cfg),
 		(value, cfg) => renderCheckbox(label, value, cfg),
+	);
+}
+
+/**
+ * ラジオボタンウィジェット（宣言的API）
+ * HTMLを自動出力し、選択された値を返す
+ */
+export function radio(
+	label: string,
+	options: string[],
+	defaultValue?: string,
+	config?: Partial<RadioConfig>,
+): string {
+	return wrapWidget(
+		config,
+		(cfg) => imperativeRadio(label, options, defaultValue, cfg),
+		(value, cfg) => renderRadio(label, options, value, cfg),
 	);
 }

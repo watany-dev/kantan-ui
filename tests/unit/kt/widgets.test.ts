@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { button, checkbox, selectbox, slider, text_input } from "../../../src/kt/widgets";
+import { button, checkbox, radio, selectbox, slider, text_input } from "../../../src/kt/widgets";
 import { clearContext, setContext } from "../../../src/runtime/context";
 import {
 	SessionManager,
@@ -165,6 +165,41 @@ describe("Declarative Widget APIs", () => {
 		});
 	});
 
+	describe("radio", () => {
+		it("should append radio HTML to buffer", () => {
+			radio("Size", ["S", "M", "L"]);
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-radio-container');
+			expect(html).toContain('type="radio"');
+			expect(html).toContain("Size");
+			expect(html).toContain("S");
+			expect(html).toContain("M");
+			expect(html).toContain("L");
+		});
+
+		it("should return first option by default", () => {
+			const value = radio("Size", ["S", "M", "L"]);
+			expect(value).toBe("S");
+		});
+
+		it("should return defaultValue when provided", () => {
+			const value = radio("Size", ["S", "M", "L"], "M");
+			expect(value).toBe("M");
+		});
+
+		it("should mark selected option as checked", () => {
+			radio("Size", ["S", "M", "L"], "M");
+			const html = ctx.getHtml();
+			expect(html).toMatch(/value="M"[^>]*checked/);
+		});
+
+		it("should use custom key", () => {
+			radio("Size", ["S", "M", "L"], "S", { key: "my_radio" });
+			const html = ctx.getHtml();
+			expect(html).toContain('name="my_radio"');
+		});
+	});
+
 	describe("multiple widgets", () => {
 		it("should append multiple widgets in order", () => {
 			button("Click");
@@ -288,6 +323,32 @@ describe("Declarative Widget APIs", () => {
 			const value = checkbox("Accept terms", false, { key: "my_checkbox" });
 
 			expect(value).toBe(true);
+		});
+
+		it("radio should use existing stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "widget_0", "L");
+
+			const value = radio("Size", ["S", "M", "L"], "S");
+
+			expect(value).toBe("L");
+		});
+
+		it("radio should throw error for empty options array", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => radio("Size", [])).toThrow("radio: options array must not be empty");
+		});
+
+		it("radio should throw error when defaultValue is not in options", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => radio("Size", ["S", "M", "L"], "XL")).toThrow(
+				'radio: defaultValue "XL" must be one of the options',
+			);
 		});
 	});
 });
