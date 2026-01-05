@@ -1,9 +1,11 @@
 import { button as imperativeButton, renderButton } from "../widgets/button";
+import { download_button as imperativeDownloadButton } from "../widgets/download-button";
 import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/selectbox";
 import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
 import { text_input as imperativeTextInput, renderTextInput } from "../widgets/text-input";
 import type {
 	ButtonConfig,
+	DownloadButtonConfig,
 	SelectboxConfig,
 	SliderConfig,
 	TextInputConfig,
@@ -71,4 +73,18 @@ export function selectbox(
 		(cfg) => imperativeSelectbox(label, options, defaultValue, cfg),
 		(value, cfg) => renderSelectbox(label, options, value, cfg),
 	);
+}
+
+/**
+ * ダウンロードボタンウィジェット（宣言的API）
+ * HTMLを自動出力し、クリックされたかどうかを返す
+ */
+export function download_button(
+	label: string,
+	data: string | ArrayBuffer,
+	filename: string,
+	config?: DownloadButtonConfig,
+): boolean {
+	// download_buttonは直接実装されており、wrapWidgetを使用しない
+	return imperativeDownloadButton(label, data, filename, config);
 }

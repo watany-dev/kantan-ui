@@ -49,3 +49,9 @@ export interface SelectboxConfig {
 	key?: string;
 	disabled?: boolean;
 }
+
+export interface DownloadButtonConfig {
+	key?: string;
+	mime?: string;
+	disabled?: boolean;
+}

@@ -52,4 +52,5 @@ export const kt = {
 	slider: widgets.slider,
 	text_input: widgets.text_input,
 	selectbox: widgets.selectbox,
+	download_button: widgets.download_button,
 };
