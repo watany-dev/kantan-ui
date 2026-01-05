@@ -89,3 +89,9 @@ export {
 	getRenderContext,
 	requireRenderContext,
 } from "./kt/context";
+export {
+	type PageConfig,
+	set_page_config,
+	getPageConfig,
+	resetPageConfig,
+} from "./kt/config";

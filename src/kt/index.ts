@@ -22,10 +22,14 @@
  */
 
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
+import * as config from "./config";
 import * as output from "./output";
 import * as widgets from "./widgets";
 
 export const kt = {
+	// Config APIs
+	set_page_config: config.set_page_config,
+
 	// Output APIs
 	write: output.write,
 	title: output.title,
