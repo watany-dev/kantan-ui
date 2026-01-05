@@ -163,6 +163,14 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Spinner Section =====
+	kt.header("Spinner");
+	kt.spinner();
+	kt.spinner("Processing data...", { size: "small" });
+	kt.spinner("Loading large content...", { size: "large" });
+
+	kt.divider();
+
 	// ===== Layout Section =====
 	kt.header("Layout");
 

@@ -54,3 +54,57 @@ test.describe("Feedback API - Progress bar", () => {
 		await expect(progress.locator(".kt-progress-fill")).toBeVisible();
 	});
 });
+
+test.describe("Feedback API - Spinner", () => {
+	test("kt.spinner() creates spinner with kt-spinner class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const spinners = page.locator(".kt-spinner");
+		await expect(spinners.first()).toBeVisible();
+
+		// 複数のスピナーが存在することを確認
+		const count = await spinners.count();
+		expect(count).toBeGreaterThanOrEqual(3);
+	});
+
+	test("spinner displays default text 'Loading...'", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const firstSpinner = page.locator(".kt-spinner").first();
+		await expect(firstSpinner).toContainText("Loading...");
+	});
+
+	test("spinner displays custom text", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// 2番目のスピナーは "Processing data..."
+		const secondSpinner = page.locator(".kt-spinner").nth(1);
+		await expect(secondSpinner).toContainText("Processing data...");
+	});
+
+	test("spinner has rotating icon", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const spinnerIcon = page.locator(".kt-spinner-icon").first();
+		await expect(spinnerIcon).toBeVisible();
+
+		// アニメーションが設定されていることを確認
+		await expect(spinnerIcon).toHaveCSS("animation-name", "kt-spin");
+	});
+
+	test("spinner sizes work correctly", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// デフォルト（medium = 24px）
+		const defaultSpinner = page.locator(".kt-spinner-icon").first();
+		await expect(defaultSpinner).toHaveCSS("width", "24px");
+
+		// small (16px)
+		const smallSpinner = page.locator(".kt-spinner-icon").nth(1);
+		await expect(smallSpinner).toHaveCSS("width", "16px");
+
+		// large (32px)
+		const largeSpinner = page.locator(".kt-spinner-icon").nth(2);
+		await expect(largeSpinner).toHaveCSS("width", "32px");
+	});
+});
