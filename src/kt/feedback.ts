@@ -14,7 +14,7 @@ export interface ProgressConfig {
 // Spinner API
 // ============================================
 
-export type SpinnerSize = "small" | "medium" | "large";
+type SpinnerSize = "small" | "medium" | "large";
 
 export interface SpinnerConfig {
 	show?: boolean;
@@ -31,7 +31,7 @@ const spinnerSizes: Record<SpinnerSize, string> = {
 // Toast API
 // ============================================
 
-export type ToastType = "success" | "info" | "warning" | "error";
+type ToastType = "success" | "info" | "warning" | "error";
 
 export interface ToastConfig {
 	type?: ToastType;
