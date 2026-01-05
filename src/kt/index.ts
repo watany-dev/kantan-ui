@@ -24,6 +24,7 @@
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
 import * as config from "./config";
 import * as control from "./control";
+import * as data from "./data";
 import * as output from "./output";
 import * as widgets from "./widgets";
 
@@ -42,6 +43,9 @@ export const kt = {
 	text: output.text,
 	divider: output.divider,
 	html: output.html,
+
+	// Data APIs
+	table: data.table,
 
 	// Widget APIs
 	button: widgets.button,

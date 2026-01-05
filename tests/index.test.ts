@@ -53,6 +53,7 @@ describe("kantan-ui module exports", () => {
 		expect(kt.text).toBeDefined();
 		expect(kt.divider).toBeDefined();
 		expect(kt.html).toBeDefined();
+		expect(kt.table).toBeDefined();
 		expect(kt.button).toBeDefined();
 		expect(kt.slider).toBeDefined();
 		expect(kt.text_input).toBeDefined();
