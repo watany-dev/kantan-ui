@@ -25,6 +25,7 @@
 import * as config from "./config";
 import * as control from "./control";
 import * as data from "./data";
+import * as layout from "./layout";
 import * as output from "./output";
 import * as widgets from "./widgets";
 
@@ -53,4 +54,7 @@ export const kt = {
 	text_input: widgets.text_input,
 	selectbox: widgets.selectbox,
 	download_button: widgets.download_button,
+
+	// Layout APIs
+	tabs: layout.tabs,
 };

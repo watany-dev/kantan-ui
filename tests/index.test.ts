@@ -59,5 +59,6 @@ describe("kantan-ui module exports", () => {
 		expect(kt.text_input).toBeDefined();
 		expect(kt.selectbox).toBeDefined();
 		expect(kt.download_button).toBeDefined();
+		expect(kt.tabs).toBeDefined();
 	});
 });
