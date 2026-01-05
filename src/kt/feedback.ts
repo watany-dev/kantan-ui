@@ -10,6 +10,23 @@ export interface ProgressConfig {
 	color?: string;
 }
 
+// ============================================
+// Spinner API
+// ============================================
+
+export type SpinnerSize = "small" | "medium" | "large";
+
+export interface SpinnerConfig {
+	show?: boolean;
+	size?: SpinnerSize;
+}
+
+const spinnerSizes: Record<SpinnerSize, string> = {
+	small: "16px",
+	medium: "24px",
+	large: "32px",
+};
+
 /**
  * プログレスバーを表示
  *
@@ -38,5 +55,34 @@ export function progress(value: number, config: ProgressConfig = {}): void {
 
 	ctx.append(
 		`<div class="kt-progress">${labelHtml}<div class="kt-progress-bar" style="background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden;"><div class="kt-progress-fill" style="background: ${color}; width: ${percentage}%; height: 100%; transition: width 0.3s ease;"></div></div></div>`,
+	);
+}
+
+/**
+ * ローディングスピナーを表示
+ *
+ * @param text - 表示テキスト (デフォルト: "Loading...")
+ * @param config - オプション設定
+ *
+ * @example
+ * ```typescript
+ * kt.spinner();  // "Loading..."
+ * kt.spinner("Processing data...");
+ * kt.spinner("Loading...", { size: "large" });
+ * kt.spinner("Loading...", { show: false });  // 非表示
+ * ```
+ */
+export function spinner(text = "Loading...", config: SpinnerConfig = {}): void {
+	const ctx = requireRenderContext();
+
+	// show=falseの場合は何も出力しない
+	if (config.show === false) {
+		return;
+	}
+
+	const size = spinnerSizes[config.size ?? "medium"];
+
+	ctx.append(
+		`<div class="kt-spinner"><style>@keyframes kt-spin { to { transform: rotate(360deg); } }</style><div class="kt-spinner-icon" style="width: ${size}; height: ${size}; border: 2px solid #e0e0e0; border-top-color: #3498db; border-radius: 50%; animation: kt-spin 1s linear infinite;"></div><span class="kt-spinner-text">${escapeHtml(text)}</span></div>`,
 	);
 }

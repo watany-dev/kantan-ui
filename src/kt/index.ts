@@ -45,6 +45,7 @@ export const kt = {
 
 	// Feedback APIs
 	progress: feedback.progress,
+	spinner: feedback.spinner,
 
 	// Layout APIs
 	container: layout.container,
