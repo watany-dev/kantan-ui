@@ -163,6 +163,31 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Layout Section =====
+	kt.header("Layout");
+
+	kt.subheader("Columns");
+	kt.columns([
+		() => {
+			kt.write("Left column");
+		},
+		() => {
+			kt.write("Right column");
+		},
+	]);
+
+	kt.subheader("Columns with ratio");
+	kt.columns(
+		[
+			() => kt.write("Sidebar (25%)"),
+			() => kt.write("Main content (50%)"),
+			() => kt.write("Sidebar (25%)"),
+		],
+		{ ratios: [1, 2, 1] },
+	);
+
+	kt.divider();
+
 	// ===== Debug Section =====
 	kt.subheader("Session State (Debug)");
 	kt.html(`
