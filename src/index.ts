@@ -51,6 +51,8 @@ export {
 	renderRadio,
 	number_input,
 	renderNumberInput,
+	text_area,
+	renderTextArea,
 	generateWidgetId,
 	resetWidgetCounter,
 	getWidgetValue,
@@ -68,6 +70,7 @@ export type {
 	CheckboxConfig,
 	RadioConfig,
 	NumberInputConfig,
+	TextAreaConfig,
 } from "./widgets/types";
 
 // WebSocket

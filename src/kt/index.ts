@@ -43,4 +43,5 @@ export const kt = {
 	checkbox: widgets.checkbox,
 	radio: widgets.radio,
 	number_input: widgets.number_input,
+	text_area: widgets.text_area,
 };

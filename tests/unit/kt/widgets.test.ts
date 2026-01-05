@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { button, checkbox, number_input, radio, selectbox, slider, text_input } from "../../../src/kt/widgets";
+import { button, checkbox, number_input, radio, selectbox, slider, text_area, text_input } from "../../../src/kt/widgets";
 import { clearContext, setContext } from "../../../src/runtime/context";
 import {
 	SessionManager,
@@ -238,6 +238,39 @@ describe("Declarative Widget APIs", () => {
 		});
 	});
 
+	describe("text_area", () => {
+		it("should append text_area HTML to buffer", () => {
+			text_area("Bio", "Hello");
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-text-area-container"');
+			expect(html).toContain("<textarea");
+			expect(html).toContain("Bio");
+			expect(html).toContain("Hello");
+		});
+
+		it("should return empty string by default", () => {
+			const value = text_area("Bio");
+			expect(value).toBe("");
+		});
+
+		it("should return defaultValue when provided", () => {
+			const value = text_area("Bio", "My bio");
+			expect(value).toBe("My bio");
+		});
+
+		it("should include height style", () => {
+			text_area("Bio", "", { height: 200 });
+			const html = ctx.getHtml();
+			expect(html).toContain("height: 200px");
+		});
+
+		it("should use custom key", () => {
+			text_area("Bio", "", { key: "my_textarea" });
+			const html = ctx.getHtml();
+			expect(html).toContain('id="my_textarea"');
+		});
+	});
+
 	describe("multiple widgets", () => {
 		it("should append multiple widgets in order", () => {
 			button("Click");
@@ -415,6 +448,26 @@ describe("Declarative Widget APIs", () => {
 			expect(() => number_input("Age", 0, 100, 150)).toThrow(
 				"number_input: defaultValue (150) must be between min (0) and max (100)",
 			);
+		});
+
+		it("text_area should use existing stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "widget_0", "stored bio");
+
+			const value = text_area("Bio", "default");
+
+			expect(value).toBe("stored bio");
+		});
+
+		it("text_area should use custom key with stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "my_textarea", "custom bio");
+
+			const value = text_area("Bio", "default", { key: "my_textarea" });
+
+			expect(value).toBe("custom bio");
 		});
 	});
 });

@@ -4,6 +4,7 @@ import { number_input as imperativeNumberInput, renderNumberInput } from "../wid
 import { radio as imperativeRadio, renderRadio } from "../widgets/radio";
 import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/selectbox";
 import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
+import { text_area as imperativeTextArea, renderTextArea } from "../widgets/text-area";
 import { text_input as imperativeTextInput, renderTextInput } from "../widgets/text-input";
 import type {
 	ButtonConfig,
@@ -12,6 +13,7 @@ import type {
 	RadioConfig,
 	SelectboxConfig,
 	SliderConfig,
+	TextAreaConfig,
 	TextInputConfig,
 } from "../widgets/types";
 import { wrapWidget } from "./widget-helper";
@@ -127,5 +129,21 @@ export function number_input(
 		config,
 		(cfg) => imperativeNumberInput(label, min, max, defaultValue, cfg),
 		(value, cfg) => renderNumberInput(label, min, max, value, cfg),
+	);
+}
+
+/**
+ * テキストエリアウィジェット（宣言的API）
+ * HTMLを自動出力し、入力されたテキストを返す
+ */
+export function text_area(
+	label: string,
+	defaultValue?: string,
+	config?: Partial<TextAreaConfig>,
+): string {
+	return wrapWidget(
+		config,
+		(cfg) => imperativeTextArea(label, defaultValue, cfg),
+		(value, cfg) => renderTextArea(label, value, cfg),
 	);
 }
