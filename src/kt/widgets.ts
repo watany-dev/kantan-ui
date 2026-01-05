@@ -1,9 +1,11 @@
 import { button as imperativeButton, renderButton } from "../widgets/button";
+import { checkbox as imperativeCheckbox, renderCheckbox } from "../widgets/checkbox";
 import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/selectbox";
 import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
 import { text_input as imperativeTextInput, renderTextInput } from "../widgets/text-input";
 import type {
 	ButtonConfig,
+	CheckboxConfig,
 	SelectboxConfig,
 	SliderConfig,
 	TextInputConfig,
@@ -70,5 +72,21 @@ export function selectbox(
 		config,
 		(cfg) => imperativeSelectbox(label, options, defaultValue, cfg),
 		(value, cfg) => renderSelectbox(label, options, value, cfg),
+	);
+}
+
+/**
+ * チェックボックスウィジェット（宣言的API）
+ * HTMLを自動出力し、チェック状態を返す
+ */
+export function checkbox(
+	label: string,
+	defaultValue?: boolean,
+	config?: Partial<CheckboxConfig>,
+): boolean {
+	return wrapWidget(
+		config,
+		(cfg) => imperativeCheckbox(label, defaultValue, cfg),
+		(value, cfg) => renderCheckbox(label, value, cfg),
 	);
 }

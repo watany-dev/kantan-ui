@@ -40,4 +40,5 @@ export const kt = {
 	slider: widgets.slider,
 	text_input: widgets.text_input,
 	selectbox: widgets.selectbox,
+	checkbox: widgets.checkbox,
 };

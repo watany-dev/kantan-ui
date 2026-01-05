@@ -45,6 +45,8 @@ export {
 	renderTextInput,
 	selectbox,
 	renderSelectbox,
+	checkbox,
+	renderCheckbox,
 	generateWidgetId,
 	resetWidgetCounter,
 	getWidgetValue,
@@ -59,6 +61,7 @@ export type {
 	SliderConfig,
 	TextInputConfig,
 	SelectboxConfig,
+	CheckboxConfig,
 } from "./widgets/types";
 
 // WebSocket
