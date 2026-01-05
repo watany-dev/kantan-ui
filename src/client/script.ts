@@ -193,11 +193,12 @@ function applyPatch(patch) {
 }`;
 
 /**
- * イベント処理スクリプト（デバウンス付き）
+ * イベント処理スクリプト（デバウンス付き、IME対応）
  */
 const eventHandlingScript = `
 const debounceTimers = new Map();
 const DEBOUNCE_DELAY = 50;
+let isComposing = false;
 
 function sendEventDebounced(widgetId, value, sendFn) {
   const existingTimer = debounceTimers.get(widgetId);
@@ -217,7 +218,21 @@ function setupEventDelegation(sendEvent) {
     if (target && target.id) sendEvent(target.id, "clicked");
   });
 
+  app.addEventListener("compositionstart", () => {
+    isComposing = true;
+  });
+
+  app.addEventListener("compositionend", (e) => {
+    isComposing = false;
+    const target = e.target;
+    if (target.dataset && target.dataset.ktEvent === "input" && target.id) {
+      const value = target.dataset.ktType === "number" ? Number(target.value) : target.value;
+      sendEventDebounced(target.id, value, sendEvent);
+    }
+  });
+
   app.addEventListener("input", (e) => {
+    if (isComposing) return;
     const target = e.target;
     if (target.dataset && target.dataset.ktEvent === "input" && target.id) {
       const value = target.dataset.ktType === "number" ? Number(target.value) : target.value;
