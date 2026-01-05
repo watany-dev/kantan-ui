@@ -55,3 +55,58 @@ test.describe("Layout API - Columns", () => {
 		await expect(columnsContainer).toHaveAttribute("style", /gap:/);
 	});
 });
+
+test.describe("Layout API - Expander", () => {
+	test("kt.expander() creates details element with kt-expander class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const expanders = page.locator("details.kt-expander");
+		await expect(expanders.first()).toBeVisible();
+	});
+
+	test("expander has summary with label", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const summary = page.locator("details.kt-expander").first().locator("summary");
+		await expect(summary).toBeVisible();
+		await expect(summary).toContainText("Click to see details");
+	});
+
+	test("expander content is hidden when collapsed", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const firstExpander = page.locator("details.kt-expander").first();
+		const content = firstExpander.locator(".kt-expander-content");
+
+		// details要素が閉じている場合、コンテンツは非表示
+		await expect(firstExpander).not.toHaveAttribute("open");
+		await expect(content).not.toBeVisible();
+	});
+
+	test("expander can be opened by clicking", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const firstExpander = page.locator("details.kt-expander").first();
+		const summary = firstExpander.locator("summary");
+		const content = firstExpander.locator(".kt-expander-content");
+
+		// クリックして展開
+		await summary.click();
+
+		// コンテンツが表示される
+		await expect(content).toBeVisible();
+		await expect(content).toContainText("This content is hidden by default");
+	});
+
+	test("expander with expanded=true is open by default", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const expandedExpander = page.locator("details.kt-expander").nth(1);
+		const content = expandedExpander.locator(".kt-expander-content");
+
+		// デフォルトで展開されている
+		await expect(expandedExpander).toHaveAttribute("open");
+		await expect(content).toBeVisible();
+		await expect(content).toContainText("This content is visible by default");
+	});
+});

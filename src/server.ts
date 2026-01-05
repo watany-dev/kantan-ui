@@ -186,6 +186,19 @@ const script = () => {
 		{ ratios: [1, 2, 1] },
 	);
 
+	kt.subheader("Expander");
+	kt.expander("Click to see details", () => {
+		kt.write("This content is hidden by default");
+	});
+
+	kt.expander(
+		"Expanded by default",
+		() => {
+			kt.write("This content is visible by default");
+		},
+		{ expanded: true },
+	);
+
 	kt.divider();
 
 	// ===== Debug Section =====
