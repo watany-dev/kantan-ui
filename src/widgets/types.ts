@@ -92,3 +92,12 @@ export interface ToggleConfig {
 	key?: string;
 	disabled?: boolean;
 }
+
+export interface MultiselectConfig {
+	label: string;
+	options: string[];
+	defaultValue?: string[];
+	key?: string;
+	maxSelections?: number;
+	disabled?: boolean;
+}

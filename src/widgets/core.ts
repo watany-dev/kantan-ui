@@ -147,3 +147,30 @@ export function initializeNumberInputState(
 ): number {
 	return initializeWidgetState(widgetId, defaultValue ?? min ?? 0);
 }
+
+/**
+ * マルチセレクトのバリデーション
+ */
+export function validateMultiselect(options: string[], defaultValue?: string[]): void {
+	if (!options || options.length === 0) {
+		throw new Error("multiselect: options array must not be empty");
+	}
+	if (defaultValue !== undefined) {
+		for (const value of defaultValue) {
+			if (!options.includes(value)) {
+				throw new Error(`multiselect: defaultValue "${value}" must be one of the options`);
+			}
+		}
+	}
+}
+
+/**
+ * マルチセレクトのstate管理
+ * 初期値をstateに保存し、現在値を返す
+ */
+export function initializeMultiselectState(
+	widgetId: string,
+	defaultValue?: string[],
+): string[] {
+	return initializeWidgetState(widgetId, defaultValue ?? []);
+}
