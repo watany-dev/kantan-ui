@@ -6,7 +6,7 @@ import {
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
-import { checkbox } from "../../../src/widgets/checkbox";
+import { checkbox, renderCheckbox } from "../../../src/widgets/checkbox";
 
 describe("checkbox", () => {
 	let manager: SessionManager;
@@ -67,6 +67,54 @@ describe("checkbox", () => {
 			const value = checkbox("Accept terms", false, { key: "my_checkbox" });
 
 			expect(value).toBe(true);
+		});
+	});
+
+	describe("renderCheckbox", () => {
+		it("should render checkbox HTML with label", () => {
+			const html = renderCheckbox("Accept terms", false);
+
+			expect(html).toContain("<input");
+			expect(html).toContain('type="checkbox"');
+			expect(html).toContain("Accept terms");
+			expect(html).toContain('data-kt-event="change"');
+		});
+
+		it("should include checked attribute when value is true", () => {
+			const html = renderCheckbox("Accept terms", true);
+
+			expect(html).toContain("checked");
+		});
+
+		it("should not include checked attribute when value is false", () => {
+			const html = renderCheckbox("Accept terms", false);
+
+			expect(html).not.toContain("checked");
+		});
+
+		it("should use custom key for id", () => {
+			const html = renderCheckbox("Accept terms", false, { key: "my_checkbox" });
+
+			expect(html).toContain('id="my_checkbox"');
+		});
+
+		it("should render disabled attribute when disabled", () => {
+			const html = renderCheckbox("Accept terms", false, { disabled: true });
+
+			expect(html).toContain("disabled");
+		});
+
+		it("should not render disabled attribute when not disabled", () => {
+			const html = renderCheckbox("Accept terms", false, { disabled: false });
+
+			expect(html).not.toContain("disabled");
+		});
+
+		it("should escape HTML in label", () => {
+			const html = renderCheckbox("<script>alert('xss')</script>", false);
+
+			expect(html).not.toContain("<script>");
+			expect(html).toContain("&lt;script&gt;");
 		});
 	});
 });
