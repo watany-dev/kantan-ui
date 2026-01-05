@@ -5,6 +5,42 @@ import type { SessionId, SessionState } from "./types";
 // 現在のセッションID（rerun中に設定）
 let currentSessionId: SessionId | null = null;
 
+/**
+ * 値をディープクローンする
+ * 配列やオブジェクトの場合に、セッション間での共有を防ぐ
+ */
+function deepClone<T>(value: T): T {
+	if (value === null || typeof value !== "object") {
+		return value;
+	}
+	if (Array.isArray(value)) {
+		return value.map((item) => deepClone(item)) as T;
+	}
+	if (value instanceof Date) {
+		return new Date(value.getTime()) as T;
+	}
+	if (value instanceof Map) {
+		const clonedMap = new Map();
+		for (const [k, v] of value) {
+			clonedMap.set(deepClone(k), deepClone(v));
+		}
+		return clonedMap as T;
+	}
+	if (value instanceof Set) {
+		const clonedSet = new Set();
+		for (const v of value) {
+			clonedSet.add(deepClone(v));
+		}
+		return clonedSet as T;
+	}
+	// 通常のオブジェクト
+	const cloned = {} as T;
+	for (const key of Object.keys(value)) {
+		(cloned as Record<string, unknown>)[key] = deepClone((value as Record<string, unknown>)[key]);
+	}
+	return cloned;
+}
+
 export function setCurrentSessionId(id: SessionId | null): void {
 	currentSessionId = id;
 }
@@ -87,9 +123,18 @@ export function createTypedSessionState<T extends Record<string, unknown>>(defau
 			}
 			const state = getSessionManager().getState(currentSessionId);
 			const value = state?.[prop];
-			// 値が未設定ならデフォルト値を返す（状態は変更しない）
+			// 値が未設定ならデフォルト値をクローンしてセッションに保存
+			// これにより配列やオブジェクトの変更（push等）がセッションに反映される
 			if (value === undefined && prop in defaults) {
-				return defaults[prop as keyof T];
+				const defaultValue = defaults[prop as keyof T];
+				// オブジェクトや配列の場合はクローンして保存（セッション間の共有を防ぐ）
+				if (defaultValue !== null && typeof defaultValue === "object") {
+					const clonedValue = deepClone(defaultValue);
+					getSessionManager().setState(currentSessionId, prop, clonedValue);
+					return clonedValue;
+				}
+				// プリミティブ値はそのまま返す（保存不要、変更されないため）
+				return defaultValue;
 			}
 			return value;
 		},
