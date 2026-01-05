@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { button, checkbox, radio, selectbox, slider, text_input } from "../../../src/kt/widgets";
+import { button, checkbox, number_input, radio, selectbox, slider, text_input } from "../../../src/kt/widgets";
 import { clearContext, setContext } from "../../../src/runtime/context";
 import {
 	SessionManager,
@@ -200,6 +200,44 @@ describe("Declarative Widget APIs", () => {
 		});
 	});
 
+	describe("number_input", () => {
+		it("should append number input HTML to buffer", () => {
+			number_input("Age", 0, 120, 25);
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-number-input-container"');
+			expect(html).toContain('type="number"');
+			expect(html).toContain("Age");
+		});
+
+		it("should return defaultValue when provided", () => {
+			const value = number_input("Age", 0, 120, 25);
+			expect(value).toBe(25);
+		});
+
+		it("should return min when no defaultValue", () => {
+			const value = number_input("Age", 10, 120);
+			expect(value).toBe(10);
+		});
+
+		it("should return 0 when no min or defaultValue", () => {
+			const value = number_input("Count");
+			expect(value).toBe(0);
+		});
+
+		it("should include min and max attributes", () => {
+			number_input("Age", 0, 120, 25);
+			const html = ctx.getHtml();
+			expect(html).toContain('min="0"');
+			expect(html).toContain('max="120"');
+		});
+
+		it("should use custom key", () => {
+			number_input("Age", 0, 120, 25, { key: "my_number" });
+			const html = ctx.getHtml();
+			expect(html).toContain('id="my_number"');
+		});
+	});
+
 	describe("multiple widgets", () => {
 		it("should append multiple widgets in order", () => {
 			button("Click");
@@ -348,6 +386,34 @@ describe("Declarative Widget APIs", () => {
 
 			expect(() => radio("Size", ["S", "M", "L"], "XL")).toThrow(
 				'radio: defaultValue "XL" must be one of the options',
+			);
+		});
+
+		it("number_input should use existing stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "widget_0", 42);
+
+			const value = number_input("Age", 0, 120, 25);
+
+			expect(value).toBe(42);
+		});
+
+		it("number_input should throw error when min > max", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => number_input("Age", 100, 0, 50)).toThrow(
+				"number_input: min (100) must be <= max (0)",
+			);
+		});
+
+		it("number_input should throw error when defaultValue out of range", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			expect(() => number_input("Age", 0, 100, 150)).toThrow(
+				"number_input: defaultValue (150) must be between min (0) and max (100)",
 			);
 		});
 	});

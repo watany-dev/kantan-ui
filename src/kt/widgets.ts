@@ -1,5 +1,6 @@
 import { button as imperativeButton, renderButton } from "../widgets/button";
 import { checkbox as imperativeCheckbox, renderCheckbox } from "../widgets/checkbox";
+import { number_input as imperativeNumberInput, renderNumberInput } from "../widgets/number-input";
 import { radio as imperativeRadio, renderRadio } from "../widgets/radio";
 import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/selectbox";
 import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
@@ -7,6 +8,7 @@ import { text_input as imperativeTextInput, renderTextInput } from "../widgets/t
 import type {
 	ButtonConfig,
 	CheckboxConfig,
+	NumberInputConfig,
 	RadioConfig,
 	SelectboxConfig,
 	SliderConfig,
@@ -107,5 +109,23 @@ export function radio(
 		config,
 		(cfg) => imperativeRadio(label, options, defaultValue, cfg),
 		(value, cfg) => renderRadio(label, options, value, cfg),
+	);
+}
+
+/**
+ * 数値入力ウィジェット（宣言的API）
+ * HTMLを自動出力し、入力された数値を返す
+ */
+export function number_input(
+	label: string,
+	min?: number,
+	max?: number,
+	defaultValue?: number,
+	config?: Partial<NumberInputConfig>,
+): number {
+	return wrapWidget(
+		config,
+		(cfg) => imperativeNumberInput(label, min, max, defaultValue, cfg),
+		(value, cfg) => renderNumberInput(label, min, max, value, cfg),
 	);
 }
