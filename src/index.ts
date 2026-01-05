@@ -45,6 +45,8 @@ export {
 	renderTextInput,
 	selectbox,
 	renderSelectbox,
+	download_button,
+	renderDownloadButton,
 	generateWidgetId,
 	resetWidgetCounter,
 	getWidgetValue,
@@ -59,6 +61,7 @@ export type {
 	SliderConfig,
 	TextInputConfig,
 	SelectboxConfig,
+	DownloadButtonConfig,
 } from "./widgets/types";
 
 // WebSocket
