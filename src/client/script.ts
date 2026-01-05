@@ -242,7 +242,39 @@ function setupEventDelegation(sendEvent) {
 
   app.addEventListener("change", (e) => {
     const target = e.target;
-    if (target.dataset && target.dataset.ktEvent === "change" && target.id) {
+    if (!target.dataset || target.dataset.ktEvent !== "change") return;
+
+    // Checkbox with id (kt.checkbox, kt.toggle)
+    if (target.type === "checkbox" && target.id) {
+      sendEvent(target.id, target.checked);
+      return;
+    }
+
+    // Radio button (uses name as widget ID)
+    if (target.type === "radio" && target.name) {
+      sendEvent(target.name, target.value);
+      return;
+    }
+
+    // Checkbox without id but with name (multiselect)
+    if (target.type === "checkbox" && target.name) {
+      const checkboxes = document.querySelectorAll('input[type="checkbox"][name="' + target.name + '"]');
+      const values = [];
+      checkboxes.forEach((cb) => {
+        if (cb.checked) values.push(cb.value);
+      });
+      sendEvent(target.name, values);
+      return;
+    }
+
+    // Number input
+    if (target.type === "number" && target.id) {
+      sendEvent(target.id, Number(target.value));
+      return;
+    }
+
+    // Default: send target.value with target.id
+    if (target.id) {
       sendEvent(target.id, target.value);
     }
   });

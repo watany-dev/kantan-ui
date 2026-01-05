@@ -100,6 +100,24 @@ const name = kt.text_input("Your name", "Default", { key: "name" });
 
 // セレクトボックス - 選択された値を返す
 const color = kt.selectbox("Color", ["Red", "Green", "Blue"], "Blue", { key: "color" });
+
+// チェックボックス - boolean値を返す
+const agreed = kt.checkbox("I agree", false, { key: "agree" });
+
+// トグル - boolean値を返す（スイッチスタイル）
+const darkMode = kt.toggle("Dark mode", false, { key: "dark_mode" });
+
+// ラジオボタン - 選択された値を返す
+const size = kt.radio("Size", ["S", "M", "L"], "M", { key: "size" });
+
+// 数値入力 - number値を返す
+const age = kt.number_input("Age", 0, 120, 25, { key: "age", step: 1 });
+
+// テキストエリア - 複数行テキストを返す
+const bio = kt.text_area("Bio", "Tell us about yourself...", { key: "bio" });
+
+// マルチセレクト - 選択された値の配列を返す
+const tags = kt.multiselect("Tags", ["Tech", "Design", "Business"], [], { key: "tags" });
 ```
 
 ### セッション状態管理
@@ -206,7 +224,13 @@ src/
     ├── button.ts
     ├── slider.ts
     ├── text-input.ts
+    ├── text-area.ts
     ├── selectbox.ts
+    ├── checkbox.ts
+    ├── toggle.ts
+    ├── radio.ts
+    ├── number-input.ts
+    ├── multiselect.ts
     ├── core.ts       # 共通処理
     ├── registry.ts   # ウィジェットID管理
     ├── types.ts      # ウィジェット型定義

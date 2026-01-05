@@ -40,4 +40,10 @@ export const kt = {
 	slider: widgets.slider,
 	text_input: widgets.text_input,
 	selectbox: widgets.selectbox,
+	checkbox: widgets.checkbox,
+	radio: widgets.radio,
+	number_input: widgets.number_input,
+	text_area: widgets.text_area,
+	toggle: widgets.toggle,
+	multiselect: widgets.multiselect,
 };
