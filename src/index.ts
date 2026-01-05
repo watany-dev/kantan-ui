@@ -55,6 +55,8 @@ export {
 	renderTextArea,
 	toggle,
 	renderToggle,
+	multiselect,
+	renderMultiselect,
 	generateWidgetId,
 	resetWidgetCounter,
 	getWidgetValue,
@@ -74,6 +76,7 @@ export type {
 	NumberInputConfig,
 	TextAreaConfig,
 	ToggleConfig,
+	MultiselectConfig,
 } from "./widgets/types";
 
 // WebSocket
