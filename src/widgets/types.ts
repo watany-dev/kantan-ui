@@ -85,3 +85,10 @@ export interface TextAreaConfig {
 	key?: string;
 	disabled?: boolean;
 }
+
+export interface ToggleConfig {
+	label: string;
+	defaultValue?: boolean;
+	key?: string;
+	disabled?: boolean;
+}
