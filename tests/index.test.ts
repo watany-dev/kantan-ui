@@ -45,6 +45,7 @@ describe("kantan-ui module exports", () => {
 	it("should export kt object with all APIs", () => {
 		expect(kt).toBeDefined();
 		expect(kt.set_page_config).toBeDefined();
+		expect(kt.rerun).toBeDefined();
 		expect(kt.write).toBeDefined();
 		expect(kt.title).toBeDefined();
 		expect(kt.header).toBeDefined();
