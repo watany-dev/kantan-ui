@@ -86,6 +86,19 @@ export default defineConfig({
 			},
 			testMatch: "**/output-api.spec.ts",
 		},
+		// Firefox: 基本テストのみ実行（専用サーバーテストは除外）
+		{
+			name: "firefox",
+			use: {
+				...devices["Desktop Firefox"],
+				baseURL: "http://localhost:3000",
+			},
+			testIgnore: [
+				"**/session-scope-browser.spec.ts",
+				"**/streaming.spec.ts",
+				"**/output-api.spec.ts",
+			],
+		},
 	],
 	webServer: [
 		{
