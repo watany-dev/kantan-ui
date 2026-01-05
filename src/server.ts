@@ -146,6 +146,15 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Alert Section =====
+	kt.header("Alerts");
+	kt.success("This is a success message");
+	kt.error("This is an error message");
+	kt.warning("This is a warning message");
+	kt.info("This is an info message");
+
+	kt.divider();
+
 	// ===== Debug Section =====
 	kt.subheader("Session State (Debug)");
 	kt.html(`

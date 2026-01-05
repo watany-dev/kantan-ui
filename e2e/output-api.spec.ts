@@ -117,3 +117,66 @@ test.describe("Output API - kt.html and XSS escaping", () => {
 		expect(h2Text).toContain("<script>");
 	});
 });
+
+test.describe("Output API - Alert messages", () => {
+	test("kt.success() outputs alert with kt-alert-success class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const successAlert = page.locator(".kt-alert-success");
+		await expect(successAlert).toBeVisible();
+		await expect(successAlert).toContainText("This is a success message");
+
+		// アイコンが表示されていることを確認
+		await expect(successAlert.locator(".kt-alert-icon")).toContainText("✓");
+	});
+
+	test("kt.error() outputs alert with kt-alert-error class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const errorAlert = page.locator(".kt-alert-error");
+		await expect(errorAlert).toBeVisible();
+		await expect(errorAlert).toContainText("This is an error message");
+
+		// アイコンが表示されていることを確認
+		await expect(errorAlert.locator(".kt-alert-icon")).toContainText("✕");
+	});
+
+	test("kt.warning() outputs alert with kt-alert-warning class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const warningAlert = page.locator(".kt-alert-warning");
+		await expect(warningAlert).toBeVisible();
+		await expect(warningAlert).toContainText("This is a warning message");
+
+		// アイコンが表示されていることを確認
+		await expect(warningAlert.locator(".kt-alert-icon")).toContainText("⚠");
+	});
+
+	test("kt.info() outputs alert with kt-alert-info class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const infoAlert = page.locator(".kt-alert-info");
+		await expect(infoAlert).toBeVisible();
+		await expect(infoAlert).toContainText("This is an info message");
+
+		// アイコンが表示されていることを確認
+		await expect(infoAlert.locator(".kt-alert-icon")).toContainText("ℹ");
+	});
+
+	test("alert messages have proper styling", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// 各アラートが適切な背景色を持っていることを確認
+		const successAlert = page.locator(".kt-alert-success");
+		await expect(successAlert).toHaveCSS("background", /rgb\(212, 237, 218\)/);
+
+		const errorAlert = page.locator(".kt-alert-error");
+		await expect(errorAlert).toHaveCSS("background", /rgb\(248, 215, 218\)/);
+
+		const warningAlert = page.locator(".kt-alert-warning");
+		await expect(warningAlert).toHaveCSS("background", /rgb\(255, 243, 205\)/);
+
+		const infoAlert = page.locator(".kt-alert-info");
+		await expect(infoAlert).toHaveCSS("background", /rgb\(209, 236, 241\)/);
+	});
+});
