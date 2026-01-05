@@ -49,3 +49,10 @@ export interface SelectboxConfig {
 	key?: string;
 	disabled?: boolean;
 }
+
+export interface CheckboxConfig {
+	label: string;
+	defaultValue?: boolean;
+	key?: string;
+	disabled?: boolean;
+}

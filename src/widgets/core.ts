@@ -82,3 +82,11 @@ export function initializeSelectboxState(
 ): string {
 	return initializeWidgetState(widgetId, defaultValue ?? options[0] ?? "");
 }
+
+/**
+ * チェックボックスのstate管理
+ * 初期値をstateに保存し、現在値を返す
+ */
+export function initializeCheckboxState(widgetId: string, defaultValue?: boolean): boolean {
+	return initializeWidgetState(widgetId, defaultValue ?? false);
+}
