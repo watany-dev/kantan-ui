@@ -23,6 +23,7 @@
 
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
 import * as feedback from "./feedback";
+import * as layout from "./layout";
 import * as output from "./output";
 import * as widgets from "./widgets";
 
@@ -44,6 +45,9 @@ export const kt = {
 
 	// Feedback APIs
 	progress: feedback.progress,
+
+	// Layout APIs
+	container: layout.container,
 
 	// Widget APIs
 	button: widgets.button,
