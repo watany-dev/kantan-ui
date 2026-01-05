@@ -35,6 +35,12 @@ export const kt = {
 	divider: output.divider,
 	html: output.html,
 
+	// Alert APIs
+	success: output.success,
+	error: output.error,
+	warning: output.warning,
+	info: output.info,
+
 	// Widget APIs
 	button: widgets.button,
 	slider: widgets.slider,
