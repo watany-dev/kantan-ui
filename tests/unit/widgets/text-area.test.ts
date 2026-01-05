@@ -6,7 +6,7 @@ import {
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
-import { text_area } from "../../../src/widgets/text-area";
+import { text_area, renderTextArea } from "../../../src/widgets/text-area";
 
 describe("text_area", () => {
 	let manager: SessionManager;
@@ -67,6 +67,67 @@ describe("text_area", () => {
 			const value = text_area("Bio", "default", { key: "my_textarea" });
 
 			expect(value).toBe("custom value");
+		});
+	});
+
+	describe("renderTextArea", () => {
+		it("should render textarea HTML with label", () => {
+			const html = renderTextArea("Bio", "Hello");
+
+			expect(html).toContain("<textarea");
+			expect(html).toContain("Bio");
+			expect(html).toContain("Hello");
+			expect(html).toContain('data-kt-event="change"');
+		});
+
+		it("should include height style when configured", () => {
+			const html = renderTextArea("Bio", "", { height: 200 });
+
+			expect(html).toContain('height: 200px');
+		});
+
+		it("should use default height of 100px", () => {
+			const html = renderTextArea("Bio", "");
+
+			expect(html).toContain('height: 100px');
+		});
+
+		it("should include placeholder attribute", () => {
+			const html = renderTextArea("Bio", "", { placeholder: "Enter your bio..." });
+
+			expect(html).toContain('placeholder="Enter your bio..."');
+		});
+
+		it("should include maxlength attribute when maxChars configured", () => {
+			const html = renderTextArea("Bio", "", { maxChars: 500 });
+
+			expect(html).toContain('maxlength="500"');
+		});
+
+		it("should render disabled attribute when disabled", () => {
+			const html = renderTextArea("Bio", "", { disabled: true });
+
+			expect(html).toContain("disabled");
+		});
+
+		it("should use custom key for id", () => {
+			const html = renderTextArea("Bio", "", { key: "my_textarea" });
+
+			expect(html).toContain('id="my_textarea"');
+		});
+
+		it("should escape HTML in label", () => {
+			const html = renderTextArea("<script>alert('xss')</script>", "");
+
+			expect(html).not.toContain("<script>alert");
+			expect(html).toContain("&lt;script&gt;");
+		});
+
+		it("should escape HTML in value", () => {
+			const html = renderTextArea("Bio", "<script>alert('xss')</script>");
+
+			// Value should be escaped inside textarea content
+			expect(html).not.toContain("<script>alert");
 		});
 	});
 });
