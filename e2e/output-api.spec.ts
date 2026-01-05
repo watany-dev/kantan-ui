@@ -101,8 +101,9 @@ test.describe("Output API - kt.html and XSS escaping", () => {
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		}, xssPayload);
 
-		// 結果カードを確認（エスケープされているはず）
+		// UIの更新を待機
 		const resultsCard = page.locator("#results-card");
+		await expect(resultsCard.locator("h2")).toContainText(xssPayload, { timeout: 5000 });
 
 		// scriptタグが実行可能な形で存在しないことを確認
 		const scriptTags = page.locator("#results-card script");
@@ -110,7 +111,8 @@ test.describe("Output API - kt.html and XSS escaping", () => {
 		expect(scriptCount).toBe(0);
 
 		// エスケープされたテキストが表示されることを確認
-		// escapeHtml により < は &lt; に変換されている
+		// escapeHtml により < は &lt; に変換されてDOMに挿入されるが、
+		// textContent()で取得すると元の文字として表示される
 		const h2Text = await resultsCard.locator("h2").textContent();
 		expect(h2Text).toContain("<script>");
 	});

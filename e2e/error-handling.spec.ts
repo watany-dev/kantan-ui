@@ -45,10 +45,11 @@ test.describe("Error Handling - WebSocket Reconnection", () => {
 		await page.reload();
 		await gotoAndWait(page);
 
-		// UIが機能していることを確認
+		// tabスコープでもセッションIDはlocalStorageに保持されるため、
+		// リロード後もセッション状態が維持される
+		// UIが機能していることを確認（さらにインクリメント）
 		await page.click("#btn_inc");
-		// 注: tabスコープなので状態はリセットされる
-		await expect(page.locator("#counter-display")).toContainText("Counter: 1");
+		await expect(page.locator("#counter-display")).toContainText("Counter: 3");
 	});
 
 	test("Connection status indicator shows connected state", async ({ page }) => {
