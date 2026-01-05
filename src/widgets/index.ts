@@ -3,7 +3,7 @@ export { slider, renderSlider } from "./slider";
 export { text_input, renderTextInput } from "./text-input";
 export { selectbox, renderSelectbox } from "./selectbox";
 export { checkbox, renderCheckbox } from "./checkbox";
-export { radio } from "./radio";
+export { radio, renderRadio } from "./radio";
 export {
 	generateWidgetId,
 	resetWidgetCounter,
