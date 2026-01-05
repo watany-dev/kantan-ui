@@ -1,6 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { form } from "../../../src/kt/form";
+import { form, form_submit_button } from "../../../src/kt/form";
+import * as registry from "../../../src/widgets/registry";
 
 describe("Form API", () => {
 	let ctx: RenderContext;
@@ -72,6 +73,61 @@ describe("Form API", () => {
 		});
 	});
 
+	describe("form_submit_button", () => {
+		it("should output button with type=submit", () => {
+			form_submit_button("Submit");
+			const html = ctx.getHtml();
+			expect(html).toContain('type="submit"');
+			expect(html).toContain('class="kt-form-submit"');
+		});
+
+		it("should display button label", () => {
+			form_submit_button("Send Message");
+			const html = ctx.getHtml();
+			expect(html).toContain("Send Message");
+		});
+
+		it("should escape HTML in label", () => {
+			form_submit_button('<script>alert("xss")</script>');
+			const html = ctx.getHtml();
+			expect(html).toContain("&lt;script&gt;");
+		});
+
+		it("should support disabled option", () => {
+			form_submit_button("Submit", { disabled: true });
+			const html = ctx.getHtml();
+			expect(html).toContain("disabled");
+		});
+
+		it("should return false when not pressed", () => {
+			const result = form_submit_button("Submit");
+			expect(result).toBe(false);
+		});
+
+		it("should return true when button is pressed", () => {
+			// Mock the isButtonPressed to return true
+			const mockIsPressed = vi.spyOn(registry, "getWidgetValue");
+			mockIsPressed.mockReturnValue(true);
+
+			const result = form_submit_button("Submit", { key: "test_submit" });
+			expect(result).toBe(true);
+
+			mockIsPressed.mockRestore();
+		});
+
+		it("should use kt-form-submit class", () => {
+			form_submit_button("Submit");
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-form-submit"');
+		});
+
+		it("should have data-kt-event=submit attribute", () => {
+			form_submit_button("Submit");
+			const html = ctx.getHtml();
+			expect(html).toContain('data-kt-event="submit"');
+		});
+	});
+
 	describe("without render context", () => {
 		it("should throw error when no context", () => {
 			setRenderContext(null);
@@ -80,6 +136,11 @@ describe("Form API", () => {
 					// empty
 				}),
 			).toThrow("RenderContext is not available");
+		});
+
+		it("should throw error for form_submit_button when no context", () => {
+			setRenderContext(null);
+			expect(() => form_submit_button("Submit")).toThrow("RenderContext is not available");
 		});
 	});
 });

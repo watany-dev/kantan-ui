@@ -55,6 +55,7 @@ export const kt = {
 
 	// Form APIs
 	form: formModule.form,
+	form_submit_button: formModule.form_submit_button,
 
 	// Widget APIs
 	button: widgets.button,

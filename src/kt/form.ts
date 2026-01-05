@@ -1,4 +1,5 @@
 import { escapeHtml } from "../utils/html";
+import { generateWidgetId, getWidgetValue } from "../widgets/registry";
 import { requireRenderContext } from "./context";
 
 // ============================================
@@ -7,6 +8,11 @@ import { requireRenderContext } from "./context";
 
 export interface FormConfig {
 	clear_on_submit?: boolean;
+}
+
+export interface FormSubmitButtonConfig {
+	key?: string;
+	disabled?: boolean;
 }
 
 /**
@@ -44,4 +50,38 @@ export function form(key: string, content: () => void, config: FormConfig = {}):
 	ctx.append(`<form class="kt-form" data-form-key="${escapeHtml(key)}"${clearAttr}>`);
 	content();
 	ctx.append("</form>");
+}
+
+/**
+ * フォーム送信ボタン
+ *
+ * フォーム内で使用し、クリック時にフォームを送信します。
+ * 送信時のrerunでのみtrueを返します。
+ *
+ * @param label - ボタンのラベル
+ * @param config - オプション設定
+ * @returns フォームが送信された場合true
+ *
+ * @example
+ * ```typescript
+ * kt.form("contact", () => {
+ *   const name = kt.text_input("Name");
+ *   if (kt.form_submit_button("Send")) {
+ *     // フォーム送信時の処理
+ *   }
+ * });
+ * ```
+ */
+export function form_submit_button(label: string, config: FormSubmitButtonConfig = {}): boolean {
+	const ctx = requireRenderContext();
+	const id = generateWidgetId(config.key);
+	const disabled = config.disabled ? " disabled" : "";
+
+	ctx.append(
+		`<button id="${id}" type="submit" data-kt-event="submit" class="kt-form-submit"${disabled}>${escapeHtml(label)}</button>`,
+	);
+
+	// ボタンが押されたかどうかを確認
+	const pressed = getWidgetValue<boolean>(id, false);
+	return pressed === true;
 }
