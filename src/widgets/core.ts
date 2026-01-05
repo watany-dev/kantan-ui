@@ -90,3 +90,27 @@ export function initializeSelectboxState(
 export function initializeCheckboxState(widgetId: string, defaultValue?: boolean): boolean {
 	return initializeWidgetState(widgetId, defaultValue ?? false);
 }
+
+/**
+ * ラジオボタンのバリデーション
+ */
+export function validateRadio(options: string[], defaultValue?: string): void {
+	if (!options || options.length === 0) {
+		throw new Error("radio: options array must not be empty");
+	}
+	if (defaultValue !== undefined && !options.includes(defaultValue)) {
+		throw new Error(`radio: defaultValue "${defaultValue}" must be one of the options`);
+	}
+}
+
+/**
+ * ラジオボタンのstate管理
+ * 初期値をstateに保存し、現在値を返す
+ */
+export function initializeRadioState(
+	widgetId: string,
+	options: string[],
+	defaultValue?: string,
+): string {
+	return initializeWidgetState(widgetId, defaultValue ?? options[0] ?? "");
+}

@@ -56,3 +56,12 @@ export interface CheckboxConfig {
 	key?: string;
 	disabled?: boolean;
 }
+
+export interface RadioConfig {
+	label: string;
+	options: string[];
+	defaultValue?: string;
+	key?: string;
+	disabled?: boolean;
+	horizontal?: boolean;
+}
