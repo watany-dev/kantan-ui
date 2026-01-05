@@ -6,7 +6,7 @@ import {
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
-import { number_input } from "../../../src/widgets/number-input";
+import { number_input, renderNumberInput } from "../../../src/widgets/number-input";
 
 describe("number_input", () => {
 	let manager: SessionManager;
@@ -103,6 +103,68 @@ describe("number_input", () => {
 			const value = number_input("Age", 0, 120, 25, { key: "my_number" });
 
 			expect(value).toBe(42);
+		});
+	});
+
+	describe("renderNumberInput", () => {
+		it("should render number input HTML with label", () => {
+			const html = renderNumberInput("Age", 0, 120, 25);
+
+			expect(html).toContain("<input");
+			expect(html).toContain('type="number"');
+			expect(html).toContain("Age");
+			expect(html).toContain('data-kt-event="change"');
+		});
+
+		it("should include min and max attributes", () => {
+			const html = renderNumberInput("Age", 0, 120, 25);
+
+			expect(html).toContain('min="0"');
+			expect(html).toContain('max="120"');
+		});
+
+		it("should include current value", () => {
+			const html = renderNumberInput("Age", 0, 120, 25);
+
+			expect(html).toContain('value="25"');
+		});
+
+		it("should include step attribute when configured", () => {
+			const html = renderNumberInput("Price", 0, 1000, 100, { step: 10 });
+
+			expect(html).toContain('step="10"');
+		});
+
+		it("should use default step of 1", () => {
+			const html = renderNumberInput("Age", 0, 120, 25);
+
+			expect(html).toContain('step="1"');
+		});
+
+		it("should render disabled attribute when disabled", () => {
+			const html = renderNumberInput("Age", 0, 120, 25, { disabled: true });
+
+			expect(html).toContain("disabled");
+		});
+
+		it("should use custom key for id", () => {
+			const html = renderNumberInput("Age", 0, 120, 25, { key: "my_number" });
+
+			expect(html).toContain('id="my_number"');
+		});
+
+		it("should escape HTML in label", () => {
+			const html = renderNumberInput("<script>alert('xss')</script>", 0, 100, 50);
+
+			expect(html).not.toContain("<script>");
+			expect(html).toContain("&lt;script&gt;");
+		});
+
+		it("should handle undefined min/max", () => {
+			const html = renderNumberInput("Count", undefined, undefined, 10);
+
+			expect(html).not.toContain('min="');
+			expect(html).not.toContain('max="');
 		});
 	});
 });
