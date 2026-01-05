@@ -84,6 +84,43 @@ kt.divider();              // 区切り線 <hr>
 kt.html("<div>生HTML</div>"); // 生のHTML出力（注意: XSS対策必要）
 ```
 
+#### データ表示API
+
+```typescript
+// テーブル - 様々なデータ形式に対応
+kt.table([
+  { name: "Alice", age: 30 },
+  { name: "Bob", age: 25 },
+]);
+
+// 2D配列形式
+kt.table([
+  ["Name", "Age"],
+  ["Alice", 30],
+  ["Bob", 25],
+]);
+
+// 明示的ヘッダー指定
+kt.table({
+  columns: ["Name", "Age"],
+  data: [["Alice", 30], ["Bob", 25]],
+});
+```
+
+#### ページ設定API
+
+```typescript
+// ページの設定（タイトル、レイアウトなど）
+kt.set_page_config({
+  title: "My App",
+  layout: "wide",  // "centered" | "wide"
+  icon: "🚀",
+});
+
+// 明示的な再実行
+kt.rerun();  // スクリプトを強制的に再実行
+```
+
 #### ウィジェットAPI
 
 ```typescript
@@ -100,6 +137,33 @@ const name = kt.text_input("Your name", "Default", { key: "name" });
 
 // セレクトボックス - 選択された値を返す
 const color = kt.selectbox("Color", ["Red", "Green", "Blue"], "Blue", { key: "color" });
+
+// ダウンロードボタン - ファイルダウンロード
+kt.download_button("Download CSV", "name,age\nAlice,30", "data.csv", {
+  mime: "text/csv",
+});
+```
+
+#### レイアウトAPI
+
+```typescript
+// タブ - 複数のタブで内容を整理
+const [tab1, tab2, tab3] = kt.tabs(["Overview", "Data", "Settings"]);
+
+tab1(() => {
+  kt.header("Overview");
+  kt.write("This is the overview tab.");
+});
+
+tab2(() => {
+  kt.header("Data");
+  kt.table(data);
+});
+
+tab3(() => {
+  kt.header("Settings");
+  kt.write("Configure your preferences here.");
+});
 ```
 
 ### セッション状態管理
@@ -183,6 +247,10 @@ src/
 │   └── index.ts
 ├── kt/               # 宣言的API（Streamlit風）
 │   ├── context.ts    # レンダリングコンテキスト
+│   ├── config.ts     # ページ設定（set_page_config）
+│   ├── control.ts    # 制御API（rerun）
+│   ├── data.ts       # データ表示（table）
+│   ├── layout.ts     # レイアウト（tabs）
 │   ├── output.ts     # 出力API（title, write, headerなど）
 │   ├── widgets.ts    # ウィジェットAPI（button, sliderなど）
 │   └── index.ts
@@ -207,6 +275,7 @@ src/
     ├── slider.ts
     ├── text-input.ts
     ├── selectbox.ts
+    ├── download-button.ts
     ├── core.ts       # 共通処理
     ├── registry.ts   # ウィジェットID管理
     ├── types.ts      # ウィジェット型定義
