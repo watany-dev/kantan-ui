@@ -64,6 +64,9 @@ test.describe("Focus Preservation", () => {
 		await textInput.focus();
 		await expect(textInput).toBeFocused();
 
+		// 入力フィールドをクリア
+		await textInput.fill("");
+
 		// 1文字ずつevaluateで入力（各文字でrerunが発生）
 		const text = "Hi";
 		for (const char of text) {
@@ -71,9 +74,10 @@ test.describe("Focus Preservation", () => {
 				el.value += c;
 				el.dispatchEvent(new Event("input", { bubbles: true }));
 			}, char);
-			// rerun完了を待機
-			await page.waitForTimeout(100);
 		}
+
+		// 入力値が反映されるまで待機（条件ベース）
+		await expect(textInput).toHaveValue("Hi", { timeout: 5000 });
 
 		// 入力後もフォーカスが維持されていることを確認
 		// フォーカス復元には少し時間がかかる可能性があるため、リトライ付きで確認
@@ -175,8 +179,8 @@ test.describe("Focus Preservation", () => {
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		});
 
-		// rerun完了を待機
-		await page.waitForTimeout(100);
+		// 入力値が反映されるまで待機（条件ベース）
+		await expect(textInput).toHaveValue("Hello World", { timeout: 5000 });
 
 		// テキストの一部を選択（"World"の部分を選択）
 		await textInput.evaluate((el: HTMLInputElement) => {
@@ -204,7 +208,7 @@ test.describe("Focus Preservation", () => {
 
 		// テキスト入力にフォーカスを戻して選択範囲を確認
 		await textInput.focus();
-		await page.waitForTimeout(100);
+		await expect(textInput).toBeFocused();
 
 		// 選択範囲が復元されていることを確認
 		// 注意: 別の要素からのrerunでフォーカスが移動するため、
@@ -242,8 +246,8 @@ test.describe("Focus Preservation", () => {
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		});
 
-		// rerun完了を待機
-		await page.waitForTimeout(150);
+		// 入力値が反映されるまで待機（条件ベース）
+		await expect(textInput).toHaveValue("TeXst", { timeout: 5000 });
 
 		// フォーカスが維持されていることを確認
 		const isFocused = await waitForFocus(textInput, 2000);
@@ -279,9 +283,10 @@ test.describe("replaceRoot Focus Preservation", () => {
 		// ページをリロード（replaceRootパッチが発生）
 		await page.reload();
 
-		// WebSocket接続と初期パッチ適用を待機
-		await page.waitForSelector("#btn_inc");
-		await page.waitForTimeout(500);
+		// WebSocket接続と初期パッチ適用を待機（条件ベース）
+		await expect(page.locator("#kt-connection-status")).toContainText("Connected", {
+			timeout: 10000,
+		});
 
 		// セッションが維持されていることを確認
 		await expect(page.locator(".kt-write").filter({ hasText: "Current count:" })).toContainText(
@@ -327,7 +332,9 @@ test.describe("replaceRoot Focus Preservation", () => {
 			el.value = "Multi-widget test";
 			el.dispatchEvent(new Event("input", { bubbles: true }));
 		});
-		await page.waitForTimeout(100);
+
+		// 入力値が反映されるまで待機（条件ベース）
+		await expect(textInput).toHaveValue("Multi-widget test", { timeout: 5000 });
 
 		// 各ウィジェットが正しく更新されていることを確認
 		await expect(page.locator(".kt-slider-label")).toContainText("Volume: 10");

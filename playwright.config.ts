@@ -5,15 +5,15 @@ const chromiumPath = "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chro
 
 export default defineConfig({
 	testDir: "./e2e",
-	fullyParallel: false,
+	fullyParallel: true, // 全テストを並列実行（各テストは独立したブラウザコンテキスト）
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
-	workers: 1,
+	workers: 3, // 3プロジェクトを並列実行（各プロジェクトは別サーバー/ポート）
 	reporter: "html",
 	/* タイムアウト設定の一元管理 */
 	timeout: 30000, // テスト全体のタイムアウト
 	expect: {
-		timeout: 10000, // WebSocket経由のUI更新を待つため長めに設定
+		timeout: 5000, // 条件ベース待機により短縮可能
 	},
 	use: {
 		trace: "on-first-retry",
@@ -77,7 +77,7 @@ export default defineConfig({
 			command: "bun run src/server.ts",
 			url: "http://localhost:3000",
 			reuseExistingServer: !process.env.CI,
-			timeout: 60000,
+			timeout: 30000, // Bunは高速起動のため30秒で十分
 			stdout: "pipe",
 			stderr: "pipe",
 		},
@@ -85,7 +85,7 @@ export default defineConfig({
 			command: "bun run src/server-browser.ts",
 			url: "http://localhost:3001",
 			reuseExistingServer: !process.env.CI,
-			timeout: 60000,
+			timeout: 30000,
 			stdout: "pipe",
 			stderr: "pipe",
 		},
@@ -93,7 +93,7 @@ export default defineConfig({
 			command: "bun run src/server-streaming.ts",
 			url: "http://localhost:3002",
 			reuseExistingServer: !process.env.CI,
-			timeout: 60000,
+			timeout: 30000,
 			stdout: "pipe",
 			stderr: "pipe",
 		},

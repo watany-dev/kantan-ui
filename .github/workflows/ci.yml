@@ -162,7 +162,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: bunx playwright install --with-deps
 
-      - name: Install Playwright dependencies (cached)
+      - name: Install Playwright system dependencies (cached)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: bunx playwright install-deps
 

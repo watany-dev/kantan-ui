@@ -37,31 +37,31 @@ export async function waitForRerun(
  * テキスト入力をrerun対応で行う
  * replaceRootによるDOM置換と競合しないよう、1文字ずつ入力して
  * 各文字の反映を待機する
+ *
+ * @param options.expectedValue - 入力完了後に期待される値（指定時は値の反映を待機）
  */
 export async function typeWithRerun(
 	page: Page,
 	inputLocator: Locator,
 	text: string,
 	options: {
-		/** 各文字入力後の遅延（ミリ秒） */
-		delay?: number;
+		/** 入力完了後に期待される値（条件待機に使用） */
+		expectedValue?: string;
 	} = {},
 ): Promise<void> {
-	const { delay = 150 } = options;
-
 	// 入力フィールドをクリックしてフォーカス
 	await inputLocator.click();
 
 	// 既存のテキストをクリア（Ctrl+Aで全選択してBackspace）
 	await page.keyboard.press("Control+a");
 	await page.keyboard.press("Backspace");
-	await page.waitForTimeout(delay);
 
-	// 1文字ずつ入力
-	for (const char of text) {
-		await page.keyboard.type(char);
-		// rerun完了を待機
-		await page.waitForTimeout(delay);
+	// テキストを入力（Playwrightのtype()は内部で適切に待機）
+	await inputLocator.pressSequentially(text, { delay: 50 });
+
+	// 期待値が指定されている場合は値の反映を待機
+	if (options.expectedValue !== undefined) {
+		await expect(inputLocator).toHaveValue(options.expectedValue, { timeout: 5000 });
 	}
 }
 
@@ -69,34 +69,41 @@ export async function typeWithRerun(
  * セレクトボックスをrerun対応で変更する
  * Playwrightのネイティブ selectOption() を使用し、
  * 反映を待機する
+ *
+ * @param options.waitForSelector - 変更後に待機するセレクター（DOM更新完了の確認用）
+ * @param options.waitForText - 変更後に待機するテキスト（waitForSelectorと併用）
  */
 export async function selectWithRerun(
-	page: Page,
 	selectLocator: Locator,
 	value: string,
 	options: {
-		/** 変更後の待機時間（ミリ秒） */
-		delay?: number;
+		/** 変更後に待機するセレクター */
+		waitForSelector?: string;
+		/** 変更後に待機するテキスト */
+		waitForText?: string;
 	} = {},
 ): Promise<void> {
-	const { delay = 200 } = options;
+	const page = selectLocator.page();
 
 	// Playwrightのネイティブ selectOption を使用
 	await selectLocator.selectOption(value);
 
-	// rerun完了を待機
-	await page.waitForTimeout(delay);
+	// 条件が指定されている場合はDOM更新を待機
+	if (options.waitForSelector && options.waitForText) {
+		await expect(page.locator(options.waitForSelector)).toContainText(options.waitForText, {
+			timeout: 5000,
+		});
+	}
 }
 
 /**
- * 要素がフォーカスされるまで待機（リトライ付き）
+ * 要素がフォーカスされるまで待機（Playwrightのリトライ機構を使用）
  */
 export async function waitForFocus(locator: Locator, timeout = 2000): Promise<boolean> {
-	const startTime = Date.now();
-	while (Date.now() - startTime < timeout) {
-		const isFocused = await locator.evaluate((el) => document.activeElement === el);
-		if (isFocused) return true;
-		await locator.page().waitForTimeout(50);
+	try {
+		await expect(locator).toBeFocused({ timeout });
+		return true;
+	} catch {
+		return false;
 	}
-	return false;
 }

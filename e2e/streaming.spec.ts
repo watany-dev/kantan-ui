@@ -28,11 +28,12 @@ test.describe("Streaming enabled server", () => {
 	test("should increment counter on button click", async ({ page }) => {
 		await page.goto("/");
 
-		// Wait for WebSocket connection
-		await page.waitForTimeout(500);
+		// Wait for button to be ready (WebSocket connection established)
+		const button = page.getByRole("button", { name: "Increment" }).first();
+		await expect(button).toBeEnabled();
 
 		// Click increment button
-		await page.getByRole("button", { name: "Increment" }).first().click();
+		await button.click();
 
 		// Wait for update - check that at least one counter shows updated value
 		await expect(page.locator("#counter-display").first()).toHaveText("Count: 1");
@@ -54,11 +55,9 @@ test.describe("Streaming enabled server", () => {
 	test("should handle multiple button clicks with streaming", async ({ page }) => {
 		await page.goto("/");
 
-		// Wait for initial load
-		await page.waitForTimeout(500);
-
-		// Click increment multiple times
+		// Wait for button to be ready (WebSocket connection established)
 		const button = page.getByRole("button", { name: "Increment" }).first();
+		await expect(button).toBeEnabled();
 
 		await button.click();
 		await expect(page.locator("#counter-display").first()).toHaveText("Count: 1");
