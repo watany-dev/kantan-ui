@@ -155,6 +155,14 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Progress Section =====
+	kt.header("Progress");
+	kt.progress(0.25);
+	kt.progress(0.5, { label: "Downloading... 50%" });
+	kt.progress(75, { label: "Processing... 75%", color: "#27ae60" });
+
+	kt.divider();
+
 	// ===== Debug Section =====
 	kt.subheader("Session State (Debug)");
 	kt.html(`
