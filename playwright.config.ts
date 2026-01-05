@@ -99,6 +99,19 @@ export default defineConfig({
 				"**/output-api.spec.ts",
 			],
 		},
+		// WebKit (Safari): 基本テストのみ実行（専用サーバーテストは除外）
+		{
+			name: "webkit",
+			use: {
+				...devices["Desktop Safari"],
+				baseURL: "http://localhost:3000",
+			},
+			testIgnore: [
+				"**/session-scope-browser.spec.ts",
+				"**/streaming.spec.ts",
+				"**/output-api.spec.ts",
+			],
+		},
 	],
 	webServer: [
 		{
