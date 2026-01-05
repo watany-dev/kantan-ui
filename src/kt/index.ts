@@ -47,6 +47,7 @@ export const kt = {
 	// Feedback APIs
 	progress: feedback.progress,
 	spinner: feedback.spinner,
+	toast: feedback.toast,
 
 	// Layout APIs
 	container: layout.container,

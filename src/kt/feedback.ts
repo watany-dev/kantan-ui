@@ -27,6 +27,24 @@ const spinnerSizes: Record<SpinnerSize, string> = {
 	large: "32px",
 };
 
+// ============================================
+// Toast API
+// ============================================
+
+export type ToastType = "success" | "info" | "warning" | "error";
+
+export interface ToastConfig {
+	type?: ToastType;
+	duration?: number;
+}
+
+const toastColors: Record<ToastType, { bg: string; border: string; icon: string }> = {
+	success: { bg: "#d4edda", border: "#c3e6cb", icon: "✓" },
+	info: { bg: "#d1ecf1", border: "#bee5eb", icon: "ℹ" },
+	warning: { bg: "#fff3cd", border: "#ffeeba", icon: "⚠" },
+	error: { bg: "#f8d7da", border: "#f5c6cb", icon: "✕" },
+};
+
 /**
  * プログレスバーを表示
  *
@@ -84,5 +102,33 @@ export function spinner(text = "Loading...", config: SpinnerConfig = {}): void {
 
 	ctx.append(
 		`<div class="kt-spinner"><style>@keyframes kt-spin { to { transform: rotate(360deg); } }</style><div class="kt-spinner-icon" style="width: ${size}; height: ${size}; border: 2px solid #e0e0e0; border-top-color: #3498db; border-radius: 50%; animation: kt-spin 1s linear infinite;"></div><span class="kt-spinner-text">${escapeHtml(text)}</span></div>`,
+	);
+}
+
+/**
+ * トースト通知を表示
+ *
+ * 画面の隅に一時的な通知メッセージを表示します。
+ * 指定時間後に自動的に消えます。
+ *
+ * @param message - 表示するメッセージ
+ * @param config - オプション設定
+ *
+ * @example
+ * ```typescript
+ * kt.toast("Saved successfully!");
+ * kt.toast("Error occurred", { type: "error" });
+ * kt.toast("Please wait...", { type: "info", duration: 5000 });
+ * ```
+ */
+export function toast(message: string, config: ToastConfig = {}): void {
+	const ctx = requireRenderContext();
+
+	const type = config.type ?? "success";
+	const duration = config.duration ?? 4000;
+	const colors = toastColors[type];
+
+	ctx.append(
+		`<div class="kt-toast kt-toast-${type}" data-duration="${duration}" style="background: ${colors.bg}; border: 1px solid ${colors.border}; padding: 12px 16px; border-radius: 4px; margin: 8px 0; display: flex; align-items: center;"><span class="kt-toast-icon" style="margin-right: 8px;">${colors.icon}</span><span class="kt-toast-message">${escapeHtml(message)}</span></div>`,
 	);
 }

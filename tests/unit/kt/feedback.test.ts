@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { progress, spinner } from "../../../src/kt/feedback";
+import { progress, spinner, toast } from "../../../src/kt/feedback";
 
 describe("Feedback APIs", () => {
 	let ctx: RenderContext;
@@ -142,6 +142,68 @@ describe("Feedback APIs", () => {
 		});
 	});
 
+	describe("toast", () => {
+		it("should output toast with kt-toast class", () => {
+			toast("Message saved!");
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-toast');
+		});
+
+		it("should display message text", () => {
+			toast("Operation completed");
+			const html = ctx.getHtml();
+			expect(html).toContain("Operation completed");
+		});
+
+		it("should escape HTML in message", () => {
+			toast('<script>alert("xss")</script>');
+			const html = ctx.getHtml();
+			expect(html).toContain("&lt;script&gt;");
+		});
+
+		it("should use success type by default", () => {
+			toast("Success!");
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-toast-success");
+		});
+
+		it("should support info type", () => {
+			toast("Info message", { type: "info" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-toast-info");
+		});
+
+		it("should support warning type", () => {
+			toast("Warning message", { type: "warning" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-toast-warning");
+		});
+
+		it("should support error type", () => {
+			toast("Error message", { type: "error" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-toast-error");
+		});
+
+		it("should have data-duration attribute for auto-dismiss", () => {
+			toast("Message", { duration: 3000 });
+			const html = ctx.getHtml();
+			expect(html).toContain('data-duration="3000"');
+		});
+
+		it("should use default duration of 4000ms", () => {
+			toast("Message");
+			const html = ctx.getHtml();
+			expect(html).toContain('data-duration="4000"');
+		});
+
+		it("should include icon based on type", () => {
+			toast("Success!", { type: "success" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-toast-icon");
+		});
+	});
+
 	describe("without render context", () => {
 		it("should throw error when no context", () => {
 			setRenderContext(null);
@@ -151,6 +213,11 @@ describe("Feedback APIs", () => {
 		it("should throw error for spinner when no context", () => {
 			setRenderContext(null);
 			expect(() => spinner()).toThrow("RenderContext is not available");
+		});
+
+		it("should throw error for toast when no context", () => {
+			setRenderContext(null);
+			expect(() => toast("Test")).toThrow("RenderContext is not available");
 		});
 	});
 });
