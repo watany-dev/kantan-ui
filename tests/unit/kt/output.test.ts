@@ -350,5 +350,20 @@ describe("Output APIs", () => {
 			code("");
 			expect(ctx.getHtml()).toContain('class="kt-code"');
 		});
+
+		it("should apply syntax highlighting for typescript", () => {
+			code("const x = 1;", "typescript");
+			expect(ctx.getHtml()).toContain('class="kt-code-keyword"');
+		});
+
+		it("should apply syntax highlighting for python", () => {
+			code("def foo():", "python");
+			expect(ctx.getHtml()).toContain('class="kt-code-keyword"');
+		});
+
+		it("should not apply highlighting for unknown language", () => {
+			code("const x = 1;", "unknown");
+			expect(ctx.getHtml()).not.toContain('class="kt-code-keyword"');
+		});
 	});
 });

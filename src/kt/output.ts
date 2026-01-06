@@ -1,4 +1,5 @@
 import { escapeHtml } from "../utils/html";
+import { applyHighlight } from "./code/highlighter";
 import { requireRenderContext } from "./context";
 
 /**
@@ -158,6 +159,9 @@ export function code(body: string, language?: string, config?: CodeConfig): void
 	// コード内容をエスケープ
 	const escapedCode = escapeHtml(body);
 
+	// 構文ハイライト適用（言語指定がある場合）
+	const highlightedCode = language ? applyHighlight(escapedCode, language) : escapedCode;
+
 	// 行番号の生成（オプション）
 	const lineNumbers = config?.line_numbers ? generateLineNumbers(body) : "";
 
@@ -165,7 +169,7 @@ export function code(body: string, language?: string, config?: CodeConfig): void
 	const langAttr = `data-language="${escapeHtml(language ?? "")}"`;
 
 	ctx.append(
-		`<div class="kt-code${wrapClass}" ${langAttr}>${lineNumbers}<pre><code class="kt-code-content">${escapedCode}</code></pre></div>`,
+		`<div class="kt-code${wrapClass}" ${langAttr}>${lineNumbers}<pre><code class="kt-code-content">${highlightedCode}</code></pre></div>`,
 	);
 }
 
