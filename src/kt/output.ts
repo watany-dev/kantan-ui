@@ -84,24 +84,16 @@ const defaultIcons: Record<AlertType, string> = {
 	info: "ℹ",
 };
 
-const alertColors: Record<AlertType, { bg: string; border: string; text: string }> = {
-	success: { bg: "#d4edda", border: "#c3e6cb", text: "#155724" },
-	error: { bg: "#f8d7da", border: "#f5c6cb", text: "#721c24" },
-	warning: { bg: "#fff3cd", border: "#ffeeba", text: "#856404" },
-	info: { bg: "#d1ecf1", border: "#bee5eb", text: "#0c5460" },
-};
-
 export interface AlertConfig {
 	icon?: string;
 }
 
 function alert(type: AlertType, message: string, config: AlertConfig = {}): void {
 	const ctx = requireRenderContext();
-	const colors = alertColors[type];
 	const icon = escapeHtml(config.icon ?? defaultIcons[type]);
 
 	ctx.append(
-		`<div class="kt-alert kt-alert-${type}" style="background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text}; padding: 0.75rem 1rem; border-radius: 4px; margin: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;"><span class="kt-alert-icon">${icon}</span><span class="kt-alert-message">${escapeHtml(message)}</span></div>`,
+		`<div class="kt-alert kt-alert-${type}"><span class="kt-alert-icon">${icon}</span><span class="kt-alert-message">${escapeHtml(message)}</span></div>`,
 	);
 }
 
