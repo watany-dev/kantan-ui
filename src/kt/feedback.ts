@@ -1,5 +1,6 @@
 import { escapeHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
+import { type MessageType, messageColors, messageIcons } from "./theme";
 
 // ============================================
 // Progress API
@@ -41,19 +42,10 @@ const spinnerSizes: Record<SpinnerSize, string> = {
 // Toast API
 // ============================================
 
-type ToastType = "success" | "info" | "warning" | "error";
-
 export interface ToastConfig {
-	type?: ToastType;
+	type?: MessageType;
 	duration?: number;
 }
-
-const toastColors: Record<ToastType, { bg: string; border: string; icon: string }> = {
-	success: { bg: "#d4edda", border: "#c3e6cb", icon: "✓" },
-	info: { bg: "#d1ecf1", border: "#bee5eb", icon: "ℹ" },
-	warning: { bg: "#fff3cd", border: "#ffeeba", icon: "⚠" },
-	error: { bg: "#f8d7da", border: "#f5c6cb", icon: "✕" },
-};
 
 /**
  * 値をパーセンテージに変換
@@ -162,9 +154,10 @@ export function toast(message: string, config: ToastConfig = {}): void {
 
 	const type = config.type ?? "success";
 	const duration = config.duration ?? 4000;
-	const colors = toastColors[type];
+	const colors = messageColors[type];
+	const icon = messageIcons[type];
 
 	ctx.append(
-		`<div class="kt-toast kt-toast-${type}" data-duration="${duration}" style="background: ${colors.bg}; border: 1px solid ${colors.border}; padding: 12px 16px; border-radius: 4px; margin: 8px 0; display: flex; align-items: center;"><span class="kt-toast-icon" style="margin-right: 8px;">${colors.icon}</span><span class="kt-toast-message">${escapeHtml(message)}</span></div>`,
+		`<div class="kt-toast kt-toast-${type}" data-duration="${duration}" style="background: ${colors.bg}; border: 1px solid ${colors.border}; padding: 12px 16px; border-radius: 4px; margin: 8px 0; display: flex; align-items: center;"><span class="kt-toast-icon" style="margin-right: 8px;">${icon}</span><span class="kt-toast-message">${escapeHtml(message)}</span></div>`,
 	);
 }
