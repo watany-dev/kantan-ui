@@ -45,6 +45,8 @@ export {
 	renderTextInput,
 	selectbox,
 	renderSelectbox,
+	download_button,
+	renderDownloadButton,
 	checkbox,
 	renderCheckbox,
 	radio,
@@ -71,6 +73,7 @@ export type {
 	SliderConfig,
 	TextInputConfig,
 	SelectboxConfig,
+	DownloadButtonConfig,
 	CheckboxConfig,
 	RadioConfig,
 	NumberInputConfig,
@@ -107,3 +110,9 @@ export {
 	getRenderContext,
 	requireRenderContext,
 } from "./kt/context";
+export {
+	type PageConfig,
+	set_page_config,
+	getPageConfig,
+	resetPageConfig,
+} from "./kt/config";

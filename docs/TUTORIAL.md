@@ -8,11 +8,14 @@
 2. [環境構築](#環境構築)
 3. [Hello World](#hello-world)
 4. [ウィジェットの使い方](#ウィジェットの使い方)
-5. [セッションステート](#セッションステート)
-6. [実践: カウンターアプリ](#実践-カウンターアプリ)
-7. [実践: TODOアプリ](#実践-todoアプリ)
-8. [設定オプション](#設定オプション)
-9. [次のステップ](#次のステップ)
+5. [データ表示](#データ表示)
+6. [レイアウト](#レイアウト)
+7. [セッションステート](#セッションステート)
+8. [ページ設定](#ページ設定)
+9. [実践: カウンターアプリ](#実践-カウンターアプリ)
+10. [実践: TODOアプリ](#実践-todoアプリ)
+11. [設定オプション](#設定オプション)
+12. [次のステップ](#次のステップ)
 
 ---
 
@@ -202,6 +205,38 @@ const size = kt.selectbox("サイズ", ["S", "M", "L"]);  // デフォルトは"
 
 **注意**: 空の配列や、選択肢に存在しない`defaultValue`を指定するとエラーになります。
 
+### ダウンロードボタン
+
+ファイルダウンロードを提供するボタンです。
+
+```typescript
+// テキストデータのダウンロード
+kt.download_button(
+  "Download CSV",
+  "name,age\nAlice,30\nBob,25",
+  "users.csv",
+  { mime: "text/csv" }
+);
+
+// バイナリデータのダウンロード
+const buffer = new TextEncoder().encode("Binary content").buffer;
+kt.download_button("Download Binary", buffer, "data.bin");
+```
+
+パラメータ:
+- 第1引数: ボタンのラベル
+- 第2引数: ダウンロードするデータ（文字列またはArrayBuffer）
+- 第3引数: ファイル名
+- オプション: `{ key, mime, disabled }`
+
+```typescript
+// 動的データのダウンロード
+const jsonData = JSON.stringify(state.data, null, 2);
+kt.download_button("Export JSON", jsonData, "export.json", {
+  mime: "application/json",
+});
+```
+
 ### チェックボックス
 
 真偽値を選択するチェックボックスです。
@@ -319,6 +354,113 @@ const skills = kt.multiselect("スキル", ["JS", "TS", "Python", "Go"], [], {
 
 ---
 
+## データ表示
+
+データを視覚的に表示するためのAPIです。
+
+### テーブル
+
+様々な形式のデータをテーブルとして表示します。
+
+```typescript
+// オブジェクト配列形式（推奨）
+kt.table([
+  { name: "Alice", age: 30, city: "Tokyo" },
+  { name: "Bob", age: 25, city: "Osaka" },
+  { name: "Carol", age: 35, city: "Kyoto" },
+]);
+```
+
+2D配列形式も使用できます:
+
+```typescript
+// 最初の行がヘッダーとして扱われます
+kt.table([
+  ["Name", "Age", "City"],
+  ["Alice", 30, "Tokyo"],
+  ["Bob", 25, "Osaka"],
+]);
+```
+
+明示的にカラムを指定する場合:
+
+```typescript
+kt.table({
+  columns: ["名前", "年齢", "都市"],
+  data: [
+    ["Alice", 30, "Tokyo"],
+    ["Bob", 25, "Osaka"],
+  ],
+});
+```
+
+オプション:
+
+```typescript
+kt.table(data, {
+  key: "user_table",      // ウィジェットキー
+  headers: ["A", "B"],    // ヘッダーの上書き
+});
+```
+
+**注意**: テーブル内のデータはXSS対策として自動的にエスケープされます。
+
+---
+
+## レイアウト
+
+UIをレイアウトするためのコンポーネントです。
+
+### タブ
+
+複数のタブで内容を整理します。
+
+```typescript
+const [overview, details, settings] = kt.tabs([
+  "概要",
+  "詳細",
+  "設定"
+]);
+
+overview(() => {
+  kt.header("概要");
+  kt.write("アプリケーションの概要説明です。");
+});
+
+details(() => {
+  kt.header("詳細データ");
+  kt.table(data);
+});
+
+settings(() => {
+  kt.header("設定");
+  const theme = kt.selectbox("テーマ", ["ライト", "ダーク"]);
+  kt.write(`選択されたテーマ: ${theme}`);
+});
+```
+
+タブの状態は自動的に保存され、ページをリロードしても選択したタブが維持されます。
+
+各タブ関数には`isActive`プロパティがあり、現在アクティブかどうかを確認できます:
+
+```typescript
+const [tab1, tab2] = kt.tabs(["Tab 1", "Tab 2"]);
+
+if (tab1.isActive) {
+  kt.write("Tab 1 is currently active");
+}
+
+tab1(() => {
+  kt.write("Content for Tab 1");
+});
+
+tab2(() => {
+  kt.write("Content for Tab 2");
+});
+```
+
+---
+
 ## セッションステート
 
 セッションステートを使うと、ユーザーの操作間で状態を保持できます。
@@ -377,6 +519,46 @@ const script = () => {
   return undefined;
 };
 ```
+
+---
+
+## ページ設定
+
+ページ全体の設定を行うためのAPIです。
+
+### set_page_config
+
+ページのタイトル、レイアウト、アイコンなどを設定します。
+
+```typescript
+kt.set_page_config({
+  title: "My Dashboard",      // ブラウザタブのタイトル
+  icon: "📊",                  // ファビコン（絵文字）
+  layout: "wide",             // "centered" | "wide"
+  initialSidebarState: "expanded",  // "auto" | "expanded" | "collapsed"
+  menuItems: [
+    { label: "GitHub", url: "https://github.com" },
+    { label: "Docs", url: "/docs" },
+  ],
+});
+```
+
+**注意**: `set_page_config`はスクリプトの最初に呼び出してください。
+
+### rerun
+
+スクリプトを強制的に再実行します。
+
+```typescript
+const autoRefresh = kt.selectbox("自動更新", ["オン", "オフ"]);
+
+if (autoRefresh === "オン") {
+  // 何らかの条件で再実行
+  kt.rerun();
+}
+```
+
+**注意**: `rerun()`を呼び出すと、その時点でスクリプトの実行が中断され、最初から再実行されます。無限ループにならないよう注意してください。
 
 ---
 
@@ -620,9 +802,12 @@ export default createApp(script, {
 
 ### 現在利用可能な機能
 
-- ✅ テキスト出力（title, header, write, divider）
-- ✅ 基本ウィジェット（button, slider, text_input, selectbox）
+- ✅ テキスト出力（title, header, write, divider, html）
+- ✅ 基本ウィジェット（button, slider, text_input, selectbox, download_button）
 - ✅ フォームウィジェット（checkbox, toggle, radio, number_input, text_area, multiselect）
+- ✅ データ表示（table）
+- ✅ レイアウト（tabs）
+- ✅ ページ設定（set_page_config, rerun）
 - ✅ セッションステート管理
 - ✅ WebSocketリアルタイム通信
 - ✅ DOM差分更新
@@ -631,18 +816,20 @@ export default createApp(script, {
 - ✅ フォーカス保持
 - ✅ ストリーミングレンダリング
 
-### 今後の予定
+### 今後の予定（Phase 3-B/C）
 
-- レイアウトコンポーネント: `kt.columns()`, `kt.tabs()`, `kt.sidebar()`
-- データウィジェット: `kt.dataframe()`, `kt.chart()`
-- 追加ウィジェット: `kt.file_uploader()`, `kt.date_input()`, `kt.time_input()`
+- キャッシュ: `kt.cache_data()`, `kt.cache_resource()`
+- レイアウト: `kt.sidebar()`, `kt.columns()`
+- データウィジェット: `kt.dataframe()`, `kt.file_uploader()`
+- チャート: `kt.line_chart()`, `kt.bar_chart()`
+- 追加ウィジェット: `kt.date_input()`, `kt.time_input()`
 - プラグインシステム
 
 ### 関連ドキュメント
 
 - [技術ブログ Week 4](./tech-blog-week4.md) - アーキテクチャの詳細
+- [技術ブログ Week 5](./tech-blog-week5.md) - ストリーミングとリアルタイム通信
 - [DOM差分モジュール](./diff-module.md) - 差分アルゴリズムの解説
-- [Week 5 ストリーミング](./impl/week5-streaming-phase2.md) - ストリーミング機能の設計
 
 ---
 

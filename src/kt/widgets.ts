@@ -1,5 +1,6 @@
 import { button as imperativeButton, renderButton } from "../widgets/button";
 import { checkbox as imperativeCheckbox, renderCheckbox } from "../widgets/checkbox";
+import { download_button as imperativeDownloadButton } from "../widgets/download-button";
 import { multiselect as imperativeMultiselect, renderMultiselect } from "../widgets/multiselect";
 import { number_input as imperativeNumberInput, renderNumberInput } from "../widgets/number-input";
 import { radio as imperativeRadio, renderRadio } from "../widgets/radio";
@@ -11,6 +12,7 @@ import { toggle as imperativeToggle, renderToggle } from "../widgets/toggle";
 import type {
 	ButtonConfig,
 	CheckboxConfig,
+	DownloadButtonConfig,
 	MultiselectConfig,
 	NumberInputConfig,
 	RadioConfig,
@@ -83,6 +85,20 @@ export function selectbox(
 		(cfg) => imperativeSelectbox(label, options, defaultValue, cfg),
 		(value, cfg) => renderSelectbox(label, options, value, cfg),
 	);
+}
+
+/**
+ * ダウンロードボタンウィジェット（宣言的API）
+ * HTMLを自動出力し、クリックされたかどうかを返す
+ */
+export function download_button(
+	label: string,
+	data: string | ArrayBuffer,
+	filename: string,
+	config?: DownloadButtonConfig,
+): boolean {
+	// download_buttonは直接実装されており、wrapWidgetを使用しない
+	return imperativeDownloadButton(label, data, filename, config);
 }
 
 /**

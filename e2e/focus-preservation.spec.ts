@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { gotoAndWait, waitForFocus } from "./helpers";
+import { gotoAndWait, typeWithRerun, waitForFocus } from "./helpers";
 
 // 各テストで空のストレージ状態を使用
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -64,24 +64,9 @@ test.describe("Focus Preservation", () => {
 
 		const textInput = page.locator("#name_input");
 
-		// テキスト入力にフォーカス
-		await textInput.focus();
-		await expect(textInput).toBeFocused();
-
-		// 入力フィールドをクリア
-		await textInput.fill("");
-
-		// 1文字ずつevaluateで入力（各文字でrerunが発生）
-		const text = "Hi";
-		for (const char of text) {
-			await textInput.evaluate((el: HTMLInputElement, c: string) => {
-				el.value += c;
-				el.dispatchEvent(new Event("input", { bubbles: true }));
-			}, char);
-		}
-
-		// 入力値が反映されるまで待機（条件ベース）
-		await expect(textInput).toHaveValue("Hi", { timeout: 5000 });
+		// typeWithRerunヘルパーを使用してテキストを入力
+		// 内部でpressSequentiallyを使用し、各文字間に適切な遅延を設ける
+		await typeWithRerun(page, textInput, "Hi", { expectedValue: "Hi" });
 
 		// 入力後もフォーカスが維持されていることを確認
 		// フォーカス復元には少し時間がかかる可能性があるため、リトライ付きで確認

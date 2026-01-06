@@ -216,7 +216,92 @@ Week5では506のテストがパスしており、以下のテストを追加し
 - 再接続シナリオのテスト
 - イベントデバウンスのテスト
 
-### 6. Streamlit互換ウィジェット（Phase 1）
+## Phase 3-A: Streamlit互換API
+
+Week5の後半では、StreamlitとのAPI互換性を高めるPhase 3-Aを実装しました。
+
+### 1. ページ設定 (set_page_config)
+
+Streamlitの`st.set_page_config`に相当する機能を実装しました。
+
+```typescript
+kt.set_page_config({
+  title: "My App",
+  icon: "🚀",
+  layout: "wide",  // "centered" | "wide"
+  initialSidebarState: "auto",
+  menuItems: [
+    { label: "GitHub", url: "https://github.com" },
+  ],
+});
+```
+
+HTMLテンプレートに設定が反映され、`<title>`タグやレイアウトクラスが動的に変更されます。
+
+### 2. 制御フロー (rerun)
+
+スクリプトを明示的に再実行する`kt.rerun()`を実装しました。
+
+```typescript
+export function requestRerun(): never {
+  throw new RerunException();
+}
+```
+
+`RerunException`を投げることで、スクリプト実行を中断し、最初から再実行します。
+
+### 3. テーブル表示 (table)
+
+様々なデータ形式に対応したテーブル表示機能を実装しました。
+
+```typescript
+// オブジェクト配列
+kt.table([{ name: "Alice", age: 30 }, { name: "Bob", age: 25 }]);
+
+// 2D配列（最初の行がヘッダー）
+kt.table([["Name", "Age"], ["Alice", 30], ["Bob", 25]]);
+
+// 明示的形式
+kt.table({ columns: ["Name", "Age"], data: [["Alice", 30]] });
+```
+
+内部では`normalizeTableData`関数で統一形式に変換し、`escapeHtml`でXSS対策を施しています。
+
+### 4. ダウンロードボタン (download_button)
+
+ファイルダウンロードを提供するウィジェットを実装しました。
+
+```typescript
+kt.download_button("Download", csvData, "data.csv", { mime: "text/csv" });
+```
+
+特徴:
+- 文字列とArrayBuffer両対応
+- Base64エンコーディングによるData URL生成
+- カスタムMIMEタイプ指定
+- XSS対策済み
+
+### 5. タブレイアウト (tabs)
+
+複数のタブでコンテンツを整理するレイアウトコンポーネントを実装しました。
+
+```typescript
+const [tab1, tab2] = kt.tabs(["Overview", "Details"]);
+
+tab1(() => {
+  kt.header("Overview");
+  kt.write("Overview content");
+});
+
+tab2(() => {
+  kt.header("Details");
+  kt.table(data);
+});
+```
+
+TypeScriptらしいコールバックパターンを採用し、各タブ関数には`isActive`プロパティも付与されています。
+
+### 6. Streamlit互換ウィジェット
 
 Streamlitとの互換性を高めるため、6つの新しいウィジェットを実装しました。
 
@@ -287,6 +372,16 @@ app.addEventListener("change", (e) => {
 });
 ```
 
+## テスト
+
+Week5では610のテストがパスしており、以下のテストを追加しました：
+
+- ストリーミングのユニットテスト
+- マルチタブ同期のE2Eテスト
+- 再接続シナリオのテスト
+- イベントデバウンスのテスト
+- Phase 3-A各機能のユニットテスト
+
 ## まとめ
 
 Week5の実装により、kantan-uiは以下の点で強化されました：
@@ -299,14 +394,20 @@ Week5の実装により、kantan-uiは以下の点で強化されました：
 | シーケンス番号 | 再接続時のパッチ欠落防止 |
 | デバウンス | サーバー負荷軽減、レスポンス向上 |
 | リファクタリング | コード品質向上、保守性改善 |
+| set_page_config | ページタイトル・レイアウト設定 |
+| table | 様々な形式のデータ表示 |
+| download_button | ファイルダウンロード提供 |
+| tabs | コンテンツの整理・切り替え |
 | Streamlit互換ウィジェット | checkbox, toggle, radio, number_input, text_area, multiselect |
 
-次のステップとして、以下を検討しています：
+次のステップとして、Phase 3-B/Cで以下を検討しています：
 
-1. **Cloudflare Workers対応**: エッジでの実行
-2. **レイアウトAPI**: `kt.columns()`, `kt.sidebar()`などの追加
-3. **チャートコンポーネント**: データ可視化対応
-4. **追加ウィジェット**: `kt.file_uploader()`, `kt.date_input()`など
+1. **キャッシュAPI**: `kt.cache_data()`, `kt.cache_resource()`
+2. **レイアウトAPI**: `kt.sidebar()`, `kt.columns()`
+3. **データウィジェット**: `kt.dataframe()`, `kt.file_uploader()`
+4. **チャート**: `kt.line_chart()`, `kt.bar_chart()`
+5. **Cloudflare Workers対応**: エッジでの実行
+6. **追加ウィジェット**: `kt.date_input()`, `kt.time_input()`
 
 ---
 

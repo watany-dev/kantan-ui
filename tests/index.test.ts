@@ -44,6 +44,8 @@ describe("kantan-ui module exports", () => {
 
 	it("should export kt object with all APIs", () => {
 		expect(kt).toBeDefined();
+		expect(kt.set_page_config).toBeDefined();
+		expect(kt.rerun).toBeDefined();
 		expect(kt.write).toBeDefined();
 		expect(kt.title).toBeDefined();
 		expect(kt.header).toBeDefined();
@@ -51,9 +53,12 @@ describe("kantan-ui module exports", () => {
 		expect(kt.text).toBeDefined();
 		expect(kt.divider).toBeDefined();
 		expect(kt.html).toBeDefined();
+		expect(kt.table).toBeDefined();
 		expect(kt.button).toBeDefined();
 		expect(kt.slider).toBeDefined();
 		expect(kt.text_input).toBeDefined();
 		expect(kt.selectbox).toBeDefined();
+		expect(kt.download_button).toBeDefined();
+		expect(kt.tabs).toBeDefined();
 	});
 });

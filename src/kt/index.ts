@@ -22,6 +22,9 @@
  */
 
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
+import * as config from "./config";
+import * as control from "./control";
+import * as data from "./data";
 import * as feedback from "./feedback";
 import * as formModule from "./form";
 import * as layout from "./layout";
@@ -29,6 +32,12 @@ import * as output from "./output";
 import * as widgets from "./widgets";
 
 export const kt = {
+	// Config APIs
+	set_page_config: config.set_page_config,
+
+	// Control APIs
+	rerun: control.requestRerun,
+
 	// Output APIs
 	write: output.write,
 	title: output.title,
@@ -49,10 +58,14 @@ export const kt = {
 	spinner: feedback.spinner,
 	toast: feedback.toast,
 
+	// Data APIs
+	table: data.table,
+
 	// Layout APIs
 	container: layout.container,
 	columns: layout.columns,
 	expander: layout.expander,
+	tabs: layout.tabs,
 
 	// Form APIs
 	form: formModule.form,
@@ -63,6 +76,7 @@ export const kt = {
 	slider: widgets.slider,
 	text_input: widgets.text_input,
 	selectbox: widgets.selectbox,
+	download_button: widgets.download_button,
 	checkbox: widgets.checkbox,
 	radio: widgets.radio,
 	number_input: widgets.number_input,

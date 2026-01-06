@@ -50,6 +50,12 @@ export interface SelectboxConfig {
 	disabled?: boolean;
 }
 
+export interface DownloadButtonConfig {
+	key?: string;
+	mime?: string;
+	disabled?: boolean;
+}
+
 export interface CheckboxConfig {
 	label: string;
 	defaultValue?: boolean;
