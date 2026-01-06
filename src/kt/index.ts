@@ -46,6 +46,7 @@ export const kt = {
 	text: output.text,
 	divider: output.divider,
 	html: output.html,
+	json: output.json,
 
 	// Alert APIs
 	success: output.success,

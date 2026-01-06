@@ -129,3 +129,83 @@ export function warning(message: string, config?: AlertConfig): void {
 export function info(message: string, config?: AlertConfig): void {
 	alert("info", message, config);
 }
+
+// ============================================
+// JSON API
+// ============================================
+
+export interface JsonConfig {
+	/** 展開するデフォルト深さ（デフォルト: 1） */
+	expanded?: number;
+}
+
+/**
+ * JSONデータを折りたたみ可能なビューで表示
+ *
+ * @param data - JSONデータ（オブジェクト、配列、またはプリミティブ）
+ * @param config - オプション設定
+ *
+ * @example
+ * kt.json({ name: "Alice", age: 30 });
+ * kt.json(apiResponse, { expanded: 2 });
+ */
+export function json(data: unknown, config?: JsonConfig): void {
+	const ctx = requireRenderContext();
+	const expandedDepth = config?.expanded ?? 1;
+	const jsonHtml = renderJsonTree(data, 0, expandedDepth);
+	ctx.append(`<div class="kt-json">${jsonHtml}</div>`);
+}
+
+function renderJsonTree(data: unknown, depth: number, expandedDepth: number): string {
+	if (data === null) {
+		return '<span class="kt-json-null">null</span>';
+	}
+
+	if (typeof data === "boolean") {
+		return `<span class="kt-json-boolean">${data}</span>`;
+	}
+
+	if (typeof data === "number") {
+		return `<span class="kt-json-number">${data}</span>`;
+	}
+
+	if (typeof data === "string") {
+		return `<span class="kt-json-string">"${escapeHtml(data)}"</span>`;
+	}
+
+	if (Array.isArray(data)) {
+		if (data.length === 0) {
+			return '<span class="kt-json-array">[]</span>';
+		}
+
+		const isExpanded = depth < expandedDepth;
+		const items = data
+			.map(
+				(item, i) =>
+					`<div class="kt-json-item">${renderJsonTree(item, depth + 1, expandedDepth)}${i < data.length - 1 ? "," : ""}</div>`,
+			)
+			.join("");
+
+		return `<details class="kt-json-array"${isExpanded ? " open" : ""}><summary>[${data.length}]</summary>${items}</details>`;
+	}
+
+	if (typeof data === "object") {
+		const entries = Object.entries(data);
+		if (entries.length === 0) {
+			return '<span class="kt-json-object">{}</span>';
+		}
+
+		const isExpanded = depth < expandedDepth;
+		const items = entries
+			.map(
+				([key, value], i) =>
+					`<div class="kt-json-item"><span class="kt-json-key">"${escapeHtml(key)}"</span>: ${renderJsonTree(value, depth + 1, expandedDepth)}${i < entries.length - 1 ? "," : ""}</div>`,
+			)
+			.join("");
+
+		return `<details class="kt-json-object"${isExpanded ? " open" : ""}><summary>{${entries.length}}</summary>${items}</details>`;
+	}
+
+	// その他の型（undefined等）
+	return escapeHtml(String(data));
+}

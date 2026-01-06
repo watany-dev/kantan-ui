@@ -6,6 +6,7 @@ import {
 	header,
 	html,
 	info,
+	json,
 	subheader,
 	success,
 	text,
@@ -167,6 +168,118 @@ describe("Output APIs", () => {
 		it("should include default info icon", () => {
 			info("Information");
 			expect(ctx.getHtml()).toContain("ℹ");
+		});
+	});
+
+	describe("json", () => {
+		it("should render with kt-json class", () => {
+			json({ a: 1 });
+			expect(ctx.getHtml()).toContain('class="kt-json"');
+		});
+
+		it("should render null", () => {
+			json(null);
+			expect(ctx.getHtml()).toContain("kt-json-null");
+			expect(ctx.getHtml()).toContain("null");
+		});
+
+		it("should render boolean true", () => {
+			json(true);
+			expect(ctx.getHtml()).toContain("kt-json-boolean");
+			expect(ctx.getHtml()).toContain("true");
+		});
+
+		it("should render boolean false", () => {
+			json(false);
+			expect(ctx.getHtml()).toContain("kt-json-boolean");
+			expect(ctx.getHtml()).toContain("false");
+		});
+
+		it("should render number", () => {
+			json(42);
+			expect(ctx.getHtml()).toContain("kt-json-number");
+			expect(ctx.getHtml()).toContain("42");
+		});
+
+		it("should render string with quotes", () => {
+			json("hello");
+			expect(ctx.getHtml()).toContain("kt-json-string");
+			expect(ctx.getHtml()).toContain('"hello"');
+		});
+
+		it("should escape HTML in string values", () => {
+			json("<script>xss</script>");
+			expect(ctx.getHtml()).toContain("&lt;script&gt;");
+			expect(ctx.getHtml()).not.toContain("<script>");
+		});
+
+		it("should render empty array as []", () => {
+			json([]);
+			expect(ctx.getHtml()).toContain("[]");
+		});
+
+		it("should render empty object as {}", () => {
+			json({});
+			expect(ctx.getHtml()).toContain("{}");
+		});
+
+		it("should render array with details/summary", () => {
+			json([1, 2, 3]);
+			expect(ctx.getHtml()).toContain("<details");
+			expect(ctx.getHtml()).toContain("<summary>");
+			expect(ctx.getHtml()).toContain("[3]");
+		});
+
+		it("should render object with details/summary", () => {
+			json({ a: 1, b: 2 });
+			expect(ctx.getHtml()).toContain("<details");
+			expect(ctx.getHtml()).toContain("{2}");
+		});
+
+		it("should render object keys", () => {
+			json({ name: "Alice" });
+			expect(ctx.getHtml()).toContain("kt-json-key");
+			expect(ctx.getHtml()).toContain('"name"');
+		});
+
+		it("should expand to depth 1 by default", () => {
+			json({ a: { b: 1 } });
+			const output = ctx.getHtml();
+			// 最初のdetailsタグはopen属性を持つ（depth 0）
+			expect(output).toMatch(/<details[^>]*open/);
+		});
+
+		it("should not expand beyond default depth", () => {
+			json({ a: { b: 1 } });
+			const output = ctx.getHtml();
+			// 2番目のdetailsタグはopen属性を持たない（depth 1）
+			const matches = output.match(/<details/g);
+			expect(matches?.length).toBe(2);
+		});
+
+		it("should respect expanded option", () => {
+			json({ a: { b: { c: 1 } } }, { expanded: 2 });
+			const output = ctx.getHtml();
+			// expanded: 2 なので depth 0, 1 のdetailsはopen
+			const openMatches = output.match(/<details[^>]*open/g);
+			expect(openMatches?.length).toBe(2);
+		});
+
+		it("should render nested arrays", () => {
+			json([
+				[1, 2],
+				[3, 4],
+			]);
+			expect(ctx.getHtml()).toContain("[2]");
+		});
+
+		it("should render mixed content", () => {
+			json({ str: "text", num: 42, bool: true, nil: null });
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-json-string");
+			expect(output).toContain("kt-json-number");
+			expect(output).toContain("kt-json-boolean");
+			expect(output).toContain("kt-json-null");
 		});
 	});
 });
