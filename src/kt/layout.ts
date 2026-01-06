@@ -149,6 +149,8 @@ export function container(content: () => void, config: ContainerConfig = {}): vo
 export interface ColumnsConfig {
 	gap?: string;
 	ratios?: number[];
+	/** Stack columns vertically on mobile (default: true) */
+	responsive?: boolean;
 }
 
 /**
@@ -181,8 +183,11 @@ export function columns(contents: Array<() => void>, config: ColumnsConfig = {})
 	const gap = config.gap ?? "1rem";
 	const ratios = config.ratios ?? contents.map(() => 1);
 	const totalRatio = ratios.reduce((a, b) => a + b, 0);
+	// Responsive is true by default
+	const responsive = config.responsive !== false;
+	const responsiveClass = responsive ? " kt-columns-responsive" : "";
 
-	ctx.append(`<div class="kt-columns" style="display: flex; gap: ${gap};">`);
+	ctx.append(`<div class="kt-columns${responsiveClass}" style="display: flex; gap: ${gap};">`);
 
 	contents.forEach((content, i) => {
 		const ratio = ratios[i] ?? 1;

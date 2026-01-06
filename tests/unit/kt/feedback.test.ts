@@ -82,6 +82,25 @@ describe("Feedback APIs", () => {
 			progress(1);
 			expect(ctx.getHtml()).toContain("width: 100%");
 		});
+
+		it("should add animated class when animated option is true", () => {
+			progress(0.5, { animated: true });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-progress-animated");
+		});
+
+		it("should not add animated class by default", () => {
+			progress(0.5);
+			const html = ctx.getHtml();
+			expect(html).not.toContain("kt-progress-animated");
+		});
+
+		it("should combine animated with color option", () => {
+			progress(0.75, { animated: true, color: "#ff0000" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-progress-animated");
+			expect(html).toContain("background: #ff0000");
+		});
 	});
 
 	describe("spinner", () => {
@@ -134,11 +153,13 @@ describe("Feedback APIs", () => {
 			expect(html).toContain("32px");
 		});
 
-		it("should include CSS animation keyframes", () => {
+		it("should use kt-spinner-icon class for animation (external CSS)", () => {
 			spinner();
 			const html = ctx.getHtml();
-			expect(html).toContain("@keyframes kt-spin");
-			expect(html).toContain("animation:");
+			// Animation is provided by external CSS (default.ts), not inline
+			expect(html).toContain('class="kt-spinner-icon"');
+			// Should NOT contain inline keyframes (prevents duplication)
+			expect(html).not.toContain("@keyframes");
 		});
 	});
 

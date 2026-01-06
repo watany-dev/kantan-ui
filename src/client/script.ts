@@ -193,6 +193,25 @@ function applyPatch(patch) {
 }`;
 
 /**
+ * Toast自動消去スクリプト
+ */
+const toastScript = `
+function initToasts() {
+  const toasts = document.querySelectorAll(".kt-toast[data-duration]:not([data-toast-initialized])");
+  toasts.forEach(function(toast) {
+    toast.setAttribute("data-toast-initialized", "true");
+    const duration = parseInt(toast.getAttribute("data-duration"), 10) || 4000;
+    toast.style.transition = "opacity 0.3s ease-out";
+    setTimeout(function() {
+      toast.style.opacity = "0";
+      setTimeout(function() {
+        toast.remove();
+      }, 300);
+    }, duration);
+  });
+}`;
+
+/**
  * イベント処理スクリプト（デバウンス付き、IME対応）
  */
 const eventHandlingScript = `
@@ -214,6 +233,32 @@ function setupEventDelegation(sendEvent) {
   const app = document.getElementById("app");
 
   app.addEventListener("click", (e) => {
+    // コピーボタンのハンドリング
+    const copyBtn = e.target.closest("[data-kt-copy]");
+    if (copyBtn) {
+      const codeBlock = copyBtn.closest(".kt-code");
+      if (codeBlock && codeBlock.dataset.code) {
+        const textToCopy = codeBlock.dataset.code
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&amp;/g, "&")
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'");
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = "Copied!";
+          copyBtn.classList.add("kt-code-copy-success");
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.classList.remove("kt-code-copy-success");
+          }, 2000);
+        }).catch((err) => {
+          console.error("Failed to copy code:", err);
+        });
+      }
+      return;
+    }
+
     const target = e.target.closest("[data-kt-event='click']");
     if (target && target.id) sendEvent(target.id, "clicked");
   });
@@ -357,6 +402,8 @@ function connect() {
         restoreFocusState(focusState, 0);
         requestAnimationFrame(() => restoreFocusState(focusState, 0));
       }
+      // Initialize toasts after DOM update
+      initToasts();
     }
   };
 
@@ -404,6 +451,7 @@ setupEventDelegation(window.sendEvent);
 		focusManagementScript,
 		xssDetectionScript,
 		patchApplyScript,
+		toastScript,
 		eventHandlingScript,
 		websocketScript,
 	].join("\n");

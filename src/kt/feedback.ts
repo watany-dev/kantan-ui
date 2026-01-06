@@ -8,6 +8,8 @@ import { requireRenderContext } from "./context";
 export interface ProgressConfig {
 	label?: string;
 	color?: string;
+	/** Show animated stripes effect (useful for indeterminate progress) */
+	animated?: boolean;
 }
 
 // ============================================
@@ -66,13 +68,14 @@ export function progress(value: number, config: ProgressConfig = {}): void {
 	// 0-100% にクランプ
 	const percentage = Math.min(Math.max(normalizedValue * 100, 0), 100);
 	const color = config.color ?? "#3498db";
+	const animatedClass = config.animated ? " kt-progress-animated" : "";
 
 	const labelHtml = config.label
 		? `<div class="kt-progress-label">${escapeHtml(config.label)}</div>`
 		: "";
 
 	ctx.append(
-		`<div class="kt-progress">${labelHtml}<div class="kt-progress-bar" style="background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden;"><div class="kt-progress-fill" style="background: ${color}; width: ${percentage}%; height: 100%; transition: width 0.3s ease;"></div></div></div>`,
+		`<div class="kt-progress">${labelHtml}<div class="kt-progress-bar"><div class="kt-progress-fill${animatedClass}" style="background: ${color}; width: ${percentage}%;"></div></div></div>`,
 	);
 }
 
@@ -101,7 +104,7 @@ export function spinner(text = "Loading...", config: SpinnerConfig = {}): void {
 	const size = spinnerSizes[config.size ?? "medium"];
 
 	ctx.append(
-		`<div class="kt-spinner"><style>@keyframes kt-spin { to { transform: rotate(360deg); } }</style><div class="kt-spinner-icon" style="width: ${size}; height: ${size}; border: 2px solid #e0e0e0; border-top-color: #3498db; border-radius: 50%; animation: kt-spin 1s linear infinite;"></div><span class="kt-spinner-text">${escapeHtml(text)}</span></div>`,
+		`<div class="kt-spinner"><div class="kt-spinner-icon" style="width: ${size}; height: ${size};"></div><span class="kt-spinner-text">${escapeHtml(text)}</span></div>`,
 	);
 }
 

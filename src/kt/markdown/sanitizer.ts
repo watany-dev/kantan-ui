@@ -89,7 +89,9 @@ function sanitizeAttributes(tagName: string, attributes: string): string {
 	let match: RegExpExecArray | null = attrPattern.exec(attributes);
 
 	while (match !== null) {
-		const attrName = match[1]?.toLowerCase() ?? "";
+		// match[1] is guaranteed by regex pattern (\w+)
+		const attrName = (match[1] as string).toLowerCase();
+		// One of match[2-4] will be defined by the alternation pattern
 		const attrValue = match[2] ?? match[3] ?? match[4] ?? "";
 
 		if (allowedAttrs.has(attrName)) {
@@ -147,8 +149,10 @@ export function sanitizeMarkdownHtml(html: string): string {
 
 	while (match !== null) {
 		const fullMatch = match[0];
-		const tagName = match[1]?.toLowerCase() ?? "";
-		const attributes = match[2] ?? "";
+		// match[1] is guaranteed by regex pattern ([a-zA-Z][a-zA-Z0-9]*)
+		const tagName = (match[1] as string).toLowerCase();
+		// match[2] is guaranteed by regex pattern ((?:\s+[^>]*)?)
+		const attributes = match[2] as string;
 		const isClosingTag = fullMatch.startsWith("</");
 		const isSelfClosing = fullMatch.endsWith("/>");
 

@@ -255,7 +255,7 @@ describe("Layout APIs", () => {
 		it("should create columns with kt-columns class", () => {
 			columns([() => write("Left"), () => write("Right")]);
 			const html = ctx.getHtml();
-			expect(html).toContain('class="kt-columns"');
+			expect(html).toContain("kt-columns");
 			expect(html).toContain('class="kt-column"');
 		});
 
@@ -313,6 +313,24 @@ describe("Layout APIs", () => {
 		it("should throw error without render context", () => {
 			setRenderContext(null);
 			expect(() => columns([() => write("test")])).toThrow("RenderContext is not available");
+		});
+
+		it("should add responsive class by default", () => {
+			columns([() => write("A"), () => write("B")]);
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-columns-responsive");
+		});
+
+		it("should add responsive class when responsive is true", () => {
+			columns([() => write("A"), () => write("B")], { responsive: true });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-columns-responsive");
+		});
+
+		it("should not add responsive class when responsive is false", () => {
+			columns([() => write("A"), () => write("B")], { responsive: false });
+			const html = ctx.getHtml();
+			expect(html).not.toContain("kt-columns-responsive");
 		});
 	});
 

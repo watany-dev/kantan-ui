@@ -128,6 +128,60 @@ const sqlRules: LanguageRules = [
 ];
 
 /**
+ * Go のハイライトルール
+ */
+const goRules: LanguageRules = [
+	// コメント
+	{ pattern: /\/\/.*$/gm, className: "kt-code-comment" },
+	{ pattern: /\/\*[\s\S]*?\*\//g, className: "kt-code-comment" },
+	// 文字列
+	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-code-string" },
+	{ pattern: /`[^`]*`/g, className: "kt-code-string" },
+	// キーワード
+	{
+		pattern:
+			/\b(break|case|chan|const|continue|default|defer|else|fallthrough|for|func|go|goto|if|import|interface|map|package|range|return|select|struct|switch|type|var|nil|true|false|iota)\b/g,
+		className: "kt-code-keyword",
+	},
+	// 組み込み型
+	{
+		pattern:
+			/\b(bool|byte|complex64|complex128|error|float32|float64|int|int8|int16|int32|int64|rune|string|uint|uint8|uint16|uint32|uint64|uintptr)\b/g,
+		className: "kt-code-keyword",
+	},
+	// 数値
+	{ pattern: /\b\d+\.?\d*\b/g, className: "kt-code-number" },
+];
+
+/**
+ * Rust のハイライトルール
+ */
+const rustRules: LanguageRules = [
+	// コメント
+	{ pattern: /\/\/.*$/gm, className: "kt-code-comment" },
+	{ pattern: /\/\*[\s\S]*?\*\//g, className: "kt-code-comment" },
+	// 文字列
+	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-code-string" },
+	{ pattern: /r#*"[^"]*"#*/g, className: "kt-code-string" },
+	// キーワード
+	{
+		pattern:
+			/\b(as|async|await|break|const|continue|crate|dyn|else|enum|extern|false|fn|for|if|impl|in|let|loop|match|mod|move|mut|pub|ref|return|self|Self|static|struct|super|trait|true|type|unsafe|use|where|while)\b/g,
+		className: "kt-code-keyword",
+	},
+	// 組み込み型
+	{
+		pattern:
+			/\b(bool|char|str|u8|u16|u32|u64|u128|usize|i8|i16|i32|i64|i128|isize|f32|f64|Option|Result|String|Vec|Box|Rc|Arc|Cell|RefCell)\b/g,
+		className: "kt-code-keyword",
+	},
+	// マクロ
+	{ pattern: /\b[a-z_][a-z0-9_]*!/g, className: "kt-code-keyword" },
+	// 数値
+	{ pattern: /\b\d+\.?\d*\b/g, className: "kt-code-number" },
+];
+
+/**
  * 言語エイリアスのマッピング
  */
 const languageAliases: Record<string, string> = {
@@ -137,6 +191,8 @@ const languageAliases: Record<string, string> = {
 	py: "python",
 	sh: "bash",
 	shell: "bash",
+	golang: "go",
+	rs: "rust",
 };
 
 /**
@@ -150,6 +206,8 @@ export const languageRules: Record<string, LanguageRules> = {
 	html: htmlRules,
 	css: cssRules,
 	sql: sqlRules,
+	go: goRules,
+	rust: rustRules,
 };
 
 /**
