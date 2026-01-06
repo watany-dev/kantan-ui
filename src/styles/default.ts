@@ -186,6 +186,24 @@ const feedbackStyles = `
     height: 100%;
     transition: width 0.3s ease;
   }
+  .kt-progress-animated {
+    background-image: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.15) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.15) 50%,
+      rgba(255, 255, 255, 0.15) 75%,
+      transparent 75%,
+      transparent
+    );
+    background-size: 1rem 1rem;
+    animation: kt-progress-stripes 1s linear infinite;
+  }
+  @keyframes kt-progress-stripes {
+    from { background-position: 1rem 0; }
+    to { background-position: 0 0; }
+  }
 
   /* Spinner */
   .kt-spinner {

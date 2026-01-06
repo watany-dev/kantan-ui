@@ -130,6 +130,11 @@ describe("Default Styles", () => {
 			expect(feedbackStyles).toContain(".kt-progress-fill");
 		});
 
+		it("should include animated progress bar styles", () => {
+			expect(feedbackStyles).toContain(".kt-progress-animated");
+			expect(feedbackStyles).toContain("@keyframes kt-progress-stripes");
+		});
+
 		it("should include spinner class", () => {
 			expect(feedbackStyles).toContain(".kt-spinner");
 			expect(feedbackStyles).toContain(".kt-spinner-icon");

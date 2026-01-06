@@ -82,6 +82,25 @@ describe("Feedback APIs", () => {
 			progress(1);
 			expect(ctx.getHtml()).toContain("width: 100%");
 		});
+
+		it("should add animated class when animated option is true", () => {
+			progress(0.5, { animated: true });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-progress-animated");
+		});
+
+		it("should not add animated class by default", () => {
+			progress(0.5);
+			const html = ctx.getHtml();
+			expect(html).not.toContain("kt-progress-animated");
+		});
+
+		it("should combine animated with color option", () => {
+			progress(0.75, { animated: true, color: "#ff0000" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-progress-animated");
+			expect(html).toContain("background: #ff0000");
+		});
 	});
 
 	describe("spinner", () => {
