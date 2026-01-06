@@ -403,6 +403,30 @@ describe("parseMarkdown", () => {
 		});
 	});
 
+	describe("table edge cases", () => {
+		it("should handle table followed by paragraph", () => {
+			const md = "| A | B |\n|---|---|\n| 1 | 2 |\nThis is a paragraph after table";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<table>");
+			expect(result).toContain("<td>1</td>");
+			expect(result).toContain("<p>This is a paragraph after table</p>");
+		});
+
+		it("should handle table followed by heading", () => {
+			const md = "| A | B |\n|---|---|\n| 1 | 2 |\n# Heading after table";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<table>");
+			expect(result).toContain("<h1>Heading after table</h1>");
+		});
+
+		it("should handle table followed by list", () => {
+			const md = "| A | B |\n|---|---|\n| 1 | 2 |\n- list item";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<table>");
+			expect(result).toContain("<li>list item</li>");
+		});
+	});
+
 	describe("edge cases", () => {
 		it("should handle empty string", () => {
 			expect(parseMarkdown("")).toBe("");

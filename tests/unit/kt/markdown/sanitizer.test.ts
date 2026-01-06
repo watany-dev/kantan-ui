@@ -199,5 +199,66 @@ describe("sanitizeMarkdownHtml", () => {
 			const result = sanitizeMarkdownHtml("<p>text<");
 			expect(result).toContain("text");
 		});
+
+		it("should handle tags with multiple allowed attributes", () => {
+			const result = sanitizeMarkdownHtml(
+				'<a href="url" title="my title" target="_blank">link</a>',
+			);
+			expect(result).toContain('href="url"');
+			expect(result).toContain('title="my title"');
+			expect(result).toContain('target="_blank"');
+		});
+
+		it("should handle img with multiple allowed attributes", () => {
+			const result = sanitizeMarkdownHtml(
+				'<img src="img.png" alt="alt text" title="title" width="100" height="50">',
+			);
+			expect(result).toContain('src="img.png"');
+			expect(result).toContain('alt="alt text"');
+			expect(result).toContain('width="100"');
+			expect(result).toContain('height="50"');
+		});
+
+		it("should filter out disallowed attributes from tags", () => {
+			const result = sanitizeMarkdownHtml('<a href="url" class="link" id="my-id">link</a>');
+			expect(result).toContain('href="url"');
+			expect(result).not.toContain("class=");
+			expect(result).not.toContain("id=");
+		});
+
+		it("should handle mixed allowed and disallowed attributes", () => {
+			const result = sanitizeMarkdownHtml('<a href="url" onclick="evil()">link</a>');
+			expect(result).toContain('href="url"');
+			expect(result).not.toContain("onclick");
+		});
+
+		it("should handle tag with only disallowed attributes", () => {
+			const result = sanitizeMarkdownHtml('<p onclick="evil()" onmouseover="bad()">text</p>');
+			expect(result).toContain("<p>");
+			expect(result).toContain("text");
+			expect(result).not.toContain("onclick");
+			expect(result).not.toContain("onmouseover");
+		});
+
+		it("should handle closing tags properly", () => {
+			const result = sanitizeMarkdownHtml("</p></div></script>");
+			expect(result).toContain("</p>");
+			expect(result).not.toContain("</script>");
+		});
+
+		it("should preserve text between tags", () => {
+			const result = sanitizeMarkdownHtml("before<p>middle</p>after");
+			expect(result).toBe("before<p>middle</p>after");
+		});
+
+		it("should handle uppercase tag names", () => {
+			const result = sanitizeMarkdownHtml("<P>text</P>");
+			expect(result.toLowerCase()).toContain("<p>text</p>");
+		});
+
+		it("should handle whitespace in tags", () => {
+			const result = sanitizeMarkdownHtml('<p  class="test" >text</p >');
+			expect(result).toContain("text");
+		});
 	});
 });

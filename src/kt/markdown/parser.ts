@@ -298,7 +298,8 @@ export function parseMarkdown(markdown: string): string {
 				inBlockquote = true;
 				blockquoteContent = [];
 			}
-			blockquoteContent.push(blockquoteMatch[1] ?? "");
+			// blockquoteMatch[1] is guaranteed by regex pattern (.*), always defined
+			blockquoteContent.push(blockquoteMatch[1] as string);
 			continue;
 		}
 
@@ -313,7 +314,8 @@ export function parseMarkdown(markdown: string): string {
 			flushParagraph();
 			flushBlockquote();
 			flushTable();
-			const itemIndent = taskListMatch[1]?.length ?? 0;
+			// taskListMatch[1] is guaranteed by regex pattern (\s*), always defined
+			const itemIndent = (taskListMatch[1] as string).length;
 			const isChecked = taskListMatch[2]?.toLowerCase() === "x";
 			listStack.push({
 				content: taskListMatch[3],
@@ -331,7 +333,8 @@ export function parseMarkdown(markdown: string): string {
 			flushParagraph();
 			flushBlockquote();
 			flushTable();
-			const itemIndent = unorderedListMatch[1]?.length ?? 0;
+			// unorderedListMatch[1] is guaranteed by regex pattern (\s*), always defined
+			const itemIndent = (unorderedListMatch[1] as string).length;
 			listStack.push({
 				content: unorderedListMatch[2],
 				indent: itemIndent,
@@ -346,7 +349,8 @@ export function parseMarkdown(markdown: string): string {
 			flushParagraph();
 			flushBlockquote();
 			flushTable();
-			const itemIndent = orderedListMatch[1]?.length ?? 0;
+			// orderedListMatch[1] is guaranteed by regex pattern (\s*), always defined
+			const itemIndent = (orderedListMatch[1] as string).length;
 			listStack.push({
 				content: orderedListMatch[2],
 				indent: itemIndent,
