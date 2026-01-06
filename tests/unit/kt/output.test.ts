@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import {
+	code,
 	divider,
 	error,
 	header,
@@ -280,6 +281,74 @@ describe("Output APIs", () => {
 			expect(output).toContain("kt-json-number");
 			expect(output).toContain("kt-json-boolean");
 			expect(output).toContain("kt-json-null");
+		});
+	});
+
+	describe("code", () => {
+		it("should render code block with kt-code class", () => {
+			code("const x = 1;");
+			expect(ctx.getHtml()).toContain('class="kt-code"');
+		});
+
+		it("should render with pre and code tags", () => {
+			code("const x = 1;");
+			expect(ctx.getHtml()).toContain("<pre>");
+			expect(ctx.getHtml()).toContain("<code");
+		});
+
+		it("should escape HTML in code content", () => {
+			code("<script>alert('xss')</script>");
+			expect(ctx.getHtml()).toContain("&lt;script&gt;");
+			expect(ctx.getHtml()).not.toContain("<script>alert");
+		});
+
+		it("should set data-language attribute when language provided", () => {
+			code("x = 1", "python");
+			expect(ctx.getHtml()).toContain('data-language="python"');
+		});
+
+		it("should set empty data-language when no language provided", () => {
+			code("plain text");
+			expect(ctx.getHtml()).toContain('data-language=""');
+		});
+
+		it("should escape language attribute", () => {
+			code("text", '"><script>xss</script>');
+			expect(ctx.getHtml()).not.toContain("<script>xss");
+		});
+
+		it("should add wrap class when wrap_lines is true", () => {
+			code("text", undefined, { wrap_lines: true });
+			expect(ctx.getHtml()).toContain("kt-code-wrap");
+		});
+
+		it("should not add wrap class by default", () => {
+			code("text");
+			expect(ctx.getHtml()).not.toContain("kt-code-wrap");
+		});
+
+		it("should render line numbers when enabled", () => {
+			code("line1\nline2\nline3", undefined, { line_numbers: true });
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-code-line-numbers");
+			expect(output).toContain(">1<");
+			expect(output).toContain(">2<");
+			expect(output).toContain(">3<");
+		});
+
+		it("should not render line numbers by default", () => {
+			code("line1\nline2");
+			expect(ctx.getHtml()).not.toContain("kt-code-line-numbers");
+		});
+
+		it("should preserve newlines in code", () => {
+			code("line1\nline2");
+			expect(ctx.getHtml()).toContain("line1\nline2");
+		});
+
+		it("should handle empty code", () => {
+			code("");
+			expect(ctx.getHtml()).toContain('class="kt-code"');
 		});
 	});
 });

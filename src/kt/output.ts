@@ -131,6 +131,51 @@ export function info(message: string, config?: AlertConfig): void {
 }
 
 // ============================================
+// Code API
+// ============================================
+
+export interface CodeConfig {
+	/** 行番号を表示（デフォルト: false） */
+	line_numbers?: boolean;
+	/** ラップ表示（デフォルト: false、横スクロール） */
+	wrap_lines?: boolean;
+}
+
+/**
+ * コードブロックを表示
+ *
+ * @param body - コードの内容
+ * @param language - プログラミング言語（構文ハイライト用）
+ * @param config - オプション設定
+ *
+ * @example
+ * kt.code("const x = 42;", "typescript");
+ * kt.code("print('hello')", "python", { line_numbers: true });
+ */
+export function code(body: string, language?: string, config?: CodeConfig): void {
+	const ctx = requireRenderContext();
+
+	// コード内容をエスケープ
+	const escapedCode = escapeHtml(body);
+
+	// 行番号の生成（オプション）
+	const lineNumbers = config?.line_numbers ? generateLineNumbers(body) : "";
+
+	const wrapClass = config?.wrap_lines ? " kt-code-wrap" : "";
+	const langAttr = `data-language="${escapeHtml(language ?? "")}"`;
+
+	ctx.append(
+		`<div class="kt-code${wrapClass}" ${langAttr}>${lineNumbers}<pre><code class="kt-code-content">${escapedCode}</code></pre></div>`,
+	);
+}
+
+function generateLineNumbers(code: string): string {
+	const lineCount = code.split("\n").length;
+	const numbers = Array.from({ length: lineCount }, (_, i) => `<span>${i + 1}</span>`).join("\n");
+	return `<div class="kt-code-line-numbers">${numbers}</div>`;
+}
+
+// ============================================
 // JSON API
 // ============================================
 
