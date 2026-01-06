@@ -29,6 +29,8 @@ export function parseMarkdown(markdown: string): string {
 		content: string;
 		indent: number;
 		type: "ul" | "ol";
+		isTask?: boolean;
+		isChecked?: boolean;
 	}
 	let listStack: ListItem[] = [];
 	let inBlockquote = false;
@@ -83,7 +85,14 @@ export function parseMarkdown(markdown: string): string {
 				}
 
 				// 同レベルの項目
-				result.push(`<li>${parseInline(item.content)}</li>`);
+				if (item.isTask) {
+					const checkbox = item.isChecked
+						? '<input type="checkbox" checked disabled>'
+						: '<input type="checkbox" disabled>';
+					result.push(`<li class="kt-task-item">${checkbox} ${parseInline(item.content)}</li>`);
+				} else {
+					result.push(`<li>${parseInline(item.content)}</li>`);
+				}
 				i++;
 			}
 
@@ -296,6 +305,24 @@ export function parseMarkdown(markdown: string): string {
 		// 引用の終了
 		if (inBlockquote && !trimmedLine.startsWith(">")) {
 			flushBlockquote();
+		}
+
+		// タスクリスト（- [ ] または - [x]）
+		const taskListMatch = line.match(/^(\s*)[-*]\s+\[([ xX])\]\s+(.+)$/);
+		if (taskListMatch?.[3]) {
+			flushParagraph();
+			flushBlockquote();
+			flushTable();
+			const itemIndent = taskListMatch[1]?.length ?? 0;
+			const isChecked = taskListMatch[2]?.toLowerCase() === "x";
+			listStack.push({
+				content: taskListMatch[3],
+				indent: itemIndent,
+				type: "ul",
+				isTask: true,
+				isChecked,
+			});
+			continue;
 		}
 
 		// 無順リスト（インデント対応）

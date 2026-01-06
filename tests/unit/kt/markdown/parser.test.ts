@@ -241,6 +241,50 @@ describe("parseMarkdown", () => {
 		});
 	});
 
+	describe("task lists", () => {
+		it("should parse unchecked task item", () => {
+			const md = "- [ ] unchecked task";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ul>");
+			expect(result).toContain('<input type="checkbox" disabled>');
+			expect(result).toContain("unchecked task");
+			expect(result).toContain('class="kt-task-item"');
+		});
+
+		it("should parse checked task item", () => {
+			const md = "- [x] checked task";
+			const result = parseMarkdown(md);
+			expect(result).toContain('<input type="checkbox" checked disabled>');
+			expect(result).toContain("checked task");
+		});
+
+		it("should parse checked task item with uppercase X", () => {
+			const md = "- [X] checked task";
+			const result = parseMarkdown(md);
+			expect(result).toContain('<input type="checkbox" checked disabled>');
+		});
+
+		it("should parse mixed task list", () => {
+			const md = "- [ ] todo\n- [x] done\n- [ ] another todo";
+			const result = parseMarkdown(md);
+			expect(result).toContain('<input type="checkbox" disabled>');
+			expect(result).toContain('<input type="checkbox" checked disabled>');
+		});
+
+		it("should handle inline formatting in task items", () => {
+			const md = "- [ ] **bold** task";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<strong>bold</strong>");
+		});
+
+		it("should work with asterisk syntax", () => {
+			const md = "* [ ] task with asterisk";
+			const result = parseMarkdown(md);
+			expect(result).toContain('<input type="checkbox" disabled>');
+			expect(result).toContain("task with asterisk");
+		});
+	});
+
 	describe("tables", () => {
 		it("should parse simple table", () => {
 			const md = "| Header 1 | Header 2 |\n|----------|----------|\n| Cell 1   | Cell 2   |";
