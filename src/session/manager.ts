@@ -219,20 +219,6 @@ export class SessionManager {
 		}
 	}
 
-	/**
-	 * WebSocket からセッションを取得
-	 * @deprecated WSContextの参照等価性が保証されないため、
-	 * クライアントから送信されるsessionIdを使用してgetSession()を呼び出すこと。
-	 * このメソッドはonClose時のクリーンアップ用途でのみ残している。
-	 */
-	getSessionByWebSocket(ws: WSContext): Session | undefined {
-		const sessionId = this.wsToSession.get(ws);
-		if (sessionId) {
-			return this.getSession(sessionId);
-		}
-		return undefined;
-	}
-
 	// WebSocket 切断時の処理
 	removeWebSocket(ws: WSContext): void {
 		const sessionId = this.wsToSession.get(ws);

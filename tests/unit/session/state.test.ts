@@ -12,7 +12,7 @@ import {
 	setCurrentSessionId,
 } from "../../../src/session/state";
 
-describe("session_state", () => {
+describe("SessionState", () => {
 	let manager: SessionManager;
 
 	beforeEach(() => {

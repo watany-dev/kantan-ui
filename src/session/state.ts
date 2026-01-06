@@ -196,6 +196,3 @@ export function createTypedSessionState<T extends Record<string, unknown>>(defau
 		},
 	});
 }
-
-// グローバル session_state インスタンス（後方互換用）
-export const session_state = createSessionState();
