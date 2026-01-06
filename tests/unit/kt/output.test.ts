@@ -1,11 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import {
+	code,
 	divider,
 	error,
 	header,
 	html,
 	info,
+	json,
+	markdown,
 	subheader,
 	success,
 	text,
@@ -174,6 +177,259 @@ describe("Output APIs", () => {
 		it("should include default info icon", () => {
 			info("Information");
 			expect(ctx.getHtml()).toContain("ℹ");
+		});
+	});
+
+	describe("json", () => {
+		it("should render with kt-json class", () => {
+			json({ a: 1 });
+			expect(ctx.getHtml()).toContain('class="kt-json"');
+		});
+
+		it("should render null", () => {
+			json(null);
+			expect(ctx.getHtml()).toContain("kt-json-null");
+			expect(ctx.getHtml()).toContain("null");
+		});
+
+		it("should render boolean true", () => {
+			json(true);
+			expect(ctx.getHtml()).toContain("kt-json-boolean");
+			expect(ctx.getHtml()).toContain("true");
+		});
+
+		it("should render boolean false", () => {
+			json(false);
+			expect(ctx.getHtml()).toContain("kt-json-boolean");
+			expect(ctx.getHtml()).toContain("false");
+		});
+
+		it("should render number", () => {
+			json(42);
+			expect(ctx.getHtml()).toContain("kt-json-number");
+			expect(ctx.getHtml()).toContain("42");
+		});
+
+		it("should render string with quotes", () => {
+			json("hello");
+			expect(ctx.getHtml()).toContain("kt-json-string");
+			expect(ctx.getHtml()).toContain('"hello"');
+		});
+
+		it("should escape HTML in string values", () => {
+			json("<script>xss</script>");
+			expect(ctx.getHtml()).toContain("&lt;script&gt;");
+			expect(ctx.getHtml()).not.toContain("<script>");
+		});
+
+		it("should render empty array as []", () => {
+			json([]);
+			expect(ctx.getHtml()).toContain("[]");
+		});
+
+		it("should render empty object as {}", () => {
+			json({});
+			expect(ctx.getHtml()).toContain("{}");
+		});
+
+		it("should render array with details/summary", () => {
+			json([1, 2, 3]);
+			expect(ctx.getHtml()).toContain("<details");
+			expect(ctx.getHtml()).toContain("<summary>");
+			expect(ctx.getHtml()).toContain("[3]");
+		});
+
+		it("should render object with details/summary", () => {
+			json({ a: 1, b: 2 });
+			expect(ctx.getHtml()).toContain("<details");
+			expect(ctx.getHtml()).toContain("{2}");
+		});
+
+		it("should render object keys", () => {
+			json({ name: "Alice" });
+			expect(ctx.getHtml()).toContain("kt-json-key");
+			expect(ctx.getHtml()).toContain('"name"');
+		});
+
+		it("should expand to depth 1 by default", () => {
+			json({ a: { b: 1 } });
+			const output = ctx.getHtml();
+			// 最初のdetailsタグはopen属性を持つ（depth 0）
+			expect(output).toMatch(/<details[^>]*open/);
+		});
+
+		it("should not expand beyond default depth", () => {
+			json({ a: { b: 1 } });
+			const output = ctx.getHtml();
+			// 2番目のdetailsタグはopen属性を持たない（depth 1）
+			const matches = output.match(/<details/g);
+			expect(matches?.length).toBe(2);
+		});
+
+		it("should respect expanded option", () => {
+			json({ a: { b: { c: 1 } } }, { expanded: 2 });
+			const output = ctx.getHtml();
+			// expanded: 2 なので depth 0, 1 のdetailsはopen
+			const openMatches = output.match(/<details[^>]*open/g);
+			expect(openMatches?.length).toBe(2);
+		});
+
+		it("should render nested arrays", () => {
+			json([
+				[1, 2],
+				[3, 4],
+			]);
+			expect(ctx.getHtml()).toContain("[2]");
+		});
+
+		it("should render mixed content", () => {
+			json({ str: "text", num: 42, bool: true, nil: null });
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-json-string");
+			expect(output).toContain("kt-json-number");
+			expect(output).toContain("kt-json-boolean");
+			expect(output).toContain("kt-json-null");
+		});
+	});
+
+	describe("code", () => {
+		it("should render code block with kt-code class", () => {
+			code("const x = 1;");
+			expect(ctx.getHtml()).toContain('class="kt-code"');
+		});
+
+		it("should render with pre and code tags", () => {
+			code("const x = 1;");
+			expect(ctx.getHtml()).toContain("<pre>");
+			expect(ctx.getHtml()).toContain("<code");
+		});
+
+		it("should escape HTML in code content", () => {
+			code("<script>alert('xss')</script>");
+			expect(ctx.getHtml()).toContain("&lt;script&gt;");
+			expect(ctx.getHtml()).not.toContain("<script>alert");
+		});
+
+		it("should set data-language attribute when language provided", () => {
+			code("x = 1", "python");
+			expect(ctx.getHtml()).toContain('data-language="python"');
+		});
+
+		it("should set empty data-language when no language provided", () => {
+			code("plain text");
+			expect(ctx.getHtml()).toContain('data-language=""');
+		});
+
+		it("should escape language attribute", () => {
+			code("text", '"><script>xss</script>');
+			expect(ctx.getHtml()).not.toContain("<script>xss");
+		});
+
+		it("should add wrap class when wrap_lines is true", () => {
+			code("text", undefined, { wrap_lines: true });
+			expect(ctx.getHtml()).toContain("kt-code-wrap");
+		});
+
+		it("should not add wrap class by default", () => {
+			code("text");
+			expect(ctx.getHtml()).not.toContain("kt-code-wrap");
+		});
+
+		it("should render line numbers when enabled", () => {
+			code("line1\nline2\nline3", undefined, { line_numbers: true });
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-code-line-numbers");
+			expect(output).toContain(">1<");
+			expect(output).toContain(">2<");
+			expect(output).toContain(">3<");
+		});
+
+		it("should not render line numbers by default", () => {
+			code("line1\nline2");
+			expect(ctx.getHtml()).not.toContain("kt-code-line-numbers");
+		});
+
+		it("should preserve newlines in code", () => {
+			code("line1\nline2");
+			expect(ctx.getHtml()).toContain("line1\nline2");
+		});
+
+		it("should handle empty code", () => {
+			code("");
+			expect(ctx.getHtml()).toContain('class="kt-code"');
+		});
+
+		it("should apply syntax highlighting for typescript", () => {
+			code("const x = 1;", "typescript");
+			expect(ctx.getHtml()).toContain('class="kt-code-keyword"');
+		});
+
+		it("should apply syntax highlighting for python", () => {
+			code("def foo():", "python");
+			expect(ctx.getHtml()).toContain('class="kt-code-keyword"');
+		});
+
+		it("should not apply highlighting for unknown language", () => {
+			code("const x = 1;", "unknown");
+			expect(ctx.getHtml()).not.toContain('class="kt-code-keyword"');
+		});
+	});
+
+	describe("markdown", () => {
+		it("should render with kt-markdown class", () => {
+			markdown("# Hello");
+			expect(ctx.getHtml()).toContain('class="kt-markdown"');
+		});
+
+		it("should render heading", () => {
+			markdown("# Hello");
+			expect(ctx.getHtml()).toContain("<h1>Hello</h1>");
+		});
+
+		it("should render bold text", () => {
+			markdown("**bold**");
+			expect(ctx.getHtml()).toContain("<strong>bold</strong>");
+		});
+
+		it("should render links", () => {
+			markdown("[link](https://example.com)");
+			expect(ctx.getHtml()).toContain('<a href="https://example.com">link</a>');
+		});
+
+		it("should sanitize by default", () => {
+			markdown("<script>alert('xss')</script>");
+			expect(ctx.getHtml()).not.toContain("<script>");
+		});
+
+		it("should block javascript: URLs", () => {
+			markdown("[click](javascript:alert('xss'))");
+			expect(ctx.getHtml()).not.toContain("javascript:");
+		});
+
+		it("should remove onclick handlers", () => {
+			markdown('<div onclick="alert(1)">text</div>');
+			expect(ctx.getHtml()).not.toContain("onclick");
+		});
+
+		it("should allow HTML when unsafe_allow_html is true", () => {
+			markdown('<span class="custom">text</span>', { unsafe_allow_html: true });
+			expect(ctx.getHtml()).toContain("<span");
+		});
+
+		it("should render complex markdown", () => {
+			const md = `# Title
+
+This is **bold** and *italic*.
+
+- Item 1
+- Item 2
+`;
+			markdown(md);
+			const output = ctx.getHtml();
+			expect(output).toContain("<h1>Title</h1>");
+			expect(output).toContain("<strong>bold</strong>");
+			expect(output).toContain("<em>italic</em>");
+			expect(output).toContain("<ul>");
 		});
 	});
 });
