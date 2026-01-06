@@ -2,12 +2,12 @@
  * 構文ハイライト用の言語定義
  */
 
-export interface HighlightRule {
+interface HighlightRule {
 	pattern: RegExp;
 	className: string;
 }
 
-export type LanguageRules = HighlightRule[];
+type LanguageRules = HighlightRule[];
 
 /**
  * TypeScript/JavaScript のハイライトルール
