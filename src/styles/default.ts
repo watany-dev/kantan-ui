@@ -300,6 +300,33 @@ const formStyles = `
     background: #6c757d;
     cursor: not-allowed;
   }
+
+  /* Validation Errors */
+  .kt-validation-error {
+    color: #721c24;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+  }
+  .kt-validation-errors {
+    color: #721c24;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+  }
+  .kt-validation-errors ul {
+    margin: 0;
+    padding-left: 1.5rem;
+  }
+  .kt-validation-errors li {
+    margin: 0.25rem 0;
+  }
 `;
 
 /**

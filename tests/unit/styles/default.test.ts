@@ -182,5 +182,10 @@ describe("Default Styles", () => {
 		it("should include disabled state", () => {
 			expect(formStyles).toContain(".kt-form-submit:disabled");
 		});
+
+		it("should include validation error styles", () => {
+			expect(formStyles).toContain(".kt-validation-error");
+			expect(formStyles).toContain(".kt-validation-errors");
+		});
 	});
 });
