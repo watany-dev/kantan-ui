@@ -24,8 +24,13 @@ export function parseMarkdown(markdown: string): string {
 	let inCodeBlock = false;
 	let codeBlockContent: string[] = [];
 	let codeBlockLang = "";
-	let inList: "ul" | "ol" | null = null;
-	let listItems: string[] = [];
+	// ネストリスト用のスタック構造
+	interface ListItem {
+		content: string;
+		indent: number;
+		type: "ul" | "ol";
+	}
+	let listStack: ListItem[] = [];
 	let inBlockquote = false;
 	let blockquoteContent: string[] = [];
 
@@ -38,12 +43,55 @@ export function parseMarkdown(markdown: string): string {
 	};
 
 	const flushList = () => {
-		if (inList && listItems.length > 0) {
-			const items = listItems.map((item) => `<li>${parseInline(item)}</li>`).join("");
-			result.push(`<${inList}>${items}</${inList}>`);
-			listItems = [];
-			inList = null;
-		}
+		if (listStack.length === 0) return;
+
+		// ネストしたリストをHTMLに変換
+		const buildNestedList = (
+			items: ListItem[],
+			startIndex: number,
+			baseIndent: number,
+		): { html: string; endIndex: number } => {
+			const result: string[] = [];
+			let i = startIndex;
+			const listType = items[i]?.type ?? "ul";
+
+			while (i < items.length) {
+				const item = items[i];
+				if (!item) break;
+
+				if (item.indent < baseIndent) {
+					// 親レベルに戻る
+					break;
+				}
+
+				if (item.indent > baseIndent) {
+					// ネストしたリストを再帰的に処理
+					const nested = buildNestedList(items, i, item.indent);
+					// 最後のliにネストを追加
+					if (result.length > 0) {
+						const lastLi = result.pop();
+						if (lastLi) {
+							result.push(lastLi.replace(/<\/li>$/, `${nested.html}</li>`));
+						}
+					}
+					i = nested.endIndex;
+					continue;
+				}
+
+				// 同レベルの項目
+				result.push(`<li>${parseInline(item.content)}</li>`);
+				i++;
+			}
+
+			return {
+				html: `<${listType}>${result.join("")}</${listType}>`,
+				endIndex: i,
+			};
+		};
+
+		const { html } = buildNestedList(listStack, 0, listStack[0]?.indent ?? 0);
+		result.push(html);
+		listStack = [];
 	};
 
 	const flushBlockquote = () => {
@@ -132,34 +180,36 @@ export function parseMarkdown(markdown: string): string {
 			flushBlockquote();
 		}
 
-		// 無順リスト
-		const unorderedListMatch = trimmedLine.match(/^[-*]\s+(.+)$/);
-		if (unorderedListMatch?.[1]) {
+		// 無順リスト（インデント対応）
+		const unorderedListMatch = line.match(/^(\s*)[-*]\s+(.+)$/);
+		if (unorderedListMatch?.[2]) {
 			flushParagraph();
 			flushBlockquote();
-			if (inList !== "ul") {
-				flushList();
-				inList = "ul";
-			}
-			listItems.push(unorderedListMatch[1]);
+			const itemIndent = unorderedListMatch[1]?.length ?? 0;
+			listStack.push({
+				content: unorderedListMatch[2],
+				indent: itemIndent,
+				type: "ul",
+			});
 			continue;
 		}
 
-		// 順序リスト
-		const orderedListMatch = trimmedLine.match(/^\d+\.\s+(.+)$/);
-		if (orderedListMatch?.[1]) {
+		// 順序リスト（インデント対応）
+		const orderedListMatch = line.match(/^(\s*)\d+\.\s+(.+)$/);
+		if (orderedListMatch?.[2]) {
 			flushParagraph();
 			flushBlockquote();
-			if (inList !== "ol") {
-				flushList();
-				inList = "ol";
-			}
-			listItems.push(orderedListMatch[1]);
+			const itemIndent = orderedListMatch[1]?.length ?? 0;
+			listStack.push({
+				content: orderedListMatch[2],
+				indent: itemIndent,
+				type: "ol",
+			});
 			continue;
 		}
 
 		// リスト外のテキストでリストを終了
-		if (inList) {
+		if (listStack.length > 0) {
 			flushList();
 		}
 

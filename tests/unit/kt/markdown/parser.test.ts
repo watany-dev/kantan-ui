@@ -188,6 +188,59 @@ describe("parseMarkdown", () => {
 		});
 	});
 
+	describe("nested lists", () => {
+		it("should parse simple nested unordered list", () => {
+			const md = "- item1\n  - nested1\n  - nested2\n- item2";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ul>");
+			expect(result).toContain("<li>item1");
+			expect(result).toContain("<li>nested1</li>");
+			expect(result).toContain("<li>nested2</li>");
+			expect(result).toContain("<li>item2</li>");
+		});
+
+		it("should parse deeply nested unordered list", () => {
+			const md = "- level1\n  - level2\n    - level3";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ul>");
+			expect(result).toContain("<li>level1");
+			expect(result).toContain("<li>level2");
+			expect(result).toContain("<li>level3</li>");
+		});
+
+		it("should parse nested ordered list", () => {
+			const md = "1. first\n   1. nested first\n   2. nested second\n2. second";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ol>");
+			expect(result).toContain("<li>first");
+			expect(result).toContain("<li>nested first</li>");
+			expect(result).toContain("<li>second</li>");
+		});
+
+		it("should handle mixed nested lists (ul inside ol)", () => {
+			const md = "1. ordered item\n   - unordered nested\n2. another ordered";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ol>");
+			expect(result).toContain("<ul>");
+			expect(result).toContain("<li>ordered item");
+			expect(result).toContain("<li>unordered nested</li>");
+		});
+
+		it("should handle inline formatting in nested lists", () => {
+			const md = "- **bold** item\n  - *italic* nested";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<strong>bold</strong>");
+			expect(result).toContain("<em>italic</em>");
+		});
+
+		it("should return to parent level after nested items", () => {
+			const md = "- parent1\n  - child\n- parent2";
+			const result = parseMarkdown(md);
+			// parent2 should be at the same level as parent1
+			expect(result).toContain("<li>parent2</li>");
+		});
+	});
+
 	describe("blockquotes", () => {
 		it("should parse blockquote", () => {
 			expect(parseMarkdown("> quote")).toContain("<blockquote>quote</blockquote>");
