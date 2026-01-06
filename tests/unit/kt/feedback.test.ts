@@ -134,11 +134,13 @@ describe("Feedback APIs", () => {
 			expect(html).toContain("32px");
 		});
 
-		it("should include CSS animation keyframes", () => {
+		it("should use kt-spinner-icon class for animation (external CSS)", () => {
 			spinner();
 			const html = ctx.getHtml();
-			expect(html).toContain("@keyframes kt-spin");
-			expect(html).toContain("animation:");
+			// Animation is provided by external CSS (default.ts), not inline
+			expect(html).toContain('class="kt-spinner-icon"');
+			// Should NOT contain inline keyframes (prevents duplication)
+			expect(html).not.toContain("@keyframes");
 		});
 	});
 
