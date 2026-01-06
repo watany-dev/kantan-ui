@@ -74,6 +74,11 @@ jobs:
           severity: 'MEDIUM,HIGH,CRITICAL'
           exit-code: '1'
 
+      - name: Run Semgrep SAST
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: "p/typescript"
+
   dead-code:
     name: Dead Code Check
     needs: [lint]
