@@ -153,6 +153,8 @@ export interface CodeConfig {
 	line_numbers?: boolean;
 	/** ラップ表示（デフォルト: false、横スクロール） */
 	wrap_lines?: boolean;
+	/** コピーボタンを表示（デフォルト: false） */
+	copy_button?: boolean;
 }
 
 /**
@@ -178,11 +180,18 @@ export function code(body: string, language?: string, config?: CodeConfig): void
 	// 行番号の生成（オプション）
 	const lineNumbers = config?.line_numbers ? generateLineNumbers(body) : "";
 
+	// コピーボタンの生成（オプション）
+	const copyButton = config?.copy_button
+		? `<button class="kt-code-copy" data-kt-copy title="Copy code">Copy</button>`
+		: "";
+
 	const wrapClass = config?.wrap_lines ? " kt-code-wrap" : "";
 	const langAttr = `data-language="${escapeHtml(language ?? "")}"`;
+	// コピー用に元のコード（エスケープ済み）をdata属性に保存
+	const codeDataAttr = config?.copy_button ? ` data-code="${escapeHtml(body)}"` : "";
 
 	ctx.append(
-		`<div class="kt-code${wrapClass}" ${langAttr}>${lineNumbers}<pre><code class="kt-code-content">${highlightedCode}</code></pre></div>`,
+		`<div class="kt-code${wrapClass}" ${langAttr}${codeDataAttr}>${copyButton}${lineNumbers}<pre><code class="kt-code-content">${highlightedCode}</code></pre></div>`,
 	);
 }
 

@@ -412,6 +412,42 @@ describe("Output APIs", () => {
 			code("const x = 1;", "unknown");
 			expect(ctx.getHtml()).not.toContain('class="kt-code-keyword"');
 		});
+
+		it("should render copy button when copy_button is true", () => {
+			code("const x = 1;", "typescript", { copy_button: true });
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-code-copy");
+			expect(output).toContain("data-kt-copy");
+		});
+
+		it("should not render copy button by default", () => {
+			code("const x = 1;");
+			expect(ctx.getHtml()).not.toContain("kt-code-copy");
+		});
+
+		it("should include data-code attribute when copy_button is true", () => {
+			code("const x = 1;", undefined, { copy_button: true });
+			expect(ctx.getHtml()).toContain("data-code=");
+		});
+
+		it("should escape HTML in data-code attribute", () => {
+			code('<script>alert("xss")</script>', undefined, { copy_button: true });
+			const output = ctx.getHtml();
+			expect(output).toContain("data-code=");
+			expect(output).not.toContain('data-code="<script>');
+		});
+
+		it("should combine copy_button with other options", () => {
+			code("line1\nline2", "typescript", {
+				copy_button: true,
+				line_numbers: true,
+				wrap_lines: true,
+			});
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-code-copy");
+			expect(output).toContain("kt-code-line-numbers");
+			expect(output).toContain("kt-code-wrap");
+		});
 	});
 
 	describe("markdown", () => {

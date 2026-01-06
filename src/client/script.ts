@@ -214,6 +214,32 @@ function setupEventDelegation(sendEvent) {
   const app = document.getElementById("app");
 
   app.addEventListener("click", (e) => {
+    // コピーボタンのハンドリング
+    const copyBtn = e.target.closest("[data-kt-copy]");
+    if (copyBtn) {
+      const codeBlock = copyBtn.closest(".kt-code");
+      if (codeBlock && codeBlock.dataset.code) {
+        const textToCopy = codeBlock.dataset.code
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&amp;/g, "&")
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'");
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = "Copied!";
+          copyBtn.classList.add("kt-code-copy-success");
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.classList.remove("kt-code-copy-success");
+          }, 2000);
+        }).catch((err) => {
+          console.error("Failed to copy code:", err);
+        });
+      }
+      return;
+    }
+
     const target = e.target.closest("[data-kt-event='click']");
     if (target && target.id) sendEvent(target.id, "clicked");
   });

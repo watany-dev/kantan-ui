@@ -90,6 +90,23 @@ const codeStyles = `
   .kt-code-line-numbers span { display: block; }
   .kt-code-content { display: block; }
 
+  /* Copy Button */
+  .kt-code-copy {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s, background 0.2s;
+  }
+  .kt-code-copy:hover { opacity: 1; background: #f8f9fa; }
+  .kt-code-copy-success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+
   /* Syntax Highlighting */
   .kt-hl-keyword { color: #d73a49; }
   .kt-hl-string { color: #032f62; }

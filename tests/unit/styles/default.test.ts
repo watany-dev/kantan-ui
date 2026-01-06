@@ -93,6 +93,11 @@ describe("Default Styles", () => {
 			expect(codeStyles).toContain(".kt-code-line-numbers");
 		});
 
+		it("should include copy button styles", () => {
+			expect(codeStyles).toContain(".kt-code-copy");
+			expect(codeStyles).toContain(".kt-code-copy-success");
+		});
+
 		it("should include syntax highlighting classes", () => {
 			expect(codeStyles).toContain(".kt-hl-keyword");
 			expect(codeStyles).toContain(".kt-hl-string");
