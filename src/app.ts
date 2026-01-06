@@ -5,11 +5,11 @@ import { generateClientScript } from "./client";
 import { type KantanConfig, resolveConfig } from "./config";
 import { diff, toWebSocketPatches } from "./diff";
 import { getPageConfig } from "./kt/config";
-import { type Script, type StreamingOptions, rerun } from "./runtime";
+import { rerun, type Script, type StreamingOptions } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { upgradeWebSocket, websocket } from "./websocket";
 import type { Patch } from "./websocket/types";
-import { type ClientMessage, type ServerMessage, isClientMessage } from "./websocket/types";
+import { type ClientMessage, isClientMessage, type ServerMessage } from "./websocket/types";
 
 /** CSP用のnonce生成 */
 function generateNonce(): string {

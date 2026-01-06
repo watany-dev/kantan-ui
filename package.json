@@ -11,7 +11,9 @@
 			"import": "./dist/index.js"
 		}
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"dev": "bun run --watch src/server.ts",
 		"build": "bun build src/index.ts --outdir dist --target bun && bun run build:types",
@@ -29,7 +31,13 @@
 		"dead-code": "knip",
 		"ci": "bun run lint && bun run build && bun run test:coverage"
 	},
-	"keywords": ["ui", "framework", "hono", "streamlit", "web"],
+	"keywords": [
+		"ui",
+		"framework",
+		"hono",
+		"streamlit",
+		"web"
+	],
 	"author": "",
 	"license": "MIT",
 	"repository": {
@@ -44,7 +52,7 @@
 		"hono": "^4.6.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.0",
+		"@biomejs/biome": "^2.3.11",
 		"knip": "^5.0.0",
 		"@playwright/test": "^1.50.0",
 		"@types/bun": "^1.1.0",

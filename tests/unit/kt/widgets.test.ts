@@ -14,8 +14,8 @@ import {
 } from "../../../src/kt/widgets";
 import { clearContext, setContext } from "../../../src/runtime/context";
 import {
-	SessionManager,
 	resetSessionManager,
+	SessionManager,
 	setSessionManager,
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";

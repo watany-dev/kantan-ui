@@ -1,5 +1,5 @@
 export {
+	createWebSocketHandler,
 	upgradeWebSocket,
 	websocket,
-	createWebSocketHandler,
 } from "./handler";

@@ -1,6 +1,6 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
-	"organizeImports": {
+	"$schema": "https://biomejs.dev/schemas/2.3.11/schema.json",
+	"assist": {
 		"enabled": true
 	},
 	"linter": {
@@ -48,6 +48,13 @@
 		}
 	},
 	"files": {
-		"ignore": ["node_modules", "dist", "playwright-report", "test-results", "coverage"]
+		"includes": [
+			"**",
+			"!**/node_modules",
+			"!**/dist",
+			"!**/playwright-report",
+			"!**/test-results",
+			"!**/coverage"
+		]
 	}
 }

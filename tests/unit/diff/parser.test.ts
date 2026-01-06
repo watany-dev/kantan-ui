@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PARSER_LIMITS, buildNodeMap, isValidId, parseHtml } from "../../../src/diff/parser";
+import { buildNodeMap, isValidId, PARSER_LIMITS, parseHtml } from "../../../src/diff/parser";
 
 describe("parseHtml", () => {
 	it("should extract elements with id attribute", () => {

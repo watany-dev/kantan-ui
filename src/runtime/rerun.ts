@@ -2,7 +2,7 @@ import { type FlushCallback, RenderContext, setRenderContext } from "../kt/conte
 import { setCurrentSessionId } from "../session/state";
 import { resetWidgetCounter } from "../widgets/registry";
 import { AbortError } from "./abort";
-import { type RerunContext, clearContext, setContext } from "./context";
+import { clearContext, type RerunContext, setContext } from "./context";
 
 /**
  * スクリプトの型

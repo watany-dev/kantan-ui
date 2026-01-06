@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
-	RenderContext,
 	getRenderContext,
+	RenderContext,
 	requireRenderContext,
 	setRenderContext,
 } from "../../../src/kt/context";

@@ -4,9 +4,9 @@ import { clearContext, getContext, setContext } from "../src/runtime/context";
 import { rerun } from "../src/runtime/rerun";
 // Note: Import individual modules to avoid hono/bun dependency in Node.js test environment
 import {
-	SessionManager,
 	getSessionManager,
 	resetSessionManager,
+	SessionManager,
 	setSessionManager,
 } from "../src/session/manager";
 import { getCurrentSessionId, session_state, setCurrentSessionId } from "../src/session/state";

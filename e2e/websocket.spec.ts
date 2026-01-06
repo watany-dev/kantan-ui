@@ -1,4 +1,4 @@
-import { type Page, type WebSocket, expect, test } from "@playwright/test";
+import { expect, type Page, test, type WebSocket } from "@playwright/test";
 import { gotoAndWait, waitForInitialRender } from "./helpers";
 
 // 各テストで空のストレージ状態を使用
