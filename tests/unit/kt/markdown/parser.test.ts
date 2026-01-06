@@ -266,5 +266,29 @@ code()
 			expect(result).toContain("<blockquote>");
 			expect(result).toContain("<pre>");
 		});
+
+		it("should handle unclosed code block", () => {
+			const md = "```typescript\nconst x = 1;";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<pre>");
+			expect(result).toContain("<code");
+			expect(result).toContain("const x = 1;");
+		});
+
+		it("should handle blockquote followed by text", () => {
+			const md = "> quote\ntext after";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<blockquote>");
+			expect(result).toContain("quote");
+			expect(result).toContain("text after");
+		});
+
+		it("should handle list followed by text", () => {
+			const md = "- item1\ntext after";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ul>");
+			expect(result).toContain("<li>item1</li>");
+			expect(result).toContain("text after");
+		});
 	});
 });

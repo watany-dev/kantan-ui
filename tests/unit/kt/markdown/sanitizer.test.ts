@@ -167,5 +167,37 @@ describe("sanitizeMarkdownHtml", () => {
 			expect(result).toContain("<p>more</p>");
 			expect(result).not.toContain("<script>");
 		});
+
+		it("should handle self-closing tags", () => {
+			const result = sanitizeMarkdownHtml('<img src="test.png" />');
+			expect(result).toContain("<img");
+			expect(result).toContain("/>");
+		});
+
+		it("should handle attributes with single quotes", () => {
+			const result = sanitizeMarkdownHtml("<a href='https://example.com'>link</a>");
+			expect(result).toContain('href="https://example.com"');
+		});
+
+		it("should handle attributes without quotes", () => {
+			const result = sanitizeMarkdownHtml("<a href=https://example.com>link</a>");
+			expect(result).toContain('href="https://example.com"');
+		});
+
+		it("should handle disallowed tags preserving content", () => {
+			const result = sanitizeMarkdownHtml("<div>content</div>");
+			expect(result).toBe("content");
+			expect(result).not.toContain("<div>");
+		});
+
+		it("should handle empty attributes", () => {
+			const result = sanitizeMarkdownHtml("<img alt>");
+			expect(result).toContain("<img");
+		});
+
+		it("should handle malformed tags gracefully", () => {
+			const result = sanitizeMarkdownHtml("<p>text<");
+			expect(result).toContain("text");
+		});
 	});
 });
