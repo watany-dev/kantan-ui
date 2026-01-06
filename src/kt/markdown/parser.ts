@@ -33,6 +33,10 @@ export function parseMarkdown(markdown: string): string {
 	let listStack: ListItem[] = [];
 	let inBlockquote = false;
 	let blockquoteContent: string[] = [];
+	// テーブル用の状態
+	let tableRows: string[][] = [];
+	let tableAlignments: ("left" | "center" | "right" | null)[] = [];
+	let inTable = false;
 
 	const flushParagraph = () => {
 		if (currentParagraph.length > 0) {
@@ -103,6 +107,77 @@ export function parseMarkdown(markdown: string): string {
 		}
 	};
 
+	const flushTable = () => {
+		if (!inTable || tableRows.length === 0) return;
+
+		const thead = tableRows[0];
+		const tbody = tableRows.slice(1);
+
+		let html = "<table>";
+
+		// ヘッダー行
+		if (thead) {
+			html += "<thead><tr>";
+			thead.forEach((cell, idx) => {
+				const align = tableAlignments[idx];
+				const alignAttr = align ? ` style="text-align:${align}"` : "";
+				html += `<th${alignAttr}>${parseInline(cell.trim())}</th>`;
+			});
+			html += "</tr></thead>";
+		}
+
+		// ボディ行
+		if (tbody.length > 0) {
+			html += "<tbody>";
+			tbody.forEach((row) => {
+				html += "<tr>";
+				row.forEach((cell, idx) => {
+					const align = tableAlignments[idx];
+					const alignAttr = align ? ` style="text-align:${align}"` : "";
+					html += `<td${alignAttr}>${parseInline(cell.trim())}</td>`;
+				});
+				html += "</tr>";
+			});
+			html += "</tbody>";
+		}
+
+		html += "</table>";
+		result.push(html);
+
+		tableRows = [];
+		tableAlignments = [];
+		inTable = false;
+	};
+
+	// テーブル行をパース
+	const parseTableRow = (line: string): string[] | null => {
+		if (!line.includes("|")) return null;
+		// 先頭・末尾の|を除去してセルに分割
+		const trimmed = line.replace(/^\|/, "").replace(/\|$/, "");
+		return trimmed.split("|");
+	};
+
+	// 区切り行かどうかチェック（|---|---|のような行）
+	const isTableDelimiter = (line: string): boolean => {
+		// 単一カラム or 複数カラムに対応
+		return /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?$/.test(line);
+	};
+
+	// 区切り行からアラインメントを取得
+	const parseTableAlignments = (line: string): ("left" | "center" | "right" | null)[] => {
+		const cells = parseTableRow(line);
+		if (!cells) return [];
+		return cells.map((cell) => {
+			const trimmed = cell.trim();
+			const leftColon = trimmed.startsWith(":");
+			const rightColon = trimmed.endsWith(":");
+			if (leftColon && rightColon) return "center";
+			if (rightColon) return "right";
+			if (leftColon) return "left";
+			return null;
+		});
+	};
+
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i] ?? "";
 		const trimmedLine = line.trim();
@@ -113,6 +188,7 @@ export function parseMarkdown(markdown: string): string {
 				flushParagraph();
 				flushList();
 				flushBlockquote();
+				flushTable();
 				inCodeBlock = true;
 				codeBlockLang = trimmedLine.slice(3).trim();
 				codeBlockContent = [];
@@ -138,6 +214,7 @@ export function parseMarkdown(markdown: string): string {
 			flushParagraph();
 			flushList();
 			flushBlockquote();
+			flushTable();
 			continue;
 		}
 
@@ -146,6 +223,7 @@ export function parseMarkdown(markdown: string): string {
 			flushParagraph();
 			flushList();
 			flushBlockquote();
+			flushTable();
 			result.push("<hr>");
 			continue;
 		}
@@ -156,10 +234,49 @@ export function parseMarkdown(markdown: string): string {
 			flushParagraph();
 			flushList();
 			flushBlockquote();
+			flushTable();
 			const level = headingMatch[1].length;
 			const text = headingMatch[2].trim();
 			result.push(`<h${level}>${parseInline(text)}</h${level}>`);
 			continue;
+		}
+
+		// テーブル処理
+		if (trimmedLine.includes("|")) {
+			// テーブルの開始または継続
+			if (!inTable) {
+				// 次の行が区切り行かチェック
+				const nextLine = lines[i + 1]?.trim() ?? "";
+				if (isTableDelimiter(nextLine)) {
+					flushParagraph();
+					flushList();
+					flushBlockquote();
+					inTable = true;
+					const headerCells = parseTableRow(trimmedLine);
+					if (headerCells) {
+						tableRows.push(headerCells);
+					}
+					continue;
+				}
+			} else {
+				// テーブル継続中
+				if (isTableDelimiter(trimmedLine)) {
+					// 区切り行: アラインメントを取得
+					tableAlignments = parseTableAlignments(trimmedLine);
+					continue;
+				}
+				// データ行
+				const cells = parseTableRow(trimmedLine);
+				if (cells) {
+					tableRows.push(cells);
+					continue;
+				}
+			}
+		}
+
+		// テーブル外の行でテーブルを終了
+		if (inTable && !trimmedLine.includes("|")) {
+			flushTable();
 		}
 
 		// 引用
@@ -167,6 +284,7 @@ export function parseMarkdown(markdown: string): string {
 		if (blockquoteMatch) {
 			flushParagraph();
 			flushList();
+			flushTable();
 			if (!inBlockquote) {
 				inBlockquote = true;
 				blockquoteContent = [];
@@ -185,6 +303,7 @@ export function parseMarkdown(markdown: string): string {
 		if (unorderedListMatch?.[2]) {
 			flushParagraph();
 			flushBlockquote();
+			flushTable();
 			const itemIndent = unorderedListMatch[1]?.length ?? 0;
 			listStack.push({
 				content: unorderedListMatch[2],
@@ -199,6 +318,7 @@ export function parseMarkdown(markdown: string): string {
 		if (orderedListMatch?.[2]) {
 			flushParagraph();
 			flushBlockquote();
+			flushTable();
 			const itemIndent = orderedListMatch[1]?.length ?? 0;
 			listStack.push({
 				content: orderedListMatch[2],
@@ -221,6 +341,7 @@ export function parseMarkdown(markdown: string): string {
 	flushParagraph();
 	flushList();
 	flushBlockquote();
+	flushTable();
 
 	// コードブロックが閉じられていない場合
 	if (inCodeBlock) {

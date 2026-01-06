@@ -241,6 +241,61 @@ describe("parseMarkdown", () => {
 		});
 	});
 
+	describe("tables", () => {
+		it("should parse simple table", () => {
+			const md = "| Header 1 | Header 2 |\n|----------|----------|\n| Cell 1   | Cell 2   |";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<table>");
+			expect(result).toContain("<thead>");
+			expect(result).toContain("<th>Header 1</th>");
+			expect(result).toContain("<th>Header 2</th>");
+			expect(result).toContain("<tbody>");
+			expect(result).toContain("<td>Cell 1</td>");
+			expect(result).toContain("<td>Cell 2</td>");
+		});
+
+		it("should parse table with multiple rows", () => {
+			const md = "| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<td>1</td>");
+			expect(result).toContain("<td>2</td>");
+			expect(result).toContain("<td>3</td>");
+			expect(result).toContain("<td>4</td>");
+		});
+
+		it("should parse table with left alignment", () => {
+			const md = "| Left |\n|:-----|\n| text |";
+			const result = parseMarkdown(md);
+			expect(result).toContain('style="text-align:left"');
+		});
+
+		it("should parse table with right alignment", () => {
+			const md = "| Right |\n|------:|\n| text  |";
+			const result = parseMarkdown(md);
+			expect(result).toContain('style="text-align:right"');
+		});
+
+		it("should parse table with center alignment", () => {
+			const md = "| Center |\n|:------:|\n| text   |";
+			const result = parseMarkdown(md);
+			expect(result).toContain('style="text-align:center"');
+		});
+
+		it("should handle inline formatting in table cells", () => {
+			const md = "| **Bold** | *Italic* |\n|----------|----------|\n| text     | text     |";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<strong>Bold</strong>");
+			expect(result).toContain("<em>Italic</em>");
+		});
+
+		it("should handle table without leading/trailing pipes", () => {
+			const md = "Header 1 | Header 2\n---------|---------\nCell 1   | Cell 2";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<table>");
+			expect(result).toContain("<th>Header 1</th>");
+		});
+	});
+
 	describe("blockquotes", () => {
 		it("should parse blockquote", () => {
 			expect(parseMarkdown("> quote")).toContain("<blockquote>quote</blockquote>");
