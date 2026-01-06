@@ -25,6 +25,8 @@
 import * as config from "./config";
 import * as control from "./control";
 import * as data from "./data";
+import * as feedback from "./feedback";
+import * as formModule from "./form";
 import * as layout from "./layout";
 import * as output from "./output";
 import * as widgets from "./widgets";
@@ -45,8 +47,29 @@ export const kt = {
 	divider: output.divider,
 	html: output.html,
 
+	// Alert APIs
+	success: output.success,
+	error: output.error,
+	warning: output.warning,
+	info: output.info,
+
+	// Feedback APIs
+	progress: feedback.progress,
+	spinner: feedback.spinner,
+	toast: feedback.toast,
+
 	// Data APIs
 	table: data.table,
+
+	// Layout APIs
+	container: layout.container,
+	columns: layout.columns,
+	expander: layout.expander,
+	tabs: layout.tabs,
+
+	// Form APIs
+	form: formModule.form,
+	form_submit_button: formModule.form_submit_button,
 
 	// Widget APIs
 	button: widgets.button,
@@ -60,7 +83,4 @@ export const kt = {
 	text_area: widgets.text_area,
 	toggle: widgets.toggle,
 	multiselect: widgets.multiselect,
-
-	// Layout APIs
-	tabs: layout.tabs,
 };

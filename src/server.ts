@@ -146,6 +146,90 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Alert Section =====
+	kt.header("Alerts");
+	kt.success("This is a success message");
+	kt.error("This is an error message");
+	kt.warning("This is a warning message");
+	kt.info("This is an info message");
+
+	kt.divider();
+
+	// ===== Progress Section =====
+	kt.header("Progress");
+	kt.progress(0.25);
+	kt.progress(0.5, { label: "Downloading... 50%" });
+	kt.progress(75, { label: "Processing... 75%", color: "#27ae60" });
+
+	kt.divider();
+
+	// ===== Spinner Section =====
+	kt.header("Spinner");
+	kt.spinner();
+	kt.spinner("Processing data...", { size: "small" });
+	kt.spinner("Loading large content...", { size: "large" });
+
+	kt.divider();
+
+	// ===== Toast Section =====
+	kt.header("Toast");
+	kt.toast("Saved successfully!");
+	kt.toast("New update available", { type: "info" });
+	kt.toast("Please check your input", { type: "warning" });
+	kt.toast("Failed to connect", { type: "error" });
+
+	kt.divider();
+
+	// ===== Layout Section =====
+	kt.header("Layout");
+
+	kt.subheader("Columns");
+	kt.columns([
+		() => {
+			kt.write("Left column");
+		},
+		() => {
+			kt.write("Right column");
+		},
+	]);
+
+	kt.subheader("Columns with ratio");
+	kt.columns(
+		[
+			() => kt.write("Sidebar (25%)"),
+			() => kt.write("Main content (50%)"),
+			() => kt.write("Sidebar (25%)"),
+		],
+		{ ratios: [1, 2, 1] },
+	);
+
+	kt.subheader("Expander");
+	kt.expander("Click to see details", () => {
+		kt.write("This content is hidden by default");
+	});
+
+	kt.expander(
+		"Expanded by default",
+		() => {
+			kt.write("This content is visible by default");
+		},
+		{ expanded: true },
+	);
+
+	kt.divider();
+
+	// ===== Form Section =====
+	kt.header("Form");
+	kt.form("contact_form", () => {
+		kt.text_input("Name", "", { key: "form_name" });
+		kt.text_input("Email", "", { key: "form_email" });
+		if (kt.form_submit_button("Submit", { key: "form_submit" })) {
+			kt.success("Form submitted!");
+		}
+	});
+
+	kt.divider();
+
 	// ===== Debug Section =====
 	kt.subheader("Session State (Debug)");
 	kt.html(`

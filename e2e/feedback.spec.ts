@@ -1,0 +1,160 @@
+import { expect, test } from "@playwright/test";
+import { gotoAndWait } from "./helpers";
+
+// 各テストで空のストレージ状態を使用
+test.use({ storageState: { cookies: [], origins: [] } });
+
+test.describe("Feedback API - Progress bar", () => {
+	test("kt.progress() outputs progress bar with kt-progress class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const progressBars = page.locator(".kt-progress");
+		await expect(progressBars.first()).toBeVisible();
+
+		// 複数のプログレスバーが存在することを確認
+		const count = await progressBars.count();
+		expect(count).toBeGreaterThanOrEqual(3);
+	});
+
+	test("progress bar displays correct width for value 0.25", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// 最初のプログレスバー（0.25 = 25%）
+		const firstProgressFill = page.locator(".kt-progress").first().locator(".kt-progress-fill");
+		// インラインスタイルで width: 25% が設定されていることを確認
+		await expect(firstProgressFill).toHaveAttribute("style", /width:\s*25%/);
+	});
+
+	test("progress bar displays label when provided", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// ラベル付きプログレスバー
+		const labeledProgress = page.locator(".kt-progress-label");
+		await expect(labeledProgress.first()).toBeVisible();
+		await expect(labeledProgress.first()).toContainText("Downloading... 50%");
+	});
+
+	test("progress bar uses custom color when provided", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// カスタム色（緑 #27ae60）のプログレスバー
+		const greenProgress = page.locator(".kt-progress").nth(2).locator(".kt-progress-fill");
+		await expect(greenProgress).toHaveCSS("background", /rgb\(39, 174, 96\)/);
+	});
+
+	test("progress bar has proper structure", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const progress = page.locator(".kt-progress").first();
+
+		// kt-progress-bar が存在することを確認
+		await expect(progress.locator(".kt-progress-bar")).toBeVisible();
+
+		// kt-progress-fill が存在することを確認
+		await expect(progress.locator(".kt-progress-fill")).toBeVisible();
+	});
+});
+
+test.describe("Feedback API - Spinner", () => {
+	test("kt.spinner() creates spinner with kt-spinner class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const spinners = page.locator(".kt-spinner");
+		await expect(spinners.first()).toBeVisible();
+
+		// 複数のスピナーが存在することを確認
+		const count = await spinners.count();
+		expect(count).toBeGreaterThanOrEqual(3);
+	});
+
+	test("spinner displays default text 'Loading...'", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const firstSpinner = page.locator(".kt-spinner").first();
+		await expect(firstSpinner).toContainText("Loading...");
+	});
+
+	test("spinner displays custom text", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// 2番目のスピナーは "Processing data..."
+		const secondSpinner = page.locator(".kt-spinner").nth(1);
+		await expect(secondSpinner).toContainText("Processing data...");
+	});
+
+	test("spinner has rotating icon", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const spinnerIcon = page.locator(".kt-spinner-icon").first();
+		await expect(spinnerIcon).toBeVisible();
+
+		// アニメーションが設定されていることを確認
+		await expect(spinnerIcon).toHaveCSS("animation-name", "kt-spin");
+	});
+
+	test("spinner sizes work correctly", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// デフォルト（medium = 24px）
+		const defaultSpinner = page.locator(".kt-spinner-icon").first();
+		await expect(defaultSpinner).toHaveCSS("width", "24px");
+
+		// small (16px)
+		const smallSpinner = page.locator(".kt-spinner-icon").nth(1);
+		await expect(smallSpinner).toHaveCSS("width", "16px");
+
+		// large (32px)
+		const largeSpinner = page.locator(".kt-spinner-icon").nth(2);
+		await expect(largeSpinner).toHaveCSS("width", "32px");
+	});
+});
+
+test.describe("Feedback API - Toast", () => {
+	test("kt.toast() creates toast with kt-toast class", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const toasts = page.locator(".kt-toast");
+		await expect(toasts.first()).toBeVisible();
+
+		// 複数のトーストが存在することを確認
+		const count = await toasts.count();
+		expect(count).toBeGreaterThanOrEqual(4);
+	});
+
+	test("toast displays message text", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const firstToast = page.locator(".kt-toast").first();
+		await expect(firstToast).toContainText("Saved successfully!");
+	});
+
+	test("toast has type-specific classes", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// success (default)
+		await expect(page.locator(".kt-toast-success").first()).toBeVisible();
+
+		// info
+		await expect(page.locator(".kt-toast-info").first()).toBeVisible();
+
+		// warning
+		await expect(page.locator(".kt-toast-warning").first()).toBeVisible();
+
+		// error
+		await expect(page.locator(".kt-toast-error").first()).toBeVisible();
+	});
+
+	test("toast has data-duration attribute", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const firstToast = page.locator(".kt-toast").first();
+		await expect(firstToast).toHaveAttribute("data-duration", "4000");
+	});
+
+	test("toast displays icon", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const toastIcon = page.locator(".kt-toast-icon").first();
+		await expect(toastIcon).toBeVisible();
+	});
+});
