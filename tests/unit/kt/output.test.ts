@@ -8,6 +8,7 @@ import {
 	html,
 	info,
 	json,
+	markdown,
 	subheader,
 	success,
 	text,
@@ -364,6 +365,64 @@ describe("Output APIs", () => {
 		it("should not apply highlighting for unknown language", () => {
 			code("const x = 1;", "unknown");
 			expect(ctx.getHtml()).not.toContain('class="kt-code-keyword"');
+		});
+	});
+
+	describe("markdown", () => {
+		it("should render with kt-markdown class", () => {
+			markdown("# Hello");
+			expect(ctx.getHtml()).toContain('class="kt-markdown"');
+		});
+
+		it("should render heading", () => {
+			markdown("# Hello");
+			expect(ctx.getHtml()).toContain("<h1>Hello</h1>");
+		});
+
+		it("should render bold text", () => {
+			markdown("**bold**");
+			expect(ctx.getHtml()).toContain("<strong>bold</strong>");
+		});
+
+		it("should render links", () => {
+			markdown("[link](https://example.com)");
+			expect(ctx.getHtml()).toContain('<a href="https://example.com">link</a>');
+		});
+
+		it("should sanitize by default", () => {
+			markdown("<script>alert('xss')</script>");
+			expect(ctx.getHtml()).not.toContain("<script>");
+		});
+
+		it("should block javascript: URLs", () => {
+			markdown("[click](javascript:alert('xss'))");
+			expect(ctx.getHtml()).not.toContain("javascript:");
+		});
+
+		it("should remove onclick handlers", () => {
+			markdown('<div onclick="alert(1)">text</div>');
+			expect(ctx.getHtml()).not.toContain("onclick");
+		});
+
+		it("should allow HTML when unsafe_allow_html is true", () => {
+			markdown('<span class="custom">text</span>', { unsafe_allow_html: true });
+			expect(ctx.getHtml()).toContain("<span");
+		});
+
+		it("should render complex markdown", () => {
+			const md = `# Title
+
+This is **bold** and *italic*.
+
+- Item 1
+- Item 2
+`;
+			markdown(md);
+			const output = ctx.getHtml();
+			expect(output).toContain("<h1>Title</h1>");
+			expect(output).toContain("<strong>bold</strong>");
+			expect(output).toContain("<em>italic</em>");
+			expect(output).toContain("<ul>");
 		});
 	});
 });

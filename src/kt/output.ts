@@ -1,6 +1,8 @@
 import { escapeHtml } from "../utils/html";
 import { applyHighlight } from "./code/highlighter";
 import { requireRenderContext } from "./context";
+import { parseMarkdown } from "./markdown/parser";
+import { sanitizeMarkdownHtml } from "./markdown/sanitizer";
 
 /**
  * テキストまたはHTMLを出力
@@ -177,6 +179,42 @@ function generateLineNumbers(code: string): string {
 	const lineCount = code.split("\n").length;
 	const numbers = Array.from({ length: lineCount }, (_, i) => `<span>${i + 1}</span>`).join("\n");
 	return `<div class="kt-code-line-numbers">${numbers}</div>`;
+}
+
+// ============================================
+// Markdown API
+// ============================================
+
+export interface MarkdownConfig {
+	/**
+	 * HTMLタグの直接埋め込みを許可（デフォルト: false）
+	 * @security trueにするとXSSリスクあり
+	 */
+	unsafe_allow_html?: boolean;
+}
+
+/**
+ * Markdownテキストをレンダリングして表示
+ *
+ * @param content - Markdownテキスト
+ * @param config - オプション設定
+ *
+ * @example
+ * kt.markdown("# Hello\n\nThis is **bold** text.");
+ * kt.markdown("## Header", { unsafe_allow_html: true });
+ */
+export function markdown(content: string, config?: MarkdownConfig): void {
+	const ctx = requireRenderContext();
+
+	// MarkdownをHTMLにパース
+	let html = parseMarkdown(content);
+
+	// サニタイズ（unsafe_allow_htmlがfalseの場合）
+	if (!config?.unsafe_allow_html) {
+		html = sanitizeMarkdownHtml(html);
+	}
+
+	ctx.append(`<div class="kt-markdown">${html}</div>`);
 }
 
 // ============================================
