@@ -69,12 +69,13 @@ jobs:
       - name: Run npm audit
         run: npm audit --audit-level=moderate
 
-      - name: Run OSV-Scanner
-        uses: google/osv-scanner-action@v2
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
         with:
-          scan-args: |-
-            --lockfile=bun.lockb
-            --format=table
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'MEDIUM,HIGH,CRITICAL'
+          exit-code: '1'
 
   dead-code:
     name: Dead Code Check
