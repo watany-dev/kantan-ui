@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-	SessionManager,
 	resetSessionManager,
+	SessionManager,
 	setSessionManager,
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";

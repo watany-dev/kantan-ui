@@ -122,6 +122,8 @@ export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Pa
 					index: p.index,
 					html: p.html,
 				} satisfies InsertNodePatch;
+			default:
+				throw new Error(`Unknown patch type: ${(p as { type: string }).type}`);
 		}
 	});
 }

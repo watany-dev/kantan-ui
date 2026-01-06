@@ -7,8 +7,8 @@ import {
 	isNumber,
 	isObject,
 	isString,
-	isUUID,
 	isUndefined,
+	isUUID,
 	validateType,
 } from "../../../src/utils/type-guards";
 

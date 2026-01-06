@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RerunException, isRerunException } from "../../../src/runtime/rerun-exception";
+import { isRerunException, RerunException } from "../../../src/runtime/rerun-exception";
 
 describe("RerunException", () => {
 	it("should be an instance of Error", () => {

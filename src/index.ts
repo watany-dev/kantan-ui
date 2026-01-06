@@ -6,82 +6,49 @@ export { createApp } from "./app";
 
 // Config
 export type {
-	KantanConfig,
-	SessionConfig,
 	ClientConfig,
+	KantanConfig,
 	ResolvedKantanConfig,
+	SessionConfig,
 } from "./config";
 export {
-	DEFAULT_SESSION_CONFIG,
 	DEFAULT_CLIENT_CONFIG,
 	DEFAULT_CONFIG,
+	DEFAULT_SESSION_CONFIG,
 	resolveConfig,
 } from "./config";
-
+// Diff (for advanced use)
+export { buildNodeMap, diff, parseHtml, toWebSocketPatches } from "./diff";
+export type { DiffPatch, DiffResult, VNode } from "./diff/types";
+// kt - Declarative UI API
+export { kt } from "./kt";
+export {
+	getPageConfig,
+	type PageConfig,
+	resetPageConfig,
+	set_page_config,
+} from "./kt/config";
+export {
+	getRenderContext,
+	RenderContext,
+	requireRenderContext,
+	setRenderContext,
+} from "./kt/context";
+export type { RerunContext, Script } from "./runtime";
 // Runtime
-export { rerun, getContext, setContext, clearContext } from "./runtime";
-export type { Script, RerunContext } from "./runtime";
-
+export { clearContext, getContext, rerun, setContext } from "./runtime";
 // Session
 export {
-	SessionManager,
-	getSessionManager,
-	setSessionManager,
-	resetSessionManager,
-	session_state,
 	createTypedSessionState,
-	setCurrentSessionId,
 	getCurrentSessionId,
+	getSessionManager,
+	resetSessionManager,
+	SessionManager,
+	session_state,
+	setCurrentSessionId,
+	setSessionManager,
 } from "./session";
-export type { SessionId, Session, SessionState } from "./session/types";
-
-// Widgets
-export {
-	button,
-	renderButton,
-	slider,
-	renderSlider,
-	text_input,
-	renderTextInput,
-	selectbox,
-	renderSelectbox,
-	download_button,
-	renderDownloadButton,
-	checkbox,
-	renderCheckbox,
-	radio,
-	renderRadio,
-	number_input,
-	renderNumberInput,
-	text_area,
-	renderTextArea,
-	toggle,
-	renderToggle,
-	multiselect,
-	renderMultiselect,
-	generateWidgetId,
-	resetWidgetCounter,
-	getWidgetValue,
-	setWidgetValue,
-	hasWidgetValue,
-} from "./widgets";
-export type {
-	WidgetConfig,
-	WidgetState,
-	WidgetRenderResult,
-	ButtonConfig,
-	SliderConfig,
-	TextInputConfig,
-	SelectboxConfig,
-	DownloadButtonConfig,
-	CheckboxConfig,
-	RadioConfig,
-	NumberInputConfig,
-	TextAreaConfig,
-	ToggleConfig,
-	MultiselectConfig,
-} from "./widgets/types";
-
+export type { Session, SessionId, SessionState } from "./session/types";
 // WebSocket
 export {
 	createWebSocketHandler,
@@ -90,29 +57,56 @@ export {
 } from "./websocket";
 export type {
 	ClientMessage,
-	ServerMessage,
-	Patch,
-	ReplaceRootPatch,
-	ReplaceNodePatch,
-	RemoveNodePatch,
 	InsertNodePatch,
+	Patch,
+	RemoveNodePatch,
+	ReplaceNodePatch,
+	ReplaceRootPatch,
+	ServerMessage,
 } from "./websocket/types";
-
-// Diff (for advanced use)
-export { parseHtml, buildNodeMap, diff, toWebSocketPatches } from "./diff";
-export type { VNode, DiffPatch, DiffResult } from "./diff/types";
-
-// kt - Declarative UI API
-export { kt } from "./kt";
+// Widgets
 export {
-	RenderContext,
-	setRenderContext,
-	getRenderContext,
-	requireRenderContext,
-} from "./kt/context";
-export {
-	type PageConfig,
-	set_page_config,
-	getPageConfig,
-	resetPageConfig,
-} from "./kt/config";
+	button,
+	checkbox,
+	download_button,
+	generateWidgetId,
+	getWidgetValue,
+	hasWidgetValue,
+	multiselect,
+	number_input,
+	radio,
+	renderButton,
+	renderCheckbox,
+	renderDownloadButton,
+	renderMultiselect,
+	renderNumberInput,
+	renderRadio,
+	renderSelectbox,
+	renderSlider,
+	renderTextArea,
+	renderTextInput,
+	renderToggle,
+	resetWidgetCounter,
+	selectbox,
+	setWidgetValue,
+	slider,
+	text_area,
+	text_input,
+	toggle,
+} from "./widgets";
+export type {
+	ButtonConfig,
+	CheckboxConfig,
+	DownloadButtonConfig,
+	MultiselectConfig,
+	NumberInputConfig,
+	RadioConfig,
+	SelectboxConfig,
+	SliderConfig,
+	TextAreaConfig,
+	TextInputConfig,
+	ToggleConfig,
+	WidgetConfig,
+	WidgetRenderResult,
+	WidgetState,
+} from "./widgets/types";

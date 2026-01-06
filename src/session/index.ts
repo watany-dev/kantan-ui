@@ -1,12 +1,12 @@
 export {
-	SessionManager,
 	getSessionManager,
-	setSessionManager,
 	resetSessionManager,
+	SessionManager,
+	setSessionManager,
 } from "./manager";
 export {
+	createTypedSessionState,
+	getCurrentSessionId,
 	session_state,
 	setCurrentSessionId,
-	getCurrentSessionId,
-	createTypedSessionState,
 } from "./state";

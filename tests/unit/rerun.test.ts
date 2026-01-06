@@ -3,9 +3,9 @@ import { getRenderContext } from "../../src/kt/context";
 import { getContext } from "../../src/runtime/context";
 import { rerun } from "../../src/runtime/rerun";
 import {
-	SessionManager,
 	getCurrentSessionId,
 	resetSessionManager,
+	SessionManager,
 	setSessionManager,
 } from "../../src/session";
 import { generateWidgetId, resetWidgetCounter } from "../../src/widgets";

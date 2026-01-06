@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { type StreamingOptions, rerun } from "../../../src/runtime";
+import { rerun, type StreamingOptions } from "../../../src/runtime";
 
 describe("rerun with streaming", () => {
 	it("should call flush callback when threshold is reached", () => {

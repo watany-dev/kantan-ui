@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { type TableData, normalizeTableData, table } from "../../../src/kt/data";
+import { normalizeTableData, type TableData, table } from "../../../src/kt/data";
 
 describe("Table Data", () => {
 	describe("normalizeTableData", () => {

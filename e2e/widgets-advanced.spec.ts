@@ -41,7 +41,7 @@ test.describe("Advanced Widget Behavior", () => {
 		// step=10なので75がそのまま設定される（HTMLの仕様では75は有効）
 		// ただし最も近いstepに丸められる場合がある
 		const value = await slider.inputValue();
-		expect(Number.parseInt(value) % 10).toBe(0);
+		expect(Number.parseInt(value, 10) % 10).toBe(0);
 	});
 
 	test("selectbox change triggers update", async ({ page }) => {

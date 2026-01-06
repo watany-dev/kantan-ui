@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_SESSION_CONFIG } from "../../../src/config";
 import {
-	SessionManager,
 	getSessionManager,
 	resetSessionManager,
+	SessionManager,
 	setSessionManager,
 } from "../../../src/session/manager";
 
@@ -269,7 +269,7 @@ describe("SessionManager", () => {
 			expect(() => manager.stopCleanupInterval()).not.toThrow();
 		});
 
-		it("should automatically clean up expired sessions via interval", async () => {
+		it("should automatically clean up expired sessions via interval", () => {
 			vi.useFakeTimers();
 			const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
@@ -548,7 +548,7 @@ describe("Event Queue", () => {
 		expect(manager.getQueueLength(session.id)).toBe(0);
 	});
 
-	it("should return early when already processing", async () => {
+	it("should return early when already processing", () => {
 		const session = manager.createSession();
 
 		// Manually set processing flag
@@ -589,7 +589,7 @@ describe("Event Queue", () => {
 		expect(manager.isProcessing(session.id)).toBe(false);
 	});
 
-	it("should handle edge case when queue item is undefined after shift", async () => {
+	it("should handle edge case when queue item is undefined after shift", () => {
 		const session = manager.createSession();
 
 		// Setup queue that will return undefined on shift (edge case)

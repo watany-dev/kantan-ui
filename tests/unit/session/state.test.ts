@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SessionStateError } from "../../../src/session/errors";
 import {
-	SessionManager,
 	resetSessionManager,
+	SessionManager,
 	setSessionManager,
 } from "../../../src/session/manager";
 import {
