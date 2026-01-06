@@ -24,6 +24,30 @@ function encodeBase64(data: string | ArrayBuffer): string {
 }
 
 /**
+ * ダウンロードボタンのHTML文字列を生成（内部ヘルパー）
+ */
+function buildDownloadButtonHtml(
+	widgetId: string,
+	label: string,
+	data: string | ArrayBuffer,
+	filename: string,
+	config: DownloadButtonConfig,
+): string {
+	const mime = config.mime ?? "application/octet-stream";
+	const base64 = encodeBase64(data);
+	const dataUrl = `data:${mime};base64,${base64}`;
+	const disabled = config.disabled ? " disabled" : "";
+	const disabledAttr = config.disabled ? ' aria-disabled="true"' : "";
+
+	// ファイル名をエスケープ（XSS対策）
+	const safeFilename = escapeHtml(filename).replace(/"/g, "&quot;");
+
+	return `<div class="kt-download-button" id="${widgetId}">
+<a href="${dataUrl}" download="${safeFilename}" class="kt-button"${disabledAttr}${disabled} data-kt-event="click">${escapeHtml(label)}</a>
+</div>`;
+}
+
+/**
  * ダウンロードボタンをレンダリング
  *
  * @param label ボタンのラベル
@@ -39,18 +63,7 @@ export function renderDownloadButton(
 	config: DownloadButtonConfig = {},
 ): string {
 	const widgetId = generateWidgetId(config.key);
-	const mime = config.mime ?? "application/octet-stream";
-	const base64 = encodeBase64(data);
-	const dataUrl = `data:${mime};base64,${base64}`;
-	const disabled = config.disabled ? " disabled" : "";
-	const disabledAttr = config.disabled ? ' aria-disabled="true"' : "";
-
-	// ファイル名をエスケープ（XSS対策）
-	const safeFilename = escapeHtml(filename).replace(/"/g, "&quot;");
-
-	return `<div class="kt-download-button" id="${widgetId}">
-<a href="${dataUrl}" download="${safeFilename}" class="kt-button"${disabledAttr}${disabled} data-kt-event="click">${escapeHtml(label)}</a>
-</div>`;
+	return buildDownloadButtonHtml(widgetId, label, data, filename, config);
 }
 
 /**
@@ -77,18 +90,7 @@ export function download_button(
 ): boolean {
 	const ctx = requireRenderContext();
 	const widgetId = generateWidgetId(config.key);
-
-	// HTMLをレンダリング（IDはすでに生成されているので、キーを渡さない）
-	const mime = config.mime ?? "application/octet-stream";
-	const base64 = encodeBase64(data);
-	const dataUrl = `data:${mime};base64,${base64}`;
-	const disabled = config.disabled ? " disabled" : "";
-	const disabledAttr = config.disabled ? ' aria-disabled="true"' : "";
-	const safeFilename = escapeHtml(filename).replace(/"/g, "&quot;");
-
-	const html = `<div class="kt-download-button" id="${widgetId}">
-<a href="${dataUrl}" download="${safeFilename}" class="kt-button"${disabledAttr}${disabled} data-kt-event="click">${escapeHtml(label)}</a>
-</div>`;
+	const html = buildDownloadButtonHtml(widgetId, label, data, filename, config);
 
 	ctx.append(html);
 

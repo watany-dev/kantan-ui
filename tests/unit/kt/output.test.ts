@@ -126,6 +126,13 @@ describe("Output APIs", () => {
 			expect(html).toContain("👍");
 			expect(html).not.toContain("✓");
 		});
+
+		it("should escape HTML in custom icon", () => {
+			success("Done", { icon: '<script>alert("xss")</script>' });
+			const html = ctx.getHtml();
+			expect(html).toContain("&lt;script&gt;");
+			expect(html).not.toContain("<script>");
+		});
 	});
 
 	describe("error", () => {

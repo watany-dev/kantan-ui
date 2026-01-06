@@ -1,13 +1,55 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getPageConfig, resetPageConfig, set_page_config } from "../../../src/kt/config";
+import { resetSessionManager, setSessionManager } from "../../../src/session/manager";
+import { setCurrentSessionId } from "../../../src/session/state";
+
+// Mock SessionManager
+class MockSessionManager {
+	private states = new Map<string, Record<string, unknown>>();
+
+	getSession(id: string) {
+		return { id, state: this.states.get(id) ?? {} };
+	}
+
+	getState(sessionId: string): Record<string, unknown> | undefined {
+		return this.states.get(sessionId);
+	}
+
+	setState(sessionId: string, key: string, value: unknown): void {
+		if (!this.states.has(sessionId)) {
+			this.states.set(sessionId, {});
+		}
+		const state = this.states.get(sessionId);
+		if (state) {
+			state[key] = value;
+		}
+	}
+
+	hasState(sessionId: string, key: string): boolean {
+		const state = this.states.get(sessionId);
+		return state ? key in state : false;
+	}
+
+	// テスト用: セッション状態をクリア
+	clearSession(sessionId: string): void {
+		this.states.delete(sessionId);
+	}
+}
 
 describe("Page Config", () => {
+	let mockManager: MockSessionManager;
+	const TEST_SESSION_ID = "test-session-123";
+
 	beforeEach(() => {
-		resetPageConfig();
+		mockManager = new MockSessionManager();
+		setSessionManager(mockManager as never);
+		setCurrentSessionId(TEST_SESSION_ID);
 	});
 
 	afterEach(() => {
 		resetPageConfig();
+		setCurrentSessionId(null);
+		resetSessionManager();
 	});
 
 	describe("set_page_config", () => {
@@ -73,6 +115,18 @@ describe("Page Config", () => {
 			expect(getPageConfig().menuItems).toHaveLength(2);
 			expect(getPageConfig().menuItems?.[0].label).toBe("Home");
 		});
+
+		it("should warn when called outside session context", () => {
+			setCurrentSessionId(null);
+			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+			set_page_config({ title: "Test" });
+
+			expect(warnSpy).toHaveBeenCalledWith(
+				"set_page_config must be called within a session context",
+			);
+			warnSpy.mockRestore();
+		});
 	});
 
 	describe("getPageConfig", () => {
@@ -87,6 +141,13 @@ describe("Page Config", () => {
 			const config = getPageConfig();
 			expect(config.title).toBe("Test App");
 			expect(config.layout).toBe("centered");
+		});
+
+		it("should return empty object when called outside session context", () => {
+			set_page_config({ title: "Test" });
+			setCurrentSessionId(null);
+
+			expect(getPageConfig()).toEqual({});
 		});
 	});
 
@@ -106,6 +167,29 @@ describe("Page Config", () => {
 			set_page_config({ title: "Second" });
 
 			expect(getPageConfig().title).toBe("Second");
+		});
+	});
+
+	describe("session isolation", () => {
+		it("should isolate page config between sessions", () => {
+			// First session
+			set_page_config({ title: "Session 1 App" });
+			expect(getPageConfig().title).toBe("Session 1 App");
+
+			// Switch to second session
+			const SESSION_2_ID = "test-session-456";
+			setCurrentSessionId(SESSION_2_ID);
+
+			// Second session should have empty config
+			expect(getPageConfig()).toEqual({});
+
+			// Set config for second session
+			set_page_config({ title: "Session 2 App" });
+			expect(getPageConfig().title).toBe("Session 2 App");
+
+			// Switch back to first session
+			setCurrentSessionId(TEST_SESSION_ID);
+			expect(getPageConfig().title).toBe("Session 1 App");
 		});
 	});
 });

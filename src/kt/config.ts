@@ -4,6 +4,9 @@
  * Streamlit の st.set_page_config() に相当する機能
  */
 
+import { getSessionManager } from "../session/manager";
+import { getCurrentSessionId } from "../session/state";
+
 /**
  * ページ設定の型定義
  */
@@ -20,7 +23,8 @@ export interface PageConfig {
 	menuItems?: { label: string; url: string }[];
 }
 
-let pageConfig: PageConfig | null = null;
+/** セッションステートに保存するためのキー */
+const PAGE_CONFIG_KEY = "__kt_page_config__";
 
 /**
  * ページ設定を行う
@@ -38,23 +42,48 @@ let pageConfig: PageConfig | null = null;
  * ```
  */
 export function set_page_config(config: PageConfig): void {
-	if (pageConfig !== null) {
+	const sessionId = getCurrentSessionId();
+	if (!sessionId) {
+		console.warn("set_page_config must be called within a session context");
+		return;
+	}
+
+	const manager = getSessionManager();
+	const state = manager.getState(sessionId);
+
+	if (state && PAGE_CONFIG_KEY in state) {
 		console.warn("set_page_config should only be called once");
 		return;
 	}
-	pageConfig = config;
+
+	manager.setState(sessionId, PAGE_CONFIG_KEY, config);
 }
 
 /**
  * 現在のページ設定を取得
  */
 export function getPageConfig(): PageConfig {
-	return pageConfig ?? {};
+	const sessionId = getCurrentSessionId();
+	if (!sessionId) {
+		return {};
+	}
+
+	const state = getSessionManager().getState(sessionId);
+	return (state?.[PAGE_CONFIG_KEY] as PageConfig) ?? {};
 }
 
 /**
  * ページ設定をリセット（テスト用）
  */
 export function resetPageConfig(): void {
-	pageConfig = null;
+	const sessionId = getCurrentSessionId();
+	if (!sessionId) {
+		return;
+	}
+
+	const manager = getSessionManager();
+	const state = manager.getState(sessionId);
+	if (state && PAGE_CONFIG_KEY in state) {
+		delete state[PAGE_CONFIG_KEY];
+	}
 }
