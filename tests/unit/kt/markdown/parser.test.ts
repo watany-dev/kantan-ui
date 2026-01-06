@@ -228,6 +228,27 @@ describe("parseMarkdown", () => {
 			const result = parseMarkdown(md);
 			expect(result).toContain("  indented");
 		});
+
+		it("should escape HTML in code block content", () => {
+			const md = "```\n<script>alert('xss')</script>\n```";
+			const result = parseMarkdown(md);
+			expect(result).toContain("&lt;script&gt;");
+			expect(result).not.toContain("<script>alert");
+		});
+
+		it("should escape HTML in unclosed code block", () => {
+			const md = "```\n<img onerror=alert(1)>";
+			const result = parseMarkdown(md);
+			expect(result).toContain("&lt;img");
+			expect(result).not.toContain("<img onerror");
+		});
+
+		it("should escape language name to prevent XSS", () => {
+			const md = '```"><script>xss</script>\ncode\n```';
+			const result = parseMarkdown(md);
+			expect(result).not.toContain("<script>xss");
+			expect(result).toContain("&gt;");
+		});
 	});
 
 	describe("edge cases", () => {
