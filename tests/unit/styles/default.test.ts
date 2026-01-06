@@ -157,6 +157,12 @@ describe("Default Styles", () => {
 			expect(layoutStyles).toContain(".kt-column");
 		});
 
+		it("should include responsive columns media query", () => {
+			expect(layoutStyles).toContain("@media (max-width: 768px)");
+			expect(layoutStyles).toContain(".kt-columns-responsive");
+			expect(layoutStyles).toContain("flex-direction: column");
+		});
+
 		it("should include expander class", () => {
 			expect(layoutStyles).toContain(".kt-expander");
 			expect(layoutStyles).toContain(".kt-expander-header");

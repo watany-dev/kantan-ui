@@ -241,6 +241,12 @@ const layoutStyles = `
   .kt-columns { display: flex; }
   .kt-column { min-width: 0; }
 
+  /* Responsive Columns */
+  @media (max-width: 768px) {
+    .kt-columns-responsive { flex-direction: column; }
+    .kt-columns-responsive .kt-column { flex: 0 0 100% !important; }
+  }
+
   /* Expander */
   .kt-expander {
     border: 1px solid #e9ecef;
