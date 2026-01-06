@@ -5,9 +5,19 @@ import { requireRenderContext } from "./context";
 // Progress API
 // ============================================
 
+/**
+ * 進捗値の解釈方法
+ * - "auto": 値が1より大きい場合は0-100%として、それ以外は0-1として解釈（デフォルト）
+ * - "fraction": 値を0-1の割合として解釈（0.5 = 50%）
+ * - "percentage": 値を0-100のパーセンテージとして解釈（50 = 50%）
+ */
+export type ProgressFormat = "auto" | "fraction" | "percentage";
+
 export interface ProgressConfig {
 	label?: string;
 	color?: string;
+	/** 進捗値の解釈方法 */
+	format?: ProgressFormat;
 }
 
 // ============================================
@@ -46,25 +56,51 @@ const toastColors: Record<ToastType, { bg: string; border: string; icon: string 
 };
 
 /**
+ * 値をパーセンテージに変換
+ * @internal
+ */
+function toPercentage(value: number, format: ProgressFormat): number {
+	switch (format) {
+		case "fraction":
+			// 0-1 の値を 0-100% に変換
+			return value * 100;
+		case "percentage":
+			// そのまま使用
+			return value;
+		case "auto":
+		default:
+			// 1より大きい場合は0-100%として、それ以外は0-1として解釈
+			return value > 1 ? value : value * 100;
+	}
+}
+
+/**
  * プログレスバーを表示
  *
- * @param value - 進捗値 (0-1 または 0-100)
+ * @param value - 進捗値
  * @param config - オプション設定
  *
  * @example
  * ```typescript
- * kt.progress(0.5);  // 50%
- * kt.progress(75);   // 75% (0-100を自動正規化)
+ * // 自動判定（デフォルト）
+ * kt.progress(0.5);   // 50% (0-1 として解釈)
+ * kt.progress(75);    // 75% (0-100 として解釈)
+ *
+ * // 明示的なフォーマット指定
+ * kt.progress(0.75, { format: "fraction" });    // 75%
+ * kt.progress(75, { format: "percentage" });    // 75%
+ *
+ * // ラベル付き
  * kt.progress(0.75, { label: "Downloading... 75%" });
  * ```
  */
 export function progress(value: number, config: ProgressConfig = {}): void {
 	const ctx = requireRenderContext();
 
-	// 0-100 を 0-1 に正規化
-	const normalizedValue = value > 1 ? value / 100 : value;
+	const format = config.format ?? "auto";
+	const rawPercentage = toPercentage(value, format);
 	// 0-100% にクランプ
-	const percentage = Math.min(Math.max(normalizedValue * 100, 0), 100);
+	const percentage = Math.min(Math.max(rawPercentage, 0), 100);
 	const color = config.color ?? "#3498db";
 
 	const labelHtml = config.label

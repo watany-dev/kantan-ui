@@ -82,6 +82,43 @@ describe("Feedback APIs", () => {
 			progress(1);
 			expect(ctx.getHtml()).toContain("width: 100%");
 		});
+
+		describe("format option", () => {
+			it("should use 'auto' format by default (values > 1 treated as percentage)", () => {
+				progress(75);
+				expect(ctx.getHtml()).toContain("width: 75%");
+			});
+
+			it("should treat 0-1 values as fractions in auto format", () => {
+				progress(0.5);
+				expect(ctx.getHtml()).toContain("width: 50%");
+			});
+
+			it("should interpret values as 0-1 fraction when format is 'fraction'", () => {
+				progress(0.75, { format: "fraction" });
+				expect(ctx.getHtml()).toContain("width: 75%");
+			});
+
+			it("should clamp fraction values > 1 to 100% when format is 'fraction'", () => {
+				progress(1.5, { format: "fraction" });
+				expect(ctx.getHtml()).toContain("width: 100%");
+			});
+
+			it("should interpret values as 0-100 percentage when format is 'percentage'", () => {
+				progress(75, { format: "percentage" });
+				expect(ctx.getHtml()).toContain("width: 75%");
+			});
+
+			it("should handle percentage value 0.5 as 0.5% when format is 'percentage'", () => {
+				progress(0.5, { format: "percentage" });
+				expect(ctx.getHtml()).toContain("width: 0.5%");
+			});
+
+			it("should clamp percentage values > 100 to 100%", () => {
+				progress(150, { format: "percentage" });
+				expect(ctx.getHtml()).toContain("width: 100%");
+			});
+		});
 	});
 
 	describe("spinner", () => {
