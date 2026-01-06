@@ -32,6 +32,62 @@ const defaultStyles = `
   .kt-selectbox { padding: 8px; }
   .kt-layout-centered { max-width: 800px; margin: 0 auto; padding: 0 1rem; }
   .kt-layout-wide { width: 100%; padding: 0 1rem; }
+
+  /* JSON Viewer */
+  .kt-json { font-family: monospace; font-size: 0.875rem; line-height: 1.4; }
+  .kt-json details { margin-left: 1rem; }
+  .kt-json details > summary { cursor: pointer; list-style: none; }
+  .kt-json details > summary::-webkit-details-marker { display: none; }
+  .kt-json details > summary::before { content: '▶ '; }
+  .kt-json details[open] > summary::before { content: '▼ '; }
+  .kt-json-null { color: #6c757d; }
+  .kt-json-boolean { color: #d63384; }
+  .kt-json-number { color: #0d6efd; }
+  .kt-json-string { color: #198754; }
+  .kt-json-key { color: #6f42c1; }
+  .kt-json-item { margin-left: 1rem; }
+
+  /* Code Block */
+  .kt-code { position: relative; margin: 0.5rem 0; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; overflow: hidden; }
+  .kt-code pre { margin: 0; padding: 1rem; overflow-x: auto; }
+  .kt-code code { font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 0.875rem; }
+  .kt-code-wrap pre { white-space: pre-wrap; word-wrap: break-word; }
+  .kt-code-line-numbers { float: left; padding: 1rem 0.5rem 1rem 1rem; text-align: right; color: #6c757d; border-right: 1px solid #e9ecef; user-select: none; }
+  .kt-code-line-numbers span { display: block; }
+  .kt-code-content { display: block; }
+
+  /* Syntax Highlighting */
+  .kt-hl-keyword { color: #d73a49; }
+  .kt-hl-string { color: #032f62; }
+  .kt-hl-number { color: #005cc5; }
+  .kt-hl-comment { color: #6a737d; font-style: italic; }
+  .kt-hl-function { color: #6f42c1; }
+  .kt-hl-operator { color: #d73a49; }
+  .kt-hl-punctuation { color: #24292e; }
+  .kt-hl-type { color: #22863a; }
+  .kt-hl-tag { color: #22863a; }
+  .kt-hl-attribute { color: #6f42c1; }
+  .kt-hl-value { color: #032f62; }
+  .kt-hl-selector { color: #6f42c1; }
+  .kt-hl-property { color: #005cc5; }
+
+  /* Markdown */
+  .kt-markdown { line-height: 1.6; }
+  .kt-markdown h1 { font-size: 2rem; margin: 1rem 0 0.5rem; border-bottom: 1px solid #e9ecef; padding-bottom: 0.3rem; }
+  .kt-markdown h2 { font-size: 1.5rem; margin: 1rem 0 0.5rem; border-bottom: 1px solid #e9ecef; padding-bottom: 0.3rem; }
+  .kt-markdown h3 { font-size: 1.25rem; margin: 1rem 0 0.5rem; }
+  .kt-markdown h4, .kt-markdown h5, .kt-markdown h6 { font-size: 1rem; margin: 1rem 0 0.5rem; }
+  .kt-markdown p { margin: 0.5rem 0; }
+  .kt-markdown code { background: #f1f3f5; padding: 0.125rem 0.25rem; border-radius: 3px; font-family: monospace; font-size: 0.875em; }
+  .kt-markdown pre { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 1rem; overflow-x: auto; }
+  .kt-markdown pre code { background: none; padding: 0; }
+  .kt-markdown blockquote { border-left: 4px solid #e9ecef; margin: 0.5rem 0; padding: 0.5rem 1rem; color: #6c757d; }
+  .kt-markdown ul, .kt-markdown ol { margin: 0.5rem 0; padding-left: 2rem; }
+  .kt-markdown li { margin: 0.25rem 0; }
+  .kt-markdown a { color: #0d6efd; text-decoration: none; }
+  .kt-markdown a:hover { text-decoration: underline; }
+  .kt-markdown img { max-width: 100%; height: auto; }
+  .kt-markdown hr { border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
 `;
 
 export function createApp(script: Script, userConfig?: KantanConfig) {
