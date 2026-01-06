@@ -118,6 +118,118 @@ describe("parseMarkdown", () => {
 		});
 	});
 
+	describe("links", () => {
+		it("should parse links", () => {
+			expect(parseMarkdown("[text](https://example.com)")).toContain(
+				'<a href="https://example.com">text</a>',
+			);
+		});
+
+		it("should parse links in text", () => {
+			const result = parseMarkdown("Check [this link](https://example.com) out");
+			expect(result).toContain('<a href="https://example.com">this link</a>');
+		});
+
+		it("should handle relative URLs", () => {
+			expect(parseMarkdown("[link](/path/to/page)")).toContain('href="/path/to/page"');
+		});
+	});
+
+	describe("images", () => {
+		it("should parse images", () => {
+			expect(parseMarkdown("![alt text](image.png)")).toContain(
+				'<img src="image.png" alt="alt text">',
+			);
+		});
+
+		it("should parse images with URLs", () => {
+			const result = parseMarkdown("![logo](https://example.com/logo.png)");
+			expect(result).toContain('src="https://example.com/logo.png"');
+		});
+
+		it("should handle empty alt text", () => {
+			expect(parseMarkdown("![](image.png)")).toContain('alt=""');
+		});
+	});
+
+	describe("unordered lists", () => {
+		it("should parse unordered list with -", () => {
+			const result = parseMarkdown("- item1\n- item2");
+			expect(result).toContain("<ul>");
+			expect(result).toContain("<li>item1</li>");
+			expect(result).toContain("<li>item2</li>");
+			expect(result).toContain("</ul>");
+		});
+
+		it("should parse unordered list with *", () => {
+			const result = parseMarkdown("* item1\n* item2");
+			expect(result).toContain("<ul>");
+			expect(result).toContain("<li>item1</li>");
+		});
+
+		it("should handle inline formatting in list items", () => {
+			const result = parseMarkdown("- **bold** item");
+			expect(result).toContain("<strong>bold</strong>");
+		});
+	});
+
+	describe("ordered lists", () => {
+		it("should parse ordered list", () => {
+			const result = parseMarkdown("1. first\n2. second");
+			expect(result).toContain("<ol>");
+			expect(result).toContain("<li>first</li>");
+			expect(result).toContain("<li>second</li>");
+			expect(result).toContain("</ol>");
+		});
+
+		it("should handle any numbers", () => {
+			const result = parseMarkdown("1. item\n1. item\n1. item");
+			expect(result).toContain("<ol>");
+		});
+	});
+
+	describe("blockquotes", () => {
+		it("should parse blockquote", () => {
+			expect(parseMarkdown("> quote")).toContain("<blockquote>quote</blockquote>");
+		});
+
+		it("should parse multi-line blockquote", () => {
+			const result = parseMarkdown("> line1\n> line2");
+			expect(result).toContain("<blockquote>");
+			expect(result).toContain("line1");
+			expect(result).toContain("line2");
+		});
+
+		it("should handle formatting in blockquote", () => {
+			const result = parseMarkdown("> **bold** quote");
+			expect(result).toContain("<strong>bold</strong>");
+		});
+	});
+
+	describe("code blocks", () => {
+		it("should parse fenced code block", () => {
+			const md = "```\ncode here\n```";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<pre>");
+			expect(result).toContain("<code>");
+			expect(result).toContain("code here");
+		});
+
+		it("should parse fenced code block with language", () => {
+			const md = "```typescript\nconst x = 1;\n```";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<pre>");
+			expect(result).toContain("<code");
+			expect(result).toContain("const x = 1;");
+		});
+
+		it("should preserve whitespace in code blocks", () => {
+			const md = "```\n  indented\n```";
+			const result = parseMarkdown(md);
+			expect(result).toContain("  indented");
+		});
+	});
+
 	describe("edge cases", () => {
 		it("should handle empty string", () => {
 			expect(parseMarkdown("")).toBe("");
@@ -131,6 +243,28 @@ describe("parseMarkdown", () => {
 			const result = parseMarkdown("**bold** and *italic*");
 			expect(result).toContain("<strong>bold</strong>");
 			expect(result).toContain("<em>italic</em>");
+		});
+
+		it("should handle complex document", () => {
+			const md = `# Title
+
+This is a paragraph with **bold** and *italic*.
+
+- Item 1
+- Item 2
+
+> A quote
+
+\`\`\`js
+code()
+\`\`\`
+`;
+			const result = parseMarkdown(md);
+			expect(result).toContain("<h1>Title</h1>");
+			expect(result).toContain("<strong>bold</strong>");
+			expect(result).toContain("<ul>");
+			expect(result).toContain("<blockquote>");
+			expect(result).toContain("<pre>");
 		});
 	});
 });
