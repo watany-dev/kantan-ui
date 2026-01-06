@@ -86,14 +86,33 @@ const defaultIcons: Record<AlertType, string> = {
 
 export interface AlertConfig {
 	icon?: string;
+	/** カスタム背景色 (例: "#f0f0f0") */
+	background?: string;
+	/** カスタムテキスト色 (例: "#333") */
+	color?: string;
+	/** カスタムボーダー色 (例: "#ccc") */
+	border?: string;
 }
 
 function alert(type: AlertType, message: string, config: AlertConfig = {}): void {
 	const ctx = requireRenderContext();
 	const icon = escapeHtml(config.icon ?? defaultIcons[type]);
 
+	// カスタムカラーが指定されている場合はインラインスタイルを生成
+	const styles: string[] = [];
+	if (config.background) {
+		styles.push(`background-color:${escapeHtml(config.background)}`);
+	}
+	if (config.color) {
+		styles.push(`color:${escapeHtml(config.color)}`);
+	}
+	if (config.border) {
+		styles.push(`border-color:${escapeHtml(config.border)}`);
+	}
+	const styleAttr = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
+
 	ctx.append(
-		`<div class="kt-alert kt-alert-${type}"><span class="kt-alert-icon">${icon}</span><span class="kt-alert-message">${escapeHtml(message)}</span></div>`,
+		`<div class="kt-alert kt-alert-${type}"${styleAttr}><span class="kt-alert-icon">${icon}</span><span class="kt-alert-message">${escapeHtml(message)}</span></div>`,
 	);
 }
 

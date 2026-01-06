@@ -136,6 +136,45 @@ describe("Output APIs", () => {
 			expect(html).toContain("&lt;script&gt;");
 			expect(html).not.toContain("<script>");
 		});
+
+		it("should apply custom background color", () => {
+			success("Done", { background: "#f0f0f0" });
+			const html = ctx.getHtml();
+			expect(html).toContain('style="background-color:#f0f0f0"');
+		});
+
+		it("should apply custom text color", () => {
+			success("Done", { color: "#333333" });
+			const html = ctx.getHtml();
+			expect(html).toContain('style="color:#333333"');
+		});
+
+		it("should apply custom border color", () => {
+			success("Done", { border: "#cccccc" });
+			const html = ctx.getHtml();
+			expect(html).toContain('style="border-color:#cccccc"');
+		});
+
+		it("should apply multiple custom colors", () => {
+			success("Done", { background: "#fff", color: "#000", border: "#ccc" });
+			const html = ctx.getHtml();
+			expect(html).toContain("background-color:#fff");
+			expect(html).toContain("color:#000");
+			expect(html).toContain("border-color:#ccc");
+		});
+
+		it("should escape HTML in custom colors", () => {
+			success("Done", { background: '"><script>xss</script>' });
+			const html = ctx.getHtml();
+			expect(html).not.toContain("<script>");
+			expect(html).toContain("&lt;script&gt;");
+		});
+
+		it("should not add style attribute when no custom colors", () => {
+			success("Done");
+			const html = ctx.getHtml();
+			expect(html).not.toContain("style=");
+		});
 	});
 
 	describe("error", () => {
