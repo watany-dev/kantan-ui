@@ -136,9 +136,7 @@ describe("sanitizeMarkdownHtml", () => {
 		});
 
 		it("should block data: URLs with base64", () => {
-			const result = sanitizeMarkdownHtml(
-				'<a href="data:text/html;base64,PHNjcmlwdD4=">click</a>',
-			);
+			const result = sanitizeMarkdownHtml('<a href="data:text/html;base64,PHNjcmlwdD4=">click</a>');
 			expect(result).not.toContain("data:");
 		});
 
