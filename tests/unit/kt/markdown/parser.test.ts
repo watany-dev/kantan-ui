@@ -291,4 +291,37 @@ code()
 			expect(result).toContain("text after");
 		});
 	});
+
+	describe("security", () => {
+		it("should escape language attribute to prevent XSS", () => {
+			const md = '```javascript" onload="alert(\'xss\')\ncode\n```';
+			const result = parseMarkdown(md);
+			// The quotes should be escaped, preventing attribute injection
+			expect(result).toContain("&quot;");
+			expect(result).not.toContain('onload="alert');
+		});
+
+		it("should escape special characters in language attribute", () => {
+			const md = "```<script>alert(1)</script>\ncode\n```";
+			const result = parseMarkdown(md);
+			// < and > should be escaped
+			expect(result).toContain("&lt;");
+			expect(result).toContain("&gt;");
+			expect(result).not.toContain("<script>");
+		});
+
+		it("should escape language attribute in unclosed code blocks", () => {
+			const md = '```javascript" onclick="evil()\ncode';
+			const result = parseMarkdown(md);
+			// The quotes should be escaped even in unclosed blocks
+			expect(result).toContain("&quot;");
+			expect(result).not.toContain('onclick="evil');
+		});
+
+		it("should handle ampersand in language attribute", () => {
+			const md = "```foo&bar\ncode\n```";
+			const result = parseMarkdown(md);
+			expect(result).toContain("&amp;");
+		});
+	});
 });

@@ -150,11 +150,15 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 		}
 		const nonce = generateNonce();
 
-		// CSPヘッダー設定
+		// セキュリティヘッダー設定
 		c.header(
 			"Content-Security-Policy",
 			`default-src 'self'; script-src 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:;`,
 		);
+		c.header("X-Content-Type-Options", "nosniff");
+		c.header("X-Frame-Options", "SAMEORIGIN");
+		c.header("X-XSS-Protection", "1; mode=block");
+		c.header("Referrer-Policy", "strict-origin-when-cross-origin");
 
 		// PageConfig を取得
 		const pageConfig = getPageConfig();

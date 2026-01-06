@@ -3,6 +3,7 @@
  *
  * 基本的なMarkdown構文をHTMLに変換する
  */
+import { escapeHtml } from "../../utils/html";
 
 /**
  * Markdownをパースする
@@ -67,7 +68,7 @@ export function parseMarkdown(markdown: string): string {
 				codeBlockLang = trimmedLine.slice(3).trim();
 				codeBlockContent = [];
 			} else {
-				const langAttr = codeBlockLang ? ` class="language-${codeBlockLang}"` : "";
+				const langAttr = codeBlockLang ? ` class="language-${escapeHtml(codeBlockLang)}"` : "";
 				result.push(`<pre><code${langAttr}>${codeBlockContent.join("\n")}</code></pre>`);
 				inCodeBlock = false;
 				codeBlockLang = "";
@@ -170,7 +171,7 @@ export function parseMarkdown(markdown: string): string {
 
 	// コードブロックが閉じられていない場合
 	if (inCodeBlock) {
-		const langAttr = codeBlockLang ? ` class="language-${codeBlockLang}"` : "";
+		const langAttr = codeBlockLang ? ` class="language-${escapeHtml(codeBlockLang)}"` : "";
 		result.push(`<pre><code${langAttr}>${codeBlockContent.join("\n")}</code></pre>`);
 	}
 
