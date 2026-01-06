@@ -2,6 +2,14 @@
 export type FlushCallback = (html: string, itemCount: number) => void;
 
 /**
+ * RenderContextの制限値
+ */
+export const RENDER_CONTEXT_LIMITS = {
+	/** バッファの最大要素数（デフォルト: 10,000要素） */
+	MAX_BUFFER_SIZE: 10000,
+} as const;
+
+/**
  * レンダリングコンテキスト
  * スクリプト実行中にHTMLを自動収集するためのバッファ
  */
@@ -10,6 +18,14 @@ export class RenderContext {
 	private flushCallback: FlushCallback | null = null;
 	private flushThreshold = 0; // 0 = 無効（フラッシュしない）
 	private flushedCount = 0;
+	private maxBufferSize: number;
+
+	/**
+	 * @param maxBufferSize バッファの最大要素数（デフォルト: RENDER_CONTEXT_LIMITS.MAX_BUFFER_SIZE）
+	 */
+	constructor(maxBufferSize: number = RENDER_CONTEXT_LIMITS.MAX_BUFFER_SIZE) {
+		this.maxBufferSize = maxBufferSize;
+	}
 
 	/**
 	 * フラッシュコールバックを設定
@@ -30,8 +46,15 @@ export class RenderContext {
 
 	/**
 	 * HTMLをバッファに追加
+	 * @throws {Error} バッファサイズが上限を超えた場合
 	 */
 	append(html: string): void {
+		if (this.buffer.length >= this.maxBufferSize) {
+			throw new Error(
+				`RenderContext buffer size exceeds limit: ${this.maxBufferSize}. ` +
+					"Consider enabling streaming or reducing the number of rendered elements.",
+			);
+		}
 		this.buffer.push(html);
 		this.maybeFlush();
 	}

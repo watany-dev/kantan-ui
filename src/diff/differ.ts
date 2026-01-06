@@ -94,9 +94,14 @@ export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Pa
 	}
 
 	// insertパッチがある場合はreplaceRootにフォールバック
-	// insertのインデックスはID付き要素間の順序で計算されるが、
+	// 理由: insertのインデックスはID付き要素間の順序で計算されるが、
 	// クライアント側ではすべてのDOM子要素に対してインデックスを適用するため、
-	// ID無し要素が混在している場合に誤った位置に挿入される
+	// ID無し要素（テキストノード、コメント等）が混在している場合に誤った位置に挿入される
+	//
+	// TODO: 将来の改善案
+	// 1. insertAfterId/insertBeforeId方式への変更（ID参照ベースの挿入）
+	// 2. 親要素がID付き子要素のみを持つ場合に限定してinsertを有効化
+	// 3. クライアント側でID付き要素のみをカウントしてインデックスを計算
 	const hasInsertPatches = diffResult.patches.some((p) => p.type === "insert");
 	if (hasInsertPatches) {
 		return [{ type: "replaceRoot", html: fullHtml } satisfies ReplaceRootPatch];

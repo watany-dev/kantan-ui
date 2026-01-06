@@ -87,10 +87,16 @@ export function isValidId(id: string): boolean {
  *
  * 注意: 完全なHTMLパーサーではなく、kantan-ui生成のHTMLに特化した軽量実装
  *
+ * 計算量: O(k log k) where k = ID付き要素数
+ * - 正規表現マッチング: O(n) where n = HTML文字列長
+ * - 親ツリー構築: O(k log k) - ソート + スタック走査
+ * - VNode構築: O(k)
+ *
  * @param html - パース対象のHTML文字列（最大1MB）
  * @returns VNodeの配列（最大1000要素）
  * @throws {Error} サイズ超過、タイムアウト、要素数超過時
  */
+
 /**
  * 中間データ構造：パース中のノード情報
  */
@@ -243,30 +249,53 @@ function groupSiblings(
 }
 
 /**
+ * 兄弟グループからインデックスマップを構築 O(k)
+ * 各ノードIDからグループ内の順序を O(1) で取得可能にする
+ */
+function buildSiblingIndexMaps(
+	siblingGroups: Map<string | null, ParsedNode[]>,
+): Map<string | null, Map<string, number>> {
+	const indexMaps = new Map<string | null, Map<string, number>>();
+
+	for (const [parentId, group] of siblingGroups) {
+		const indexMap = new Map<string, number>();
+		for (let i = 0; i < group.length; i++) {
+			indexMap.set(group[i].id, i);
+		}
+		indexMaps.set(parentId, indexMap);
+	}
+
+	return indexMaps;
+}
+
+/**
  * パースされたノードから親子関係と順序を計算してVNodeを構築
- * 計算量: O(k²) - 親マップ構築がO(k²)、それ以外はO(k)
+ * 計算量: O(k log k) - ソート O(k log k) + 各ステップ O(k)
  */
 function buildNodeTree(parsedNodes: ParsedNode[]): VNode[] {
-	// Step 1: 親マップを事前計算 O(k²)
+	// Step 1: 親マップを事前計算 O(k log k)
 	const parentMap = buildParentMap(parsedNodes);
 
 	// Step 2: 兄弟をグループ化 O(k)
 	const siblingGroups = groupSiblings(parsedNodes, parentMap);
 
-	// Step 3: VNodeを構築 O(k)
+	// Step 3: インデックスマップを構築 O(k)
+	const siblingIndexMaps = buildSiblingIndexMaps(siblingGroups);
+
+	// Step 4: VNodeを構築 O(k)
 	const nodes: VNode[] = [];
 
 	for (const node of parsedNodes) {
 		const parentId = parentMap.get(node.id) ?? null;
-		const siblings = siblingGroups.get(parentId) || [];
-		const order = siblings.findIndex((s) => s.id === node.id);
+		const indexMap = siblingIndexMaps.get(parentId);
+		const order = indexMap?.get(node.id) ?? 0;
 
 		nodes.push({
 			id: node.id,
 			tag: node.tag,
 			html: node.html,
 			parentId,
-			order: order >= 0 ? order : 0,
+			order,
 		});
 	}
 
