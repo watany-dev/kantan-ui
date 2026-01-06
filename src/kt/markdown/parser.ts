@@ -54,7 +54,7 @@ export function parseMarkdown(markdown: string): string {
 	};
 
 	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i];
+		const line = lines[i] ?? "";
 		const trimmedLine = line.trim();
 
 		// コードブロック開始/終了
@@ -100,7 +100,7 @@ export function parseMarkdown(markdown: string): string {
 
 		// 見出し
 		const headingMatch = trimmedLine.match(/^(#{1,6})\s+(.+)$/);
-		if (headingMatch) {
+		if (headingMatch?.[1] && headingMatch[2]) {
 			flushParagraph();
 			flushList();
 			flushBlockquote();
@@ -119,7 +119,7 @@ export function parseMarkdown(markdown: string): string {
 				inBlockquote = true;
 				blockquoteContent = [];
 			}
-			blockquoteContent.push(blockquoteMatch[1]);
+			blockquoteContent.push(blockquoteMatch[1] ?? "");
 			continue;
 		}
 
@@ -130,7 +130,7 @@ export function parseMarkdown(markdown: string): string {
 
 		// 無順リスト
 		const unorderedListMatch = trimmedLine.match(/^[-*]\s+(.+)$/);
-		if (unorderedListMatch) {
+		if (unorderedListMatch?.[1]) {
 			flushParagraph();
 			flushBlockquote();
 			if (inList !== "ul") {
@@ -143,7 +143,7 @@ export function parseMarkdown(markdown: string): string {
 
 		// 順序リスト
 		const orderedListMatch = trimmedLine.match(/^\d+\.\s+(.+)$/);
-		if (orderedListMatch) {
+		if (orderedListMatch?.[1]) {
 			flushParagraph();
 			flushBlockquote();
 			if (inList !== "ol") {
