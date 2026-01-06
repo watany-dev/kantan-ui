@@ -22,6 +22,9 @@
  */
 
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
+import * as feedback from "./feedback";
+import * as formModule from "./form";
+import * as layout from "./layout";
 import * as output from "./output";
 import * as widgets from "./widgets";
 
@@ -34,6 +37,26 @@ export const kt = {
 	text: output.text,
 	divider: output.divider,
 	html: output.html,
+
+	// Alert APIs
+	success: output.success,
+	error: output.error,
+	warning: output.warning,
+	info: output.info,
+
+	// Feedback APIs
+	progress: feedback.progress,
+	spinner: feedback.spinner,
+	toast: feedback.toast,
+
+	// Layout APIs
+	container: layout.container,
+	columns: layout.columns,
+	expander: layout.expander,
+
+	// Form APIs
+	form: formModule.form,
+	form_submit_button: formModule.form_submit_button,
 
 	// Widget APIs
 	button: widgets.button,

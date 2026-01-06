@@ -1,6 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { divider, header, html, subheader, text, title, write } from "../../../src/kt/output";
+import {
+	divider,
+	error,
+	header,
+	html,
+	info,
+	subheader,
+	success,
+	text,
+	title,
+	warning,
+	write,
+} from "../../../src/kt/output";
 
 describe("Output APIs", () => {
 	let ctx: RenderContext;
@@ -87,6 +99,74 @@ describe("Output APIs", () => {
 		it("should throw error when no context", () => {
 			setRenderContext(null);
 			expect(() => write("test")).toThrow("RenderContext is not available");
+		});
+	});
+
+	describe("success", () => {
+		it("should output success alert with kt-alert-success class", () => {
+			success("Operation completed");
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-alert kt-alert-success"');
+			expect(html).toContain("Operation completed");
+		});
+
+		it("should escape HTML in message", () => {
+			success("<script>alert('xss')</script>");
+			expect(ctx.getHtml()).toContain("&lt;script&gt;");
+		});
+
+		it("should include default success icon", () => {
+			success("Done");
+			expect(ctx.getHtml()).toContain("✓");
+		});
+
+		it("should use custom icon when provided", () => {
+			success("Done", { icon: "👍" });
+			const html = ctx.getHtml();
+			expect(html).toContain("👍");
+			expect(html).not.toContain("✓");
+		});
+	});
+
+	describe("error", () => {
+		it("should output error alert with kt-alert-error class", () => {
+			error("Something went wrong");
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-alert kt-alert-error"');
+			expect(html).toContain("Something went wrong");
+		});
+
+		it("should include default error icon", () => {
+			error("Failed");
+			expect(ctx.getHtml()).toContain("✕");
+		});
+	});
+
+	describe("warning", () => {
+		it("should output warning alert with kt-alert-warning class", () => {
+			warning("Please check your input");
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-alert kt-alert-warning"');
+			expect(html).toContain("Please check your input");
+		});
+
+		it("should include default warning icon", () => {
+			warning("Caution");
+			expect(ctx.getHtml()).toContain("⚠");
+		});
+	});
+
+	describe("info", () => {
+		it("should output info alert with kt-alert-info class", () => {
+			info("FYI: New features available");
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-alert kt-alert-info"');
+			expect(html).toContain("FYI: New features available");
+		});
+
+		it("should include default info icon", () => {
+			info("Information");
+			expect(ctx.getHtml()).toContain("ℹ");
 		});
 	});
 });
