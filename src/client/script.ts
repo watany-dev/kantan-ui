@@ -193,6 +193,25 @@ function applyPatch(patch) {
 }`;
 
 /**
+ * Toast自動消去スクリプト
+ */
+const toastScript = `
+function initToasts() {
+  const toasts = document.querySelectorAll(".kt-toast[data-duration]:not([data-toast-initialized])");
+  toasts.forEach(function(toast) {
+    toast.setAttribute("data-toast-initialized", "true");
+    const duration = parseInt(toast.getAttribute("data-duration"), 10) || 4000;
+    toast.style.transition = "opacity 0.3s ease-out";
+    setTimeout(function() {
+      toast.style.opacity = "0";
+      setTimeout(function() {
+        toast.remove();
+      }, 300);
+    }, duration);
+  });
+}`;
+
+/**
  * イベント処理スクリプト（デバウンス付き、IME対応）
  */
 const eventHandlingScript = `
@@ -383,6 +402,8 @@ function connect() {
         restoreFocusState(focusState, 0);
         requestAnimationFrame(() => restoreFocusState(focusState, 0));
       }
+      // Initialize toasts after DOM update
+      initToasts();
     }
   };
 
@@ -430,6 +451,7 @@ setupEventDelegation(window.sendEvent);
 		focusManagementScript,
 		xssDetectionScript,
 		patchApplyScript,
+		toastScript,
 		eventHandlingScript,
 		websocketScript,
 	].join("\n");
