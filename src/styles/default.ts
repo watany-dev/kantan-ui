@@ -483,6 +483,5 @@ export {
 	markdownStyles,
 	feedbackStyles,
 	layoutStyles,
-	chatStyles,
 	formStyles,
 };
