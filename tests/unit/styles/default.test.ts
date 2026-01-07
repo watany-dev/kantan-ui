@@ -9,6 +9,7 @@ import {
 	jsonStyles,
 	layoutStyles,
 	markdownStyles,
+	sidebarStyles,
 } from "../../../src/styles";
 
 describe("Default Styles", () => {
@@ -29,6 +30,7 @@ describe("Default Styles", () => {
 			expect(defaultStyles).toContain(".kt-toast");
 			expect(defaultStyles).toContain(".kt-columns");
 			expect(defaultStyles).toContain(".kt-expander");
+			expect(defaultStyles).toContain(".kt-sidebar");
 			expect(defaultStyles).toContain(".kt-form");
 		});
 	});
@@ -192,6 +194,41 @@ describe("Default Styles", () => {
 		it("should include validation error styles", () => {
 			expect(formStyles).toContain(".kt-validation-error");
 			expect(formStyles).toContain(".kt-validation-errors");
+		});
+	});
+
+	describe("sidebarStyles", () => {
+		it("should include sidebar layout class", () => {
+			expect(sidebarStyles).toContain(".kt-layout-sidebar");
+		});
+
+		it("should include sidebar class", () => {
+			expect(sidebarStyles).toContain(".kt-sidebar");
+		});
+
+		it("should include sidebar collapsed state", () => {
+			expect(sidebarStyles).toContain('.kt-sidebar[data-state="collapsed"]');
+		});
+
+		it("should include sidebar content class", () => {
+			expect(sidebarStyles).toContain(".kt-sidebar-content");
+		});
+
+		it("should include sidebar toggle button", () => {
+			expect(sidebarStyles).toContain(".kt-sidebar-toggle");
+			expect(sidebarStyles).toContain(".kt-sidebar-toggle-icon");
+		});
+
+		it("should include responsive media query", () => {
+			expect(sidebarStyles).toContain("@media (max-width: 768px)");
+		});
+
+		it("should include mobile overlay styles", () => {
+			expect(sidebarStyles).toContain(".kt-sidebar-overlay");
+		});
+
+		it("should include main area styles", () => {
+			expect(sidebarStyles).toContain(".kt-layout-sidebar .kt-main");
 		});
 	});
 });
