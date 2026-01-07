@@ -116,5 +116,24 @@ describe("text_input", () => {
 
 			expect(html).not.toContain("maxlength");
 		});
+
+		it("should render password type when type is password", () => {
+			const html = renderTextInput("Password", "", { type: "password" });
+
+			expect(html).toContain('type="password"');
+			expect(html).not.toContain('type="text"');
+		});
+
+		it("should render email type when type is email", () => {
+			const html = renderTextInput("Email", "", { type: "email" });
+
+			expect(html).toContain('type="email"');
+		});
+
+		it("should render text type by default", () => {
+			const html = renderTextInput("Name", "World");
+
+			expect(html).toContain('type="text"');
+		});
 	});
 });
