@@ -1,0 +1,14 @@
+{
+	"$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
+	"tasks": {
+		"dev": "deno run --allow-net --allow-read --watch src/server-deno.ts"
+	},
+	"imports": {
+		"hono": "npm:hono@^4.6.0",
+		"hono/": "npm:hono@^4.6.0/"
+	},
+	"compilerOptions": {
+		"strict": true,
+		"noImplicitAny": true
+	}
+}
