@@ -118,7 +118,7 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 			isTemporarySession = true;
 		}
 
-		const initialHtml = rerun(script, undefined, sessionId);
+		const initialResult = rerun(script, undefined, sessionId);
 
 		// 一時セッションは初期レンダリング後に削除
 		if (isTemporarySession) {
@@ -131,7 +131,21 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 		// PageConfig を取得
 		const pageConfig = getPageConfig();
 		const pageTitle = pageConfig.title ?? "kantan-ui";
-		const layoutClass = pageConfig.layout === "wide" ? "kt-layout-wide" : "kt-layout-centered";
+		const baseLayoutClass = pageConfig.layout === "wide" ? "kt-layout-wide" : "kt-layout-centered";
+
+		// サイドバーがある場合のHTML構造を生成
+		const bodyContent = initialResult.hasSidebar
+			? html`<div class="kt-layout-sidebar">
+					<aside class="kt-sidebar" data-state="expanded">
+						<div class="kt-sidebar-content">${raw(initialResult.sidebarHtml)}</div>
+						<button class="kt-sidebar-toggle" type="button" aria-label="Toggle sidebar">
+							<span class="kt-sidebar-toggle-icon"></span>
+						</button>
+					</aside>
+					<main class="kt-main ${baseLayoutClass}">${raw(initialResult.mainHtml)}</main>
+					<div class="kt-sidebar-overlay"></div>
+				</div>`
+			: html`<div class="${baseLayoutClass}">${raw(initialResult.mainHtml)}</div>`;
 
 		// Honoのhtmlヘルパーを使用（raw()でエスケープを回避）
 		return c.html(
@@ -145,8 +159,8 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 							${raw(defaultStyles)}
 						</style>
 					</head>
-					<body class="${layoutClass}">
-						<div id="app">${raw(initialHtml)}</div>
+					<body>
+						<div id="app">${bodyContent}</div>
 						<script nonce="${nonce}">
 							${raw(clientScript)}
 						</script>
