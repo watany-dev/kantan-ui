@@ -4,6 +4,12 @@
  */
 
 import { getContext } from "../runtime/context";
+import {
+	validateMinMax,
+	validateOptionsNotEmpty,
+	validateValueInOptions,
+	validateValueInRange,
+} from "../utils/validation";
 import { getWidgetValue, hasWidgetValue, setWidgetValue } from "./registry";
 
 /**
@@ -29,13 +35,9 @@ export function isButtonPressed(widgetId: string): boolean {
  * スライダーのバリデーション
  */
 export function validateSlider(min: number, max: number, defaultValue?: number): void {
-	if (min > max) {
-		throw new Error(`slider: min (${min}) must be <= max (${max})`);
-	}
-	if (defaultValue !== undefined && (defaultValue < min || defaultValue > max)) {
-		throw new Error(
-			`slider: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
-		);
+	validateMinMax(min, max, "slider");
+	if (defaultValue !== undefined) {
+		validateValueInRange(defaultValue, min, max, "slider");
 	}
 }
 
@@ -63,11 +65,9 @@ export function initializeTextInputState(widgetId: string, defaultValue?: string
  * セレクトボックスのバリデーション
  */
 export function validateSelectbox(options: string[], defaultValue?: string): void {
-	if (!options || options.length === 0) {
-		throw new Error("selectbox: options array must not be empty");
-	}
-	if (defaultValue !== undefined && !options.includes(defaultValue)) {
-		throw new Error(`selectbox: defaultValue "${defaultValue}" must be one of the options`);
+	validateOptionsNotEmpty(options, "selectbox");
+	if (defaultValue !== undefined) {
+		validateValueInOptions(defaultValue, options, "selectbox");
 	}
 }
 
@@ -95,11 +95,9 @@ export function initializeCheckboxState(widgetId: string, defaultValue?: boolean
  * ラジオボタンのバリデーション
  */
 export function validateRadio(options: string[], defaultValue?: string): void {
-	if (!options || options.length === 0) {
-		throw new Error("radio: options array must not be empty");
-	}
-	if (defaultValue !== undefined && !options.includes(defaultValue)) {
-		throw new Error(`radio: defaultValue "${defaultValue}" must be one of the options`);
+	validateOptionsNotEmpty(options, "radio");
+	if (defaultValue !== undefined) {
+		validateValueInOptions(defaultValue, options, "radio");
 	}
 }
 
@@ -119,20 +117,11 @@ export function initializeRadioState(
  * 数値入力のバリデーション
  */
 export function validateNumberInput(min?: number, max?: number, defaultValue?: number): void {
-	if (min !== undefined && max !== undefined && min > max) {
-		throw new Error(`number_input: min (${min}) must be <= max (${max})`);
+	if (min !== undefined && max !== undefined) {
+		validateMinMax(min, max, "number_input");
 	}
 	if (defaultValue !== undefined) {
-		if (min !== undefined && defaultValue < min) {
-			throw new Error(
-				`number_input: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
-			);
-		}
-		if (max !== undefined && defaultValue > max) {
-			throw new Error(
-				`number_input: defaultValue (${defaultValue}) must be between min (${min}) and max (${max})`,
-			);
-		}
+		validateValueInRange(defaultValue, min, max, "number_input");
 	}
 }
 
@@ -152,14 +141,10 @@ export function initializeNumberInputState(
  * マルチセレクトのバリデーション
  */
 export function validateMultiselect(options: string[], defaultValue?: string[]): void {
-	if (!options || options.length === 0) {
-		throw new Error("multiselect: options array must not be empty");
-	}
+	validateOptionsNotEmpty(options, "multiselect");
 	if (defaultValue !== undefined) {
 		for (const value of defaultValue) {
-			if (!options.includes(value)) {
-				throw new Error(`multiselect: defaultValue "${value}" must be one of the options`);
-			}
+			validateValueInOptions(value, options, "multiselect");
 		}
 	}
 }
