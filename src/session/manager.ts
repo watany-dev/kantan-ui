@@ -1,6 +1,7 @@
 import type { WSContext } from "hono/ws";
 import { DEFAULT_SECURITY_CONFIG, DEFAULT_SESSION_CONFIG } from "../config";
 import type { ResolvedSessionConfig, SecurityConfig, SessionConfig } from "../config/types";
+import { MAX_PATCH_HISTORY } from "../constants";
 import { isUUID } from "../utils/type-guards";
 import type {
 	DownloadData,
@@ -285,9 +286,6 @@ export class SessionManager {
 		}
 	}
 
-	// パッチ履歴の最大保持数
-	private static readonly MAX_PATCH_HISTORY = 100;
-
 	/**
 	 * パッチのバイトサイズを計算（Web標準 TextEncoder使用）
 	 */
@@ -324,7 +322,7 @@ export class SessionManager {
 		session.patchHistory.push(entry);
 
 		// 古い履歴を削除
-		if (session.patchHistory.length > SessionManager.MAX_PATCH_HISTORY) {
+		if (session.patchHistory.length > MAX_PATCH_HISTORY) {
 			session.patchHistory.shift();
 		}
 
@@ -342,7 +340,7 @@ export class SessionManager {
 		}
 
 		// 差分が大きすぎる場合はフル同期が必要（nullを返す）
-		if (session.lastSeq - lastClientSeq > SessionManager.MAX_PATCH_HISTORY) {
+		if (session.lastSeq - lastClientSeq > MAX_PATCH_HISTORY) {
 			return null;
 		}
 

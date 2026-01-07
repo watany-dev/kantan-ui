@@ -1,5 +1,105 @@
 import { describe, expect, it } from "vitest";
-import { containsUnsafeHtml, escapeHtml } from "../../../src/utils/html";
+import {
+	buildAttributes,
+	buildClassAttr,
+	buildStyleAttr,
+	containsUnsafeHtml,
+	escapeHtml,
+} from "../../../src/utils/html";
+
+describe("buildAttributes", () => {
+	it("should build simple attributes", () => {
+		expect(buildAttributes({ id: "test", name: "myName" })).toBe(' id="test" name="myName"');
+	});
+
+	it("should handle boolean true as attribute without value", () => {
+		expect(buildAttributes({ disabled: true, readonly: true })).toBe(" disabled readonly");
+	});
+
+	it("should exclude boolean false attributes", () => {
+		expect(buildAttributes({ disabled: false, id: "test" })).toBe(' id="test"');
+	});
+
+	it("should exclude undefined/null attributes", () => {
+		expect(buildAttributes({ id: "test", name: undefined, title: null })).toBe(' id="test"');
+	});
+
+	it("should handle numeric values", () => {
+		expect(buildAttributes({ tabindex: 0, maxlength: 100 })).toBe(' tabindex="0" maxlength="100"');
+	});
+
+	it("should escape special characters in values", () => {
+		expect(buildAttributes({ title: '<script>alert("xss")</script>' })).toBe(
+			' title="&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"',
+		);
+	});
+
+	it("should return empty string for empty object", () => {
+		expect(buildAttributes({})).toBe("");
+	});
+
+	it("should return empty string when all values are excluded", () => {
+		expect(buildAttributes({ a: undefined, b: false, c: null })).toBe("");
+	});
+});
+
+describe("buildStyleAttr", () => {
+	it("should build style attribute", () => {
+		expect(buildStyleAttr({ color: "red", "font-size": "14px" })).toBe(
+			'style="color: red; font-size: 14px"',
+		);
+	});
+
+	it("should handle numeric values", () => {
+		expect(buildStyleAttr({ "z-index": 100, opacity: 0.5 })).toBe(
+			'style="z-index: 100; opacity: 0.5"',
+		);
+	});
+
+	it("should exclude undefined/null/empty values", () => {
+		expect(buildStyleAttr({ color: "red", background: undefined, border: null, margin: "" })).toBe(
+			'style="color: red"',
+		);
+	});
+
+	it("should return empty string for empty object", () => {
+		expect(buildStyleAttr({})).toBe("");
+	});
+
+	it("should return empty string when all values are excluded", () => {
+		expect(buildStyleAttr({ a: undefined, b: null, c: "" })).toBe("");
+	});
+});
+
+describe("buildClassAttr", () => {
+	it("should build class attribute", () => {
+		expect(buildClassAttr(["btn", "btn-primary"])).toBe('class="btn btn-primary"');
+	});
+
+	it("should exclude false/undefined/null values", () => {
+		expect(buildClassAttr(["btn", false, "active", undefined, null])).toBe('class="btn active"');
+	});
+
+	it("should exclude empty strings", () => {
+		expect(buildClassAttr(["btn", "", "active"])).toBe('class="btn active"');
+	});
+
+	it("should return empty string for empty array", () => {
+		expect(buildClassAttr([])).toBe("");
+	});
+
+	it("should return empty string when all values are excluded", () => {
+		expect(buildClassAttr([false, undefined, null, ""])).toBe("");
+	});
+
+	it("should handle conditional classes", () => {
+		const isActive = true;
+		const isDisabled = false;
+		expect(buildClassAttr(["btn", isActive && "active", isDisabled && "disabled"])).toBe(
+			'class="btn active"',
+		);
+	});
+});
 
 describe("escapeHtml", () => {
 	describe("XSS prevention", () => {

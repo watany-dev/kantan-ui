@@ -1,3 +1,4 @@
+import { ALERT_ICONS, type AlertType } from "../constants";
 import { escapeHtml } from "../utils/html";
 import { applyHighlight } from "./code/highlighter";
 import { requireRenderContext } from "./context";
@@ -75,15 +76,6 @@ export function html(rawHtml: string): void {
 // Alert APIs
 // ============================================
 
-type AlertType = "success" | "error" | "warning" | "info";
-
-const defaultIcons: Record<AlertType, string> = {
-	success: "✓",
-	error: "✕",
-	warning: "⚠",
-	info: "ℹ",
-};
-
 export interface AlertConfig {
 	icon?: string;
 	/** カスタム背景色 (例: "#f0f0f0") */
@@ -96,7 +88,7 @@ export interface AlertConfig {
 
 function alert(type: AlertType, message: string, config: AlertConfig = {}): void {
 	const ctx = requireRenderContext();
-	const icon = escapeHtml(config.icon ?? defaultIcons[type]);
+	const icon = escapeHtml(config.icon ?? ALERT_ICONS[type]);
 
 	// カスタムカラーが指定されている場合はインラインスタイルを生成
 	const styles: string[] = [];
