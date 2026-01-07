@@ -7,6 +7,7 @@
 		"src/server-browser.ts",
 		"src/server-streaming.ts",
 		"src/server-patch-test.ts",
-		"src/server-error-test.ts"
+		"src/server-error-test.ts",
+		"src/server-node.ts"
 	]
 }
