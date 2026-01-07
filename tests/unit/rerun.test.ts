@@ -20,10 +20,12 @@ describe("rerun", () => {
 		resetSessionManager();
 	});
 
-	it("should execute script and return HTML", () => {
+	it("should execute script and return RerunResult", () => {
 		const script = () => "<div>Hello</div>";
 		const result = rerun(script);
-		expect(result).toBe("<div>Hello</div>");
+		expect(result.mainHtml).toBe("<div>Hello</div>");
+		expect(result.sidebarHtml).toBe("");
+		expect(result.hasSidebar).toBe(false);
 	});
 
 	it("should clear context after execution", () => {
@@ -97,8 +99,8 @@ describe("rerun", () => {
 		const result2 = rerun(script, undefined, session.id);
 
 		// Both should generate widget_0 because counter is reset
-		expect(result1).toBe("<div>widget_0</div>");
-		expect(result2).toBe("<div>widget_0</div>");
+		expect(result1.mainHtml).toBe("<div>widget_0</div>");
+		expect(result2.mainHtml).toBe("<div>widget_0</div>");
 	});
 
 	it("should return HTML from render context when script returns void", () => {
@@ -114,7 +116,8 @@ describe("rerun", () => {
 
 		const result = rerun(script);
 
-		expect(result).toBe("<h1>Title</h1>\n<p>Content</p>");
+		expect(result.mainHtml).toBe("<h1>Title</h1>\n<p>Content</p>");
+		expect(result.hasSidebar).toBe(false);
 	});
 
 	it("should clear render context after execution", () => {
@@ -129,5 +132,38 @@ describe("rerun", () => {
 
 		// Render context should be cleared
 		expect(getRenderContext()).toBeNull();
+	});
+
+	it("should return sidebar content when sidebar is used", () => {
+		const script = () => {
+			const ctx = getRenderContext();
+			if (ctx) {
+				ctx.append("<main>Main content</main>");
+				ctx.setTarget("sidebar");
+				ctx.append("<nav>Sidebar content</nav>");
+				ctx.setTarget("main");
+			}
+		};
+
+		const result = rerun(script);
+
+		expect(result.mainHtml).toBe("<main>Main content</main>");
+		expect(result.sidebarHtml).toBe("<nav>Sidebar content</nav>");
+		expect(result.hasSidebar).toBe(true);
+	});
+
+	it("should return empty sidebar when sidebar is not used", () => {
+		const script = () => {
+			const ctx = getRenderContext();
+			if (ctx) {
+				ctx.append("<main>Main content only</main>");
+			}
+		};
+
+		const result = rerun(script);
+
+		expect(result.mainHtml).toBe("<main>Main content only</main>");
+		expect(result.sidebarHtml).toBe("");
+		expect(result.hasSidebar).toBe(false);
 	});
 });

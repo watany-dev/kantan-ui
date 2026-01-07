@@ -26,7 +26,7 @@ describe("rerun with streaming", () => {
 	it("should work without streaming options", () => {
 		const script = () => "<div>hello</div>";
 		const result = rerun(script);
-		expect(result).toBe("<div>hello</div>");
+		expect(result.mainHtml).toBe("<div>hello</div>");
 	});
 
 	it("should work with streaming options that have high threshold", () => {
@@ -38,7 +38,7 @@ describe("rerun with streaming", () => {
 
 		const script = () => "<div>hello</div>";
 		const result = rerun(script, undefined, undefined, undefined, streamingOptions);
-		expect(result).toBe("<div>hello</div>");
+		expect(result.mainHtml).toBe("<div>hello</div>");
 		expect(flushCallback).not.toHaveBeenCalled();
 	});
 });

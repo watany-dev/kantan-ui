@@ -237,16 +237,16 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						}
 
 						// 初期HTML生成
-						const htmlContent = rerun(script, undefined, session.id);
-						session.lastHtml = htmlContent;
+						const result = rerun(script, undefined, session.id);
+						session.lastHtml = result.mainHtml;
 
 						const seq = sessionManager.addPatchToHistory(session.id, [
-							{ type: "replaceRoot", html: htmlContent },
+							{ type: "replaceRoot", html: result.mainHtml },
 						]);
 
 						const message: ServerMessage = {
 							type: "patch",
-							patches: [{ type: "replaceRoot", html: htmlContent }],
+							patches: [{ type: "replaceRoot", html: result.mainHtml }],
 							seq,
 							sessionId: config.session.scope === "tab" ? session.id : undefined,
 						};
@@ -313,7 +313,7 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 							: undefined;
 
 						const widgetId = data.widgetId ?? "";
-						const newHtml = rerun(
+						const newResult = rerun(
 							script,
 							{ widgetId, value: data.value },
 							session.id,
@@ -324,13 +324,13 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						// 差分計算
 						let patches: Patch[];
 						if (session.lastHtml) {
-							const diffResult = diff(session.lastHtml, newHtml);
-							patches = toWebSocketPatches(diffResult, newHtml);
+							const diffResult = diff(session.lastHtml, newResult.mainHtml);
+							patches = toWebSocketPatches(diffResult, newResult.mainHtml);
 						} else {
-							patches = [{ type: "replaceRoot", html: newHtml }];
+							patches = [{ type: "replaceRoot", html: newResult.mainHtml }];
 						}
 
-						session.lastHtml = newHtml;
+						session.lastHtml = newResult.mainHtml;
 
 						if (patches.length > 0) {
 							const seq = sessionManager.addPatchToHistory(session.id, patches);
