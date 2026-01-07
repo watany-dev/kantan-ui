@@ -45,10 +45,10 @@ describe("Chat APIs", () => {
 			expect(ctx.getHtml()).toContain("Hello World!");
 		});
 
-		it("should escape HTML in content by default", () => {
+		it("should sanitize HTML in content (remove dangerous tags)", () => {
 			chat_message("user", "<script>alert('xss')</script>");
-			expect(ctx.getHtml()).toContain("&lt;script&gt;");
-			expect(ctx.getHtml()).not.toContain("<script>alert");
+			expect(ctx.getHtml()).not.toContain("<script>");
+			expect(ctx.getHtml()).not.toContain("alert");
 		});
 
 		it("should render content as markdown", () => {
