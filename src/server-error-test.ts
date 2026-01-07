@@ -42,7 +42,7 @@ const script = () => {
 	return undefined;
 };
 
-const { app, websocket } = createApp(script, {
+const { app, websocket } = await createApp(script, {
 	session: { scope: "tab" },
 });
 

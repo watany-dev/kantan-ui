@@ -3,7 +3,15 @@ import { DEFAULT_SECURITY_CONFIG, DEFAULT_SESSION_CONFIG } from "../config";
 import type { ResolvedSessionConfig, SecurityConfig, SessionConfig } from "../config/types";
 import { MAX_PATCH_HISTORY } from "../constants";
 import { isUUID } from "../utils/type-guards";
-import type { EventProcessResult, EventQueueItem, Session, SessionId, SessionState } from "./types";
+import type {
+	DownloadData,
+	DownloadId,
+	EventProcessResult,
+	EventQueueItem,
+	Session,
+	SessionId,
+	SessionState,
+} from "./types";
 
 /** レート制限の状態 */
 interface RateLimitState {
@@ -57,6 +65,10 @@ export class SessionManager {
 
 	// レート制限関連
 	private rateLimitStates = new Map<SessionId, RateLimitState>();
+
+	// ダウンロードデータ（Blobストリーミング用）
+	private downloadData = new Map<DownloadId, DownloadData>();
+	private static readonly DOWNLOAD_TTL = 60 * 1000; // 1分間有効
 
 	// Web標準 TextEncoder（バイトサイズ計算用）
 	private static readonly textEncoder = new TextEncoder();
@@ -539,6 +551,47 @@ export class SessionManager {
 	 */
 	getSecurityConfig(): Required<SecurityConfig> {
 		return this.securityConfig;
+	}
+
+	/**
+	 * ダウンロードデータを登録し、ダウンロードIDを返す
+	 * Web標準 crypto.randomUUID() を使用
+	 */
+	registerDownload(data: ArrayBuffer, filename: string, mime: string): DownloadId {
+		const id = crypto.randomUUID();
+		this.downloadData.set(id, {
+			data,
+			filename,
+			mime,
+			createdAt: Date.now(),
+		});
+		// 古いダウンロードデータをクリーンアップ
+		this.cleanupDownloads();
+		return id;
+	}
+
+	/**
+	 * ダウンロードデータを取得
+	 * 取得後は自動削除（ワンタイムダウンロード）
+	 */
+	getDownload(id: DownloadId): DownloadData | undefined {
+		const data = this.downloadData.get(id);
+		if (data) {
+			this.downloadData.delete(id);
+		}
+		return data;
+	}
+
+	/**
+	 * 期限切れのダウンロードデータをクリーンアップ
+	 */
+	private cleanupDownloads(): void {
+		const now = Date.now();
+		for (const [id, data] of this.downloadData) {
+			if (now - data.createdAt > SessionManager.DOWNLOAD_TTL) {
+				this.downloadData.delete(id);
+			}
+		}
 	}
 }
 

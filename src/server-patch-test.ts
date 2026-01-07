@@ -82,7 +82,7 @@ ${JSON.stringify({ items: state.items, nextId: state.nextId }, null, 2)}
 	return undefined;
 };
 
-const { app, websocket } = createApp(script, {
+const { app, websocket } = await createApp(script, {
 	session: { scope: "tab" },
 });
 

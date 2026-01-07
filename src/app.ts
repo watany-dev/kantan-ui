@@ -1,7 +1,18 @@
-import type { ServerType } from "@hono/node-server";
 import { Hono } from "hono";
+
+/**
+ * Node.js HTTP/HTTPS Server型（@hono/node-serverからの依存を避けるためローカル定義）
+ * Deno互換性のため、@hono/node-serverを直接インポートしない
+ */
+type NodeServerType = {
+	close: () => void;
+	listen: (port: number, hostname?: string, callback?: () => void) => void;
+};
+
 import { getCookie, setCookie } from "hono/cookie";
 import { html, raw } from "hono/html";
+import { logger } from "hono/logger";
+import { NONCE, secureHeaders } from "hono/secure-headers";
 import { generateClientScript } from "./client";
 import { type KantanConfig, resolveConfig } from "./config";
 import { diff, toWebSocketPatches } from "./diff";
@@ -10,16 +21,9 @@ import { rerun, type Script, type StreamingOptions } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { defaultStyles } from "./styles";
 import { createErrorMessageJson } from "./utils/error";
-import { createWebSocketAdapter } from "./websocket";
+import { createWebSocketAdapterAsync } from "./websocket";
 import type { Patch } from "./websocket/types";
 import { type ClientMessage, isClientMessage, type ServerMessage } from "./websocket/types";
-
-/** CSP用のnonce生成 */
-function generateNonce(): string {
-	const array = new Uint8Array(16);
-	crypto.getRandomValues(array);
-	return btoa(String.fromCharCode(...array));
-}
 
 export interface KantanAppOptions extends KantanConfig {
 	/** サーバーポート（Bun.serve互換） */
@@ -37,13 +41,13 @@ export interface KantanApp {
 	/** Bun.serve互換: ホスト名 */
 	hostname: string | undefined;
 	/** Node.js用: サーバー起動後に呼び出してWebSocketを有効化 */
-	injectWebSocket: ((server: ServerType) => void) | undefined;
+	injectWebSocket: ((server: NodeServerType) => void) | undefined;
 	shutdown: () => void;
 	/** Honoインスタンス（拡張用） */
 	app: Hono;
 }
 
-export function createApp(script: Script, options?: KantanAppOptions): KantanApp {
+export async function createApp(script: Script, options?: KantanAppOptions): Promise<KantanApp> {
 	const { port, hostname, ...userConfig } = options ?? {};
 	const config = resolveConfig(userConfig);
 	const sessionManager = new SessionManager(config.session, config.security);
@@ -60,8 +64,22 @@ export function createApp(script: Script, options?: KantanAppOptions): KantanApp
 
 	const app = new Hono();
 
-	// ランタイムに応じたWebSocketアダプターを作成
-	const wsAdapter = createWebSocketAdapter(app);
+	// ミドルウェア設定
+	app.use("*", logger());
+	app.use(
+		"*",
+		secureHeaders({
+			contentSecurityPolicy: {
+				defaultSrc: ["'self'"],
+				scriptSrc: [NONCE],
+				styleSrc: ["'self'", "'unsafe-inline'"],
+				connectSrc: ["'self'", "ws:", "wss:"],
+			},
+		}),
+	);
+
+	// ランタイムに応じたWebSocketアダプターを非同期で作成（全ランタイム共通）
+	const wsAdapter = await createWebSocketAdapterAsync(app);
 	const { upgradeWebSocket } = wsAdapter;
 
 	// ルートページ
@@ -106,13 +124,9 @@ export function createApp(script: Script, options?: KantanAppOptions): KantanApp
 		if (isTemporarySession) {
 			sessionManager.deleteSession(sessionId);
 		}
-		const nonce = generateNonce();
 
-		// CSPヘッダー設定
-		c.header(
-			"Content-Security-Policy",
-			`default-src 'self'; script-src 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:;`,
-		);
+		// secureHeadersミドルウェアが生成したnonceを取得
+		const nonce = c.get("secureHeadersNonce");
 
 		// PageConfig を取得
 		const pageConfig = getPageConfig();
@@ -139,6 +153,32 @@ export function createApp(script: Script, options?: KantanAppOptions): KantanApp
 					</body>
 				</html>`,
 		);
+	});
+
+	// ダウンロードエンドポイント（Blobストリーミング）
+	app.get("/download/:id", (c) => {
+		const downloadId = c.req.param("id");
+		const download = sessionManager.getDownload(downloadId);
+
+		if (!download) {
+			return c.text("Download not found or expired", 404);
+		}
+
+		// Web標準 Response + ReadableStream でストリーミング
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(new Uint8Array(download.data));
+				controller.close();
+			},
+		});
+
+		return new Response(stream, {
+			headers: {
+				"Content-Type": download.mime,
+				"Content-Disposition": `attachment; filename="${encodeURIComponent(download.filename)}"`,
+				"Content-Length": download.data.byteLength.toString(),
+			},
+		});
 	});
 
 	// WebSocket エンドポイント
@@ -326,7 +366,7 @@ export function createApp(script: Script, options?: KantanAppOptions): KantanApp
 		websocket: wsAdapter.websocket,
 		port,
 		hostname,
-		injectWebSocket: wsAdapter.injectWebSocket as ((server: ServerType) => void) | undefined,
+		injectWebSocket: wsAdapter.injectWebSocket as ((server: NodeServerType) => void) | undefined,
 		shutdown,
 		app,
 	};
