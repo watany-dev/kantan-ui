@@ -8,6 +8,8 @@ import { resetWidgetCounter } from "../../../src/widgets/registry";
 // Mock SessionManager
 class MockSessionManager {
 	private states = new Map<string, Map<string, unknown>>();
+	private downloadCounter = 0;
+
 	getSession(id: string) {
 		return { id, state: this.states.get(id) ?? new Map() };
 	}
@@ -22,6 +24,9 @@ class MockSessionManager {
 	}
 	hasState(sessionId: string, key: string): boolean {
 		return this.states.get(sessionId)?.has(key) ?? false;
+	}
+	registerDownload(_data: ArrayBuffer, _filename: string, _mime: string): string {
+		return `download-${++this.downloadCounter}`;
 	}
 }
 
@@ -52,33 +57,22 @@ describe("download_button", () => {
 			expect(html).toContain("Download");
 			expect(html).toContain('class="kt-download-button"');
 			expect(html).toContain('data-filename="test.txt"');
-			expect(html).toContain("data-kt-download");
+			expect(html).toContain("data-kt-download-url");
 		});
 
-		it("should encode string data as base64 in data-content attribute", () => {
+		it("should use server-side streaming for string data", () => {
 			const html = renderDownloadButton("Download", "Hello World", "test.txt");
 
-			// "Hello World" in base64 is "SGVsbG8gV29ybGQ="
-			expect(html).toContain('data-mime="application/octet-stream"');
-			expect(html).toContain("data-content=");
-			expect(html).toMatch(/data-content="[A-Za-z0-9+/=]+"/);
+			expect(html).toContain("data-kt-download-url=");
+			expect(html).toMatch(/data-kt-download-url="\/download\/download-\d+"/);
 		});
 
-		it("should encode ArrayBuffer data as base64 in data-content attribute", () => {
+		it("should use server-side streaming for ArrayBuffer data", () => {
 			const buffer = new TextEncoder().encode("Hello World").buffer;
 			const html = renderDownloadButton("Download", buffer, "test.bin");
 
-			expect(html).toContain('data-mime="application/octet-stream"');
-			// Verify it contains base64 content
-			expect(html).toMatch(/data-content="[A-Za-z0-9+/=]+"/);
-		});
-
-		it("should use custom mime type", () => {
-			const html = renderDownloadButton("Download", "col1,col2\n1,2", "data.csv", {
-				mime: "text/csv",
-			});
-
-			expect(html).toContain('data-mime="text/csv"');
+			expect(html).toContain("data-kt-download-url=");
+			expect(html).toMatch(/data-kt-download-url="\/download\/download-\d+"/);
 		});
 
 		it("should escape HTML in label", () => {

@@ -47,8 +47,11 @@ function updateConnectionStatus(status, reconnectAttempts, maxReconnectAttempts)
 
 /**
  * XSS検出スクリプト
+ * @note このロジックはsrc/utils/html.ts内のcontainsUnsafeHtml()と同じ。
+ *       変更時は両方を同期すること。
  */
 const xssDetectionScript = `
+// Note: Keep in sync with src/utils/html.ts containsUnsafeHtml()
 function isUnsafeHtml(html) {
   var lowerHtml = html.toLowerCase();
   if (!lowerHtml.includes("<") && !lowerHtml.includes("javascript") && !lowerHtml.includes("vbscript") && !lowerHtml.includes("data:")) {
@@ -341,28 +344,6 @@ function setupEventDelegation(sendEvent) {
           URL.revokeObjectURL(blobUrl);
         })
         .catch((err) => console.error("Download error:", err));
-      return;
-    }
-
-    // ダウンロードボタンのハンドリング（Base64埋め込み、小さいファイル用）
-    const downloadBtn = e.target.closest("[data-kt-download]");
-    if (downloadBtn && downloadBtn.dataset.content) {
-      const { filename, mime, content } = downloadBtn.dataset;
-      // Base64 → Blob変換
-      const binary = atob(content);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: mime || "application/octet-stream" });
-      const url = URL.createObjectURL(blob);
-      // 一時的なリンクを作成してダウンロード
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename || "download";
-      a.click();
-      // メモリ解放
-      URL.revokeObjectURL(url);
       return;
     }
 

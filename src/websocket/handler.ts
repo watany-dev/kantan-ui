@@ -85,7 +85,8 @@ export async function createWebSocketAdapterAsync(app?: Hono): Promise<WebSocket
 }
 
 /**
- * アダプターキャッシュをクリア（テスト用）
+ * アダプターキャッシュをクリア
+ * @internal テスト用
  */
 export function clearAdapterCache(): void {
 	cachedAdapter = null;

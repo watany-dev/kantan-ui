@@ -10,9 +10,6 @@ import { isButtonPressed } from "./core";
 import { generateWidgetId } from "./registry";
 import type { DownloadButtonConfig } from "./types";
 
-// ストリーミング使用の閾値（これ以上のサイズはサーバーサイドストリーミングを使用）
-const STREAMING_THRESHOLD = 64 * 1024; // 64KB
-
 /**
  * データをArrayBufferに変換
  */
@@ -26,32 +23,8 @@ function toArrayBuffer(data: string | ArrayBuffer): ArrayBuffer {
 }
 
 /**
- * 文字列をBase64エンコード（小さいデータ用）
- */
-function encodeBase64(data: string | ArrayBuffer): string {
-	if (typeof data === "string") {
-		const encoder = new TextEncoder();
-		const bytes = encoder.encode(data);
-		return btoa(String.fromCharCode(...bytes));
-	}
-	const bytes = new Uint8Array(data);
-	return btoa(String.fromCharCode(...bytes));
-}
-
-/**
- * データサイズを取得
- */
-function getDataSize(data: string | ArrayBuffer): number {
-	if (data instanceof ArrayBuffer) {
-		return data.byteLength;
-	}
-	// Web標準 TextEncoder でバイトサイズを計算
-	return new TextEncoder().encode(data).length;
-}
-
-/**
  * ダウンロードボタンのHTML文字列を生成（内部ヘルパー）
- * 大きなデータはサーバーサイドストリーミング、小さいデータはBase64埋め込み
+ * サーバーサイドストリーミングを使用
  */
 function buildDownloadButtonHtml(
 	widgetId: string,
@@ -65,24 +38,12 @@ function buildDownloadButtonHtml(
 	const disabledAttr = config.disabled ? ' aria-disabled="true"' : "";
 	const safeFilename = escapeHtml(filename).replace(/"/g, "&quot;");
 
-	const dataSize = getDataSize(data);
+	const sessionManager = getSessionManager();
+	const arrayBuffer = toArrayBuffer(data);
+	const downloadId = sessionManager.registerDownload(arrayBuffer, filename, mime);
 
-	// 大きなデータはサーバーサイドストリーミングを使用
-	if (dataSize > STREAMING_THRESHOLD) {
-		const sessionManager = getSessionManager();
-		const arrayBuffer = toArrayBuffer(data);
-		const downloadId = sessionManager.registerDownload(arrayBuffer, filename, mime);
-
-		// data-kt-download-url属性でサーバーサイドダウンロードを使用
-		return `<div class="kt-download-button" id="${widgetId}">
-<button class="kt-button" data-kt-download-url="/download/${downloadId}" data-filename="${safeFilename}"${disabledAttr}${disabled} data-kt-event="click">${escapeHtml(label)}</button>
-</div>`;
-	}
-
-	// 小さいデータはBase64埋め込み（既存の動作）
-	const base64 = encodeBase64(data);
 	return `<div class="kt-download-button" id="${widgetId}">
-<button class="kt-button" data-kt-download data-filename="${safeFilename}" data-mime="${mime}" data-content="${base64}"${disabledAttr}${disabled} data-kt-event="click">${escapeHtml(label)}</button>
+<button class="kt-button" data-kt-download-url="/download/${downloadId}" data-filename="${safeFilename}"${disabledAttr}${disabled} data-kt-event="click">${escapeHtml(label)}</button>
 </div>`;
 }
 
