@@ -1,5 +1,6 @@
 {
 	"$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
+	"unstable": ["sloppy-imports"],
 	"tasks": {
 		"dev": "deno run --allow-net --allow-read --watch src/server-deno.ts",
 		"example:chat": "deno run --allow-net --allow-read examples/09-chat.ts"
