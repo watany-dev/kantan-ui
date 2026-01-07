@@ -190,7 +190,6 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 
 			return {
 				onOpen: (_evt, ws) => {
-					console.log("WebSocket connected");
 					sessionManager.initializePong(ws);
 				},
 				onMessage: (event, ws) => {
@@ -345,7 +344,6 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 				},
 				onClose: (_evt, ws) => {
 					sessionManager.removeWebSocket(ws);
-					console.log("WebSocket disconnected");
 				},
 			};
 		}),
