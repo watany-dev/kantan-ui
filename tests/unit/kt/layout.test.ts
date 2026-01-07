@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { columns, container, expander, renderTabsHeader, tabs } from "../../../src/kt/layout";
+import {
+	columns,
+	container,
+	expander,
+	renderTabsHeader,
+	sidebar,
+	tabs,
+} from "../../../src/kt/layout";
 import { write } from "../../../src/kt/output";
 import { resetSessionManager, setSessionManager } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
@@ -395,6 +402,90 @@ describe("Layout APIs", () => {
 			setRenderContext(null);
 			expect(() =>
 				expander("Test", () => {
+					write("test");
+				}),
+			).toThrow("RenderContext is not available");
+		});
+	});
+
+	describe("sidebar", () => {
+		it("should render content to sidebar buffer", () => {
+			sidebar(() => {
+				write("Sidebar content");
+			});
+
+			expect(ctx.getSidebarHtml()).toContain("Sidebar content");
+			expect(ctx.getMainHtml()).toBe("");
+		});
+
+		it("should restore target after callback", () => {
+			write("Before");
+			sidebar(() => {
+				write("Sidebar");
+			});
+			write("After");
+
+			expect(ctx.getMainHtml()).toContain("Before");
+			expect(ctx.getMainHtml()).toContain("After");
+			expect(ctx.getSidebarHtml()).toContain("Sidebar");
+		});
+
+		it("should handle nested sidebar calls correctly", () => {
+			sidebar(() => {
+				write("Outer sidebar");
+				sidebar(() => {
+					write("Inner sidebar");
+				});
+				write("After inner");
+			});
+
+			const sidebarHtml = ctx.getSidebarHtml();
+			expect(sidebarHtml).toContain("Outer sidebar");
+			expect(sidebarHtml).toContain("Inner sidebar");
+			expect(sidebarHtml).toContain("After inner");
+			expect(ctx.getMainHtml()).toBe("");
+		});
+
+		it("should report hasSidebar correctly", () => {
+			expect(ctx.hasSidebar()).toBe(false);
+
+			sidebar(() => {
+				write("Content");
+			});
+
+			expect(ctx.hasSidebar()).toBe(true);
+		});
+
+		it("should restore target even if callback throws", () => {
+			expect(ctx.getTarget()).toBe("main");
+
+			expect(() => {
+				sidebar(() => {
+					throw new Error("Test error");
+				});
+			}).toThrow("Test error");
+
+			// Target should be restored to main
+			expect(ctx.getTarget()).toBe("main");
+		});
+
+		it("should support multiple sidebar calls", () => {
+			sidebar(() => {
+				write("First");
+			});
+			sidebar(() => {
+				write("Second");
+			});
+
+			const sidebarHtml = ctx.getSidebarHtml();
+			expect(sidebarHtml).toContain("First");
+			expect(sidebarHtml).toContain("Second");
+		});
+
+		it("should throw error without render context", () => {
+			setRenderContext(null);
+			expect(() =>
+				sidebar(() => {
 					write("test");
 				}),
 			).toThrow("RenderContext is not available");

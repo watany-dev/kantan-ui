@@ -76,6 +76,7 @@ export const kt = {
 	columns: layout.columns,
 	expander: layout.expander,
 	tabs: layout.tabs,
+	sidebar: layout.sidebar,
 
 	// Form APIs
 	form: formModule.form,
