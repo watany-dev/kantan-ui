@@ -44,7 +44,7 @@ const script = () => {
 };
 
 // アプリを作成してエクスポート
-export default createApp(script);
+export default await createApp(script);
 ```
 
 これだけで、リアルタイムに更新されるカウンターアプリが完成します。
@@ -169,7 +169,7 @@ state.unknown = "x";    // コンパイルエラー
 // src/app.ts
 import { Hono } from "hono";
 
-export function createApp(script: Script, userConfig?: KantanConfig) {
+export async function createApp(script: Script, userConfig?: KantanConfig) {
   const app = new Hono();
 
   // ルートページ（HTMLを返す）

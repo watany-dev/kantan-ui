@@ -6,7 +6,7 @@
  *   または
  *   deno task dev (watchモード)
  */
-import { createAppAsync } from "./app.ts";
+import { createApp } from "./app.ts";
 import { kt } from "./kt/index.ts";
 import { createTypedSessionState } from "./session/index.ts";
 
@@ -45,7 +45,7 @@ const script = () => {
 	return undefined;
 };
 
-const kantanApp = await createAppAsync(script);
+const kantanApp = await createApp(script);
 
 const port = 3000;
 console.log(`Server running at http://localhost:${port}`);

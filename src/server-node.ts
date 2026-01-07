@@ -46,7 +46,7 @@ const script = () => {
 	return undefined;
 };
 
-const kantanApp = createApp(script);
+const kantanApp = await createApp(script);
 const { shutdown } = serve(kantanApp, { port: 3000 });
 
 // Graceful shutdown
