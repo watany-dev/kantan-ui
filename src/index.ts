@@ -2,7 +2,7 @@
 export { Hono } from "hono";
 export type { KantanApp, KantanAppOptions } from "./app";
 // App factory
-export { createApp, createAppAsync } from "./app";
+export { createApp } from "./app";
 
 // Config
 export type {
@@ -57,7 +57,6 @@ export type { WebSocketAdapter } from "./websocket";
 // WebSocket
 export {
 	clearAdapterCache,
-	createWebSocketAdapter,
 	createWebSocketAdapterAsync,
 	createWebSocketHandler,
 } from "./websocket";

@@ -345,9 +345,3 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 		app,
 	};
 }
-
-/**
- * 後方互換性のためのエイリアス
- * @deprecated createApp を使用してください
- */
-export const createAppAsync = createApp;

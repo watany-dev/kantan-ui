@@ -85,12 +85,6 @@ export async function createWebSocketAdapterAsync(app?: Hono): Promise<WebSocket
 }
 
 /**
- * 後方互換性のためのエイリアス
- * @deprecated createWebSocketAdapterAsync を使用してください
- */
-export const createWebSocketAdapter = createWebSocketAdapterAsync;
-
-/**
  * アダプターキャッシュをクリア（テスト用）
  */
 export function clearAdapterCache(): void {
