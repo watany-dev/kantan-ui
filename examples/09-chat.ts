@@ -41,15 +41,18 @@ const script = () => {
 	kt.chat_message("system", "ようこそ！チャットを始めましょう。");
 
 	// チャットメッセージ表示エリア
-	kt.chat_container(() => {
-		if (state.messages.length === 0) {
-			kt.chat_message("system", "チャットを開始してください");
-		}
+	kt.chat_container(
+		() => {
+			if (state.messages.length === 0) {
+				kt.chat_message("system", "チャットを開始してください");
+			}
 
-		for (const msg of state.messages) {
-			kt.chat_message(msg.role, msg.content);
-		}
-	}, { height: "400px" });
+			for (const msg of state.messages) {
+				kt.chat_message(msg.role, msg.content);
+			}
+		},
+		{ height: "400px" },
+	);
 
 	kt.divider();
 

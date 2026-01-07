@@ -25,6 +25,7 @@ function encodeBase64(data: string | ArrayBuffer): string {
 
 /**
  * ダウンロードボタンのHTML文字列を生成（内部ヘルパー）
+ * Web標準のBlob API + URL.createObjectURL()をクライアント側で使用
  */
 function buildDownloadButtonHtml(
 	widgetId: string,
@@ -35,15 +36,15 @@ function buildDownloadButtonHtml(
 ): string {
 	const mime = config.mime ?? "application/octet-stream";
 	const base64 = encodeBase64(data);
-	const dataUrl = `data:${mime};base64,${base64}`;
 	const disabled = config.disabled ? " disabled" : "";
 	const disabledAttr = config.disabled ? ' aria-disabled="true"' : "";
 
 	// ファイル名をエスケープ（XSS対策）
 	const safeFilename = escapeHtml(filename).replace(/"/g, "&quot;");
 
+	// data-kt-download属性でクライアント側のBlob処理をトリガー
 	return `<div class="kt-download-button" id="${widgetId}">
-<a href="${dataUrl}" download="${safeFilename}" class="kt-button"${disabledAttr}${disabled} data-kt-event="click">${escapeHtml(label)}</a>
+<button class="kt-button" data-kt-download data-filename="${safeFilename}" data-mime="${mime}" data-content="${base64}"${disabledAttr}${disabled} data-kt-event="click">${escapeHtml(label)}</button>
 </div>`;
 }
 
