@@ -1,9 +1,8 @@
 // Re-export Hono
 export { Hono } from "hono";
-
+export type { KantanApp, KantanAppOptions } from "./app";
 // App factory
 export { createApp } from "./app";
-export type { KantanApp, KantanAppOptions } from "./app";
 
 // Config
 export type {
