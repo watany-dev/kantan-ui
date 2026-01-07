@@ -20,7 +20,30 @@ function generateNonce(): string {
 	return btoa(String.fromCharCode(...array));
 }
 
-export function createApp(script: Script, userConfig?: KantanConfig) {
+export interface KantanAppOptions extends KantanConfig {
+	/** サーバーポート（Bun.serve互換） */
+	port?: number;
+	/** ホスト名 */
+	hostname?: string;
+}
+
+export interface KantanApp {
+	fetch: (request: Request) => Response | Promise<Response>;
+	/** Bun用: Bun.serve() の websocket オプションに渡す */
+	websocket: unknown;
+	/** Bun.serve互換: ポート番号 */
+	port: number | undefined;
+	/** Bun.serve互換: ホスト名 */
+	hostname: string | undefined;
+	/** Node.js用: サーバー起動後に呼び出してWebSocketを有効化 */
+	injectWebSocket: ((server: ServerType) => void) | undefined;
+	shutdown: () => void;
+	/** Honoインスタンス（拡張用） */
+	app: Hono;
+}
+
+export function createApp(script: Script, options?: KantanAppOptions): KantanApp {
+	const { port, hostname, ...userConfig } = options ?? {};
 	const config = resolveConfig(userConfig);
 	const sessionManager = new SessionManager(config.session, config.security);
 	setSessionManager(sessionManager);
@@ -305,11 +328,11 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 
 	return {
 		fetch: app.fetch,
-		/** Bun用: Bun.serve() の websocket オプションに渡す */
 		websocket: wsAdapter.websocket,
-		/** Node.js用: サーバー起動後に呼び出してWebSocketを有効化 */
+		port,
+		hostname,
 		injectWebSocket: wsAdapter.injectWebSocket as ((server: ServerType) => void) | undefined,
 		shutdown,
-		app, // Honoインスタンス（拡張用）
+		app,
 	};
 }

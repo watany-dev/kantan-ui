@@ -92,14 +92,34 @@ const script = () => {
   return undefined;
 };
 
-// アプリを作成してエクスポート
-export default createApp(script);
+// アプリを作成してエクスポート（ポート指定可能）
+export default createApp(script, { port: 3000 });
 ```
 
 ### 実行
 
+**Bun（推奨）**
+
 ```bash
 bun run src/index.ts
+```
+
+Bunは`export default`で`fetch`/`websocket`/`port`を持つオブジェクトを自動的にサーバーとして起動します。
+
+**Node.js**
+
+```typescript
+import { createApp, kt } from "kantan-ui";
+import { serve } from "kantan-ui/serve";
+
+const script = () => {
+  kt.title("Hello, kantan-ui!");
+  kt.write("これは最初のkantan-uiアプリです。");
+  return undefined;
+};
+
+const app = createApp(script);
+serve(app, { port: 3000 });
 ```
 
 ブラウザで http://localhost:3000 を開くと、「Hello, kantan-ui!」が表示されます。
@@ -909,13 +929,15 @@ async function callLLM(messages: Message[]): Promise<string> {
 ### 基本設定
 
 ```typescript
-const kantanApp = createApp(script, {
+// Bun: export default でサーバー自動起動
+export default createApp(script, {
+  port: 3000,            // サーバーポート（Bun.serve互換）
+  hostname: "0.0.0.0",   // ホスト名（省略可）
   session: {
     scope: "tab",        // "tab" または "browser"
     ttl: 24 * 60 * 60 * 1000,  // セッションの有効期限（24時間）
   },
 });
-export default kantanApp;
 ```
 
 ### セッションスコープ
@@ -962,6 +984,11 @@ const script = () => {
 };
 
 export default createApp(script, {
+  // サーバー設定（Bun.serve互換）
+  port: 3000,
+  hostname: "0.0.0.0",
+
+  // セッション設定
   session: {
     sessionKey: "__my_app_session",
     ttl: 7 * 24 * 60 * 60 * 1000,  // 1週間
@@ -974,6 +1001,8 @@ export default createApp(script, {
       path: "/",
     },
   },
+
+  // クライアント設定
   client: {
     maxReconnectAttempts: 10,
     baseReconnectDelay: 500,
@@ -981,6 +1010,8 @@ export default createApp(script, {
     pingInterval: 15000,
     pongTimeout: 30000,
   },
+
+  // ストリーミング設定
   streaming: {
     enabled: false,
     flushThreshold: 5,
