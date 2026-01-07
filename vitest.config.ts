@@ -21,6 +21,8 @@ export default defineConfig({
 				"src/server-streaming.ts",
 				"src/server-patch-test.ts",
 				"src/server-error-test.ts",
+				"src/server-node.ts",
+				"src/serve.ts",
 				"src/app.ts",
 				"src/websocket/handler.ts",
 				"src/client/script.ts", // クライアント生成スクリプト（E2Eでテスト）
