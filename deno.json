@@ -10,6 +10,7 @@
 		"kantan-ui": "./src/index.ts",
 		"kantan-ui/": "./src/"
 	},
+	"unstable": ["sloppy-imports"],
 	"compilerOptions": {
 		"strict": true,
 		"noImplicitAny": true
