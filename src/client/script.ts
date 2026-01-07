@@ -344,28 +344,6 @@ function setupEventDelegation(sendEvent) {
       return;
     }
 
-    // ダウンロードボタンのハンドリング（Base64埋め込み、小さいファイル用）
-    const downloadBtn = e.target.closest("[data-kt-download]");
-    if (downloadBtn && downloadBtn.dataset.content) {
-      const { filename, mime, content } = downloadBtn.dataset;
-      // Base64 → Blob変換
-      const binary = atob(content);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) {
-        bytes[i] = binary.charCodeAt(i);
-      }
-      const blob = new Blob([bytes], { type: mime || "application/octet-stream" });
-      const url = URL.createObjectURL(blob);
-      // 一時的なリンクを作成してダウンロード
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename || "download";
-      a.click();
-      // メモリ解放
-      URL.revokeObjectURL(url);
-      return;
-    }
-
     const target = e.target.closest("[data-kt-event='click']");
     if (target && target.id) sendEvent(target.id, "clicked");
   });
