@@ -1,22 +1,34 @@
 # 不要なコード・遅れたコード・後方互換性コードの包括的レポート
 
 作成日: 2026-01-07
+更新日: 2026-01-07
 
 ---
 
-## 🔴 1. 未使用のエクスポート関数（Dead Code）
+## ✅ 完了した改善
+
+| 項目 | コミット | 内容 |
+|------|---------|------|
+| Base64ダウンロード削除 | `899562c` | 全てのダウンロードをサーバーサイドストリーミングに移行 |
+| XSS検出の同期ドキュメント | `32094f0` | クライアント/サーバー間の同期を明示するコメント追加 |
+| console文のクリーンアップ | `87e1196` | 不要なWebSocket接続ログとdebugログを削除 |
+| テスト用メソッドのマーク | `c4c7a95` | @internal JSDocタグを追加 |
+
+---
+
+## 🔴 1. 未使用のエクスポート関数（保留）
 
 | ファイル | 行 | 関数名 | 状態 |
 |----------|-----|--------|------|
-| `src/utils/html.ts` | 6-21 | `buildAttributes()` | エクスポートされているがsrcでは未使用（テストのみで使用） |
-| `src/utils/html.ts` | 28-37 | `buildStyleAttr()` | エクスポートされているがsrcでは未使用（テストのみで使用） |
-| `src/utils/html.ts` | 44-47 | `buildClassAttr()` | エクスポートされているがsrcでは未使用（テストのみで使用） |
-| `src/utils/html.ts` | 74-111 | `containsUnsafeHtml()` | エクスポートされているがsrcでは未使用（クライアントスクリプト内で重複実装あり） |
-| `src/diff/parser.ts` | 81-83 | `isValidId()` | メインindexからre-exportされていない内部関数 |
+| `src/utils/html.ts` | 6-21 | `buildAttributes()` | REFACTORING_PLAN.md Phase 5.2 で使用予定 |
+| `src/utils/html.ts` | 28-37 | `buildStyleAttr()` | REFACTORING_PLAN.md Phase 5.2 で使用予定 |
+| `src/utils/html.ts` | 44-47 | `buildClassAttr()` | REFACTORING_PLAN.md Phase 5.2 で使用予定 |
+| `src/utils/html.ts` | 74-111 | `containsUnsafeHtml()` | クライアント側と同期を維持（@noteコメント追加済み） |
+| `src/diff/parser.ts` | 81-83 | `isValidId()` | 内部ユーティリティとして維持 |
 
-### 推奨アクション
-- これらの関数を内部化するか、公開APIとして明示的にドキュメント化する
-- `containsUnsafeHtml()`はクライアント側と重複しているため統合を検討
+### 状態
+- これらの関数はリファクタリング計画で使用予定のため保留
+- `containsUnsafeHtml()`は必然的な重複（クライアントスクリプトは文字列として送信されるため）
 
 ---
 
