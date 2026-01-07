@@ -314,6 +314,102 @@ const tableStyles = `
   }
 `;
 
+/** チャットスタイル */
+const chatStyles = `
+  /* Chat Message */
+  .kt-chat-message {
+    display: flex;
+    gap: 0.75rem;
+    margin: 0.5rem 0;
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+
+  /* Role-based styling */
+  .kt-chat-message-user {
+    background: #f0f4f8;
+    flex-direction: row-reverse;
+  }
+  .kt-chat-message-assistant {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+  }
+  .kt-chat-message-system {
+    background: #fff8e6;
+    border: 1px solid #ffeeba;
+    font-style: italic;
+  }
+
+  /* Avatar */
+  .kt-chat-avatar {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    background: #e9ecef;
+    border-radius: 50%;
+  }
+  .kt-chat-message-user .kt-chat-avatar {
+    background: #d1e7dd;
+  }
+  .kt-chat-message-assistant .kt-chat-avatar {
+    background: #cfe2ff;
+  }
+  .kt-chat-message-system .kt-chat-avatar {
+    background: #fff3cd;
+  }
+
+  /* Body */
+  .kt-chat-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .kt-chat-message-user .kt-chat-body {
+    text-align: right;
+  }
+
+  /* Name */
+  .kt-chat-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+    color: #495057;
+  }
+
+  /* Content */
+  .kt-chat-content {
+    line-height: 1.5;
+  }
+  .kt-chat-content p {
+    margin: 0 0 0.5rem;
+  }
+  .kt-chat-content p:last-child {
+    margin-bottom: 0;
+  }
+  .kt-chat-content code {
+    background: #f1f3f5;
+    padding: 0.125rem 0.25rem;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.875em;
+  }
+  .kt-chat-content pre {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 0.75rem;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+  }
+  .kt-chat-content pre code {
+    background: none;
+    padding: 0;
+  }
+`;
+
 /** フォームスタイル */
 const formStyles = `
   /* Form */
@@ -372,6 +468,7 @@ export const defaultStyles = [
 	feedbackStyles,
 	layoutStyles,
 	tableStyles,
+	chatStyles,
 	formStyles,
 ].join("\n");
 
