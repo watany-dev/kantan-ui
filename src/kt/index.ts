@@ -24,6 +24,7 @@
  */
 
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
+import * as chat from "./chat";
 import * as config from "./config";
 import * as control from "./control";
 import * as data from "./data";
@@ -39,6 +40,9 @@ export const kt = {
 
 	// Control APIs
 	rerun: control.requestRerun,
+
+	// Chat APIs
+	chat_message: chat.chat_message,
 
 	// Output APIs
 	write: output.write,
