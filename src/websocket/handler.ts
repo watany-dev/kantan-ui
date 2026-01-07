@@ -1,7 +1,11 @@
+import { createRequire } from "node:module";
 import type { ServerType } from "@hono/node-server";
 import type { Hono } from "hono";
 import { getRuntimeKey } from "hono/adapter";
 import type { UpgradeWebSocket, WSContext } from "hono/ws";
+
+// ES modules require createRequire for dynamic require() calls
+const require = createRequire(import.meta.url);
 
 interface WebSocketHandlers {
 	onOpen?: ((evt: Event, ws: WSContext) => void) | undefined;
