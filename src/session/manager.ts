@@ -431,7 +431,10 @@ export class SessionManager {
 		}
 	}
 
-	// 現在のAbortSignalを取得（テスト用）
+	/**
+	 * 現在のAbortSignalを取得
+	 * @internal テスト用
+	 */
 	getCurrentAbortSignal(sessionId: SessionId): AbortSignal | undefined {
 		return this.abortControllers.get(sessionId)?.signal;
 	}
@@ -487,12 +490,18 @@ export class SessionManager {
 		}
 	}
 
-	// キューの長さを取得（テスト用）
+	/**
+	 * キューの長さを取得
+	 * @internal テスト用
+	 */
 	getQueueLength(sessionId: SessionId): number {
 		return this.eventQueues.get(sessionId)?.length ?? 0;
 	}
 
-	// 処理中かどうかを取得（テスト用）
+	/**
+	 * 処理中かどうかを取得
+	 * @internal テスト用
+	 */
 	isProcessing(sessionId: SessionId): boolean {
 		return this.processingFlags.get(sessionId) ?? false;
 	}
@@ -540,7 +549,8 @@ export class SessionManager {
 	}
 
 	/**
-	 * レート制限状態をリセット（テスト用）
+	 * レート制限状態をリセット
+	 * @internal テスト用
 	 */
 	resetRateLimit(sessionId: SessionId): void {
 		this.rateLimitStates.delete(sessionId);
