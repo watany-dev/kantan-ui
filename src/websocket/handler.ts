@@ -1,4 +1,4 @@
-import type { Server } from "node:http";
+import type { ServerType } from "@hono/node-server";
 import type { Hono } from "hono";
 import { getRuntimeKey } from "hono/adapter";
 import type { UpgradeWebSocket, WSContext } from "hono/ws";
@@ -15,7 +15,7 @@ export interface WebSocketAdapter {
 	/** Bun用: Bun.serve() の websocket オプションに渡す */
 	websocket?: unknown;
 	/** Node.js用: サーバー起動後に呼び出してWebSocketを有効化 */
-	injectWebSocket?: (server: Server) => void;
+	injectWebSocket?: (server: ServerType) => void;
 }
 
 let cachedAdapter: WebSocketAdapter | null = null;

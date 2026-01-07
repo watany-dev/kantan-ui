@@ -1,11 +1,11 @@
-import type { Server } from "node:http";
+import type { ServerType } from "@hono/node-server";
 import { serve as nodeServe } from "@hono/node-server";
 import { getRuntimeKey } from "hono/adapter";
 
 interface KantanApp {
 	fetch: (request: Request) => Response | Promise<Response>;
 	websocket?: unknown;
-	injectWebSocket?: (server: Server) => void;
+	injectWebSocket?: ((server: ServerType) => void) | undefined;
 	shutdown: () => void;
 }
 
@@ -15,7 +15,7 @@ interface ServeOptions {
 }
 
 interface ServeResult {
-	server: Server;
+	server: ServerType;
 	shutdown: () => void;
 }
 
@@ -45,7 +45,8 @@ export function serve(kantanApp: KantanApp, options: ServeOptions = {}): ServeRe
 		);
 	}
 
-	if (!kantanApp.injectWebSocket) {
+	const injectWebSocket = kantanApp.injectWebSocket;
+	if (!injectWebSocket) {
 		throw new Error("WebSocket adapter not initialized. Ensure createApp() was called correctly.");
 	}
 
@@ -59,7 +60,7 @@ export function serve(kantanApp: KantanApp, options: ServeOptions = {}): ServeRe
 	});
 
 	// WebSocketを有効化
-	kantanApp.injectWebSocket(server);
+	injectWebSocket(server);
 
 	console.log(`Server running at http://${hostname}:${port}`);
 

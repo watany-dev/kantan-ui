@@ -1,4 +1,4 @@
-import type { Server } from "node:http";
+import type { ServerType } from "@hono/node-server";
 import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { html, raw } from "hono/html";
@@ -308,7 +308,7 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 		/** Bun用: Bun.serve() の websocket オプションに渡す */
 		websocket: wsAdapter.websocket,
 		/** Node.js用: サーバー起動後に呼び出してWebSocketを有効化 */
-		injectWebSocket: wsAdapter.injectWebSocket as ((server: Server) => void) | undefined,
+		injectWebSocket: wsAdapter.injectWebSocket as ((server: ServerType) => void) | undefined,
 		shutdown,
 		app, // Honoインスタンス（拡張用）
 	};

@@ -89,5 +89,5 @@ const { app, websocket } = createApp(script, {
 export default {
 	port: 3003,
 	fetch: app.fetch,
-	websocket,
+	websocket: websocket as Parameters<typeof Bun.serve>[0]["websocket"],
 };
