@@ -162,6 +162,47 @@ const bio = kt.text_area("Bio", "Tell us about yourself...", { key: "bio" });
 const tags = kt.multiselect("Tags", ["Tech", "Design", "Business"], [], { key: "tags" });
 ```
 
+#### Chat API
+
+```typescript
+import { kt, createTypedSessionState } from "kantan-ui";
+
+// メッセージ履歴の型定義
+type ChatState = {
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
+};
+
+const state = createTypedSessionState<ChatState>({
+  messages: [],
+});
+
+// チャットコンテナ（自動スクロール付き）
+kt.chat_container(() => {
+  for (const msg of state.messages) {
+    kt.chat_message(msg.role, msg.content);
+  }
+}, { height: "400px" });
+
+// 個別のチャットメッセージ
+kt.chat_message("user", "Hello!");
+kt.chat_message("assistant", "Hi! How can I help you?");
+
+// カスタムアバターと名前
+kt.chat_message("user", "What is **TypeScript**?", {
+  name: "Alice",
+  avatar: "🧑‍💻",
+});
+
+// システムメッセージ
+kt.chat_message("system", "Session started at 10:00 AM");
+```
+
+**機能:**
+- ロールベースのスタイリング（user / assistant / system）
+- Markdownコンテンツ対応
+- カスタマイズ可能なアバターと表示名
+- 自動スクロール（ユーザーが上にスクロールした場合は一時停止）
+
 #### レイアウトAPI
 
 ```typescript
@@ -267,6 +308,7 @@ src/
 │   ├── context.ts    # レンダリングコンテキスト
 │   ├── config.ts     # ページ設定（set_page_config）
 │   ├── control.ts    # 制御API（rerun）
+│   ├── chat.ts       # チャットAPI（chat_message, chat_container）
 │   ├── data.ts       # データ表示（table）
 │   ├── layout.ts     # レイアウト（tabs）
 │   ├── output.ts     # 出力API（title, write, headerなど）
