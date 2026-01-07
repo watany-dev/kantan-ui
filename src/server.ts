@@ -264,4 +264,4 @@ ${escapeHtml(
 	return undefined;
 };
 
-export default createApp(script);
+export default await createApp(script);

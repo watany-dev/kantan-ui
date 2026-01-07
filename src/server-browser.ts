@@ -93,7 +93,7 @@ ${escapeHtml(
 };
 
 // scope='browser' でアプリを作成
-const { fetch, websocket } = createApp(script, {
+const { fetch, websocket } = await createApp(script, {
 	session: {
 		scope: "browser",
 	},

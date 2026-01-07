@@ -85,41 +85,10 @@ export async function createWebSocketAdapterAsync(app?: Hono): Promise<WebSocket
 }
 
 /**
- * ランタイムに応じたWebSocketアダプターを作成（同期版・後方互換性用）
- * Node.jsの場合は app が必要
- * @deprecated 非同期版の createWebSocketAdapterAsync を推奨
+ * 後方互換性のためのエイリアス
+ * @deprecated createWebSocketAdapterAsync を使用してください
  */
-export function createWebSocketAdapter(app?: Hono): WebSocketAdapter {
-	if (cachedAdapter) {
-		return cachedAdapter;
-	}
-
-	const runtime = getRuntimeKey();
-
-	if (runtime === "bun") {
-		// Bun環境: hono/bun を使用（同期的にimport可能）
-		// biome-ignore lint/suspicious/noExplicitAny: dynamic import for runtime-specific module
-		const { createBunWebSocket } = require("hono/bun") as any;
-		const { upgradeWebSocket, websocket } = createBunWebSocket();
-		cachedAdapter = { upgradeWebSocket, websocket };
-	} else if (runtime === "deno") {
-		// Deno環境: 同期版では初期化できないため、エラーを投げる
-		throw new Error(
-			"Deno runtime detected. Use createWebSocketAdapterAsync() instead of createWebSocketAdapter().",
-		);
-	} else {
-		// Node.js環境: @hono/node-ws を使用
-		if (!app) {
-			throw new Error("Hono app instance is required for Node.js WebSocket adapter");
-		}
-		// biome-ignore lint/suspicious/noExplicitAny: dynamic import for runtime-specific module
-		const { createNodeWebSocket } = require("@hono/node-ws") as any;
-		const { upgradeWebSocket, injectWebSocket } = createNodeWebSocket({ app });
-		cachedAdapter = { upgradeWebSocket, injectWebSocket };
-	}
-
-	return cachedAdapter;
-}
+export const createWebSocketAdapter = createWebSocketAdapterAsync;
 
 /**
  * アダプターキャッシュをクリア（テスト用）
@@ -151,46 +120,3 @@ export function createWebSocketHandler(
 		return events;
 	});
 }
-
-// 後方互換性のためのエクスポート（非推奨）
-// 既存のserver-*.tsファイルで使用されている
-let legacyAdapter: WebSocketAdapter | null = null;
-
-function getLegacyAdapter(): WebSocketAdapter {
-	if (!legacyAdapter) {
-		const runtime = getRuntimeKey();
-		if (runtime === "bun") {
-			// biome-ignore lint/suspicious/noExplicitAny: dynamic import for runtime-specific module
-			const { createBunWebSocket } = require("hono/bun") as any;
-			const { upgradeWebSocket, websocket } = createBunWebSocket();
-			legacyAdapter = { upgradeWebSocket, websocket };
-		} else {
-			throw new Error(
-				"Legacy exports (upgradeWebSocket, websocket) are only available in Bun. " +
-					"For Node.js, use createWebSocketAdapter(app) instead.",
-			);
-		}
-	}
-	return legacyAdapter;
-}
-
-/** @deprecated Use createWebSocketAdapter(app).upgradeWebSocket instead */
-export const upgradeWebSocket: UpgradeWebSocket = new Proxy({} as UpgradeWebSocket, {
-	apply(_target, _thisArg, args) {
-		return getLegacyAdapter().upgradeWebSocket(...(args as Parameters<UpgradeWebSocket>));
-	},
-});
-
-/** @deprecated Use createWebSocketAdapter(app).websocket instead */
-export const websocket = new Proxy(
-	{},
-	{
-		get(_target, prop) {
-			const adapter = getLegacyAdapter();
-			if (adapter.websocket && typeof adapter.websocket === "object") {
-				return (adapter.websocket as Record<string | symbol, unknown>)[prop];
-			}
-			return undefined;
-		},
-	},
-);

@@ -4,7 +4,4 @@ export {
 	createWebSocketAdapter,
 	createWebSocketAdapterAsync,
 	createWebSocketHandler,
-	// 後方互換性のためのエクスポート（非推奨、Bunのみ）
-	upgradeWebSocket,
-	websocket,
 } from "./handler";

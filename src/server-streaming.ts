@@ -40,7 +40,7 @@ const script = () => {
 	return undefined;
 };
 
-const kantanApp = createApp(script, {
+const kantanApp = await createApp(script, {
 	streaming: {
 		enabled: true,
 		flushThreshold: 2,
