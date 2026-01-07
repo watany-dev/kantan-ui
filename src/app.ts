@@ -8,6 +8,7 @@ import { getPageConfig } from "./kt/config";
 import { rerun, type Script, type StreamingOptions } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { defaultStyles } from "./styles";
+import { createErrorMessageJson } from "./utils/error";
 import { upgradeWebSocket, websocket } from "./websocket";
 import type { Patch } from "./websocket/types";
 import { type ClientMessage, isClientMessage, type ServerMessage } from "./websocket/types";
@@ -186,45 +187,25 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 						const eventSessionId = cookieSessionId ?? data.sessionId;
 						if (!eventSessionId) {
 							console.error("Event received without sessionId");
-							const errorMessage: ServerMessage = {
-								type: "error",
-								error: {
-									code: "SESSION_ID_REQUIRED",
-									message: "sessionId is required for event messages.",
-								},
-							};
-							ws.send(JSON.stringify(errorMessage));
+							ws.send(createErrorMessageJson("SESSION_ID_REQUIRED", "sessionId is required for event messages."));
 							return;
 						}
 
 						const session = sessionManager.getSession(eventSessionId);
 						if (!session) {
 							console.error("Session not found:", eventSessionId);
-							const errorMessage: ServerMessage = {
-								type: "error",
-								error: {
-									code: "SESSION_NOT_FOUND",
-									message: "Session not found. Please refresh or reconnect.",
-								},
-							};
-							ws.send(JSON.stringify(errorMessage));
+							ws.send(createErrorMessageJson("SESSION_NOT_FOUND", "Session not found. Please refresh or reconnect."));
 							return;
 						}
 
 						// レート制限チェック
 						const rateLimitResult = sessionManager.checkRateLimit(session.id);
 						if (!rateLimitResult.allowed) {
-							const errorMessage: ServerMessage = {
-								type: "error",
-								error: {
-									code: "RATE_LIMITED",
-									message: "Too many requests. Please slow down.",
-									...(rateLimitResult.retryAfter !== undefined && {
-										retryAfter: rateLimitResult.retryAfter,
-									}),
-								},
-							};
-							ws.send(JSON.stringify(errorMessage));
+							ws.send(createErrorMessageJson(
+								"RATE_LIMITED",
+								"Too many requests. Please slow down.",
+								rateLimitResult.retryAfter !== undefined ? { retryAfter: rateLimitResult.retryAfter } : undefined,
+							));
 							return;
 						}
 
