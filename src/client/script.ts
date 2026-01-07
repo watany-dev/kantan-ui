@@ -140,6 +140,10 @@ function applyPatch(patch) {
       }
       const el = document.getElementById(patch.id);
       if (el) {
+        // フォーカス中のinput/textarea要素はスキップ（レースコンディション防止）
+        if ((el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) && el === document.activeElement) {
+          return;
+        }
         const temp = document.createElement("div");
         temp.innerHTML = patch.html;
         const newEl = temp.firstElementChild || temp.firstChild;
