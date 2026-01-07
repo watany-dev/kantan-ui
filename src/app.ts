@@ -137,12 +137,12 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 		const bodyContent = initialResult.hasSidebar
 			? html`<div class="kt-layout-sidebar">
 					<aside class="kt-sidebar" data-state="expanded">
-						<div class="kt-sidebar-content">${raw(initialResult.sidebarHtml)}</div>
+						<div id="kt-sidebar-content" class="kt-sidebar-content">${raw(initialResult.sidebarHtml)}</div>
 						<button class="kt-sidebar-toggle" type="button" aria-label="Toggle sidebar">
 							<span class="kt-sidebar-toggle-icon"></span>
 						</button>
 					</aside>
-					<main class="kt-main ${baseLayoutClass}">${raw(initialResult.mainHtml)}</main>
+					<main id="kt-main-content" class="kt-main ${baseLayoutClass}">${raw(initialResult.mainHtml)}</main>
 					<div class="kt-sidebar-overlay"></div>
 				</div>`
 			: html`<div class="${baseLayoutClass}">${raw(initialResult.mainHtml)}</div>`;
@@ -253,14 +253,35 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						// 初期HTML生成
 						const result = rerun(script, undefined, session.id);
 						session.lastHtml = result.mainHtml;
+						session.lastSidebarHtml = result.sidebarHtml;
 
-						const seq = sessionManager.addPatchToHistory(session.id, [
-							{ type: "replaceRoot", html: result.mainHtml },
-						]);
+						// サイドバーがある場合は個別更新、ない場合はreplaceRoot
+						let initPatches: Patch[];
+						if (result.hasSidebar) {
+							const pageConfig = getPageConfig();
+							const baseLayoutClass =
+								pageConfig.layout === "wide" ? "kt-layout-wide" : "kt-layout-centered";
+							initPatches = [
+								{
+									type: "replaceNode",
+									id: "kt-main-content",
+									html: `<main id="kt-main-content" class="kt-main ${baseLayoutClass}">${result.mainHtml}</main>`,
+								},
+								{
+									type: "replaceNode",
+									id: "kt-sidebar-content",
+									html: `<div id="kt-sidebar-content" class="kt-sidebar-content">${result.sidebarHtml}</div>`,
+								},
+							];
+						} else {
+							initPatches = [{ type: "replaceRoot", html: result.mainHtml }];
+						}
+
+						const seq = sessionManager.addPatchToHistory(session.id, initPatches);
 
 						const message: ServerMessage = {
 							type: "patch",
-							patches: [{ type: "replaceRoot", html: result.mainHtml }],
+							patches: initPatches,
 							seq,
 							sessionId: config.session.scope === "tab" ? session.id : undefined,
 						};
@@ -335,7 +356,7 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 							streamingOptions,
 						);
 
-						// 差分計算
+						// 差分計算（メインコンテンツ）
 						let patches: Patch[];
 						if (session.lastHtml) {
 							const diffResult = diff(session.lastHtml, newResult.mainHtml);
@@ -344,7 +365,17 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 							patches = [{ type: "replaceRoot", html: newResult.mainHtml }];
 						}
 
+						// サイドバーの差分計算
+						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
+							patches.push({
+								type: "replaceNode",
+								id: "kt-sidebar-content",
+								html: `<div id="kt-sidebar-content" class="kt-sidebar-content">${newResult.sidebarHtml}</div>`,
+							});
+						}
+
 						session.lastHtml = newResult.mainHtml;
+						session.lastSidebarHtml = newResult.sidebarHtml;
 
 						if (patches.length > 0) {
 							const seq = sessionManager.addPatchToHistory(session.id, patches);

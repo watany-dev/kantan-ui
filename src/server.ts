@@ -26,14 +26,6 @@ const state = createTypedSessionState<AppState>({
  * Streamlitのように直感的にUIを構築できます。
  */
 const script = () => {
-	// サイドバー
-	kt.sidebar(() => {
-		kt.header("Settings");
-		kt.write("This is sidebar content");
-		kt.divider();
-		kt.write(`Counter: ${state.counter}`);
-	});
-
 	// タイトル
 	kt.title("kantan-ui Demo");
 	kt.write("Streamlit風の宣言的APIで構築されたデモアプリです。");
@@ -63,6 +55,14 @@ const script = () => {
 
 	// IDを付与してdiffアルゴリズムが変更を検出できるようにする
 	kt.html(`<div id="counter-display" class="kt-write">Current count: ${state.counter}</div>`);
+
+	// サイドバー（カウンター操作後に定義して最新の状態を反映）
+	kt.sidebar(() => {
+		kt.header("Settings");
+		kt.write("This is sidebar content");
+		kt.divider();
+		kt.write(`Counter: ${state.counter}`);
+	});
 
 	kt.divider();
 

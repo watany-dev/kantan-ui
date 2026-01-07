@@ -22,7 +22,10 @@ test.describe("WebSocket connection and replaceRoot", () => {
 
 		// 初期HTMLの確認（新しいデモアプリ）
 		await expect(page.locator("#app h1.kt-title")).toHaveText("kantan-ui Demo");
-		await expect(page.locator("#app .kt-write").first()).toContainText("Streamlit風の宣言的API");
+		// サイドバーにも kt-write があるため、メインコンテンツ領域を指定
+		await expect(page.locator(".kt-main .kt-write").first()).toContainText(
+			"Streamlit風の宣言的API",
+		);
 	});
 
 	test("should have buttons that can trigger sendEvent", async ({ page }) => {

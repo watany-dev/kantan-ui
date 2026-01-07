@@ -420,14 +420,13 @@ const sidebarStyles = `
 
   /* サイドバー */
   .kt-sidebar {
+    position: relative;
     width: 280px;
     min-width: 280px;
     background: #f8f9fa;
     border-right: 1px solid #e9ecef;
     display: flex;
     flex-direction: column;
-    position: sticky;
-    top: 0;
     height: 100vh;
     overflow-y: auto;
     transition: width 0.3s ease, min-width 0.3s ease;
@@ -436,7 +435,11 @@ const sidebarStyles = `
   .kt-sidebar[data-state="collapsed"] {
     width: 0;
     min-width: 0;
-    overflow: hidden;
+    overflow: visible;
+  }
+
+  .kt-sidebar[data-state="collapsed"] .kt-sidebar-content {
+    display: none;
   }
 
   /* サイドバーコンテンツ */
@@ -459,8 +462,12 @@ const sidebarStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 10;
+    z-index: 1001;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .kt-sidebar[data-state="collapsed"] .kt-sidebar-toggle {
+    right: -36px;
   }
 
   .kt-sidebar-toggle:hover {
