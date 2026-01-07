@@ -1,7 +1,7 @@
 {
 	"$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
 	"tasks": {
-		"dev": "deno run --allow-net --allow-read --watch src/server-deno.ts",
+		"dev": "deno run --allow-net --allow-read --watch examples/deno-server.ts",
 		"example:chat": "deno run --allow-net --allow-read examples/09-chat.ts"
 	},
 	"imports": {

@@ -121,8 +121,23 @@ function restoreFocusState(state, retryCount) {
 
 /**
  * DOMパッチ適用スクリプト
+ * Web標準のtemplate要素とreplaceChildren/insertAdjacentHTMLを活用
  */
 const patchApplyScript = `
+// template要素を使った安全なHTML→DOM変換（スクリプト実行を防止）
+function createElementFromHtml(html) {
+  const template = document.createElement("template");
+  template.innerHTML = html.trim();
+  return template.content.firstElementChild || template.content.firstChild;
+}
+
+// 複数の子要素を取得
+function createChildNodesFromHtml(html) {
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  return template.content.childNodes;
+}
+
 function applyPatch(patch) {
   switch (patch.type) {
     case "replaceRoot": {
@@ -130,7 +145,10 @@ function applyPatch(patch) {
         console.error("Blocked potentially unsafe HTML content");
         return;
       }
-      document.getElementById("app").innerHTML = patch.html;
+      const app = document.getElementById("app");
+      const nodes = createChildNodesFromHtml(patch.html);
+      // replaceChildren()で効率的にバッチ置換
+      app.replaceChildren(...nodes);
       break;
     }
     case "replaceNode": {
@@ -140,9 +158,7 @@ function applyPatch(patch) {
       }
       const el = document.getElementById(patch.id);
       if (el) {
-        const temp = document.createElement("div");
-        temp.innerHTML = patch.html;
-        const newEl = temp.firstElementChild || temp.firstChild;
+        const newEl = createElementFromHtml(patch.html);
         if (newEl) el.replaceWith(newEl);
       }
       break;
@@ -161,12 +177,10 @@ function applyPatch(patch) {
         ? document.getElementById("app")
         : document.getElementById(patch.parentId);
       if (parent) {
-        const temp = document.createElement("div");
-        temp.innerHTML = patch.html;
-        const newEl = temp.firstElementChild || temp.firstChild;
+        const newEl = createElementFromHtml(patch.html);
         if (newEl) {
           if (patch.index >= 0 && patch.index < parent.children.length) {
-            parent.insertBefore(newEl, parent.children[patch.index]);
+            parent.children[patch.index].before(newEl);
           } else {
             parent.appendChild(newEl);
           }
@@ -181,11 +195,8 @@ function applyPatch(patch) {
       }
       const app = document.getElementById("app");
       if (app) {
-        const temp = document.createElement("div");
-        temp.innerHTML = patch.html;
-        while (temp.firstChild) {
-          app.appendChild(temp.firstChild);
-        }
+        // insertAdjacentHTMLで効率的に末尾追加
+        app.insertAdjacentHTML("beforeend", patch.html);
       }
       break;
     }
@@ -307,6 +318,28 @@ function setupEventDelegation(sendEvent) {
           console.error("Failed to copy code:", err);
         });
       }
+      return;
+    }
+
+    // ダウンロードボタンのハンドリング（Blob API + URL.createObjectURL）
+    const downloadBtn = e.target.closest("[data-kt-download]");
+    if (downloadBtn && downloadBtn.dataset.content) {
+      const { filename, mime, content } = downloadBtn.dataset;
+      // Base64 → Blob変換
+      const binary = atob(content);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: mime || "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+      // 一時的なリンクを作成してダウンロード
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename || "download";
+      a.click();
+      // メモリ解放
+      URL.revokeObjectURL(url);
       return;
     }
 

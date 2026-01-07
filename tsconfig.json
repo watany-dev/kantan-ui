@@ -30,5 +30,5 @@
 		"verbatimModuleSyntax": true
 	},
 	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist", "tests", "e2e", "src/server-deno.ts"]
+	"exclude": ["node_modules", "dist", "tests", "e2e"]
 }

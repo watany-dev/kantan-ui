@@ -117,7 +117,7 @@ export default defineConfig({
 			stderr: "pipe",
 		},
 		{
-			command: "bun run src/server-browser.ts",
+			command: "bun run examples/browser-scope.ts",
 			url: "http://localhost:3001",
 			reuseExistingServer: !process.env.CI,
 			timeout: 30000,

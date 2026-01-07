@@ -4,10 +4,10 @@
  * scope='browser' 設定でセッションをCookieで管理するデモ。
  * E2Eテスト用に別ポート(3001)で起動。
  */
-import { createApp } from "./app";
-import { kt } from "./kt";
-import { createTypedSessionState } from "./session";
-import { escapeHtml } from "./utils/html";
+import { createApp } from "../src/app";
+import { kt } from "../src/kt";
+import { createTypedSessionState } from "../src/session";
+import { escapeHtml } from "../src/utils/html";
 
 type AppState = {
 	counter: number;
