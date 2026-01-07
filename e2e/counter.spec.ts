@@ -208,7 +208,6 @@ test.describe("Counter Operations", () => {
 		await expect(page.locator("#counter-display")).toContainText("Current count: 3");
 
 		// DOM変更を監視する
-		const observedValues: string[] = [];
 		await page.evaluate(() => {
 			const target = document.getElementById("counter-display");
 			if (!target) return;
