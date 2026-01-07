@@ -303,17 +303,8 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 		sessionManager.stopPingInterval();
 	};
 
-	// Bun.serve() の auto-serve 機能が typeof fetch === 'function' チェックを行うため、
-	// app.fetch を直接渡すと認識されない場合がある。明示的なラッパー関数で確実に認識させる。
-	const fetch = (request: Request, env?: unknown, ctx?: unknown) =>
-		app.fetch(
-			request,
-			env as Parameters<typeof app.fetch>[1],
-			ctx as Parameters<typeof app.fetch>[2],
-		);
-
 	return {
-		fetch,
+		fetch: app.fetch,
 		/** Bun用: Bun.serve() の websocket オプションに渡す */
 		websocket: wsAdapter.websocket,
 		/** Node.js用: サーバー起動後に呼び出してWebSocketを有効化 */
