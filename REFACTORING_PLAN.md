@@ -24,7 +24,7 @@
 - [ ] 1.1.7: Multiselect バリデーション (154-165行) をリファクタリング
 - [ ] 1.1.8: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -41,7 +41,7 @@
 - [ ] 1.2.5: ユニットテスト `src/utils/html.test.ts` を作成
 - [ ] 1.2.6: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -61,7 +61,7 @@
 - [ ] 1.3.4: 元ファイルからimportに変更
 - [ ] 1.3.5: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -76,7 +76,7 @@
 - [ ] 1.4.3: `src/app.ts` の3箇所 (189-196, 203-210, 217-228行) をリファクタリング
 - [ ] 1.4.4: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -94,7 +94,7 @@
 - [ ] 2.1.4: ユニットテスト作成
 - [ ] 2.1.5: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -112,7 +112,7 @@
 - [ ] 2.2.6: `src/widgets/multiselect.ts` (34-46行) をリファクタリング
 - [ ] 2.2.7: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -131,7 +131,7 @@
 - [ ] 2.3.8: `text-area.ts` にヘルパー適用
 - [ ] 2.3.9: E2Eテストで動作確認
 
-**完了条件**: `bun run ci` が通ること、E2Eテスト全パス
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -155,7 +155,7 @@
 - [ ] 3.1.5: `createTypedSessionState()` (117-197行) をリファクタリング
 - [ ] 3.1.6: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -172,7 +172,7 @@
 - [ ] 3.2.4: SessionManager内部をリファクタリング
 - [ ] 3.2.5: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -187,7 +187,7 @@
 - [ ] 3.3.3: `src/app.ts` のストリーミングブロードキャスト (240-246行) をリファクタリング
 - [ ] 3.3.4: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -222,7 +222,7 @@
 - [ ] 4.2.5: `src/client/script.ts` を統合エントリポイントに変更
 - [ ] 4.2.6: E2Eテストで動作確認
 
-**完了条件**: `bun run ci` が通ること、E2Eテスト全パス
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -235,7 +235,7 @@
 - [ ] 4.3.2: ネストした三項演算子を分解
 - [ ] 4.3.3: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -267,7 +267,7 @@
 - [ ] 4.5.7: メインループをシンプル化
 - [ ] 4.5.8: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -282,7 +282,7 @@
 - [ ] 5.1.2: `src/diff/parser.ts` parseHtml (119-169行) に早期リターン適用
 - [ ] 5.1.3: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -297,7 +297,7 @@
 - [ ] 5.2.4: `src/kt/feedback.ts` (77行) をリファクタリング
 - [ ] 5.2.5: テスト実行で動作確認
 
-**完了条件**: `bun run ci` が通ること
+**完了条件**: `bun run lint`, `bun run build`, `bun run test`, E2Eテストが全て通ること
 
 ---
 
@@ -346,8 +346,10 @@ Week 5: Phase 5 (品質向上) - オプション
 
 ## 各タスク完了時のチェックリスト
 
-- [ ] `bun run lint:fix` でlintエラーなし
-- [ ] `bun run ci` が全パス
+- [ ] `bun run lint` が通ること（`bun run lint:fix` で自動修正可）
+- [ ] `bun run build` が通ること
+- [ ] `bun run test` が通ること
+- [ ] E2Eテストが通ること
 - [ ] 変更内容を説明するコミットメッセージ
 - [ ] 構造的変更と機能的変更が分離されている（Tidy First原則）
 
