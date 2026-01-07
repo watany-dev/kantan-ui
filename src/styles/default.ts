@@ -289,6 +289,31 @@ const layoutStyles = `
   .kt-tab-panel { padding: 1rem 0; }
 `;
 
+/** テーブルスタイル */
+const tableStyles = `
+  /* Table */
+  .kt-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.5rem 0;
+    font-size: 0.875rem;
+  }
+  .kt-table th,
+  .kt-table td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+  }
+  .kt-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+  }
+  .kt-table tbody tr:hover {
+    background: #f8f9fa;
+  }
+`;
+
 /** フォームスタイル */
 const formStyles = `
   /* Form */
@@ -346,6 +371,7 @@ export const defaultStyles = [
 	markdownStyles,
 	feedbackStyles,
 	layoutStyles,
+	tableStyles,
 	formStyles,
 ].join("\n");
 
