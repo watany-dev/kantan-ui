@@ -6,13 +6,15 @@
  *
  * @example
  * ```typescript
- * import { kt } from "kantan-ui";
+ * import { kt, createTypedSessionState } from "kantan-ui";
+ *
+ * const state = createTypedSessionState({ count: 0 });
  *
  * const script = () => {
  *   kt.title("My App");
  *
  *   if (kt.button("Click me")) {
- *     session_state.count++;
+ *     state.count++;
  *   }
  *
  *   const value = kt.slider("Volume", 0, 100, 50);

@@ -44,7 +44,6 @@ export {
 	getSessionManager,
 	resetSessionManager,
 	SessionManager,
-	session_state,
 	setCurrentSessionId,
 	setSessionManager,
 } from "./session";

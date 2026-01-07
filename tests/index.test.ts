@@ -9,7 +9,11 @@ import {
 	SessionManager,
 	setSessionManager,
 } from "../src/session/manager";
-import { getCurrentSessionId, session_state, setCurrentSessionId } from "../src/session/state";
+import {
+	createTypedSessionState,
+	getCurrentSessionId,
+	setCurrentSessionId,
+} from "../src/session/state";
 import { button } from "../src/widgets/button";
 import { resetWidgetCounter } from "../src/widgets/registry";
 import { selectbox } from "../src/widgets/selectbox";
@@ -29,7 +33,7 @@ describe("kantan-ui module exports", () => {
 		expect(getSessionManager).toBeDefined();
 		expect(setSessionManager).toBeDefined();
 		expect(resetSessionManager).toBeDefined();
-		expect(session_state).toBeDefined();
+		expect(createTypedSessionState).toBeDefined();
 		expect(setCurrentSessionId).toBeDefined();
 		expect(getCurrentSessionId).toBeDefined();
 	});
