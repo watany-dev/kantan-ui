@@ -63,8 +63,8 @@ const script = () => {
   return undefined;
 };
 
-// Bun: export default だけでサーバー起動（ポート指定可能）
-export default createApp(script, { port: 3000 });
+// 全ランタイム共通: await createApp でアプリを作成
+export default await createApp(script, { port: 3000 });
 ```
 
 ### サーバー起動方法
@@ -83,7 +83,7 @@ Bunは`export default`で`fetch`/`websocket`/`port`を持つオブジェクト�
 import { createApp } from "kantan-ui";
 import { serve } from "kantan-ui/serve";
 
-const app = createApp(script);
+const app = await createApp(script);
 serve(app, { port: 3000 });
 ```
 

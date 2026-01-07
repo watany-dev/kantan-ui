@@ -93,7 +93,7 @@ const script = () => {
 };
 
 // アプリを作成してエクスポート（ポート指定可能）
-export default createApp(script, { port: 3000 });
+export default await createApp(script, { port: 3000 });
 ```
 
 ### 実行
@@ -118,7 +118,7 @@ const script = () => {
   return undefined;
 };
 
-const app = createApp(script);
+const app = await createApp(script);
 serve(app, { port: 3000 });
 ```
 
@@ -697,7 +697,7 @@ const script = () => {
   return undefined;
 };
 
-export default createApp(script);
+export default await createApp(script);
 ```
 
 ---
@@ -794,7 +794,7 @@ const script = () => {
   return undefined;
 };
 
-export default createApp(script);
+export default await createApp(script);
 ```
 
 ---
@@ -888,7 +888,7 @@ const script = () => {
   return undefined;
 };
 
-export default createApp(script);
+export default await createApp(script);
 ```
 
 ### 発展: LLM APIとの連携
@@ -929,8 +929,8 @@ async function callLLM(messages: Message[]): Promise<string> {
 ### 基本設定
 
 ```typescript
-// Bun: export default でサーバー自動起動
-export default createApp(script, {
+// 全ランタイム共通: await createApp でアプリを作成
+export default await createApp(script, {
   port: 3000,            // サーバーポート（Bun.serve互換）
   hostname: "0.0.0.0",   // ホスト名（省略可）
   session: {
@@ -983,7 +983,7 @@ const script = () => {
   return undefined;
 };
 
-export default createApp(script, {
+export default await createApp(script, {
   // サーバー設定（Bun.serve互換）
   port: 3000,
   hostname: "0.0.0.0",
@@ -1112,7 +1112,7 @@ const script = () => {
   return undefined;
 };
 
-export default createApp(script);
+export default await createApp(script);
 ```
 
 シンプルで、型安全で、高速。これがkantan-uiです。

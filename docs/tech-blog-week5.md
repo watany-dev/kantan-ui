@@ -55,7 +55,7 @@ type Patch =
 #### 設定
 
 ```typescript
-export default createApp(script, {
+export default await createApp(script, {
   streaming: {
     enabled: true,      // ストリーミングを有効化
     flushThreshold: 3,  // 3要素ごとにフラッシュ
