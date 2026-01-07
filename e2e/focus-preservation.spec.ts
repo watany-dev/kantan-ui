@@ -5,9 +5,8 @@ import { gotoAndWait, typeWithRerun, waitForFocus } from "./helpers";
 test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe("Focus Preservation", () => {
-	// このテストはフォーカス復元機能が実装されるまでfixme
-	// Week3 remaining-tasks-plan.md Task 1で対応予定
-	test.fixme("should maintain focus on slider after value change", async ({ page }) => {
+	// フォーカス中のinput要素へのreplaceNodeパッチをスキップすることでレースコンディションを解決
+	test("should maintain focus on slider after value change", async ({ page }) => {
 		await gotoAndWait(page);
 
 		const slider = page.locator("#volume_slider");
@@ -57,9 +56,8 @@ test.describe("Focus Preservation", () => {
 		);
 	});
 
-	// このテストはフォーカス復元機能が実装されるまでfixme
-	// 各文字入力時にrerunが発生し、replaceNodeパッチによる値リセットのレースコンディションが存在
-	test.fixme("should maintain focus on text input during typing", async ({ page }) => {
+	// フォーカス中のinput要素へのreplaceNodeパッチをスキップすることでレースコンディションを解決
+	test("should maintain focus on text input during typing", async ({ page }) => {
 		await gotoAndWait(page);
 
 		const textInput = page.locator("#name_input");

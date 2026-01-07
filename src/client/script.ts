@@ -161,6 +161,13 @@ function applyPatch(patch) {
       }
       const el = document.getElementById(patch.id);
       if (el) {
+        // フォーカス中のinput/textarea要素、またはそれを含む要素はスキップ（レースコンディション防止）
+        const activeEl = document.activeElement;
+        if (activeEl && (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement)) {
+          if (el === activeEl || (el.contains && el.contains(activeEl))) {
+            return;
+          }
+        }
         const newEl = createElementFromHtml(patch.html);
         if (newEl) el.replaceWith(newEl);
       }
