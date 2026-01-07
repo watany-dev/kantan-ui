@@ -1,5 +1,14 @@
-import type { ServerType } from "@hono/node-server";
 import { Hono } from "hono";
+
+/**
+ * Node.js HTTP/HTTPS Server型（@hono/node-serverからの依存を避けるためローカル定義）
+ * Deno互換性のため、@hono/node-serverを直接インポートしない
+ */
+type NodeServerType = {
+	close: () => void;
+	listen: (port: number, hostname?: string, callback?: () => void) => void;
+};
+
 import { getCookie, setCookie } from "hono/cookie";
 import { html, raw } from "hono/html";
 import { generateClientScript } from "./client";
@@ -36,7 +45,7 @@ export interface KantanApp {
 	/** Bun.serve互換: ホスト名 */
 	hostname: string | undefined;
 	/** Node.js用: サーバー起動後に呼び出してWebSocketを有効化 */
-	injectWebSocket: ((server: ServerType) => void) | undefined;
+	injectWebSocket: ((server: NodeServerType) => void) | undefined;
 	shutdown: () => void;
 	/** Honoインスタンス（拡張用） */
 	app: Hono;
@@ -331,7 +340,7 @@ export function createApp(script: Script, options?: KantanAppOptions): KantanApp
 		websocket: wsAdapter.websocket,
 		port,
 		hostname,
-		injectWebSocket: wsAdapter.injectWebSocket as ((server: ServerType) => void) | undefined,
+		injectWebSocket: wsAdapter.injectWebSocket as ((server: NodeServerType) => void) | undefined,
 		shutdown,
 		app,
 	};
@@ -625,7 +634,7 @@ export async function createAppAsync(
 		websocket: wsAdapter.websocket,
 		port,
 		hostname,
-		injectWebSocket: wsAdapter.injectWebSocket as ((server: ServerType) => void) | undefined,
+		injectWebSocket: wsAdapter.injectWebSocket as ((server: NodeServerType) => void) | undefined,
 		shutdown,
 		app,
 	};
