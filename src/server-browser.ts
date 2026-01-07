@@ -103,7 +103,7 @@ const { fetch, websocket } = createApp(script, {
 const server = Bun.serve({
 	port: 3001,
 	fetch,
-	websocket: websocket as Parameters<typeof Bun.serve>[0]["websocket"],
+	websocket: websocket as NonNullable<Parameters<typeof Bun.serve>[0]["websocket"]>,
 });
 
 console.log(`Browser-scope server running at http://localhost:${server.port}`);
