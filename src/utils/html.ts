@@ -70,6 +70,10 @@ export function escapeHtml(text: string): string {
  * - data: URL（base64エンコード）
  * - イベントハンドラ属性（onclick, onerror等）
  * - 危険なタグ（iframe, embed, object, base, form）
+ *
+ * @note この関数はsrc/client/script.ts内のisUnsafeHtml()と同じロジックを持つ。
+ *       変更時は両方を同期すること。クライアント側は文字列として送信されるため
+ *       直接参照できない。テストは両者の整合性を検証する。
  */
 export function containsUnsafeHtml(html: string): boolean {
 	// パフォーマンスのため、まず簡易チェック

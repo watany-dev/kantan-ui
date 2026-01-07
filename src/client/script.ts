@@ -47,8 +47,11 @@ function updateConnectionStatus(status, reconnectAttempts, maxReconnectAttempts)
 
 /**
  * XSS検出スクリプト
+ * @note このロジックはsrc/utils/html.ts内のcontainsUnsafeHtml()と同じ。
+ *       変更時は両方を同期すること。
  */
 const xssDetectionScript = `
+// Note: Keep in sync with src/utils/html.ts containsUnsafeHtml()
 function isUnsafeHtml(html) {
   var lowerHtml = html.toLowerCase();
   if (!lowerHtml.includes("<") && !lowerHtml.includes("javascript") && !lowerHtml.includes("vbscript") && !lowerHtml.includes("data:")) {
