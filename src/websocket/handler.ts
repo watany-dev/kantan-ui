@@ -1,11 +1,7 @@
-import { createRequire } from "node:module";
 import type { ServerType } from "@hono/node-server";
 import type { Hono } from "hono";
 import { getRuntimeKey } from "hono/adapter";
 import type { UpgradeWebSocket, WSContext } from "hono/ws";
-
-// ES modules require createRequire for dynamic require() calls
-const require = createRequire(import.meta.url);
 
 interface WebSocketHandlers {
 	onOpen?: ((evt: Event, ws: WSContext) => void) | undefined;
@@ -25,8 +21,64 @@ export interface WebSocketAdapter {
 let cachedAdapter: WebSocketAdapter | null = null;
 
 /**
- * ランタイムに応じたWebSocketアダプターを作成
+ * Bun用WebSocketアダプターを作成
+ */
+async function createBunAdapter(): Promise<WebSocketAdapter> {
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic import for runtime-specific module
+	const { createBunWebSocket } = (await import("hono/bun")) as any;
+	const { upgradeWebSocket, websocket } = createBunWebSocket();
+	return { upgradeWebSocket, websocket };
+}
+
+/**
+ * Node.js用WebSocketアダプターを作成
+ */
+async function createNodeAdapter(app: Hono): Promise<WebSocketAdapter> {
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic import for runtime-specific module
+	const { createNodeWebSocket } = (await import("@hono/node-ws")) as any;
+	const { upgradeWebSocket, injectWebSocket } = createNodeWebSocket({ app });
+	return { upgradeWebSocket, injectWebSocket };
+}
+
+/**
+ * Deno用WebSocketアダプターを作成
+ */
+async function createDenoAdapter(): Promise<WebSocketAdapter> {
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic import for runtime-specific module
+	const { upgradeWebSocket } = (await import("hono/deno")) as any;
+	return { upgradeWebSocket };
+}
+
+/**
+ * ランタイムに応じたWebSocketアダプターを非同期で作成
  * Node.jsの場合は app が必要
+ */
+export async function createWebSocketAdapterAsync(app?: Hono): Promise<WebSocketAdapter> {
+	if (cachedAdapter) {
+		return cachedAdapter;
+	}
+
+	const runtime = getRuntimeKey();
+
+	if (runtime === "bun") {
+		cachedAdapter = await createBunAdapter();
+	} else if (runtime === "deno") {
+		cachedAdapter = await createDenoAdapter();
+	} else {
+		// Node.js環境
+		if (!app) {
+			throw new Error("Hono app instance is required for Node.js WebSocket adapter");
+		}
+		cachedAdapter = await createNodeAdapter(app);
+	}
+
+	return cachedAdapter;
+}
+
+/**
+ * ランタイムに応じたWebSocketアダプターを作成（同期版・後方互換性用）
+ * Node.jsの場合は app が必要
+ * @deprecated 非同期版の createWebSocketAdapterAsync を推奨
  */
 export function createWebSocketAdapter(app?: Hono): WebSocketAdapter {
 	if (cachedAdapter) {
@@ -36,11 +88,16 @@ export function createWebSocketAdapter(app?: Hono): WebSocketAdapter {
 	const runtime = getRuntimeKey();
 
 	if (runtime === "bun") {
-		// Bun環境: hono/bun を使用
+		// Bun環境: hono/bun を使用（同期的にimport可能）
 		// biome-ignore lint/suspicious/noExplicitAny: dynamic import for runtime-specific module
 		const { createBunWebSocket } = require("hono/bun") as any;
 		const { upgradeWebSocket, websocket } = createBunWebSocket();
 		cachedAdapter = { upgradeWebSocket, websocket };
+	} else if (runtime === "deno") {
+		// Deno環境: 同期版では初期化できないため、エラーを投げる
+		throw new Error(
+			"Deno runtime detected. Use createWebSocketAdapterAsync() instead of createWebSocketAdapter().",
+		);
 	} else {
 		// Node.js環境: @hono/node-ws を使用
 		if (!app) {
