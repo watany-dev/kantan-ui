@@ -63,7 +63,28 @@ const script = () => {
   return undefined;
 };
 
-export default createApp(script);
+// Bun: export default だけでサーバー起動（ポート指定可能）
+export default createApp(script, { port: 3000 });
+```
+
+### サーバー起動方法
+
+**Bun（推奨）**
+
+```bash
+bun run src/index.ts
+```
+
+Bunは`export default`で`fetch`/`websocket`/`port`を持つオブジェクトを自動的にサーバーとして起動します。
+
+**Node.js**
+
+```typescript
+import { createApp } from "kantan-ui";
+import { serve } from "kantan-ui/serve";
+
+const app = createApp(script);
+serve(app, { port: 3000 });
 ```
 
 ### kt API（宣言的API）
