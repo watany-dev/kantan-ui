@@ -1,6 +1,6 @@
+import type { Server } from "node:http";
 import { serve as nodeServe } from "@hono/node-server";
 import { getRuntimeKey } from "hono/adapter";
-import type { Server } from "node:http";
 
 interface KantanApp {
 	fetch: (request: Request) => Response | Promise<Response>;

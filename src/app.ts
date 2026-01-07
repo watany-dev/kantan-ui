@@ -1,7 +1,7 @@
+import type { Server } from "node:http";
 import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { html, raw } from "hono/html";
-import type { Server } from "node:http";
 import { generateClientScript } from "./client";
 import { type KantanConfig, resolveConfig } from "./config";
 import { diff, toWebSocketPatches } from "./diff";

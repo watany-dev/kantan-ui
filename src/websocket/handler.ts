@@ -1,7 +1,7 @@
+import type { Server } from "node:http";
 import type { Hono } from "hono";
 import { getRuntimeKey } from "hono/adapter";
 import type { UpgradeWebSocket, WSContext } from "hono/ws";
-import type { Server } from "node:http";
 
 interface WebSocketHandlers {
 	onOpen?: ((evt: Event, ws: WSContext) => void) | undefined;
