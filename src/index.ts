@@ -22,6 +22,11 @@ export { buildNodeMap, diff, parseHtml, toWebSocketPatches } from "./diff";
 export type { DiffPatch, DiffResult, VNode } from "./diff/types";
 // kt - Declarative UI API
 export { kt } from "./kt";
+export type {
+	ChatContainerConfig,
+	ChatMessageConfig,
+	ChatRole,
+} from "./kt/chat";
 export {
 	getPageConfig,
 	type PageConfig,
