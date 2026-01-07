@@ -64,6 +64,39 @@ describe("Table Data", () => {
 			]);
 		});
 
+		it("should use first row as header when useFirstRowAsHeader is true", () => {
+			const data: TableData = [
+				["製品", "2024年Q1", "2024年Q2", "2024年Q3"],
+				["製品A", 100000, 120000, 150000],
+				["製品B", 80000, 95000, 110000],
+				["製品C", 60000, 70000, 85000],
+			];
+
+			const result = normalizeTableData(data, undefined, true);
+
+			expect(result.headers).toEqual(["製品", "2024年Q1", "2024年Q2", "2024年Q3"]);
+			expect(result.rows).toEqual([
+				["製品A", 100000, 120000, 150000],
+				["製品B", 80000, 95000, 110000],
+				["製品C", 60000, 70000, 85000],
+			]);
+		});
+
+		it("should ignore useFirstRowAsHeader for non-2D arrays", () => {
+			const data: TableData = [
+				{ name: "Alice", age: 30 },
+				{ name: "Bob", age: 25 },
+			];
+
+			const result = normalizeTableData(data, undefined, true);
+
+			expect(result.headers).toEqual(["name", "age"]);
+			expect(result.rows).toEqual([
+				["Alice", 30],
+				["Bob", 25],
+			]);
+		});
+
 		it("should handle explicit format with columns and data", () => {
 			const data: TableData = {
 				columns: ["Name", "Age"],
@@ -177,5 +210,27 @@ describe("table function", () => {
 		const html = ctx.getHtml();
 		expect(html).toContain('<table class="kt-table">');
 		expect(html).toContain("<tbody></tbody>");
+	});
+
+	it("should render table with 2D array using first row as header", () => {
+		const sales2D = [
+			["製品", "2024年Q1", "2024年Q2", "2024年Q3"],
+			["製品A", 100000, 120000, 150000],
+			["製品B", 80000, 95000, 110000],
+			["製品C", 60000, 70000, 85000],
+		];
+
+		table(sales2D, { useFirstRowAsHeader: true });
+
+		const html = ctx.getHtml();
+		expect(html).toContain("<thead>");
+		expect(html).toContain("<th>製品</th>");
+		expect(html).toContain("<th>2024年Q1</th>");
+		expect(html).toContain("<th>2024年Q2</th>");
+		expect(html).toContain("<th>2024年Q3</th>");
+		expect(html).toContain("<td>製品A</td>");
+		expect(html).toContain("<td>100000</td>");
+		// First row should NOT be in tbody
+		expect(html).not.toContain("<td>製品</td>");
 	});
 });
