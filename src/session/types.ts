@@ -1,6 +1,17 @@
 // セッションID
 export type SessionId = string;
 
+// ダウンロードID
+export type DownloadId = string;
+
+// ダウンロードデータ
+export interface DownloadData {
+	data: ArrayBuffer;
+	filename: string;
+	mime: string;
+	createdAt: number;
+}
+
 // セッション状態
 export interface SessionState {
 	[key: string]: unknown;
