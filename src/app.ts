@@ -32,9 +32,9 @@ export interface KantanApp {
 	/** Bun用: Bun.serve() の websocket オプションに渡す */
 	websocket: unknown;
 	/** Bun.serve互換: ポート番号 */
-	port?: number;
+	port: number | undefined;
 	/** Bun.serve互換: ホスト名 */
-	hostname?: string;
+	hostname: string | undefined;
 	/** Node.js用: サーバー起動後に呼び出してWebSocketを有効化 */
 	injectWebSocket: ((server: ServerType) => void) | undefined;
 	shutdown: () => void;
