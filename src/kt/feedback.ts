@@ -1,4 +1,4 @@
-import { SPINNER_SIZES, type SpinnerSize, TOAST_COLORS, type ToastType } from "../constants/ui";
+import { SPINNER_SIZES, type SpinnerSize, TOAST_COLORS, type ToastType } from "../constants";
 import { escapeHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
 

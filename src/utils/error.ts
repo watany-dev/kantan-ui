@@ -19,7 +19,7 @@ export type ErrorCode =
  * @param extra 追加プロパティ（retryAfterなど）
  * @returns ServerMessage形式のエラーオブジェクト
  */
-export function createErrorMessage(
+function createErrorMessage(
 	code: ErrorCode,
 	message: string,
 	extra?: { retryAfter?: number },

@@ -1,4 +1,4 @@
-import { ALERT_ICONS, type AlertType } from "../constants/ui";
+import { ALERT_ICONS, type AlertType } from "../constants";
 import { escapeHtml } from "../utils/html";
 import { applyHighlight } from "./code/highlighter";
 import { requireRenderContext } from "./context";

@@ -1,7 +1,7 @@
 import type { WSContext } from "hono/ws";
 import { DEFAULT_SECURITY_CONFIG, DEFAULT_SESSION_CONFIG } from "../config";
 import type { ResolvedSessionConfig, SecurityConfig, SessionConfig } from "../config/types";
-import { MAX_PATCH_HISTORY } from "../constants/session";
+import { MAX_PATCH_HISTORY } from "../constants";
 import { isUUID } from "../utils/type-guards";
 import type { EventProcessResult, EventQueueItem, Session, SessionId, SessionState } from "./types";
 
