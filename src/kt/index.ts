@@ -43,6 +43,7 @@ export const kt = {
 
 	// Chat APIs
 	chat_message: chat.chat_message,
+	chat_container: chat.chat_container,
 
 	// Output APIs
 	write: output.write,

@@ -9,6 +9,14 @@ import { sanitizeMarkdownHtml } from "./markdown/sanitizer";
 export type ChatRole = "user" | "assistant" | "system";
 
 /**
+ * チャットコンテナの設定
+ */
+export interface ChatContainerConfig {
+	/** コンテナの高さ (例: "400px", "60vh") */
+	height?: string;
+}
+
+/**
  * チャットメッセージの設定
  */
 export interface ChatMessageConfig {
@@ -62,4 +70,32 @@ export function chat_message(
 			`</div>` +
 			`</div>`,
 	);
+}
+
+/**
+ * チャット用スクロールコンテナ
+ * 自動スクロール機能付きのメッセージ表示エリア
+ *
+ * @param content - コンテナ内に表示するコンテンツ（通常はchat_messageの列挙）
+ * @param config - オプション設定
+ *
+ * @example
+ * kt.chat_container(() => {
+ *   for (const msg of messages) {
+ *     kt.chat_message(msg.role, msg.content);
+ *   }
+ * }, { height: "400px" });
+ */
+export function chat_container(
+	content: () => void,
+	config: ChatContainerConfig = {},
+): void {
+	const ctx = requireRenderContext();
+	const height = config.height ?? "400px";
+
+	ctx.append(
+		`<div class="kt-chat-container" data-kt-chat-container style="height: ${height}; overflow-y: auto;">`,
+	);
+	content();
+	ctx.append("</div>");
 }

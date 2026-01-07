@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { chat_message } from "../../../src/kt/chat";
+import { chat_container, chat_message } from "../../../src/kt/chat";
 
 describe("Chat APIs", () => {
 	let ctx: RenderContext;
@@ -113,6 +113,60 @@ describe("Chat APIs", () => {
 		it("should throw error when no render context", () => {
 			setRenderContext(null);
 			expect(() => chat_message("user", "test")).toThrow(
+				"RenderContext is not available",
+			);
+		});
+	});
+
+	describe("chat_container", () => {
+		it("should render with kt-chat-container class", () => {
+			chat_container(() => {});
+			expect(ctx.getHtml()).toContain('class="kt-chat-container"');
+		});
+
+		it("should include data-kt-chat-container attribute for auto-scroll", () => {
+			chat_container(() => {});
+			expect(ctx.getHtml()).toContain("data-kt-chat-container");
+		});
+
+		it("should have default height of 400px", () => {
+			chat_container(() => {});
+			expect(ctx.getHtml()).toContain("height: 400px");
+		});
+
+		it("should use custom height when provided", () => {
+			chat_container(() => {}, { height: "600px" });
+			expect(ctx.getHtml()).toContain("height: 600px");
+		});
+
+		it("should have overflow-y auto for scrolling", () => {
+			chat_container(() => {});
+			expect(ctx.getHtml()).toContain("overflow-y: auto");
+		});
+
+		it("should render content inside container", () => {
+			chat_container(() => {
+				chat_message("user", "Hello!");
+			});
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-chat-container");
+			expect(html).toContain("kt-chat-message-user");
+			expect(html).toContain("Hello!");
+		});
+
+		it("should render multiple messages inside container", () => {
+			chat_container(() => {
+				chat_message("user", "Hi!");
+				chat_message("assistant", "Hello!");
+			});
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-chat-message-user");
+			expect(html).toContain("kt-chat-message-assistant");
+		});
+
+		it("should throw error when no render context", () => {
+			setRenderContext(null);
+			expect(() => chat_container(() => {})).toThrow(
 				"RenderContext is not available",
 			);
 		});

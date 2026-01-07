@@ -193,6 +193,57 @@ function applyPatch(patch) {
 }`;
 
 /**
+ * チャット自動スクロールスクリプト
+ */
+const chatAutoScrollScript = `
+let userHasScrolled = false;
+let lastScrollTop = 0;
+
+function shouldAutoScroll(container) {
+  if (!container) return false;
+  // ユーザーが上にスクロールした場合は自動スクロールを無効化
+  const threshold = 100;
+  const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+  return isNearBottom || !userHasScrolled;
+}
+
+function scrollToBottom(container) {
+  if (!container) return;
+  container.scrollTo({
+    top: container.scrollHeight,
+    behavior: "smooth"
+  });
+}
+
+function initChatAutoScroll() {
+  // data-kt-chat-container 属性を持つ要素を探す
+  const containers = document.querySelectorAll("[data-kt-chat-container]");
+  containers.forEach((container) => {
+    if (container.dataset.ktChatScrollInit) return;
+    container.dataset.ktChatScrollInit = "true";
+
+    container.addEventListener("scroll", () => {
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      if (container.scrollTop < lastScrollTop && !isNearBottom) {
+        userHasScrolled = true;
+      } else if (isNearBottom) {
+        userHasScrolled = false;
+      }
+      lastScrollTop = container.scrollTop;
+    });
+  });
+}
+
+function autoScrollChat() {
+  const containers = document.querySelectorAll("[data-kt-chat-container]");
+  containers.forEach((container) => {
+    if (shouldAutoScroll(container)) {
+      scrollToBottom(container);
+    }
+  });
+}`;
+
+/**
  * Toast自動消去スクリプト
  */
 const toastScript = `
@@ -404,6 +455,9 @@ function connect() {
       }
       // Initialize toasts after DOM update
       initToasts();
+      // Auto-scroll chat containers
+      initChatAutoScroll();
+      autoScrollChat();
     }
   };
 
@@ -451,6 +505,7 @@ setupEventDelegation(window.sendEvent);
 		focusManagementScript,
 		xssDetectionScript,
 		patchApplyScript,
+		chatAutoScrollScript,
 		toastScript,
 		eventHandlingScript,
 		websocketScript,
