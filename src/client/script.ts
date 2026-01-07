@@ -321,7 +321,30 @@ function setupEventDelegation(sendEvent) {
       return;
     }
 
-    // ダウンロードボタンのハンドリング（Blob API + URL.createObjectURL）
+    // ダウンロードボタンのハンドリング（サーバーサイドストリーミング）
+    const downloadUrlBtn = e.target.closest("[data-kt-download-url]");
+    if (downloadUrlBtn) {
+      const url = downloadUrlBtn.dataset.ktDownloadUrl;
+      const filename = downloadUrlBtn.dataset.filename || "download";
+      // Web標準 fetch API + Blob でストリーミングダウンロード
+      fetch(url)
+        .then((res) => {
+          if (!res.ok) throw new Error("Download failed");
+          return res.blob();
+        })
+        .then((blob) => {
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(blobUrl);
+        })
+        .catch((err) => console.error("Download error:", err));
+      return;
+    }
+
+    // ダウンロードボタンのハンドリング（Base64埋め込み、小さいファイル用）
     const downloadBtn = e.target.closest("[data-kt-download]");
     if (downloadBtn && downloadBtn.dataset.content) {
       const { filename, mime, content } = downloadBtn.dataset;

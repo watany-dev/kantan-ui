@@ -11,6 +11,8 @@ type NodeServerType = {
 
 import { getCookie, setCookie } from "hono/cookie";
 import { html, raw } from "hono/html";
+import { logger } from "hono/logger";
+import { NONCE, secureHeaders } from "hono/secure-headers";
 import { generateClientScript } from "./client";
 import { type KantanConfig, resolveConfig } from "./config";
 import { diff, toWebSocketPatches } from "./diff";
@@ -21,13 +23,6 @@ import { defaultStyles } from "./styles";
 import { createWebSocketAdapterAsync } from "./websocket";
 import type { Patch } from "./websocket/types";
 import { type ClientMessage, isClientMessage, type ServerMessage } from "./websocket/types";
-
-/** CSP用のnonce生成 */
-function generateNonce(): string {
-	const array = new Uint8Array(16);
-	crypto.getRandomValues(array);
-	return btoa(String.fromCharCode(...array));
-}
 
 export interface KantanAppOptions extends KantanConfig {
 	/** サーバーポート（Bun.serve互換） */
@@ -67,6 +62,20 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 	});
 
 	const app = new Hono();
+
+	// ミドルウェア設定
+	app.use("*", logger());
+	app.use(
+		"*",
+		secureHeaders({
+			contentSecurityPolicy: {
+				defaultSrc: ["'self'"],
+				scriptSrc: [NONCE],
+				styleSrc: ["'self'", "'unsafe-inline'"],
+				connectSrc: ["'self'", "ws:", "wss:"],
+			},
+		}),
+	);
 
 	// ランタイムに応じたWebSocketアダプターを非同期で作成（全ランタイム共通）
 	const wsAdapter = await createWebSocketAdapterAsync(app);
@@ -114,13 +123,9 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 		if (isTemporarySession) {
 			sessionManager.deleteSession(sessionId);
 		}
-		const nonce = generateNonce();
 
-		// CSPヘッダー設定
-		c.header(
-			"Content-Security-Policy",
-			`default-src 'self'; script-src 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:;`,
-		);
+		// secureHeadersミドルウェアが生成したnonceを取得
+		const nonce = c.get("secureHeadersNonce");
 
 		// PageConfig を取得
 		const pageConfig = getPageConfig();
@@ -147,6 +152,32 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 					</body>
 				</html>`,
 		);
+	});
+
+	// ダウンロードエンドポイント（Blobストリーミング）
+	app.get("/download/:id", (c) => {
+		const downloadId = c.req.param("id");
+		const download = sessionManager.getDownload(downloadId);
+
+		if (!download) {
+			return c.text("Download not found or expired", 404);
+		}
+
+		// Web標準 Response + ReadableStream でストリーミング
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(new Uint8Array(download.data));
+				controller.close();
+			},
+		});
+
+		return new Response(stream, {
+			headers: {
+				"Content-Type": download.mime,
+				"Content-Disposition": `attachment; filename="${encodeURIComponent(download.filename)}"`,
+				"Content-Length": download.data.byteLength.toString(),
+			},
+		});
 	});
 
 	// WebSocket エンドポイント
