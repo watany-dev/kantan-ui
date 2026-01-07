@@ -26,6 +26,14 @@ const state = createTypedSessionState<AppState>({
  * Streamlitのように直感的にUIを構築できます。
  */
 const script = () => {
+	// サイドバー
+	kt.sidebar(() => {
+		kt.header("Settings");
+		kt.write("This is sidebar content");
+		kt.divider();
+		kt.write(`Counter: ${state.counter}`);
+	});
+
 	// タイトル
 	kt.title("kantan-ui Demo");
 	kt.write("Streamlit風の宣言的APIで構築されたデモアプリです。");
