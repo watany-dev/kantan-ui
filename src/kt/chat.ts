@@ -45,11 +45,7 @@ const defaultAvatars: Record<ChatRole, string> = {
  * kt.chat_message("assistant", "Hi! How can I help you?");
  * kt.chat_message("user", "What is **TypeScript**?", { name: "Alice", avatar: "🧑‍💻" });
  */
-export function chat_message(
-	role: ChatRole,
-	content: string,
-	config?: ChatMessageConfig,
-): void {
+export function chat_message(role: ChatRole, content: string, config?: ChatMessageConfig): void {
 	const ctx = requireRenderContext();
 	const avatar = escapeHtml(config?.avatar ?? defaultAvatars[role]);
 
@@ -57,9 +53,7 @@ export function chat_message(
 	const parsedContent = sanitizeMarkdownHtml(parseMarkdown(content));
 
 	// 名前の表示（オプション）
-	const nameHtml = config?.name
-		? `<div class="kt-chat-name">${escapeHtml(config.name)}</div>`
-		: "";
+	const nameHtml = config?.name ? `<div class="kt-chat-name">${escapeHtml(config.name)}</div>` : "";
 
 	ctx.append(
 		`<div class="kt-chat-message kt-chat-message-${role}" data-role="${role}">` +
@@ -86,10 +80,7 @@ export function chat_message(
  *   }
  * }, { height: "400px" });
  */
-export function chat_container(
-	content: () => void,
-	config: ChatContainerConfig = {},
-): void {
+export function chat_container(content: () => void, config: ChatContainerConfig = {}): void {
 	const ctx = requireRenderContext();
 	const height = config.height ?? "400px";
 

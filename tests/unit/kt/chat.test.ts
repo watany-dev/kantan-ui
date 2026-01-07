@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import { chat_container, chat_message } from "../../../src/kt/chat";
+import { RenderContext, setRenderContext } from "../../../src/kt/context";
 
 describe("Chat APIs", () => {
 	let ctx: RenderContext;
@@ -80,7 +80,7 @@ describe("Chat APIs", () => {
 		});
 
 		it("should escape HTML in custom avatar", () => {
-			chat_message("user", "Hello!", { avatar: '<script>xss</script>' });
+			chat_message("user", "Hello!", { avatar: "<script>xss</script>" });
 			expect(ctx.getHtml()).toContain("&lt;script&gt;");
 			expect(ctx.getHtml()).not.toContain("<script>xss");
 		});
@@ -92,7 +92,7 @@ describe("Chat APIs", () => {
 		});
 
 		it("should escape HTML in name", () => {
-			chat_message("user", "Hello!", { name: '<script>xss</script>' });
+			chat_message("user", "Hello!", { name: "<script>xss</script>" });
 			expect(ctx.getHtml()).toContain("&lt;script&gt;");
 			expect(ctx.getHtml()).not.toContain("<script>xss");
 		});
@@ -112,9 +112,7 @@ describe("Chat APIs", () => {
 
 		it("should throw error when no render context", () => {
 			setRenderContext(null);
-			expect(() => chat_message("user", "test")).toThrow(
-				"RenderContext is not available",
-			);
+			expect(() => chat_message("user", "test")).toThrow("RenderContext is not available");
 		});
 	});
 
@@ -166,9 +164,7 @@ describe("Chat APIs", () => {
 
 		it("should throw error when no render context", () => {
 			setRenderContext(null);
-			expect(() => chat_container(() => {})).toThrow(
-				"RenderContext is not available",
-			);
+			expect(() => chat_container(() => {})).toThrow("RenderContext is not available");
 		});
 	});
 });
