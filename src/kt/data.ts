@@ -21,6 +21,8 @@ export type TableData =
 export interface TableConfig {
 	/** 明示的なヘッダー */
 	headers?: string[];
+	/** 2D配列の最初の行をヘッダーとして使用 */
+	useFirstRowAsHeader?: boolean;
 }
 
 /**
@@ -37,6 +39,7 @@ interface NormalizedTableData {
 export function normalizeTableData(
 	data: TableData,
 	explicitHeaders?: string[],
+	useFirstRowAsHeader?: boolean,
 ): NormalizedTableData {
 	// 明示的な形式 { columns, data }
 	if (!Array.isArray(data) && "columns" in data && "data" in data) {
@@ -50,9 +53,18 @@ export function normalizeTableData(
 	if (Array.isArray(data) && data.length > 0) {
 		// 2D配列
 		if (Array.isArray(data[0])) {
+			const data2D = data as unknown[][];
+			const firstRow = data2D[0];
+			// 最初の行をヘッダーとして使用
+			if (useFirstRowAsHeader && firstRow) {
+				return {
+					headers: explicitHeaders ?? firstRow.map((h) => String(h)),
+					rows: data2D.slice(1),
+				};
+			}
 			return {
 				headers: explicitHeaders ?? [],
-				rows: data as unknown[][],
+				rows: data2D,
 			};
 		}
 
@@ -83,7 +95,7 @@ export function normalizeTableData(
  */
 export function table(data: TableData, config: TableConfig = {}): void {
 	const ctx = requireRenderContext();
-	const { headers, rows } = normalizeTableData(data, config.headers);
+	const { headers, rows } = normalizeTableData(data, config.headers, config.useFirstRowAsHeader);
 
 	const parts: string[] = ['<table class="kt-table">'];
 
