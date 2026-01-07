@@ -4,7 +4,7 @@
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"lib": ["ESNext", "DOM", "DOM.Iterable"],
-		"types": ["bun"],
+		"types": ["bun", "node"],
 		"strict": true,
 		"allowUnreachableCode": false,
 		"allowUnusedLabels": false,

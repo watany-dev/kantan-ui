@@ -87,5 +87,5 @@ testApp.get("/health", (c) => {
 export default {
 	port: 3004,
 	fetch: testApp.fetch,
-	websocket,
+	websocket: websocket as NonNullable<Parameters<typeof Bun.serve>[0]["websocket"]>,
 };

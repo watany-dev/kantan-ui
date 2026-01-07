@@ -48,9 +48,13 @@ export {
 	setSessionManager,
 } from "./session";
 export type { Session, SessionId, SessionState } from "./session/types";
+export type { WebSocketAdapter } from "./websocket";
 // WebSocket
 export {
+	clearAdapterCache,
+	createWebSocketAdapter,
 	createWebSocketHandler,
+	// 後方互換性のためのエクスポート（非推奨、Bunのみ）
 	upgradeWebSocket,
 	websocket,
 } from "./websocket";
