@@ -50,10 +50,14 @@ export {
 export type { Session, SessionId, SessionState } from "./session/types";
 // WebSocket
 export {
+	createWebSocketAdapter,
 	createWebSocketHandler,
+	clearAdapterCache,
+	// 後方互換性のためのエクスポート（非推奨、Bunのみ）
 	upgradeWebSocket,
 	websocket,
 } from "./websocket";
+export type { WebSocketAdapter } from "./websocket";
 export type {
 	ClientMessage,
 	InsertNodePatch,

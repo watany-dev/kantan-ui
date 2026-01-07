@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { html, raw } from "hono/html";
+import type { Server } from "node:http";
 import { generateClientScript } from "./client";
 import { type KantanConfig, resolveConfig } from "./config";
 import { diff, toWebSocketPatches } from "./diff";
@@ -8,7 +9,7 @@ import { getPageConfig } from "./kt/config";
 import { rerun, type Script, type StreamingOptions } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { defaultStyles } from "./styles";
-import { upgradeWebSocket, websocket } from "./websocket";
+import { createWebSocketAdapter } from "./websocket";
 import type { Patch } from "./websocket/types";
 import { type ClientMessage, isClientMessage, type ServerMessage } from "./websocket/types";
 
@@ -34,6 +35,10 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 	});
 
 	const app = new Hono();
+
+	// ランタイムに応じたWebSocketアダプターを作成
+	const wsAdapter = createWebSocketAdapter(app);
+	const { upgradeWebSocket } = wsAdapter;
 
 	// ルートページ
 	app.get("/", (c) => {
@@ -300,7 +305,10 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 
 	return {
 		fetch: app.fetch,
-		websocket,
+		/** Bun用: Bun.serve() の websocket オプションに渡す */
+		websocket: wsAdapter.websocket,
+		/** Node.js用: サーバー起動後に呼び出してWebSocketを有効化 */
+		injectWebSocket: wsAdapter.injectWebSocket as ((server: Server) => void) | undefined,
 		shutdown,
 		app, // Honoインスタンス（拡張用）
 	};
