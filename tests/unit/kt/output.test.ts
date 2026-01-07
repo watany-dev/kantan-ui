@@ -400,17 +400,17 @@ describe("Output APIs", () => {
 
 		it("should apply syntax highlighting for typescript", () => {
 			code("const x = 1;", "typescript");
-			expect(ctx.getHtml()).toContain('class="kt-code-keyword"');
+			expect(ctx.getHtml()).toContain('class="kt-hl-keyword"');
 		});
 
 		it("should apply syntax highlighting for python", () => {
 			code("def foo():", "python");
-			expect(ctx.getHtml()).toContain('class="kt-code-keyword"');
+			expect(ctx.getHtml()).toContain('class="kt-hl-keyword"');
 		});
 
 		it("should not apply highlighting for unknown language", () => {
 			code("const x = 1;", "unknown");
-			expect(ctx.getHtml()).not.toContain('class="kt-code-keyword"');
+			expect(ctx.getHtml()).not.toContain('class="kt-hl-keyword"');
 		});
 
 		it("should render copy button when copy_button is true", () => {
