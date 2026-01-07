@@ -3,6 +3,7 @@ export { Hono } from "hono";
 
 // App factory
 export { createApp } from "./app";
+export type { KantanApp, KantanAppOptions } from "./app";
 
 // Config
 export type {
