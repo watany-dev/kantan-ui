@@ -255,6 +255,37 @@ function autoScrollChat() {
 }`;
 
 /**
+ * サイドバートグルスクリプト
+ */
+const sidebarToggleScript = `
+function initSidebarToggle() {
+  const sidebar = document.querySelector(".kt-sidebar");
+  if (!sidebar) return;
+
+  const toggle = sidebar.querySelector(".kt-sidebar-toggle");
+  const overlay = document.querySelector(".kt-sidebar-overlay");
+
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      const currentState = sidebar.getAttribute("data-state");
+      const newState = currentState === "expanded" ? "collapsed" : "expanded";
+      sidebar.setAttribute("data-state", newState);
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener("click", () => {
+      sidebar.setAttribute("data-state", "collapsed");
+    });
+  }
+}
+
+// DOM更新後にサイドバー初期化を再実行
+function reinitSidebar() {
+  initSidebarToggle();
+}`;
+
+/**
  * Toast自動消去スクリプト
  */
 const toastScript = `
@@ -553,6 +584,7 @@ window.sendEvent = (widgetId, value) => {
 // 初期化
 connect();
 setupEventDelegation(window.sendEvent);
+initSidebarToggle();
 `;
 
 	return [
@@ -562,6 +594,7 @@ setupEventDelegation(window.sendEvent);
 		xssDetectionScript,
 		patchApplyScript,
 		chatAutoScrollScript,
+		sidebarToggleScript,
 		toastScript,
 		eventHandlingScript,
 		websocketScript,
