@@ -11,6 +11,63 @@ export function escapeHtml(text: string): string {
 		.replace(/'/g, "&#039;");
 }
 
+// ============================================================================
+// HTML属性ビルダー関数
+// ============================================================================
+
+/**
+ * HTML属性を構築する
+ * undefined/falseの値は除外され、trueは値なし属性として出力される
+ *
+ * @example
+ * buildAttributes({ id: "foo", disabled: true, class: undefined })
+ * // => ' id="foo" disabled'
+ */
+export function buildAttributes(
+	attrs: Record<string, string | number | boolean | undefined>,
+): string {
+	const parts: string[] = [];
+	for (const [key, value] of Object.entries(attrs)) {
+		if (value === undefined || value === false) continue;
+		if (value === true) {
+			parts.push(key);
+		} else {
+			parts.push(`${key}="${escapeHtml(String(value))}"`);
+		}
+	}
+	return parts.length > 0 ? ` ${parts.join(" ")}` : "";
+}
+
+/**
+ * CSSスタイル文字列を構築する
+ *
+ * @example
+ * buildStyleAttr({ color: "red", "font-size": "14px" })
+ * // => 'color: red; font-size: 14px;'
+ */
+export function buildStyleAttr(styles: Record<string, string | undefined>): string {
+	const parts: string[] = [];
+	for (const [key, value] of Object.entries(styles)) {
+		if (value === undefined) continue;
+		parts.push(`${key}: ${value}`);
+	}
+	return parts.join("; ") + (parts.length > 0 ? ";" : "");
+}
+
+/**
+ * CSSクラス文字列を構築する
+ * falsy値は除外される
+ *
+ * @example
+ * buildClassAttr(["btn", isActive && "active", undefined])
+ * // => 'btn active' (isActiveがtrueの場合)
+ */
+export function buildClassAttr(
+	classes: (string | false | undefined | null)[],
+): string {
+	return classes.filter((c): c is string => Boolean(c)).join(" ");
+}
+
 /**
  * XSS攻撃の可能性があるHTMLパターンを検出する
  * クライアント側でのDOM操作前にチェックするために使用
