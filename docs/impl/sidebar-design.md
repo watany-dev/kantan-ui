@@ -72,13 +72,13 @@ export default await createApp(script);
 
 ---
 
-## 今後の改善計画
+## 実装詳細
 
-### 1. サイドバー差分更新（優先度: 中）
+### 1. サイドバー差分更新
 
-現在はサイドバー内容変更時に全置換される。メインエリアと同様に差分アルゴリズムを適用することで、パフォーマンス向上とフォーカス維持が可能。
+メインエリアと同様に差分アルゴリズムを適用。`toWebSocketPatches` に `rootId` パラメータを追加し、サイドバーコンテンツの部分更新を実現。
 
-**設計:**
+**実装:**
 ```typescript
 // toWebSocketPatches に rootId パラメータを追加
 const sidebarPatches = toWebSocketPatches(
@@ -88,9 +88,9 @@ const sidebarPatches = toWebSocketPatches(
 );
 ```
 
-### 2. レスポンシブE2Eテスト（優先度: 高）
+### 2. レスポンシブE2Eテスト
 
-モバイルビューポートでのサイドバー動作をE2Eテストで検証する。
+モバイルビューポートでのサイドバー動作をE2Eテストで検証。
 
 **テストケース:**
 - モバイル（375px）でのfixed positioning
@@ -98,11 +98,11 @@ const sidebarPatches = toWebSocketPatches(
 - タブレット境界値（768px）
 - デスクトップでのrelative positioning
 
-### 3. width設定実装（優先度: 低）
+### 3. width設定
 
-`SidebarConfig.width` でサイドバー幅をカスタマイズ可能にする。
+`SidebarConfig.width` でサイドバー幅をカスタマイズ可能。
 
-**設計:**
+**使用例:**
 ```typescript
 kt.sidebar(() => {
   kt.write("Wide sidebar");
@@ -116,11 +116,10 @@ CSS変数を使用して動的に幅を設定:
 }
 ```
 
-### 4. ネスト呼び出しドキュメント（優先度: 高）
+### 4. ネスト呼び出し挙動
 
-`kt.sidebar()` のネスト呼び出し時の挙動をドキュメント化する。
+`kt.sidebar()` のネスト呼び出し時の挙動:
 
-**現在の挙動:**
 ```typescript
 kt.sidebar(() => {
   kt.write("Outer");
@@ -178,11 +177,14 @@ export function sidebar(content: () => void): void {
 
 ## 関連ファイル
 
-- `src/kt/layout.ts` - sidebar() 関数
-- `src/kt/context.ts` - RenderContext デュアルバッファ
+- `src/kt/sidebar.ts` - sidebar() 関数・プロキシAPI
+- `src/kt/context.ts` - RenderContext デュアルバッファ・SidebarConfig
 - `src/styles/sidebar.ts` - サイドバースタイル
-- `src/client/script.ts` - トグル処理
-- `e2e/layout.spec.ts` - サイドバーE2Eテスト
+- `src/client/script.ts` - トグル処理・パッチ適用
+- `src/diff/differ.ts` - 差分計算（rootId対応）
+- `src/app.ts` - サイドバー差分更新・幅設定
+- `e2e/layout.spec.ts` - サイドバーE2Eテスト（レスポンシブ含む）
+- `tests/unit/kt/sidebar.test.ts` - ユニットテスト
 
 ---
 
