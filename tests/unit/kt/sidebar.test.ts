@@ -476,4 +476,71 @@ describe("sidebar layout, feedback, and data APIs", () => {
 			expect(html).toContain("Bob");
 		});
 	});
+
+	describe("chat APIs", () => {
+		it("should support sidebar.chat_message()", () => {
+			sidebar.chat_message("user", () => {
+				sidebar.write("Hello from sidebar");
+			});
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-chat-message");
+			expect(html).toContain("Hello from sidebar");
+			expect(ctx.getMainHtml()).toBe("");
+		});
+
+		it("should support sidebar.chat_container()", () => {
+			sidebar.chat_container(() => {
+				sidebar.chat_message("user", () => {
+					sidebar.write("Message in container");
+				});
+			});
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-chat-container");
+			expect(html).toContain("kt-chat-message");
+			expect(html).toContain("Message in container");
+		});
+	});
+
+	describe("form APIs", () => {
+		it("should support sidebar.form()", () => {
+			sidebar.form("sidebar-form", () => {
+				sidebar.text_input("Name");
+			});
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-form");
+			expect(html).toContain("sidebar-form");
+			expect(html).toContain("Name");
+			expect(ctx.getMainHtml()).toBe("");
+		});
+
+		it("should support sidebar.form_submit_button()", () => {
+			sidebar.form("test-form", () => {
+				const submitted = sidebar.form_submit_button("Submit");
+				expect(submitted).toBe(false);
+			});
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("Submit");
+			expect(html).toContain("kt-form-submit");
+		});
+
+		it("should support sidebar.validation_error()", () => {
+			sidebar.validation_error("name", "Required field");
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("Required field");
+			expect(html).toContain("kt-validation-error");
+		});
+
+		it("should support sidebar.validation_errors()", () => {
+			sidebar.validation_errors({ name: "Required", email: "Invalid format" });
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("Required");
+			expect(html).toContain("Invalid format");
+		});
+	});
 });
