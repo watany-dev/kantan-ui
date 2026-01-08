@@ -7,5 +7,9 @@
 		"src/server-streaming.ts",
 		"src/server-patch-test.ts",
 		"src/server-error-test.ts"
-	]
+	],
+	"ignoreExportsUsedInFile": {
+		"interface": true,
+		"type": true
+	}
 }
