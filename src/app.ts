@@ -369,10 +369,7 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 
 						// サイドバーの差分計算
 						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
-							const sidebarDiffResult = diff(
-								session.lastSidebarHtml ?? "",
-								newResult.sidebarHtml,
-							);
+							const sidebarDiffResult = diff(session.lastSidebarHtml ?? "", newResult.sidebarHtml);
 							const sidebarPatches = toWebSocketPatches(
 								sidebarDiffResult,
 								newResult.sidebarHtml,

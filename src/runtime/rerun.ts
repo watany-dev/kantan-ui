@@ -1,8 +1,8 @@
 import {
 	type FlushCallback,
 	RenderContext,
-	setRenderContext,
 	type SidebarConfig,
+	setRenderContext,
 } from "../kt/context";
 import { setCurrentSessionId } from "../session/state";
 import { resetWidgetCounter } from "../widgets/registry";
