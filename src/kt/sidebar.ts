@@ -16,13 +16,13 @@
  * ```
  */
 
-import type * as chat from "./chat";
-import type * as data from "./data";
-import type * as feedback from "./feedback";
-import type * as formModule from "./form";
-import type * as layout from "./layout";
-import type * as output from "./output";
-import type * as widgets from "./widgets";
+import * as chatModule from "./chat";
+import * as dataModule from "./data";
+import * as feedbackModule from "./feedback";
+import * as formModuleNS from "./form";
+import { columns, container, expander, tabs, withSidebarContext } from "./layout";
+import * as outputModule from "./output";
+import * as widgetsModule from "./widgets";
 
 /**
  * サイドバーで使用可能なAPI群
@@ -30,58 +30,58 @@ import type * as widgets from "./widgets";
  */
 export interface SidebarAPIs {
 	// Output APIs
-	write: typeof output.write;
-	title: typeof output.title;
-	header: typeof output.header;
-	subheader: typeof output.subheader;
-	text: typeof output.text;
-	divider: typeof output.divider;
-	html: typeof output.html;
-	json: typeof output.json;
-	code: typeof output.code;
-	markdown: typeof output.markdown;
+	write: typeof outputModule.write;
+	title: typeof outputModule.title;
+	header: typeof outputModule.header;
+	subheader: typeof outputModule.subheader;
+	text: typeof outputModule.text;
+	divider: typeof outputModule.divider;
+	html: typeof outputModule.html;
+	json: typeof outputModule.json;
+	code: typeof outputModule.code;
+	markdown: typeof outputModule.markdown;
 
 	// Alert APIs
-	success: typeof output.success;
-	error: typeof output.error;
-	warning: typeof output.warning;
-	info: typeof output.info;
+	success: typeof outputModule.success;
+	error: typeof outputModule.error;
+	warning: typeof outputModule.warning;
+	info: typeof outputModule.info;
 
 	// Feedback APIs (toast除外)
-	progress: typeof feedback.progress;
-	spinner: typeof feedback.spinner;
+	progress: typeof feedbackModule.progress;
+	spinner: typeof feedbackModule.spinner;
 
 	// Data APIs
-	table: typeof data.table;
+	table: typeof dataModule.table;
 
 	// Layout APIs (sidebar除外)
-	container: typeof layout.container;
-	columns: typeof layout.columns;
-	expander: typeof layout.expander;
-	tabs: typeof layout.tabs;
+	container: typeof container;
+	columns: typeof columns;
+	expander: typeof expander;
+	tabs: typeof tabs;
 
 	// Chat APIs
-	chat_message: typeof chat.chat_message;
-	chat_container: typeof chat.chat_container;
+	chat_message: typeof chatModule.chat_message;
+	chat_container: typeof chatModule.chat_container;
 
 	// Form APIs
-	form: typeof formModule.form;
-	form_submit_button: typeof formModule.form_submit_button;
-	validation_error: typeof formModule.validation_error;
-	validation_errors: typeof formModule.validation_errors;
+	form: typeof formModuleNS.form;
+	form_submit_button: typeof formModuleNS.form_submit_button;
+	validation_error: typeof formModuleNS.validation_error;
+	validation_errors: typeof formModuleNS.validation_errors;
 
 	// Widget APIs
-	button: typeof widgets.button;
-	slider: typeof widgets.slider;
-	text_input: typeof widgets.text_input;
-	selectbox: typeof widgets.selectbox;
-	checkbox: typeof widgets.checkbox;
-	radio: typeof widgets.radio;
-	number_input: typeof widgets.number_input;
-	text_area: typeof widgets.text_area;
-	toggle: typeof widgets.toggle;
-	multiselect: typeof widgets.multiselect;
-	download_button: typeof widgets.download_button;
+	button: typeof widgetsModule.button;
+	slider: typeof widgetsModule.slider;
+	text_input: typeof widgetsModule.text_input;
+	selectbox: typeof widgetsModule.selectbox;
+	checkbox: typeof widgetsModule.checkbox;
+	radio: typeof widgetsModule.radio;
+	number_input: typeof widgetsModule.number_input;
+	text_area: typeof widgetsModule.text_area;
+	toggle: typeof widgetsModule.toggle;
+	multiselect: typeof widgetsModule.multiselect;
+	download_button: typeof widgetsModule.download_button;
 }
 
 /**
@@ -94,14 +94,6 @@ export interface SidebarAPI extends SidebarAPIs {
 // ============================================
 // Implementation
 // ============================================
-
-import * as chat from "./chat";
-import * as data from "./data";
-import * as feedback from "./feedback";
-import * as formModule from "./form";
-import { columns, container, expander, tabs, withSidebarContext } from "./layout";
-import * as output from "./output";
-import * as widgets from "./widgets";
 
 /**
  * 関数をサイドバーコンテキストでラップ
@@ -117,42 +109,42 @@ export function wrapForSidebar<F extends (...args: never[]) => unknown>(fn: F): 
 // biome-ignore lint/suspicious/noExplicitAny: Dynamic API mapping requires any type
 const sidebarAPIs: Record<string, (...args: any[]) => any> = {
 	// Output APIs
-	write: output.write,
-	title: output.title,
-	header: output.header,
-	subheader: output.subheader,
-	text: output.text,
-	divider: output.divider,
-	html: output.html,
-	json: output.json,
-	code: output.code,
-	markdown: output.markdown,
+	write: outputModule.write,
+	title: outputModule.title,
+	header: outputModule.header,
+	subheader: outputModule.subheader,
+	text: outputModule.text,
+	divider: outputModule.divider,
+	html: outputModule.html,
+	json: outputModule.json,
+	code: outputModule.code,
+	markdown: outputModule.markdown,
 
 	// Alert APIs
-	success: output.success,
-	error: output.error,
-	warning: output.warning,
-	info: output.info,
+	success: outputModule.success,
+	error: outputModule.error,
+	warning: outputModule.warning,
+	info: outputModule.info,
 
 	// Widget APIs
-	button: widgets.button,
-	slider: widgets.slider,
-	text_input: widgets.text_input,
-	selectbox: widgets.selectbox,
-	checkbox: widgets.checkbox,
-	radio: widgets.radio,
-	number_input: widgets.number_input,
-	text_area: widgets.text_area,
-	toggle: widgets.toggle,
-	multiselect: widgets.multiselect,
-	download_button: widgets.download_button,
+	button: widgetsModule.button,
+	slider: widgetsModule.slider,
+	text_input: widgetsModule.text_input,
+	selectbox: widgetsModule.selectbox,
+	checkbox: widgetsModule.checkbox,
+	radio: widgetsModule.radio,
+	number_input: widgetsModule.number_input,
+	text_area: widgetsModule.text_area,
+	toggle: widgetsModule.toggle,
+	multiselect: widgetsModule.multiselect,
+	download_button: widgetsModule.download_button,
 
 	// Feedback APIs (toast除外)
-	progress: feedback.progress,
-	spinner: feedback.spinner,
+	progress: feedbackModule.progress,
+	spinner: feedbackModule.spinner,
 
 	// Data APIs
-	table: data.table,
+	table: dataModule.table,
 
 	// Layout APIs (sidebar除外)
 	container: container,
@@ -161,14 +153,14 @@ const sidebarAPIs: Record<string, (...args: any[]) => any> = {
 	tabs: tabs,
 
 	// Chat APIs
-	chat_message: chat.chat_message,
-	chat_container: chat.chat_container,
+	chat_message: chatModule.chat_message,
+	chat_container: chatModule.chat_container,
 
 	// Form APIs
-	form: formModule.form,
-	form_submit_button: formModule.form_submit_button,
-	validation_error: formModule.validation_error,
-	validation_errors: formModule.validation_errors,
+	form: formModuleNS.form,
+	form_submit_button: formModuleNS.form_submit_button,
+	validation_error: formModuleNS.validation_error,
+	validation_errors: formModuleNS.validation_errors,
 };
 
 // コールバック記法のベース関数
