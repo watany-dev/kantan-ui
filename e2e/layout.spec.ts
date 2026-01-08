@@ -240,3 +240,29 @@ test.describe("Layout API - Sidebar (Mobile)", () => {
 		await expect(sidebar).toHaveAttribute("data-state", "collapsed");
 	});
 });
+
+test.describe("Layout API - Sidebar (Tablet 768px)", () => {
+	test.use({ viewport: { width: 768, height: 1024 } });
+
+	test("sidebar uses fixed positioning at exactly 768px", async ({ page }) => {
+		await gotoAndWait(page);
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "fixed");
+	});
+});
+
+test.describe("Layout API - Sidebar (Desktop)", () => {
+	test.use({ viewport: { width: 1280, height: 800 } });
+
+	test("sidebar uses relative positioning on desktop", async ({ page }) => {
+		await gotoAndWait(page);
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "relative");
+	});
+
+	test("sidebar overlay is hidden on desktop", async ({ page }) => {
+		await gotoAndWait(page);
+		const overlay = page.locator(".kt-sidebar-overlay");
+		await expect(overlay).not.toBeVisible();
+	});
+});
