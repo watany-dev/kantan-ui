@@ -7,6 +7,7 @@ import {
 	renderTabsHeader,
 	sidebar,
 	tabs,
+	withSidebarContext,
 } from "../../../src/kt/layout";
 import { write } from "../../../src/kt/output";
 import { resetSessionManager, setSessionManager } from "../../../src/session/manager";
@@ -405,6 +406,50 @@ describe("Layout APIs", () => {
 					write("test");
 				}),
 			).toThrow("RenderContext is not available");
+		});
+	});
+
+	describe("withSidebarContext", () => {
+		it("should execute function in sidebar context", () => {
+			let targetDuringExecution: "main" | "sidebar" | null = null;
+
+			withSidebarContext(() => {
+				targetDuringExecution = ctx.getTarget();
+			});
+
+			expect(targetDuringExecution).toBe("sidebar");
+			expect(ctx.getTarget()).toBe("main");
+		});
+
+		it("should return function result", () => {
+			const result = withSidebarContext(() => 42);
+			expect(result).toBe(42);
+		});
+
+		it("should return complex result types", () => {
+			const result = withSidebarContext(() => ({ name: "test", value: 123 }));
+			expect(result).toEqual({ name: "test", value: 123 });
+		});
+
+		it("should restore context on error", () => {
+			expect(ctx.getTarget()).toBe("main");
+
+			expect(() => {
+				withSidebarContext(() => {
+					throw new Error("Test error");
+				});
+			}).toThrow("Test error");
+
+			expect(ctx.getTarget()).toBe("main");
+		});
+
+		it("should output to sidebar buffer", () => {
+			withSidebarContext(() => {
+				write("Sidebar content");
+			});
+
+			expect(ctx.getSidebarHtml()).toContain("Sidebar content");
+			expect(ctx.getMainHtml()).toBe("");
 		});
 	});
 
