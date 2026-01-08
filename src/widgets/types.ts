@@ -40,6 +40,7 @@ export interface TextInputConfig {
 	key?: string;
 	disabled?: boolean;
 	maxLength?: number;
+	type?: "text" | "password" | "email" | "tel" | "url";
 }
 
 export interface SelectboxConfig {

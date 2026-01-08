@@ -6,13 +6,15 @@
  *
  * @example
  * ```typescript
- * import { kt } from "kantan-ui";
+ * import { kt, createTypedSessionState } from "kantan-ui";
+ *
+ * const state = createTypedSessionState({ count: 0 });
  *
  * const script = () => {
  *   kt.title("My App");
  *
  *   if (kt.button("Click me")) {
- *     session_state.count++;
+ *     state.count++;
  *   }
  *
  *   const value = kt.slider("Volume", 0, 100, 50);
@@ -22,6 +24,7 @@
  */
 
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
+import * as chat from "./chat";
 import * as config from "./config";
 import * as control from "./control";
 import * as data from "./data";
@@ -29,6 +32,10 @@ import * as feedback from "./feedback";
 import * as formModule from "./form";
 import * as layout from "./layout";
 import * as output from "./output";
+import { sidebar } from "./sidebar";
+
+export type { SidebarAPI } from "./sidebar";
+
 import * as widgets from "./widgets";
 
 export const kt = {
@@ -37,6 +44,10 @@ export const kt = {
 
 	// Control APIs
 	rerun: control.requestRerun,
+
+	// Chat APIs
+	chat_message: chat.chat_message,
+	chat_container: chat.chat_container,
 
 	// Output APIs
 	write: output.write,
@@ -69,10 +80,13 @@ export const kt = {
 	columns: layout.columns,
 	expander: layout.expander,
 	tabs: layout.tabs,
+	sidebar,
 
 	// Form APIs
 	form: formModule.form,
 	form_submit_button: formModule.form_submit_button,
+	validation_error: formModule.validation_error,
+	validation_errors: formModule.validation_errors,
 
 	// Widget APIs
 	button: widgets.button,

@@ -1,6 +1,6 @@
 // Re-export Hono
 export { Hono } from "hono";
-
+export type { KantanApp, KantanAppOptions } from "./app";
 // App factory
 export { createApp } from "./app";
 
@@ -22,6 +22,11 @@ export { buildNodeMap, diff, parseHtml, toWebSocketPatches } from "./diff";
 export type { DiffPatch, DiffResult, VNode } from "./diff/types";
 // kt - Declarative UI API
 export { kt } from "./kt";
+export type {
+	ChatContainerConfig,
+	ChatMessageConfig,
+	ChatRole,
+} from "./kt/chat";
 export {
 	getPageConfig,
 	type PageConfig,
@@ -44,16 +49,16 @@ export {
 	getSessionManager,
 	resetSessionManager,
 	SessionManager,
-	session_state,
 	setCurrentSessionId,
 	setSessionManager,
 } from "./session";
 export type { Session, SessionId, SessionState } from "./session/types";
+export type { WebSocketAdapter } from "./websocket";
 // WebSocket
 export {
+	clearAdapterCache,
+	createWebSocketAdapterAsync,
 	createWebSocketHandler,
-	upgradeWebSocket,
-	websocket,
 } from "./websocket";
 export type {
 	ClientMessage,

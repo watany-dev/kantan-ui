@@ -40,7 +40,7 @@ const script = () => {
 	return undefined;
 };
 
-const kantanApp = createApp(script, {
+const kantanApp = await createApp(script, {
 	streaming: {
 		enabled: true,
 		flushThreshold: 2,
@@ -51,5 +51,6 @@ console.log("Streaming-enabled server running at http://localhost:3002");
 
 export default {
 	port: 3002,
-	...kantanApp,
+	fetch: kantanApp.fetch,
+	websocket: kantanApp.websocket as NonNullable<Parameters<typeof Bun.serve>[0]["websocket"]>,
 };

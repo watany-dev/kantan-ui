@@ -4,6 +4,163 @@ import { gotoAndWait } from "./helpers";
 // 各テストで空のストレージ状態を使用
 test.use({ storageState: { cookies: [], origins: [] } });
 
+test.describe("Layout API - Sidebar", () => {
+	test("kt.sidebar() creates sidebar layout structure", async ({ page }) => {
+		await gotoAndWait(page);
+
+		// サイドバーレイアウトコンテナが存在する
+		const sidebarLayout = page.locator(".kt-layout-sidebar");
+		await expect(sidebarLayout).toBeVisible();
+
+		// サイドバー要素が存在する
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toBeVisible();
+
+		// メインエリアが存在する
+		const main = page.locator(".kt-main");
+		await expect(main).toBeVisible();
+	});
+
+	test("sidebar contains expected content", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toContainText("Settings");
+		await expect(sidebar).toContainText("This is sidebar content");
+	});
+
+	test("sidebar is expanded by default", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveAttribute("data-state", "expanded");
+	});
+
+	test("sidebar toggle button exists", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const toggle = page.locator(".kt-sidebar-toggle");
+		await expect(toggle).toBeVisible();
+	});
+
+	test("clicking toggle collapses sidebar", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		const toggle = page.locator(".kt-sidebar-toggle");
+
+		// 最初は展開状態
+		await expect(sidebar).toHaveAttribute("data-state", "expanded");
+
+		// トグルをクリック
+		await toggle.click();
+
+		// 折りたたみ状態になる
+		await expect(sidebar).toHaveAttribute("data-state", "collapsed");
+	});
+
+	test("clicking toggle again expands sidebar", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		const toggle = page.locator(".kt-sidebar-toggle");
+
+		// トグルをクリックして折りたたむ
+		await toggle.click();
+		await expect(sidebar).toHaveAttribute("data-state", "collapsed");
+
+		// もう一度クリックして展開
+		await toggle.click();
+		await expect(sidebar).toHaveAttribute("data-state", "expanded");
+	});
+
+	test("main content displays correctly with sidebar", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const main = page.locator(".kt-main");
+		await expect(main).toContainText("kantan-ui Demo");
+	});
+
+	test("sidebar counter updates with main content", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		const incrementBtn = page.locator('[data-kt-event="click"]', { hasText: "+ Increment" });
+
+		// 初期カウント
+		await expect(sidebar).toContainText("Counter: 0");
+
+		// インクリメント
+		await incrementBtn.click();
+
+		// サイドバーのカウントも更新される（再レンダリング後）
+		await expect(sidebar).toContainText("Counter: 1");
+	});
+});
+
+test.describe("Layout API - Sidebar Responsive", () => {
+	test("mobile: sidebar uses fixed positioning", async ({ page }) => {
+		await page.setViewportSize({ width: 375, height: 667 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "fixed");
+	});
+
+	test("mobile: overlay is visible when sidebar expanded", async ({ page }) => {
+		await page.setViewportSize({ width: 375, height: 667 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveAttribute("data-state", "expanded");
+
+		// オーバーレイが表示される
+		const overlay = page.locator(".kt-sidebar-overlay");
+		await expect(overlay).toBeVisible();
+	});
+
+	test("mobile: clicking overlay closes sidebar", async ({ page }) => {
+		await page.setViewportSize({ width: 375, height: 667 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		const overlay = page.locator(".kt-sidebar-overlay");
+
+		// 初期状態は展開
+		await expect(sidebar).toHaveAttribute("data-state", "expanded");
+
+		// オーバーレイをクリック
+		await overlay.click();
+
+		// サイドバーが閉じる
+		await expect(sidebar).toHaveAttribute("data-state", "collapsed");
+	});
+
+	test("desktop: sidebar uses relative positioning", async ({ page }) => {
+		await page.setViewportSize({ width: 1280, height: 800 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "relative");
+	});
+
+	test("boundary: 768px triggers mobile layout", async ({ page }) => {
+		await page.setViewportSize({ width: 768, height: 1024 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "fixed");
+	});
+
+	test("boundary: 769px uses desktop layout", async ({ page }) => {
+		await page.setViewportSize({ width: 769, height: 1024 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "relative");
+	});
+});
+
 test.describe("Layout API - Columns", () => {
 	test("kt.columns() creates flex container with kt-columns class", async ({ page }) => {
 		await gotoAndWait(page);

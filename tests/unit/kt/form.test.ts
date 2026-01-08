@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { form, form_submit_button } from "../../../src/kt/form";
+import {
+	form,
+	form_submit_button,
+	validation_error,
+	validation_errors,
+} from "../../../src/kt/form";
 import * as registry from "../../../src/widgets/registry";
 
 describe("Form API", () => {
@@ -128,6 +133,64 @@ describe("Form API", () => {
 		});
 	});
 
+	describe("validation_error", () => {
+		it("should display single error message", () => {
+			validation_error("Email is required");
+			const html = ctx.getHtml();
+			expect(html).toContain("Email is required");
+			expect(html).toContain('class="kt-validation-error"');
+		});
+
+		it("should have role=alert for accessibility", () => {
+			validation_error("Field is required");
+			const html = ctx.getHtml();
+			expect(html).toContain('role="alert"');
+		});
+
+		it("should escape HTML in error message", () => {
+			validation_error('<script>alert("xss")</script>');
+			const html = ctx.getHtml();
+			expect(html).toContain("&lt;script&gt;");
+			expect(html).not.toContain("<script>alert");
+		});
+	});
+
+	describe("validation_errors", () => {
+		it("should display multiple error messages as list", () => {
+			validation_errors(["Name is required", "Email is required"]);
+			const html = ctx.getHtml();
+			expect(html).toContain("Name is required");
+			expect(html).toContain("Email is required");
+			expect(html).toContain("<ul>");
+			expect(html).toContain("<li>");
+		});
+
+		it("should have kt-validation-errors class", () => {
+			validation_errors(["Error 1", "Error 2"]);
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-validation-errors"');
+		});
+
+		it("should have role=alert for accessibility", () => {
+			validation_errors(["Error"]);
+			const html = ctx.getHtml();
+			expect(html).toContain('role="alert"');
+		});
+
+		it("should escape HTML in error messages", () => {
+			validation_errors(['<script>alert("xss")</script>', "Normal error"]);
+			const html = ctx.getHtml();
+			expect(html).toContain("&lt;script&gt;");
+			expect(html).not.toContain("<script>alert");
+		});
+
+		it("should not output anything for empty array", () => {
+			validation_errors([]);
+			const html = ctx.getHtml();
+			expect(html).toBe("");
+		});
+	});
+
 	describe("without render context", () => {
 		it("should throw error when no context", () => {
 			setRenderContext(null);
@@ -141,6 +204,16 @@ describe("Form API", () => {
 		it("should throw error for form_submit_button when no context", () => {
 			setRenderContext(null);
 			expect(() => form_submit_button("Submit")).toThrow("RenderContext is not available");
+		});
+
+		it("should throw error for validation_error when no context", () => {
+			setRenderContext(null);
+			expect(() => validation_error("Error")).toThrow("RenderContext is not available");
+		});
+
+		it("should throw error for validation_errors when no context", () => {
+			setRenderContext(null);
+			expect(() => validation_errors(["Error"])).toThrow("RenderContext is not available");
 		});
 	});
 });

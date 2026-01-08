@@ -9,7 +9,9 @@ describe("rerun with AbortSignal", () => {
 
 		const result = rerun(script, undefined, undefined, controller.signal);
 
-		expect(result).toBe("<div>Hello</div>");
+		expect(result.mainHtml).toBe("<div>Hello</div>");
+		expect(result.sidebarHtml).toBe("");
+		expect(result.hasSidebar).toBe(false);
 	});
 
 	it("should throw AbortError when signal is already aborted", () => {
@@ -35,7 +37,9 @@ describe("rerun with AbortSignal", () => {
 
 		const result = rerun(script);
 
-		expect(result).toBe("<div>No signal</div>");
+		expect(result.mainHtml).toBe("<div>No signal</div>");
+		expect(result.sidebarHtml).toBe("");
+		expect(result.hasSidebar).toBe(false);
 	});
 
 	it("should preserve event and sessionId with signal", () => {
@@ -49,6 +53,6 @@ describe("rerun with AbortSignal", () => {
 			controller.signal,
 		);
 
-		expect(result).toBe("<div>With context</div>");
+		expect(result.mainHtml).toBe("<div>With context</div>");
 	});
 });

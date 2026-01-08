@@ -1,4 +1,52 @@
 /**
+ * HTML属性をビルドする
+ * @param attrs 属性名と値のオブジェクト。値がundefined/null/falseの属性は除外される
+ * @returns HTML属性文字列（先頭にスペース付き、空の場合は空文字列）
+ */
+export function buildAttributes(
+	attrs: Record<string, string | number | boolean | undefined | null>,
+): string {
+	const parts: string[] = [];
+	for (const [key, value] of Object.entries(attrs)) {
+		if (value === undefined || value === null || value === false) {
+			continue;
+		}
+		if (value === true) {
+			parts.push(key);
+		} else {
+			parts.push(`${key}="${escapeHtml(String(value))}"`);
+		}
+	}
+	return parts.length > 0 ? ` ${parts.join(" ")}` : "";
+}
+
+/**
+ * CSSスタイル属性をビルドする
+ * @param styles スタイルプロパティと値のオブジェクト。値がundefined/null/空文字列は除外される
+ * @returns style属性文字列（style="..."形式、空の場合は空文字列）
+ */
+export function buildStyleAttr(styles: Record<string, string | number | undefined | null>): string {
+	const parts: string[] = [];
+	for (const [key, value] of Object.entries(styles)) {
+		if (value === undefined || value === null || value === "") {
+			continue;
+		}
+		parts.push(`${key}: ${value}`);
+	}
+	return parts.length > 0 ? `style="${parts.join("; ")}"` : "";
+}
+
+/**
+ * クラス属性をビルドする
+ * @param classes クラス名の配列。false/undefined/null/空文字列は除外される
+ * @returns class属性文字列（class="..."形式、空の場合は空文字列）
+ */
+export function buildClassAttr(classes: (string | false | undefined | null)[]): string {
+	const validClasses = classes.filter((c): c is string => typeof c === "string" && c !== "");
+	return validClasses.length > 0 ? `class="${validClasses.join(" ")}"` : "";
+}
+
+/**
  * Escape HTML special characters to prevent XSS attacks.
  * This function should be used for all user-provided text that will be rendered as HTML.
  */
@@ -22,6 +70,10 @@ export function escapeHtml(text: string): string {
  * - data: URL（base64エンコード）
  * - イベントハンドラ属性（onclick, onerror等）
  * - 危険なタグ（iframe, embed, object, base, form）
+ *
+ * @note この関数はsrc/client/script.ts内のisUnsafeHtml()と同じロジックを持つ。
+ *       変更時は両方を同期すること。クライアント側は文字列として送信されるため
+ *       直接参照できない。テストは両者の整合性を検証する。
  */
 export function containsUnsafeHtml(html: string): boolean {
 	// パフォーマンスのため、まず簡易チェック

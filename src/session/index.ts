@@ -7,6 +7,5 @@ export {
 export {
 	createTypedSessionState,
 	getCurrentSessionId,
-	session_state,
 	setCurrentSessionId,
 } from "./state";

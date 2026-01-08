@@ -1,8 +1,17 @@
 import type { WSContext } from "hono/ws";
 import { DEFAULT_SECURITY_CONFIG, DEFAULT_SESSION_CONFIG } from "../config";
 import type { ResolvedSessionConfig, SecurityConfig, SessionConfig } from "../config/types";
+import { MAX_PATCH_HISTORY } from "../constants";
 import { isUUID } from "../utils/type-guards";
-import type { EventProcessResult, EventQueueItem, Session, SessionId, SessionState } from "./types";
+import type {
+	DownloadData,
+	DownloadId,
+	EventProcessResult,
+	EventQueueItem,
+	Session,
+	SessionId,
+	SessionState,
+} from "./types";
 
 /** レート制限の状態 */
 interface RateLimitState {
@@ -56,6 +65,10 @@ export class SessionManager {
 
 	// レート制限関連
 	private rateLimitStates = new Map<SessionId, RateLimitState>();
+
+	// ダウンロードデータ（Blobストリーミング用）
+	private downloadData = new Map<DownloadId, DownloadData>();
+	private static readonly DOWNLOAD_TTL = 60 * 1000; // 1分間有効
 
 	// Web標準 TextEncoder（バイトサイズ計算用）
 	private static readonly textEncoder = new TextEncoder();
@@ -219,20 +232,6 @@ export class SessionManager {
 		}
 	}
 
-	/**
-	 * WebSocket からセッションを取得
-	 * @deprecated WSContextの参照等価性が保証されないため、
-	 * クライアントから送信されるsessionIdを使用してgetSession()を呼び出すこと。
-	 * このメソッドはonClose時のクリーンアップ用途でのみ残している。
-	 */
-	getSessionByWebSocket(ws: WSContext): Session | undefined {
-		const sessionId = this.wsToSession.get(ws);
-		if (sessionId) {
-			return this.getSession(sessionId);
-		}
-		return undefined;
-	}
-
 	// WebSocket 切断時の処理
 	removeWebSocket(ws: WSContext): void {
 		const sessionId = this.wsToSession.get(ws);
@@ -287,9 +286,6 @@ export class SessionManager {
 		}
 	}
 
-	// パッチ履歴の最大保持数
-	private static readonly MAX_PATCH_HISTORY = 100;
-
 	/**
 	 * パッチのバイトサイズを計算（Web標準 TextEncoder使用）
 	 */
@@ -326,7 +322,7 @@ export class SessionManager {
 		session.patchHistory.push(entry);
 
 		// 古い履歴を削除
-		if (session.patchHistory.length > SessionManager.MAX_PATCH_HISTORY) {
+		if (session.patchHistory.length > MAX_PATCH_HISTORY) {
 			session.patchHistory.shift();
 		}
 
@@ -344,7 +340,7 @@ export class SessionManager {
 		}
 
 		// 差分が大きすぎる場合はフル同期が必要（nullを返す）
-		if (session.lastSeq - lastClientSeq > SessionManager.MAX_PATCH_HISTORY) {
+		if (session.lastSeq - lastClientSeq > MAX_PATCH_HISTORY) {
 			return null;
 		}
 
@@ -435,7 +431,10 @@ export class SessionManager {
 		}
 	}
 
-	// 現在のAbortSignalを取得（テスト用）
+	/**
+	 * 現在のAbortSignalを取得
+	 * @internal テスト用
+	 */
 	getCurrentAbortSignal(sessionId: SessionId): AbortSignal | undefined {
 		return this.abortControllers.get(sessionId)?.signal;
 	}
@@ -491,12 +490,18 @@ export class SessionManager {
 		}
 	}
 
-	// キューの長さを取得（テスト用）
+	/**
+	 * キューの長さを取得
+	 * @internal テスト用
+	 */
 	getQueueLength(sessionId: SessionId): number {
 		return this.eventQueues.get(sessionId)?.length ?? 0;
 	}
 
-	// 処理中かどうかを取得（テスト用）
+	/**
+	 * 処理中かどうかを取得
+	 * @internal テスト用
+	 */
 	isProcessing(sessionId: SessionId): boolean {
 		return this.processingFlags.get(sessionId) ?? false;
 	}
@@ -544,7 +549,8 @@ export class SessionManager {
 	}
 
 	/**
-	 * レート制限状態をリセット（テスト用）
+	 * レート制限状態をリセット
+	 * @internal テスト用
 	 */
 	resetRateLimit(sessionId: SessionId): void {
 		this.rateLimitStates.delete(sessionId);
@@ -555,6 +561,47 @@ export class SessionManager {
 	 */
 	getSecurityConfig(): Required<SecurityConfig> {
 		return this.securityConfig;
+	}
+
+	/**
+	 * ダウンロードデータを登録し、ダウンロードIDを返す
+	 * Web標準 crypto.randomUUID() を使用
+	 */
+	registerDownload(data: ArrayBuffer, filename: string, mime: string): DownloadId {
+		const id = crypto.randomUUID();
+		this.downloadData.set(id, {
+			data,
+			filename,
+			mime,
+			createdAt: Date.now(),
+		});
+		// 古いダウンロードデータをクリーンアップ
+		this.cleanupDownloads();
+		return id;
+	}
+
+	/**
+	 * ダウンロードデータを取得
+	 * 取得後は自動削除（ワンタイムダウンロード）
+	 */
+	getDownload(id: DownloadId): DownloadData | undefined {
+		const data = this.downloadData.get(id);
+		if (data) {
+			this.downloadData.delete(id);
+		}
+		return data;
+	}
+
+	/**
+	 * 期限切れのダウンロードデータをクリーンアップ
+	 */
+	private cleanupDownloads(): void {
+		const now = Date.now();
+		for (const [id, data] of this.downloadData) {
+			if (now - data.createdAt > SessionManager.DOWNLOAD_TTL) {
+				this.downloadData.delete(id);
+			}
+		}
 	}
 }
 

@@ -9,6 +9,10 @@
 		".": {
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js"
+		},
+		"./serve": {
+			"types": "./dist/serve.d.ts",
+			"import": "./dist/serve.js"
 		}
 	},
 	"files": [
@@ -16,8 +20,9 @@
 	],
 	"scripts": {
 		"dev": "bun run --watch src/server.ts",
-		"build": "bun build src/index.ts --outdir dist --target bun && bun run build:types",
+		"build": "bun build src/index.ts src/serve.ts --outdir dist --target node --format esm && bun run build:types",
 		"build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
+		"start:dist": "bun run scripts/serve-dist.ts",
 		"test": "vitest run",
 		"test:watch": "vitest",
 		"test:coverage": "vitest run --coverage",
@@ -29,7 +34,7 @@
 		"check": "npx @biomejs/biome check --write .",
 		"audit": "npm audit --audit-level=moderate",
 		"dead-code": "knip",
-		"ci": "bun run lint && bun run build && bun run test:coverage"
+		"ci": "bun run lint && bun run build && bun run test:coverage && bun run test:e2e"
 	},
 	"keywords": [
 		"ui",
@@ -49,6 +54,8 @@
 	},
 	"homepage": "https://github.com/watany-dev/kantan-ui#readme",
 	"dependencies": {
+		"@hono/node-server": "^1.13.0",
+		"@hono/node-ws": "^1.0.0",
 		"hono": "^4.6.0"
 	},
 	"devDependencies": {
@@ -56,6 +63,7 @@
 		"knip": "^5.0.0",
 		"@playwright/test": "^1.50.0",
 		"@types/bun": "^1.1.0",
+		"@types/node": "^25.0.3",
 		"@vitest/coverage-istanbul": "^4.0.16",
 		"typescript": "^5.7.0",
 		"vitest": "^4.0.16"

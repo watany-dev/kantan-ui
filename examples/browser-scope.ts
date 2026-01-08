@@ -4,10 +4,10 @@
  * scope='browser' 設定でセッションをCookieで管理するデモ。
  * E2Eテスト用に別ポート(3001)で起動。
  */
-import { createApp } from "./app";
-import { kt } from "./kt";
-import { createTypedSessionState } from "./session";
-import { escapeHtml } from "./utils/html";
+import { createApp } from "../src/app";
+import { kt } from "../src/kt";
+import { createTypedSessionState } from "../src/session";
+import { escapeHtml } from "../src/utils/html";
 
 type AppState = {
 	counter: number;
@@ -93,7 +93,7 @@ ${escapeHtml(
 };
 
 // scope='browser' でアプリを作成
-const { fetch, websocket } = createApp(script, {
+const { fetch, websocket } = await createApp(script, {
 	session: {
 		scope: "browser",
 	},
@@ -103,7 +103,7 @@ const { fetch, websocket } = createApp(script, {
 const server = Bun.serve({
 	port: 3001,
 	fetch,
-	websocket,
+	websocket: websocket as NonNullable<Parameters<typeof Bun.serve>[0]["websocket"]>,
 });
 
 console.log(`Browser-scope server running at http://localhost:${server.port}`);

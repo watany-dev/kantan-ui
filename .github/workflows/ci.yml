@@ -186,6 +186,18 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Build for production E2E
+        run: bun run build
+
+      - name: Verify dist/ exists
+        run: |
+          if [ ! -d "dist" ]; then
+            echo "ERROR: dist/ directory does not exist after build"
+            exit 1
+          fi
+          echo "dist/ contents:"
+          ls -la dist/
+
       - name: Cache Playwright browsers
         uses: actions/cache@v5
         id: playwright-cache
@@ -205,7 +217,6 @@ jobs:
         run: bun run test:e2e
         env:
           CI: true
-          DEBUG: pw:webserver
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v6

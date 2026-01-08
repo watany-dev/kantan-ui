@@ -188,6 +188,158 @@ describe("parseMarkdown", () => {
 		});
 	});
 
+	describe("nested lists", () => {
+		it("should parse simple nested unordered list", () => {
+			const md = "- item1\n  - nested1\n  - nested2\n- item2";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ul>");
+			expect(result).toContain("<li>item1");
+			expect(result).toContain("<li>nested1</li>");
+			expect(result).toContain("<li>nested2</li>");
+			expect(result).toContain("<li>item2</li>");
+		});
+
+		it("should parse deeply nested unordered list", () => {
+			const md = "- level1\n  - level2\n    - level3";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ul>");
+			expect(result).toContain("<li>level1");
+			expect(result).toContain("<li>level2");
+			expect(result).toContain("<li>level3</li>");
+		});
+
+		it("should parse nested ordered list", () => {
+			const md = "1. first\n   1. nested first\n   2. nested second\n2. second";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ol>");
+			expect(result).toContain("<li>first");
+			expect(result).toContain("<li>nested first</li>");
+			expect(result).toContain("<li>second</li>");
+		});
+
+		it("should handle mixed nested lists (ul inside ol)", () => {
+			const md = "1. ordered item\n   - unordered nested\n2. another ordered";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ol>");
+			expect(result).toContain("<ul>");
+			expect(result).toContain("<li>ordered item");
+			expect(result).toContain("<li>unordered nested</li>");
+		});
+
+		it("should handle inline formatting in nested lists", () => {
+			const md = "- **bold** item\n  - *italic* nested";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<strong>bold</strong>");
+			expect(result).toContain("<em>italic</em>");
+		});
+
+		it("should return to parent level after nested items", () => {
+			const md = "- parent1\n  - child\n- parent2";
+			const result = parseMarkdown(md);
+			// parent2 should be at the same level as parent1
+			expect(result).toContain("<li>parent2</li>");
+		});
+	});
+
+	describe("task lists", () => {
+		it("should parse unchecked task item", () => {
+			const md = "- [ ] unchecked task";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<ul>");
+			expect(result).toContain('<input type="checkbox" disabled>');
+			expect(result).toContain("unchecked task");
+			expect(result).toContain('class="kt-task-item"');
+		});
+
+		it("should parse checked task item", () => {
+			const md = "- [x] checked task";
+			const result = parseMarkdown(md);
+			expect(result).toContain('<input type="checkbox" checked disabled>');
+			expect(result).toContain("checked task");
+		});
+
+		it("should parse checked task item with uppercase X", () => {
+			const md = "- [X] checked task";
+			const result = parseMarkdown(md);
+			expect(result).toContain('<input type="checkbox" checked disabled>');
+		});
+
+		it("should parse mixed task list", () => {
+			const md = "- [ ] todo\n- [x] done\n- [ ] another todo";
+			const result = parseMarkdown(md);
+			expect(result).toContain('<input type="checkbox" disabled>');
+			expect(result).toContain('<input type="checkbox" checked disabled>');
+		});
+
+		it("should handle inline formatting in task items", () => {
+			const md = "- [ ] **bold** task";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<strong>bold</strong>");
+		});
+
+		it("should work with asterisk syntax", () => {
+			const md = "* [ ] task with asterisk";
+			const result = parseMarkdown(md);
+			expect(result).toContain('<input type="checkbox" disabled>');
+			expect(result).toContain("task with asterisk");
+		});
+	});
+
+	describe("tables", () => {
+		it("should parse simple table", () => {
+			const md = "| Header 1 | Header 2 |\n|----------|----------|\n| Cell 1   | Cell 2   |";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<table>");
+			expect(result).toContain("<thead>");
+			expect(result).toContain("<th>Header 1</th>");
+			expect(result).toContain("<th>Header 2</th>");
+			expect(result).toContain("<tbody>");
+			expect(result).toContain("<td>Cell 1</td>");
+			expect(result).toContain("<td>Cell 2</td>");
+		});
+
+		it("should parse table with multiple rows", () => {
+			const md = "| A | B |\n|---|---|\n| 1 | 2 |\n| 3 | 4 |";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<td>1</td>");
+			expect(result).toContain("<td>2</td>");
+			expect(result).toContain("<td>3</td>");
+			expect(result).toContain("<td>4</td>");
+		});
+
+		it("should parse table with left alignment", () => {
+			const md = "| Left |\n|:-----|\n| text |";
+			const result = parseMarkdown(md);
+			expect(result).toContain('style="text-align:left"');
+		});
+
+		it("should parse table with right alignment", () => {
+			const md = "| Right |\n|------:|\n| text  |";
+			const result = parseMarkdown(md);
+			expect(result).toContain('style="text-align:right"');
+		});
+
+		it("should parse table with center alignment", () => {
+			const md = "| Center |\n|:------:|\n| text   |";
+			const result = parseMarkdown(md);
+			expect(result).toContain('style="text-align:center"');
+		});
+
+		it("should handle inline formatting in table cells", () => {
+			const md = "| **Bold** | *Italic* |\n|----------|----------|\n| text     | text     |";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<strong>Bold</strong>");
+			expect(result).toContain("<em>Italic</em>");
+		});
+
+		it("should handle table without leading/trailing pipes", () => {
+			const md = "Header 1 | Header 2\n---------|---------\nCell 1   | Cell 2";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<table>");
+			expect(result).toContain("<th>Header 1</th>");
+		});
+	});
+
 	describe("blockquotes", () => {
 		it("should parse blockquote", () => {
 			expect(parseMarkdown("> quote")).toContain("<blockquote>quote</blockquote>");
@@ -227,6 +379,51 @@ describe("parseMarkdown", () => {
 			const md = "```\n  indented\n```";
 			const result = parseMarkdown(md);
 			expect(result).toContain("  indented");
+		});
+
+		it("should escape HTML in code block content", () => {
+			const md = "```\n<script>alert('xss')</script>\n```";
+			const result = parseMarkdown(md);
+			expect(result).toContain("&lt;script&gt;");
+			expect(result).not.toContain("<script>alert");
+		});
+
+		it("should escape HTML in unclosed code block", () => {
+			const md = "```\n<img onerror=alert(1)>";
+			const result = parseMarkdown(md);
+			expect(result).toContain("&lt;img");
+			expect(result).not.toContain("<img onerror");
+		});
+
+		it("should escape language name to prevent XSS", () => {
+			const md = '```"><script>xss</script>\ncode\n```';
+			const result = parseMarkdown(md);
+			expect(result).not.toContain("<script>xss");
+			expect(result).toContain("&gt;");
+		});
+	});
+
+	describe("table edge cases", () => {
+		it("should handle table followed by paragraph", () => {
+			const md = "| A | B |\n|---|---|\n| 1 | 2 |\nThis is a paragraph after table";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<table>");
+			expect(result).toContain("<td>1</td>");
+			expect(result).toContain("<p>This is a paragraph after table</p>");
+		});
+
+		it("should handle table followed by heading", () => {
+			const md = "| A | B |\n|---|---|\n| 1 | 2 |\n# Heading after table";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<table>");
+			expect(result).toContain("<h1>Heading after table</h1>");
+		});
+
+		it("should handle table followed by list", () => {
+			const md = "| A | B |\n|---|---|\n| 1 | 2 |\n- list item";
+			const result = parseMarkdown(md);
+			expect(result).toContain("<table>");
+			expect(result).toContain("<li>list item</li>");
 		});
 	});
 

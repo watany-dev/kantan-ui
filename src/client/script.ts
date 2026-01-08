@@ -47,8 +47,11 @@ function updateConnectionStatus(status, reconnectAttempts, maxReconnectAttempts)
 
 /**
  * XSS検出スクリプト
+ * @note このロジックはsrc/utils/html.ts内のcontainsUnsafeHtml()と同じ。
+ *       変更時は両方を同期すること。
  */
 const xssDetectionScript = `
+// Note: Keep in sync with src/utils/html.ts containsUnsafeHtml()
 function isUnsafeHtml(html) {
   var lowerHtml = html.toLowerCase();
   if (!lowerHtml.includes("<") && !lowerHtml.includes("javascript") && !lowerHtml.includes("vbscript") && !lowerHtml.includes("data:")) {
@@ -121,8 +124,23 @@ function restoreFocusState(state, retryCount) {
 
 /**
  * DOMパッチ適用スクリプト
+ * Web標準のtemplate要素とreplaceChildren/insertAdjacentHTMLを活用
  */
 const patchApplyScript = `
+// template要素を使った安全なHTML→DOM変換（スクリプト実行を防止）
+function createElementFromHtml(html) {
+  const template = document.createElement("template");
+  template.innerHTML = html.trim();
+  return template.content.firstElementChild || template.content.firstChild;
+}
+
+// 複数の子要素を取得
+function createChildNodesFromHtml(html) {
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  return template.content.childNodes;
+}
+
 function applyPatch(patch) {
   switch (patch.type) {
     case "replaceRoot": {
@@ -130,7 +148,15 @@ function applyPatch(patch) {
         console.error("Blocked potentially unsafe HTML content");
         return;
       }
-      document.getElementById("app").innerHTML = patch.html;
+      const rootId = patch.rootId || "app";
+      const root = document.getElementById(rootId);
+      if (!root) {
+        console.error("Root element not found:", rootId);
+        return;
+      }
+      const nodes = createChildNodesFromHtml(patch.html);
+      // replaceChildren()で効率的にバッチ置換
+      root.replaceChildren(...nodes);
       break;
     }
     case "replaceNode": {
@@ -140,9 +166,7 @@ function applyPatch(patch) {
       }
       const el = document.getElementById(patch.id);
       if (el) {
-        const temp = document.createElement("div");
-        temp.innerHTML = patch.html;
-        const newEl = temp.firstElementChild || temp.firstChild;
+        const newEl = createElementFromHtml(patch.html);
         if (newEl) el.replaceWith(newEl);
       }
       break;
@@ -161,12 +185,10 @@ function applyPatch(patch) {
         ? document.getElementById("app")
         : document.getElementById(patch.parentId);
       if (parent) {
-        const temp = document.createElement("div");
-        temp.innerHTML = patch.html;
-        const newEl = temp.firstElementChild || temp.firstChild;
+        const newEl = createElementFromHtml(patch.html);
         if (newEl) {
           if (patch.index >= 0 && patch.index < parent.children.length) {
-            parent.insertBefore(newEl, parent.children[patch.index]);
+            parent.children[patch.index].before(newEl);
           } else {
             parent.appendChild(newEl);
           }
@@ -181,15 +203,110 @@ function applyPatch(patch) {
       }
       const app = document.getElementById("app");
       if (app) {
-        const temp = document.createElement("div");
-        temp.innerHTML = patch.html;
-        while (temp.firstChild) {
-          app.appendChild(temp.firstChild);
-        }
+        // insertAdjacentHTMLで効率的に末尾追加
+        app.insertAdjacentHTML("beforeend", patch.html);
       }
       break;
     }
   }
+}`;
+
+/**
+ * チャット自動スクロールスクリプト
+ */
+const chatAutoScrollScript = `
+let userHasScrolled = false;
+let lastScrollTop = 0;
+
+function shouldAutoScroll(container) {
+  if (!container) return false;
+  // ユーザーが上にスクロールした場合は自動スクロールを無効化
+  const threshold = 100;
+  const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+  return isNearBottom || !userHasScrolled;
+}
+
+function scrollToBottom(container) {
+  if (!container) return;
+  container.scrollTo({
+    top: container.scrollHeight,
+    behavior: "smooth"
+  });
+}
+
+function initChatAutoScroll() {
+  // data-kt-chat-container 属性を持つ要素を探す
+  const containers = document.querySelectorAll("[data-kt-chat-container]");
+  containers.forEach((container) => {
+    if (container.dataset.ktChatScrollInit) return;
+    container.dataset.ktChatScrollInit = "true";
+
+    container.addEventListener("scroll", () => {
+      const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+      if (container.scrollTop < lastScrollTop && !isNearBottom) {
+        userHasScrolled = true;
+      } else if (isNearBottom) {
+        userHasScrolled = false;
+      }
+      lastScrollTop = container.scrollTop;
+    });
+  });
+}
+
+function autoScrollChat() {
+  const containers = document.querySelectorAll("[data-kt-chat-container]");
+  containers.forEach((container) => {
+    if (shouldAutoScroll(container)) {
+      scrollToBottom(container);
+    }
+  });
+}`;
+
+/**
+ * サイドバートグルスクリプト
+ */
+const sidebarToggleScript = `
+function initSidebarToggle() {
+  const sidebar = document.querySelector(".kt-sidebar");
+  // 初期化済み or サイドバーなしの場合はスキップ
+  if (!sidebar || sidebar.dataset.ktSidebarInit) return;
+  sidebar.dataset.ktSidebarInit = "true";
+
+  const toggle = sidebar.querySelector(".kt-sidebar-toggle");
+  const overlay = document.querySelector(".kt-sidebar-overlay");
+
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      const currentState = sidebar.getAttribute("data-state");
+      const newState = currentState === "expanded" ? "collapsed" : "expanded";
+      sidebar.setAttribute("data-state", newState);
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener("click", () => {
+      sidebar.setAttribute("data-state", "collapsed");
+    });
+  }
+}`;
+
+/**
+ * Toast自動消去スクリプト
+ */
+const toastScript = `
+function initToasts() {
+  const toasts = document.querySelectorAll(".kt-toast[data-duration]:not([data-toast-initialized])");
+  toasts.forEach(function(toast) {
+    toast.setAttribute("data-toast-initialized", "true");
+    const duration = parseInt(toast.getAttribute("data-duration"), 10) || 4000;
+    toast.style.transition = "opacity 0.3s ease-out";
+    setTimeout(function() {
+      toast.style.opacity = "0";
+      setTimeout(function() {
+        toast.remove();
+      }, 300);
+    }, duration);
+  });
 }`;
 
 /**
@@ -214,6 +331,55 @@ function setupEventDelegation(sendEvent) {
   const app = document.getElementById("app");
 
   app.addEventListener("click", (e) => {
+    // コピーボタンのハンドリング
+    const copyBtn = e.target.closest("[data-kt-copy]");
+    if (copyBtn) {
+      const codeBlock = copyBtn.closest(".kt-code");
+      if (codeBlock && codeBlock.dataset.code) {
+        const textToCopy = codeBlock.dataset.code
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&amp;/g, "&")
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'");
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          const originalText = copyBtn.textContent;
+          copyBtn.textContent = "Copied!";
+          copyBtn.classList.add("kt-code-copy-success");
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.classList.remove("kt-code-copy-success");
+          }, 2000);
+        }).catch((err) => {
+          console.error("Failed to copy code:", err);
+        });
+      }
+      return;
+    }
+
+    // ダウンロードボタンのハンドリング（サーバーサイドストリーミング）
+    const downloadUrlBtn = e.target.closest("[data-kt-download-url]");
+    if (downloadUrlBtn) {
+      const url = downloadUrlBtn.dataset.ktDownloadUrl;
+      const filename = downloadUrlBtn.dataset.filename || "download";
+      // Web標準 fetch API + Blob でストリーミングダウンロード
+      fetch(url)
+        .then((res) => {
+          if (!res.ok) throw new Error("Download failed");
+          return res.blob();
+        })
+        .then((blob) => {
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = filename;
+          a.click();
+          URL.revokeObjectURL(blobUrl);
+        })
+        .catch((err) => console.error("Download error:", err));
+      return;
+    }
+
     const target = e.target.closest("[data-kt-event='click']");
     if (target && target.id) sendEvent(target.id, "clicked");
   });
@@ -357,6 +523,11 @@ function connect() {
         restoreFocusState(focusState, 0);
         requestAnimationFrame(() => restoreFocusState(focusState, 0));
       }
+      // Initialize toasts after DOM update
+      initToasts();
+      // Auto-scroll chat containers
+      initChatAutoScroll();
+      autoScrollChat();
     }
   };
 
@@ -396,6 +567,7 @@ window.sendEvent = (widgetId, value) => {
 // 初期化
 connect();
 setupEventDelegation(window.sendEvent);
+initSidebarToggle();
 `;
 
 	return [
@@ -404,6 +576,9 @@ setupEventDelegation(window.sendEvent);
 		focusManagementScript,
 		xssDetectionScript,
 		patchApplyScript,
+		chatAutoScrollScript,
+		sidebarToggleScript,
+		toastScript,
 		eventHandlingScript,
 		websocketScript,
 	].join("\n");

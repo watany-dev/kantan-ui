@@ -7,38 +7,10 @@ let currentSessionId: SessionId | null = null;
 
 /**
  * 値をディープクローンする
- * 配列やオブジェクトの場合に、セッション間での共有を防ぐ
+ * Web標準のstructuredClone()を使用し、セッション間での共有を防ぐ
  */
 function deepClone<T>(value: T): T {
-	if (value === null || typeof value !== "object") {
-		return value;
-	}
-	if (Array.isArray(value)) {
-		return value.map((item) => deepClone(item)) as T;
-	}
-	if (value instanceof Date) {
-		return new Date(value.getTime()) as T;
-	}
-	if (value instanceof Map) {
-		const clonedMap = new Map();
-		for (const [k, v] of value) {
-			clonedMap.set(deepClone(k), deepClone(v));
-		}
-		return clonedMap as T;
-	}
-	if (value instanceof Set) {
-		const clonedSet = new Set();
-		for (const v of value) {
-			clonedSet.add(deepClone(v));
-		}
-		return clonedSet as T;
-	}
-	// 通常のオブジェクト
-	const cloned = {} as T;
-	for (const key of Object.keys(value)) {
-		(cloned as Record<string, unknown>)[key] = deepClone((value as Record<string, unknown>)[key]);
-	}
-	return cloned;
+	return structuredClone(value);
 }
 
 export function setCurrentSessionId(id: SessionId | null): void {
@@ -196,6 +168,3 @@ export function createTypedSessionState<T extends Record<string, unknown>>(defau
 		},
 	});
 }
-
-// グローバル session_state インスタンス（後方互換用）
-export const session_state = createSessionState();

@@ -85,3 +85,61 @@ export function form_submit_button(label: string, config: FormSubmitButtonConfig
 	const pressed = getWidgetValue<boolean>(id, false);
 	return pressed === true;
 }
+
+/**
+ * バリデーションエラーを表示
+ *
+ * フォーム送信時にバリデーションが失敗した場合に
+ * エラーメッセージを表示します。
+ *
+ * @param message - エラーメッセージ
+ *
+ * @example
+ * ```typescript
+ * kt.form("contact", () => {
+ *   const email = kt.text_input("Email");
+ *   if (kt.form_submit_button("Send")) {
+ *     if (!email.includes("@")) {
+ *       kt.validation_error("Please enter a valid email address");
+ *       return;
+ *     }
+ *     // Process valid form data
+ *   }
+ * });
+ * ```
+ */
+export function validation_error(message: string): void {
+	const ctx = requireRenderContext();
+	ctx.append(`<div class="kt-validation-error" role="alert">${escapeHtml(message)}</div>`);
+}
+
+/**
+ * 複数のバリデーションエラーを表示
+ *
+ * @param messages - エラーメッセージの配列
+ *
+ * @example
+ * ```typescript
+ * kt.form("signup", () => {
+ *   const name = kt.text_input("Name");
+ *   const email = kt.text_input("Email");
+ *   if (kt.form_submit_button("Sign Up")) {
+ *     const errors = [];
+ *     if (!name) errors.push("Name is required");
+ *     if (!email) errors.push("Email is required");
+ *     if (errors.length > 0) {
+ *       kt.validation_errors(errors);
+ *       return;
+ *     }
+ *     // Process valid form data
+ *   }
+ * });
+ * ```
+ */
+export function validation_errors(messages: string[]): void {
+	if (messages.length === 0) return;
+
+	const ctx = requireRenderContext();
+	const items = messages.map((msg) => `<li>${escapeHtml(msg)}</li>`).join("");
+	ctx.append(`<div class="kt-validation-errors" role="alert"><ul>${items}</ul></div>`);
+}

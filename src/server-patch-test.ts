@@ -82,12 +82,12 @@ ${JSON.stringify({ items: state.items, nextId: state.nextId }, null, 2)}
 	return undefined;
 };
 
-const { app, websocket } = createApp(script, {
+const { app, websocket } = await createApp(script, {
 	session: { scope: "tab" },
 });
 
 export default {
 	port: 3003,
 	fetch: app.fetch,
-	websocket,
+	websocket: websocket as NonNullable<Parameters<typeof Bun.serve>[0]["websocket"]>,
 };

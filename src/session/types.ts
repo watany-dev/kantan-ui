@@ -1,6 +1,17 @@
 // セッションID
 export type SessionId = string;
 
+// ダウンロードID
+export type DownloadId = string;
+
+// ダウンロードデータ
+export interface DownloadData {
+	data: ArrayBuffer;
+	filename: string;
+	mime: string;
+	createdAt: number;
+}
+
 // セッション状態
 export interface SessionState {
 	[key: string]: unknown;
@@ -36,6 +47,8 @@ export interface Session {
 	lastAccessedAt: Date;
 	/** 前回レンダリングしたHTML（差分検出用） */
 	lastHtml?: string;
+	/** 前回レンダリングしたサイドバーHTML（差分検出用） */
+	lastSidebarHtml?: string;
 	/** 最後のサーバーシーケンス番号 */
 	lastSeq: number;
 	/** パッチ履歴（再接続時の再同期用） */

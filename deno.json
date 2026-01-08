@@ -1,0 +1,18 @@
+{
+	"$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
+	"unstable": ["sloppy-imports"],
+	"tasks": {
+		"dev": "deno run --allow-net --allow-read --watch examples/deno-server.ts",
+		"example:chat": "deno run --allow-net --allow-read examples/09-chat.ts"
+	},
+	"imports": {
+		"hono": "npm:hono@^4.6.0",
+		"hono/": "npm:hono@^4.6.0/",
+		"kantan-ui": "./src/index.ts",
+		"kantan-ui/": "./src/"
+	},
+	"compilerOptions": {
+		"strict": true,
+		"noImplicitAny": true
+	}
+}

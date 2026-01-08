@@ -1,3 +1,4 @@
+import { ALERT_ICONS, type AlertType } from "../constants";
 import { escapeHtml } from "../utils/html";
 import { applyHighlight } from "./code/highlighter";
 import { requireRenderContext } from "./context";
@@ -75,33 +76,35 @@ export function html(rawHtml: string): void {
 // Alert APIs
 // ============================================
 
-type AlertType = "success" | "error" | "warning" | "info";
-
-const defaultIcons: Record<AlertType, string> = {
-	success: "✓",
-	error: "✕",
-	warning: "⚠",
-	info: "ℹ",
-};
-
-const alertColors: Record<AlertType, { bg: string; border: string; text: string }> = {
-	success: { bg: "#d4edda", border: "#c3e6cb", text: "#155724" },
-	error: { bg: "#f8d7da", border: "#f5c6cb", text: "#721c24" },
-	warning: { bg: "#fff3cd", border: "#ffeeba", text: "#856404" },
-	info: { bg: "#d1ecf1", border: "#bee5eb", text: "#0c5460" },
-};
-
 export interface AlertConfig {
 	icon?: string;
+	/** カスタム背景色 (例: "#f0f0f0") */
+	background?: string;
+	/** カスタムテキスト色 (例: "#333") */
+	color?: string;
+	/** カスタムボーダー色 (例: "#ccc") */
+	border?: string;
 }
 
 function alert(type: AlertType, message: string, config: AlertConfig = {}): void {
 	const ctx = requireRenderContext();
-	const colors = alertColors[type];
-	const icon = escapeHtml(config.icon ?? defaultIcons[type]);
+	const icon = escapeHtml(config.icon ?? ALERT_ICONS[type]);
+
+	// カスタムカラーが指定されている場合はインラインスタイルを生成
+	const styles: string[] = [];
+	if (config.background) {
+		styles.push(`background-color:${escapeHtml(config.background)}`);
+	}
+	if (config.color) {
+		styles.push(`color:${escapeHtml(config.color)}`);
+	}
+	if (config.border) {
+		styles.push(`border-color:${escapeHtml(config.border)}`);
+	}
+	const styleAttr = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
 
 	ctx.append(
-		`<div class="kt-alert kt-alert-${type}" style="background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text}; padding: 0.75rem 1rem; border-radius: 4px; margin: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem;"><span class="kt-alert-icon">${icon}</span><span class="kt-alert-message">${escapeHtml(message)}</span></div>`,
+		`<div class="kt-alert kt-alert-${type}"${styleAttr}><span class="kt-alert-icon">${icon}</span><span class="kt-alert-message">${escapeHtml(message)}</span></div>`,
 	);
 }
 
@@ -142,6 +145,8 @@ export interface CodeConfig {
 	line_numbers?: boolean;
 	/** ラップ表示（デフォルト: false、横スクロール） */
 	wrap_lines?: boolean;
+	/** コピーボタンを表示（デフォルト: false） */
+	copy_button?: boolean;
 }
 
 /**
@@ -167,11 +172,18 @@ export function code(body: string, language?: string, config?: CodeConfig): void
 	// 行番号の生成（オプション）
 	const lineNumbers = config?.line_numbers ? generateLineNumbers(body) : "";
 
+	// コピーボタンの生成（オプション）
+	const copyButton = config?.copy_button
+		? `<button class="kt-code-copy" data-kt-copy title="Copy code">Copy</button>`
+		: "";
+
 	const wrapClass = config?.wrap_lines ? " kt-code-wrap" : "";
 	const langAttr = `data-language="${escapeHtml(language ?? "")}"`;
+	// コピー用に元のコード（エスケープ済み）をdata属性に保存
+	const codeDataAttr = config?.copy_button ? ` data-code="${escapeHtml(body)}"` : "";
 
 	ctx.append(
-		`<div class="kt-code${wrapClass}" ${langAttr}>${lineNumbers}<pre><code class="kt-code-content">${highlightedCode}</code></pre></div>`,
+		`<div class="kt-code${wrapClass}" ${langAttr}${codeDataAttr}>${copyButton}${lineNumbers}<pre><code class="kt-code-content">${highlightedCode}</code></pre></div>`,
 	);
 }
 

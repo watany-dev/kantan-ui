@@ -1,4 +1,9 @@
-import { type FlushCallback, RenderContext, setRenderContext } from "../kt/context";
+import {
+	type FlushCallback,
+	RenderContext,
+	type SidebarConfig,
+	setRenderContext,
+} from "../kt/context";
 import { setCurrentSessionId } from "../session/state";
 import { resetWidgetCounter } from "../widgets/registry";
 import { AbortError } from "./abort";
@@ -10,6 +15,21 @@ import { clearContext, type RerunContext, setContext } from "./context";
  * - undefined を返す: 宣言的API（kt.* を使用）
  */
 export type Script = () => string | undefined;
+
+/**
+ * rerun()の戻り値型
+ * サイドバー対応のため、メインとサイドバーのHTMLを分離して返す
+ */
+export interface RerunResult {
+	/** メインエリアのHTML */
+	mainHtml: string;
+	/** サイドバーのHTML（サイドバー未使用時は空文字） */
+	sidebarHtml: string;
+	/** サイドバーが使用されているか */
+	hasSidebar: boolean;
+	/** サイドバー設定（幅など） */
+	sidebarConfig: SidebarConfig | null;
+}
 
 /**
  * ストリーミング設定
@@ -48,7 +68,7 @@ export function rerun(
 	sessionId?: string,
 	signal?: AbortSignal,
 	streaming?: StreamingOptions,
-): string {
+): RerunResult {
 	// シグナルがabortされていたら早期リターン
 	if (signal?.aborted) {
 		throw new AbortError("Rerun was aborted");
@@ -78,12 +98,23 @@ export function rerun(
 		// スクリプトを実行してHTMLを生成
 		const result = script();
 
-		// スクリプトが文字列を返した場合はそれを使用
+		// スクリプトが文字列を返した場合はそれを使用（後方互換性）
 		// void を返した場合はバッファからHTMLを取得
 		if (typeof result === "string") {
-			return result;
+			return {
+				mainHtml: result,
+				sidebarHtml: "",
+				hasSidebar: false,
+				sidebarConfig: null,
+			};
 		}
-		return renderContext.getHtml();
+
+		return {
+			mainHtml: renderContext.getMainHtml(),
+			sidebarHtml: renderContext.getSidebarHtml(),
+			hasSidebar: renderContext.hasSidebar(),
+			sidebarConfig: renderContext.getSidebarConfig(),
+		};
 	} finally {
 		// コンテキストをクリア
 		clearContext();

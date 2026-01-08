@@ -4,9 +4,12 @@
 	"entry": ["src/runtime/index.ts", "src/config/index.ts"],
 	"ignore": [
 		"src/server.ts",
-		"src/server-browser.ts",
 		"src/server-streaming.ts",
 		"src/server-patch-test.ts",
 		"src/server-error-test.ts"
-	]
+	],
+	"ignoreExportsUsedInFile": {
+		"interface": true,
+		"type": true
+	}
 }

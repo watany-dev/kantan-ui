@@ -23,10 +23,21 @@ export function parseMarkdown(markdown: string): string {
 	let inCodeBlock = false;
 	let codeBlockContent: string[] = [];
 	let codeBlockLang = "";
-	let inList: "ul" | "ol" | null = null;
-	let listItems: string[] = [];
+	// ネストリスト用のスタック構造
+	interface ListItem {
+		content: string;
+		indent: number;
+		type: "ul" | "ol";
+		isTask?: boolean;
+		isChecked?: boolean;
+	}
+	let listStack: ListItem[] = [];
 	let inBlockquote = false;
 	let blockquoteContent: string[] = [];
+	// テーブル用の状態
+	let tableRows: string[][] = [];
+	let tableAlignments: ("left" | "center" | "right" | null)[] = [];
+	let inTable = false;
 
 	const flushParagraph = () => {
 		if (currentParagraph.length > 0) {
@@ -37,12 +48,62 @@ export function parseMarkdown(markdown: string): string {
 	};
 
 	const flushList = () => {
-		if (inList && listItems.length > 0) {
-			const items = listItems.map((item) => `<li>${parseInline(item)}</li>`).join("");
-			result.push(`<${inList}>${items}</${inList}>`);
-			listItems = [];
-			inList = null;
-		}
+		if (listStack.length === 0) return;
+
+		// ネストしたリストをHTMLに変換
+		const buildNestedList = (
+			items: ListItem[],
+			startIndex: number,
+			baseIndent: number,
+		): { html: string; endIndex: number } => {
+			const result: string[] = [];
+			let i = startIndex;
+			const listType = items[i]?.type ?? "ul";
+
+			while (i < items.length) {
+				const item = items[i];
+				if (!item) break;
+
+				if (item.indent < baseIndent) {
+					// 親レベルに戻る
+					break;
+				}
+
+				if (item.indent > baseIndent) {
+					// ネストしたリストを再帰的に処理
+					const nested = buildNestedList(items, i, item.indent);
+					// 最後のliにネストを追加
+					if (result.length > 0) {
+						const lastLi = result.pop();
+						if (lastLi) {
+							result.push(lastLi.replace(/<\/li>$/, `${nested.html}</li>`));
+						}
+					}
+					i = nested.endIndex;
+					continue;
+				}
+
+				// 同レベルの項目
+				if (item.isTask) {
+					const checkbox = item.isChecked
+						? '<input type="checkbox" checked disabled>'
+						: '<input type="checkbox" disabled>';
+					result.push(`<li class="kt-task-item">${checkbox} ${parseInline(item.content)}</li>`);
+				} else {
+					result.push(`<li>${parseInline(item.content)}</li>`);
+				}
+				i++;
+			}
+
+			return {
+				html: `<${listType}>${result.join("")}</${listType}>`,
+				endIndex: i,
+			};
+		};
+
+		const { html } = buildNestedList(listStack, 0, listStack[0]?.indent ?? 0);
+		result.push(html);
+		listStack = [];
 	};
 
 	const flushBlockquote = () => {
@@ -52,6 +113,77 @@ export function parseMarkdown(markdown: string): string {
 			blockquoteContent = [];
 			inBlockquote = false;
 		}
+	};
+
+	const flushTable = () => {
+		if (!inTable || tableRows.length === 0) return;
+
+		const thead = tableRows[0];
+		const tbody = tableRows.slice(1);
+
+		let html = "<table>";
+
+		// ヘッダー行
+		if (thead) {
+			html += "<thead><tr>";
+			thead.forEach((cell, idx) => {
+				const align = tableAlignments[idx];
+				const alignAttr = align ? ` style="text-align:${align}"` : "";
+				html += `<th${alignAttr}>${parseInline(cell.trim())}</th>`;
+			});
+			html += "</tr></thead>";
+		}
+
+		// ボディ行
+		if (tbody.length > 0) {
+			html += "<tbody>";
+			tbody.forEach((row) => {
+				html += "<tr>";
+				row.forEach((cell, idx) => {
+					const align = tableAlignments[idx];
+					const alignAttr = align ? ` style="text-align:${align}"` : "";
+					html += `<td${alignAttr}>${parseInline(cell.trim())}</td>`;
+				});
+				html += "</tr>";
+			});
+			html += "</tbody>";
+		}
+
+		html += "</table>";
+		result.push(html);
+
+		tableRows = [];
+		tableAlignments = [];
+		inTable = false;
+	};
+
+	// テーブル行をパース
+	const parseTableRow = (line: string): string[] | null => {
+		if (!line.includes("|")) return null;
+		// 先頭・末尾の|を除去してセルに分割
+		const trimmed = line.replace(/^\|/, "").replace(/\|$/, "");
+		return trimmed.split("|");
+	};
+
+	// 区切り行かどうかチェック（|---|---|のような行）
+	const isTableDelimiter = (line: string): boolean => {
+		// 単一カラム or 複数カラムに対応
+		return /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?$/.test(line);
+	};
+
+	// 区切り行からアラインメントを取得
+	const parseTableAlignments = (line: string): ("left" | "center" | "right" | null)[] => {
+		const cells = parseTableRow(line);
+		if (!cells) return [];
+		return cells.map((cell) => {
+			const trimmed = cell.trim();
+			const leftColon = trimmed.startsWith(":");
+			const rightColon = trimmed.endsWith(":");
+			if (leftColon && rightColon) return "center";
+			if (rightColon) return "right";
+			if (leftColon) return "left";
+			return null;
+		});
 	};
 
 	for (let i = 0; i < lines.length; i++) {
@@ -64,12 +196,15 @@ export function parseMarkdown(markdown: string): string {
 				flushParagraph();
 				flushList();
 				flushBlockquote();
+				flushTable();
 				inCodeBlock = true;
 				codeBlockLang = trimmedLine.slice(3).trim();
 				codeBlockContent = [];
 			} else {
-				const langAttr = codeBlockLang ? ` class="language-${escapeHtml(codeBlockLang)}"` : "";
-				result.push(`<pre><code${langAttr}>${codeBlockContent.join("\n")}</code></pre>`);
+				const escapedLang = escapeHtml(codeBlockLang);
+				const langAttr = codeBlockLang ? ` class="language-${escapedLang}"` : "";
+				const escapedContent = escapeHtml(codeBlockContent.join("\n"));
+				result.push(`<pre><code${langAttr}>${escapedContent}</code></pre>`);
 				inCodeBlock = false;
 				codeBlockLang = "";
 			}
@@ -87,6 +222,7 @@ export function parseMarkdown(markdown: string): string {
 			flushParagraph();
 			flushList();
 			flushBlockquote();
+			flushTable();
 			continue;
 		}
 
@@ -95,6 +231,7 @@ export function parseMarkdown(markdown: string): string {
 			flushParagraph();
 			flushList();
 			flushBlockquote();
+			flushTable();
 			result.push("<hr>");
 			continue;
 		}
@@ -105,10 +242,49 @@ export function parseMarkdown(markdown: string): string {
 			flushParagraph();
 			flushList();
 			flushBlockquote();
+			flushTable();
 			const level = headingMatch[1].length;
 			const text = headingMatch[2].trim();
 			result.push(`<h${level}>${parseInline(text)}</h${level}>`);
 			continue;
+		}
+
+		// テーブル処理
+		if (trimmedLine.includes("|")) {
+			// テーブルの開始または継続
+			if (!inTable) {
+				// 次の行が区切り行かチェック
+				const nextLine = lines[i + 1]?.trim() ?? "";
+				if (isTableDelimiter(nextLine)) {
+					flushParagraph();
+					flushList();
+					flushBlockquote();
+					inTable = true;
+					const headerCells = parseTableRow(trimmedLine);
+					if (headerCells) {
+						tableRows.push(headerCells);
+					}
+					continue;
+				}
+			} else {
+				// テーブル継続中
+				if (isTableDelimiter(trimmedLine)) {
+					// 区切り行: アラインメントを取得
+					tableAlignments = parseTableAlignments(trimmedLine);
+					continue;
+				}
+				// データ行
+				const cells = parseTableRow(trimmedLine);
+				if (cells) {
+					tableRows.push(cells);
+					continue;
+				}
+			}
+		}
+
+		// テーブル外の行でテーブルを終了
+		if (inTable && !trimmedLine.includes("|")) {
+			flushTable();
 		}
 
 		// 引用
@@ -116,11 +292,13 @@ export function parseMarkdown(markdown: string): string {
 		if (blockquoteMatch) {
 			flushParagraph();
 			flushList();
+			flushTable();
 			if (!inBlockquote) {
 				inBlockquote = true;
 				blockquoteContent = [];
 			}
-			blockquoteContent.push(blockquoteMatch[1] ?? "");
+			// blockquoteMatch[1] is guaranteed by regex pattern (.*), always defined
+			blockquoteContent.push(blockquoteMatch[1] as string);
 			continue;
 		}
 
@@ -129,34 +307,59 @@ export function parseMarkdown(markdown: string): string {
 			flushBlockquote();
 		}
 
-		// 無順リスト
-		const unorderedListMatch = trimmedLine.match(/^[-*]\s+(.+)$/);
-		if (unorderedListMatch?.[1]) {
+		// タスクリスト（- [ ] または - [x]）
+		const taskListMatch = line.match(/^(\s*)[-*]\s+\[([ xX])\]\s+(.+)$/);
+		if (taskListMatch?.[3]) {
 			flushParagraph();
 			flushBlockquote();
-			if (inList !== "ul") {
-				flushList();
-				inList = "ul";
-			}
-			listItems.push(unorderedListMatch[1]);
+			flushTable();
+			// taskListMatch[1] is guaranteed by regex pattern (\s*), always defined
+			const itemIndent = (taskListMatch[1] as string).length;
+			const isChecked = taskListMatch[2]?.toLowerCase() === "x";
+			listStack.push({
+				content: taskListMatch[3],
+				indent: itemIndent,
+				type: "ul",
+				isTask: true,
+				isChecked,
+			});
 			continue;
 		}
 
-		// 順序リスト
-		const orderedListMatch = trimmedLine.match(/^\d+\.\s+(.+)$/);
-		if (orderedListMatch?.[1]) {
+		// 無順リスト（インデント対応）
+		const unorderedListMatch = line.match(/^(\s*)[-*]\s+(.+)$/);
+		if (unorderedListMatch?.[2]) {
 			flushParagraph();
 			flushBlockquote();
-			if (inList !== "ol") {
-				flushList();
-				inList = "ol";
-			}
-			listItems.push(orderedListMatch[1]);
+			flushTable();
+			// unorderedListMatch[1] is guaranteed by regex pattern (\s*), always defined
+			const itemIndent = (unorderedListMatch[1] as string).length;
+			listStack.push({
+				content: unorderedListMatch[2],
+				indent: itemIndent,
+				type: "ul",
+			});
+			continue;
+		}
+
+		// 順序リスト（インデント対応）
+		const orderedListMatch = line.match(/^(\s*)\d+\.\s+(.+)$/);
+		if (orderedListMatch?.[2]) {
+			flushParagraph();
+			flushBlockquote();
+			flushTable();
+			// orderedListMatch[1] is guaranteed by regex pattern (\s*), always defined
+			const itemIndent = (orderedListMatch[1] as string).length;
+			listStack.push({
+				content: orderedListMatch[2],
+				indent: itemIndent,
+				type: "ol",
+			});
 			continue;
 		}
 
 		// リスト外のテキストでリストを終了
-		if (inList) {
+		if (listStack.length > 0) {
 			flushList();
 		}
 
@@ -168,11 +371,14 @@ export function parseMarkdown(markdown: string): string {
 	flushParagraph();
 	flushList();
 	flushBlockquote();
+	flushTable();
 
 	// コードブロックが閉じられていない場合
 	if (inCodeBlock) {
-		const langAttr = codeBlockLang ? ` class="language-${escapeHtml(codeBlockLang)}"` : "";
-		result.push(`<pre><code${langAttr}>${codeBlockContent.join("\n")}</code></pre>`);
+		const escapedLang = escapeHtml(codeBlockLang);
+		const langAttr = codeBlockLang ? ` class="language-${escapedLang}"` : "";
+		const escapedContent = escapeHtml(codeBlockContent.join("\n"));
+		result.push(`<pre><code${langAttr}>${escapedContent}</code></pre>`);
 	}
 
 	return result.join("\n");

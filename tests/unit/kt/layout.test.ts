@@ -1,7 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { columns, container, expander, renderTabsHeader, tabs } from "../../../src/kt/layout";
+import {
+	columns,
+	container,
+	expander,
+	renderTabsHeader,
+	tabs,
+	withSidebarContext,
+} from "../../../src/kt/layout";
 import { write } from "../../../src/kt/output";
+import { sidebar } from "../../../src/kt/sidebar";
 import { resetSessionManager, setSessionManager } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
@@ -255,7 +263,7 @@ describe("Layout APIs", () => {
 		it("should create columns with kt-columns class", () => {
 			columns([() => write("Left"), () => write("Right")]);
 			const html = ctx.getHtml();
-			expect(html).toContain('class="kt-columns"');
+			expect(html).toContain("kt-columns");
 			expect(html).toContain('class="kt-column"');
 		});
 
@@ -313,6 +321,24 @@ describe("Layout APIs", () => {
 		it("should throw error without render context", () => {
 			setRenderContext(null);
 			expect(() => columns([() => write("test")])).toThrow("RenderContext is not available");
+		});
+
+		it("should add responsive class by default", () => {
+			columns([() => write("A"), () => write("B")]);
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-columns-responsive");
+		});
+
+		it("should add responsive class when responsive is true", () => {
+			columns([() => write("A"), () => write("B")], { responsive: true });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-columns-responsive");
+		});
+
+		it("should not add responsive class when responsive is false", () => {
+			columns([() => write("A"), () => write("B")], { responsive: false });
+			const html = ctx.getHtml();
+			expect(html).not.toContain("kt-columns-responsive");
 		});
 	});
 
@@ -377,6 +403,134 @@ describe("Layout APIs", () => {
 			setRenderContext(null);
 			expect(() =>
 				expander("Test", () => {
+					write("test");
+				}),
+			).toThrow("RenderContext is not available");
+		});
+	});
+
+	describe("withSidebarContext", () => {
+		it("should execute function in sidebar context", () => {
+			let targetDuringExecution: "main" | "sidebar" | null = null;
+
+			withSidebarContext(() => {
+				targetDuringExecution = ctx.getTarget();
+			});
+
+			expect(targetDuringExecution).toBe("sidebar");
+			expect(ctx.getTarget()).toBe("main");
+		});
+
+		it("should return function result", () => {
+			const result = withSidebarContext(() => 42);
+			expect(result).toBe(42);
+		});
+
+		it("should return complex result types", () => {
+			const result = withSidebarContext(() => ({ name: "test", value: 123 }));
+			expect(result).toEqual({ name: "test", value: 123 });
+		});
+
+		it("should restore context on error", () => {
+			expect(ctx.getTarget()).toBe("main");
+
+			expect(() => {
+				withSidebarContext(() => {
+					throw new Error("Test error");
+				});
+			}).toThrow("Test error");
+
+			expect(ctx.getTarget()).toBe("main");
+		});
+
+		it("should output to sidebar buffer", () => {
+			withSidebarContext(() => {
+				write("Sidebar content");
+			});
+
+			expect(ctx.getSidebarHtml()).toContain("Sidebar content");
+			expect(ctx.getMainHtml()).toBe("");
+		});
+	});
+
+	describe("sidebar", () => {
+		it("should render content to sidebar buffer", () => {
+			sidebar(() => {
+				write("Sidebar content");
+			});
+
+			expect(ctx.getSidebarHtml()).toContain("Sidebar content");
+			expect(ctx.getMainHtml()).toBe("");
+		});
+
+		it("should restore target after callback", () => {
+			write("Before");
+			sidebar(() => {
+				write("Sidebar");
+			});
+			write("After");
+
+			expect(ctx.getMainHtml()).toContain("Before");
+			expect(ctx.getMainHtml()).toContain("After");
+			expect(ctx.getSidebarHtml()).toContain("Sidebar");
+		});
+
+		it("should handle nested sidebar calls correctly", () => {
+			sidebar(() => {
+				write("Outer sidebar");
+				sidebar(() => {
+					write("Inner sidebar");
+				});
+				write("After inner");
+			});
+
+			const sidebarHtml = ctx.getSidebarHtml();
+			expect(sidebarHtml).toContain("Outer sidebar");
+			expect(sidebarHtml).toContain("Inner sidebar");
+			expect(sidebarHtml).toContain("After inner");
+			expect(ctx.getMainHtml()).toBe("");
+		});
+
+		it("should report hasSidebar correctly", () => {
+			expect(ctx.hasSidebar()).toBe(false);
+
+			sidebar(() => {
+				write("Content");
+			});
+
+			expect(ctx.hasSidebar()).toBe(true);
+		});
+
+		it("should restore target even if callback throws", () => {
+			expect(ctx.getTarget()).toBe("main");
+
+			expect(() => {
+				sidebar(() => {
+					throw new Error("Test error");
+				});
+			}).toThrow("Test error");
+
+			// Target should be restored to main
+			expect(ctx.getTarget()).toBe("main");
+		});
+
+		it("should support multiple sidebar calls", () => {
+			sidebar(() => {
+				write("First");
+			});
+			sidebar(() => {
+				write("Second");
+			});
+
+			const sidebarHtml = ctx.getSidebarHtml();
+			expect(sidebarHtml).toContain("First");
+			expect(sidebarHtml).toContain("Second");
+		});
+
+		it("should throw error without render context", () => {
+			setRenderContext(null);
+			expect(() =>
+				sidebar(() => {
 					write("test");
 				}),
 			).toThrow("RenderContext is not available");

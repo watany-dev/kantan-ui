@@ -1,3 +1,4 @@
+import { SPINNER_SIZES, type SpinnerSize, TOAST_COLORS, type ToastType } from "../constants";
 import { escapeHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
 
@@ -8,42 +9,27 @@ import { requireRenderContext } from "./context";
 export interface ProgressConfig {
 	label?: string;
 	color?: string;
+	/** Show animated stripes effect (useful for indeterminate progress) */
+	animated?: boolean;
 }
 
 // ============================================
 // Spinner API
 // ============================================
 
-type SpinnerSize = "small" | "medium" | "large";
-
 export interface SpinnerConfig {
 	show?: boolean;
 	size?: SpinnerSize;
 }
 
-const spinnerSizes: Record<SpinnerSize, string> = {
-	small: "16px",
-	medium: "24px",
-	large: "32px",
-};
-
 // ============================================
 // Toast API
 // ============================================
-
-type ToastType = "success" | "info" | "warning" | "error";
 
 export interface ToastConfig {
 	type?: ToastType;
 	duration?: number;
 }
-
-const toastColors: Record<ToastType, { bg: string; border: string; icon: string }> = {
-	success: { bg: "#d4edda", border: "#c3e6cb", icon: "✓" },
-	info: { bg: "#d1ecf1", border: "#bee5eb", icon: "ℹ" },
-	warning: { bg: "#fff3cd", border: "#ffeeba", icon: "⚠" },
-	error: { bg: "#f8d7da", border: "#f5c6cb", icon: "✕" },
-};
 
 /**
  * プログレスバーを表示
@@ -66,13 +52,14 @@ export function progress(value: number, config: ProgressConfig = {}): void {
 	// 0-100% にクランプ
 	const percentage = Math.min(Math.max(normalizedValue * 100, 0), 100);
 	const color = config.color ?? "#3498db";
+	const animatedClass = config.animated ? " kt-progress-animated" : "";
 
 	const labelHtml = config.label
 		? `<div class="kt-progress-label">${escapeHtml(config.label)}</div>`
 		: "";
 
 	ctx.append(
-		`<div class="kt-progress">${labelHtml}<div class="kt-progress-bar" style="background: #e0e0e0; border-radius: 4px; height: 8px; overflow: hidden;"><div class="kt-progress-fill" style="background: ${color}; width: ${percentage}%; height: 100%; transition: width 0.3s ease;"></div></div></div>`,
+		`<div class="kt-progress">${labelHtml}<div class="kt-progress-bar"><div class="kt-progress-fill${animatedClass}" style="background: ${color}; width: ${percentage}%;"></div></div></div>`,
 	);
 }
 
@@ -98,10 +85,10 @@ export function spinner(text = "Loading...", config: SpinnerConfig = {}): void {
 		return;
 	}
 
-	const size = spinnerSizes[config.size ?? "medium"];
+	const size = SPINNER_SIZES[config.size ?? "medium"];
 
 	ctx.append(
-		`<div class="kt-spinner"><style>@keyframes kt-spin { to { transform: rotate(360deg); } }</style><div class="kt-spinner-icon" style="width: ${size}; height: ${size}; border: 2px solid #e0e0e0; border-top-color: #3498db; border-radius: 50%; animation: kt-spin 1s linear infinite;"></div><span class="kt-spinner-text">${escapeHtml(text)}</span></div>`,
+		`<div class="kt-spinner"><div class="kt-spinner-icon" style="width: ${size}; height: ${size};"></div><span class="kt-spinner-text">${escapeHtml(text)}</span></div>`,
 	);
 }
 
@@ -126,7 +113,7 @@ export function toast(message: string, config: ToastConfig = {}): void {
 
 	const type = config.type ?? "success";
 	const duration = config.duration ?? 4000;
-	const colors = toastColors[type];
+	const colors = TOAST_COLORS[type];
 
 	ctx.append(
 		`<div class="kt-toast kt-toast-${type}" data-duration="${duration}" style="background: ${colors.bg}; border: 1px solid ${colors.border}; padding: 12px 16px; border-radius: 4px; margin: 8px 0; display: flex; align-items: center;"><span class="kt-toast-icon" style="margin-right: 8px;">${colors.icon}</span><span class="kt-toast-message">${escapeHtml(message)}</span></div>`,

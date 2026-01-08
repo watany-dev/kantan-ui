@@ -335,20 +335,18 @@ describe("SessionManager", () => {
 			>[0];
 
 			manager.associateWebSocket(mockWs, session.id);
-			const retrieved = manager.getSessionByWebSocket(mockWs);
+			const connections = manager.getConnections(session.id);
 
-			expect(retrieved).toBeDefined();
-			expect(retrieved?.id).toBe(session.id);
+			expect(connections.size).toBe(1);
+			expect(connections.has(mockWs)).toBe(true);
 		});
 
-		it("should return undefined for unassociated WebSocket", () => {
-			const mockWs = { send: vi.fn() } as unknown as Parameters<
-				typeof manager.associateWebSocket
-			>[0];
+		it("should return empty set for session without WebSocket", () => {
+			const session = manager.createSession();
 
-			const session = manager.getSessionByWebSocket(mockWs);
+			const connections = manager.getConnections(session.id);
 
-			expect(session).toBeUndefined();
+			expect(connections.size).toBe(0);
 		});
 
 		it("should remove WebSocket association", () => {
@@ -360,8 +358,8 @@ describe("SessionManager", () => {
 			manager.associateWebSocket(mockWs, session.id);
 			manager.removeWebSocket(mockWs);
 
-			const retrieved = manager.getSessionByWebSocket(mockWs);
-			expect(retrieved).toBeUndefined();
+			const connections = manager.getConnections(session.id);
+			expect(connections.has(mockWs)).toBe(false);
 		});
 
 		it("should handle removing non-associated WebSocket", () => {
@@ -371,19 +369,6 @@ describe("SessionManager", () => {
 
 			// Should not throw
 			expect(() => manager.removeWebSocket(mockWs)).not.toThrow();
-		});
-
-		it("should handle associating WebSocket with non-existent session connections", () => {
-			const mockWs = { send: vi.fn() } as unknown as Parameters<
-				typeof manager.associateWebSocket
-			>[0];
-
-			// Associate with a session ID that doesn't have sessionToWs entry
-			manager.associateWebSocket(mockWs, "non-existent-session");
-
-			// Should be retrievable by WS but session won't exist
-			const wsSessionId = manager.getSessionByWebSocket(mockWs);
-			expect(wsSessionId).toBeUndefined();
 		});
 	});
 });

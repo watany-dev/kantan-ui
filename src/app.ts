@@ -1,96 +1,54 @@
 import { Hono } from "hono";
+
+/**
+ * Node.js HTTP/HTTPS Server型（@hono/node-serverからの依存を避けるためローカル定義）
+ * Deno互換性のため、@hono/node-serverを直接インポートしない
+ */
+type NodeServerType = {
+	close: () => void;
+	listen: (port: number, hostname?: string, callback?: () => void) => void;
+};
+
 import { getCookie, setCookie } from "hono/cookie";
 import { html, raw } from "hono/html";
+import { logger } from "hono/logger";
+import { NONCE, secureHeaders } from "hono/secure-headers";
 import { generateClientScript } from "./client";
 import { type KantanConfig, resolveConfig } from "./config";
 import { diff, toWebSocketPatches } from "./diff";
 import { getPageConfig } from "./kt/config";
 import { rerun, type Script, type StreamingOptions } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
-import { upgradeWebSocket, websocket } from "./websocket";
+import { defaultStyles } from "./styles";
+import { createErrorMessageJson } from "./utils/error";
+import { createWebSocketAdapterAsync } from "./websocket";
 import type { Patch } from "./websocket/types";
 import { type ClientMessage, isClientMessage, type ServerMessage } from "./websocket/types";
 
-/** CSP用のnonce生成 */
-function generateNonce(): string {
-	const array = new Uint8Array(16);
-	crypto.getRandomValues(array);
-	return btoa(String.fromCharCode(...array));
+export interface KantanAppOptions extends KantanConfig {
+	/** サーバーポート（Bun.serve互換） */
+	port?: number;
+	/** ホスト名 */
+	hostname?: string;
 }
 
-/** デフォルトスタイル */
-const defaultStyles = `
-  .kt-button { padding: 8px 16px; cursor: pointer; }
-  .kt-slider-container,
-  .kt-text-input-container,
-  .kt-selectbox-container { margin: 10px 0; }
-  .kt-slider-label,
-  .kt-text-input-label,
-  .kt-selectbox-label { display: block; margin-bottom: 4px; }
-  .kt-slider { width: 200px; }
-  .kt-text-input { padding: 8px; width: 200px; }
-  .kt-selectbox { padding: 8px; }
-  .kt-layout-centered { max-width: 800px; margin: 0 auto; padding: 0 1rem; }
-  .kt-layout-wide { width: 100%; padding: 0 1rem; }
+export interface KantanApp {
+	fetch: (request: Request) => Response | Promise<Response>;
+	/** Bun用: Bun.serve() の websocket オプションに渡す */
+	websocket: unknown;
+	/** Bun.serve互換: ポート番号 */
+	port: number | undefined;
+	/** Bun.serve互換: ホスト名 */
+	hostname: string | undefined;
+	/** Node.js用: サーバー起動後に呼び出してWebSocketを有効化 */
+	injectWebSocket: ((server: NodeServerType) => void) | undefined;
+	shutdown: () => void;
+	/** Honoインスタンス（拡張用） */
+	app: Hono;
+}
 
-  /* JSON Viewer */
-  .kt-json { font-family: monospace; font-size: 0.875rem; line-height: 1.4; }
-  .kt-json details { margin-left: 1rem; }
-  .kt-json details > summary { cursor: pointer; list-style: none; }
-  .kt-json details > summary::-webkit-details-marker { display: none; }
-  .kt-json details > summary::before { content: '▶ '; }
-  .kt-json details[open] > summary::before { content: '▼ '; }
-  .kt-json-null { color: #6c757d; }
-  .kt-json-boolean { color: #d63384; }
-  .kt-json-number { color: #0d6efd; }
-  .kt-json-string { color: #198754; }
-  .kt-json-key { color: #6f42c1; }
-  .kt-json-item { margin-left: 1rem; }
-
-  /* Code Block */
-  .kt-code { position: relative; margin: 0.5rem 0; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; overflow: hidden; }
-  .kt-code pre { margin: 0; padding: 1rem; overflow-x: auto; }
-  .kt-code code { font-family: 'SF Mono', Monaco, Consolas, monospace; font-size: 0.875rem; }
-  .kt-code-wrap pre { white-space: pre-wrap; word-wrap: break-word; }
-  .kt-code-line-numbers { float: left; padding: 1rem 0.5rem 1rem 1rem; text-align: right; color: #6c757d; border-right: 1px solid #e9ecef; user-select: none; }
-  .kt-code-line-numbers span { display: block; }
-  .kt-code-content { display: block; }
-
-  /* Syntax Highlighting */
-  .kt-hl-keyword { color: #d73a49; }
-  .kt-hl-string { color: #032f62; }
-  .kt-hl-number { color: #005cc5; }
-  .kt-hl-comment { color: #6a737d; font-style: italic; }
-  .kt-hl-function { color: #6f42c1; }
-  .kt-hl-operator { color: #d73a49; }
-  .kt-hl-punctuation { color: #24292e; }
-  .kt-hl-type { color: #22863a; }
-  .kt-hl-tag { color: #22863a; }
-  .kt-hl-attribute { color: #6f42c1; }
-  .kt-hl-value { color: #032f62; }
-  .kt-hl-selector { color: #6f42c1; }
-  .kt-hl-property { color: #005cc5; }
-
-  /* Markdown */
-  .kt-markdown { line-height: 1.6; }
-  .kt-markdown h1 { font-size: 2rem; margin: 1rem 0 0.5rem; border-bottom: 1px solid #e9ecef; padding-bottom: 0.3rem; }
-  .kt-markdown h2 { font-size: 1.5rem; margin: 1rem 0 0.5rem; border-bottom: 1px solid #e9ecef; padding-bottom: 0.3rem; }
-  .kt-markdown h3 { font-size: 1.25rem; margin: 1rem 0 0.5rem; }
-  .kt-markdown h4, .kt-markdown h5, .kt-markdown h6 { font-size: 1rem; margin: 1rem 0 0.5rem; }
-  .kt-markdown p { margin: 0.5rem 0; }
-  .kt-markdown code { background: #f1f3f5; padding: 0.125rem 0.25rem; border-radius: 3px; font-family: monospace; font-size: 0.875em; }
-  .kt-markdown pre { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 4px; padding: 1rem; overflow-x: auto; }
-  .kt-markdown pre code { background: none; padding: 0; }
-  .kt-markdown blockquote { border-left: 4px solid #e9ecef; margin: 0.5rem 0; padding: 0.5rem 1rem; color: #6c757d; }
-  .kt-markdown ul, .kt-markdown ol { margin: 0.5rem 0; padding-left: 2rem; }
-  .kt-markdown li { margin: 0.25rem 0; }
-  .kt-markdown a { color: #0d6efd; text-decoration: none; }
-  .kt-markdown a:hover { text-decoration: underline; }
-  .kt-markdown img { max-width: 100%; height: auto; }
-  .kt-markdown hr { border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
-`;
-
-export function createApp(script: Script, userConfig?: KantanConfig) {
+export async function createApp(script: Script, options?: KantanAppOptions): Promise<KantanApp> {
+	const { port, hostname, ...userConfig } = options ?? {};
 	const config = resolveConfig(userConfig);
 	const sessionManager = new SessionManager(config.session, config.security);
 	setSessionManager(sessionManager);
@@ -105,6 +63,26 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 	});
 
 	const app = new Hono();
+
+	// ミドルウェア設定（CI環境ではログを抑制）
+	if (!process.env["CI"]) {
+		app.use("*", logger());
+	}
+	app.use(
+		"*",
+		secureHeaders({
+			contentSecurityPolicy: {
+				defaultSrc: ["'self'"],
+				scriptSrc: [NONCE],
+				styleSrc: ["'self'", "'unsafe-inline'"],
+				connectSrc: ["'self'", "ws:", "wss:"],
+			},
+		}),
+	);
+
+	// ランタイムに応じたWebSocketアダプターを非同期で作成（全ランタイム共通）
+	const wsAdapter = await createWebSocketAdapterAsync(app);
+	const { upgradeWebSocket } = wsAdapter;
 
 	// ルートページ
 	app.get("/", (c) => {
@@ -142,19 +120,17 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 			isTemporarySession = true;
 		}
 
-		const initialHtml = rerun(script, undefined, sessionId);
+		const initialResult = rerun(script, undefined, sessionId);
 
 		// 一時セッションは初期レンダリング後に削除
 		if (isTemporarySession) {
 			sessionManager.deleteSession(sessionId);
 		}
-		const nonce = generateNonce();
 
-		// セキュリティヘッダー設定
-		c.header(
-			"Content-Security-Policy",
-			`default-src 'self'; script-src 'nonce-${nonce}'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:;`,
-		);
+		// secureHeadersミドルウェアが生成したnonceを取得
+		const nonce = c.get("secureHeadersNonce");
+
+		// 追加のセキュリティヘッダー
 		c.header("X-Content-Type-Options", "nosniff");
 		c.header("X-Frame-Options", "SAMEORIGIN");
 		c.header("X-XSS-Protection", "1; mode=block");
@@ -163,7 +139,24 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 		// PageConfig を取得
 		const pageConfig = getPageConfig();
 		const pageTitle = pageConfig.title ?? "kantan-ui";
-		const layoutClass = pageConfig.layout === "wide" ? "kt-layout-wide" : "kt-layout-centered";
+		const baseLayoutClass = pageConfig.layout === "wide" ? "kt-layout-wide" : "kt-layout-centered";
+
+		// サイドバーがある場合のHTML構造を生成
+		const sidebarStyle = initialResult.sidebarConfig?.width
+			? ` style="--kt-sidebar-width: ${initialResult.sidebarConfig.width}"`
+			: "";
+		const bodyContent = initialResult.hasSidebar
+			? html`<div class="kt-layout-sidebar">
+					<aside class="kt-sidebar"${raw(sidebarStyle)} data-state="expanded">
+						<div id="kt-sidebar-content" class="kt-sidebar-content">${raw(initialResult.sidebarHtml)}</div>
+						<button class="kt-sidebar-toggle" type="button" aria-label="Toggle sidebar">
+							<span class="kt-sidebar-toggle-icon"></span>
+						</button>
+					</aside>
+					<main id="kt-main-content" class="kt-main ${baseLayoutClass}">${raw(initialResult.mainHtml)}</main>
+					<div class="kt-sidebar-overlay"></div>
+				</div>`
+			: html`<div class="${baseLayoutClass}">${raw(initialResult.mainHtml)}</div>`;
 
 		// Honoのhtmlヘルパーを使用（raw()でエスケープを回避）
 		return c.html(
@@ -177,14 +170,40 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 							${raw(defaultStyles)}
 						</style>
 					</head>
-					<body class="${layoutClass}">
-						<div id="app">${raw(initialHtml)}</div>
+					<body>
+						<div id="app">${bodyContent}</div>
 						<script nonce="${nonce}">
 							${raw(clientScript)}
 						</script>
 					</body>
 				</html>`,
 		);
+	});
+
+	// ダウンロードエンドポイント（Blobストリーミング）
+	app.get("/download/:id", (c) => {
+		const downloadId = c.req.param("id");
+		const download = sessionManager.getDownload(downloadId);
+
+		if (!download) {
+			return c.text("Download not found or expired", 404);
+		}
+
+		// Web標準 Response + ReadableStream でストリーミング
+		const stream = new ReadableStream({
+			start(controller) {
+				controller.enqueue(new Uint8Array(download.data));
+				controller.close();
+			},
+		});
+
+		return new Response(stream, {
+			headers: {
+				"Content-Type": download.mime,
+				"Content-Disposition": `attachment; filename="${encodeURIComponent(download.filename)}"`,
+				"Content-Length": download.data.byteLength.toString(),
+			},
+		});
 	});
 
 	// WebSocket エンドポイント
@@ -196,7 +215,6 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 
 			return {
 				onOpen: (_evt, ws) => {
-					console.log("WebSocket connected");
 					sessionManager.initializePong(ws);
 				},
 				onMessage: (event, ws) => {
@@ -243,16 +261,37 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 						}
 
 						// 初期HTML生成
-						const htmlContent = rerun(script, undefined, session.id);
-						session.lastHtml = htmlContent;
+						const result = rerun(script, undefined, session.id);
+						session.lastHtml = result.mainHtml;
+						session.lastSidebarHtml = result.sidebarHtml;
 
-						const seq = sessionManager.addPatchToHistory(session.id, [
-							{ type: "replaceRoot", html: htmlContent },
-						]);
+						// サイドバーがある場合は個別更新、ない場合はreplaceRoot
+						let initPatches: Patch[];
+						if (result.hasSidebar) {
+							const pageConfig = getPageConfig();
+							const baseLayoutClass =
+								pageConfig.layout === "wide" ? "kt-layout-wide" : "kt-layout-centered";
+							initPatches = [
+								{
+									type: "replaceNode",
+									id: "kt-main-content",
+									html: `<main id="kt-main-content" class="kt-main ${baseLayoutClass}">${result.mainHtml}</main>`,
+								},
+								{
+									type: "replaceNode",
+									id: "kt-sidebar-content",
+									html: `<div id="kt-sidebar-content" class="kt-sidebar-content">${result.sidebarHtml}</div>`,
+								},
+							];
+						} else {
+							initPatches = [{ type: "replaceRoot", html: result.mainHtml }];
+						}
+
+						const seq = sessionManager.addPatchToHistory(session.id, initPatches);
 
 						const message: ServerMessage = {
 							type: "patch",
-							patches: [{ type: "replaceRoot", html: htmlContent }],
+							patches: initPatches,
 							seq,
 							sessionId: config.session.scope === "tab" ? session.id : undefined,
 						};
@@ -261,45 +300,39 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 						const eventSessionId = cookieSessionId ?? data.sessionId;
 						if (!eventSessionId) {
 							console.error("Event received without sessionId");
-							const errorMessage: ServerMessage = {
-								type: "error",
-								error: {
-									code: "SESSION_ID_REQUIRED",
-									message: "sessionId is required for event messages.",
-								},
-							};
-							ws.send(JSON.stringify(errorMessage));
+							ws.send(
+								createErrorMessageJson(
+									"SESSION_ID_REQUIRED",
+									"sessionId is required for event messages.",
+								),
+							);
 							return;
 						}
 
 						const session = sessionManager.getSession(eventSessionId);
 						if (!session) {
 							console.error("Session not found:", eventSessionId);
-							const errorMessage: ServerMessage = {
-								type: "error",
-								error: {
-									code: "SESSION_NOT_FOUND",
-									message: "Session not found. Please refresh or reconnect.",
-								},
-							};
-							ws.send(JSON.stringify(errorMessage));
+							ws.send(
+								createErrorMessageJson(
+									"SESSION_NOT_FOUND",
+									"Session not found. Please refresh or reconnect.",
+								),
+							);
 							return;
 						}
 
 						// レート制限チェック
 						const rateLimitResult = sessionManager.checkRateLimit(session.id);
 						if (!rateLimitResult.allowed) {
-							const errorMessage: ServerMessage = {
-								type: "error",
-								error: {
-									code: "RATE_LIMITED",
-									message: "Too many requests. Please slow down.",
-									...(rateLimitResult.retryAfter !== undefined && {
-										retryAfter: rateLimitResult.retryAfter,
-									}),
-								},
-							};
-							ws.send(JSON.stringify(errorMessage));
+							ws.send(
+								createErrorMessageJson(
+									"RATE_LIMITED",
+									"Too many requests. Please slow down.",
+									rateLimitResult.retryAfter !== undefined
+										? { retryAfter: rateLimitResult.retryAfter }
+										: undefined,
+								),
+							);
 							return;
 						}
 
@@ -325,7 +358,7 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 							: undefined;
 
 						const widgetId = data.widgetId ?? "";
-						const newHtml = rerun(
+						const newResult = rerun(
 							script,
 							{ widgetId, value: data.value },
 							session.id,
@@ -333,16 +366,28 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 							streamingOptions,
 						);
 
-						// 差分計算
+						// 差分計算（メインコンテンツ）
 						let patches: Patch[];
 						if (session.lastHtml) {
-							const diffResult = diff(session.lastHtml, newHtml);
-							patches = toWebSocketPatches(diffResult, newHtml);
+							const diffResult = diff(session.lastHtml, newResult.mainHtml);
+							patches = toWebSocketPatches(diffResult, newResult.mainHtml);
 						} else {
-							patches = [{ type: "replaceRoot", html: newHtml }];
+							patches = [{ type: "replaceRoot", html: newResult.mainHtml }];
 						}
 
-						session.lastHtml = newHtml;
+						// サイドバーの差分計算
+						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
+							const sidebarDiffResult = diff(session.lastSidebarHtml ?? "", newResult.sidebarHtml);
+							const sidebarPatches = toWebSocketPatches(
+								sidebarDiffResult,
+								newResult.sidebarHtml,
+								"kt-sidebar-content",
+							);
+							patches.push(...sidebarPatches);
+						}
+
+						session.lastHtml = newResult.mainHtml;
+						session.lastSidebarHtml = newResult.sidebarHtml;
 
 						if (patches.length > 0) {
 							const seq = sessionManager.addPatchToHistory(session.id, patches);
@@ -357,7 +402,6 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 				},
 				onClose: (_evt, ws) => {
 					sessionManager.removeWebSocket(ws);
-					console.log("WebSocket disconnected");
 				},
 			};
 		}),
@@ -375,8 +419,11 @@ export function createApp(script: Script, userConfig?: KantanConfig) {
 
 	return {
 		fetch: app.fetch,
-		websocket,
+		websocket: wsAdapter.websocket,
+		port,
+		hostname,
+		injectWebSocket: wsAdapter.injectWebSocket as ((server: NodeServerType) => void) | undefined,
 		shutdown,
-		app, // Honoインスタンス（拡張用）
+		app,
 	};
 }

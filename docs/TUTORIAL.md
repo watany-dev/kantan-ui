@@ -10,12 +10,14 @@
 4. [ウィジェットの使い方](#ウィジェットの使い方)
 5. [データ表示](#データ表示)
 6. [レイアウト](#レイアウト)
-7. [セッションステート](#セッションステート)
-8. [ページ設定](#ページ設定)
-9. [実践: カウンターアプリ](#実践-カウンターアプリ)
-10. [実践: TODOアプリ](#実践-todoアプリ)
-11. [設定オプション](#設定オプション)
-12. [次のステップ](#次のステップ)
+7. [チャットUI](#チャットui)
+8. [セッションステート](#セッションステート)
+9. [ページ設定](#ページ設定)
+10. [実践: カウンターアプリ](#実践-カウンターアプリ)
+11. [実践: TODOアプリ](#実践-todoアプリ)
+12. [実践: チャットアプリ](#実践-チャットアプリ)
+13. [設定オプション](#設定オプション)
+14. [次のステップ](#次のステップ)
 
 ---
 
@@ -90,14 +92,34 @@ const script = () => {
   return undefined;
 };
 
-// アプリを作成してエクスポート
-export default createApp(script);
+// アプリを作成してエクスポート（ポート指定可能）
+export default await createApp(script, { port: 3000 });
 ```
 
 ### 実行
 
+**Bun（推奨）**
+
 ```bash
 bun run src/index.ts
+```
+
+Bunは`export default`で`fetch`/`websocket`/`port`を持つオブジェクトを自動的にサーバーとして起動します。
+
+**Node.js**
+
+```typescript
+import { createApp, kt } from "kantan-ui";
+import { serve } from "kantan-ui/serve";
+
+const script = () => {
+  kt.title("Hello, kantan-ui!");
+  kt.write("これは最初のkantan-uiアプリです。");
+  return undefined;
+};
+
+const app = await createApp(script);
+serve(app, { port: 3000 });
 ```
 
 ブラウザで http://localhost:3000 を開くと、「Hello, kantan-ui!」が表示されます。
@@ -461,6 +483,73 @@ tab2(() => {
 
 ---
 
+## チャットUI
+
+チャットアプリケーションを構築するためのAPIです。
+
+### チャットメッセージ
+
+ユーザーとアシスタントのメッセージを表示します。
+
+```typescript
+// 基本的な使い方
+kt.chat_message("user", "こんにちは！");
+kt.chat_message("assistant", "はい、何かお手伝いできますか？");
+
+// システムメッセージ
+kt.chat_message("system", "チャットを開始しました");
+```
+
+メッセージの内容はMarkdownに対応しています:
+
+```typescript
+kt.chat_message("assistant", "**太字**や`コード`も使えます。\n\n```typescript\nconst x = 1;\n```");
+```
+
+カスタムアバターと名前を設定:
+
+```typescript
+kt.chat_message("user", "質問があります", {
+  name: "田中太郎",
+  avatar: "🧑‍💻",
+});
+
+kt.chat_message("assistant", "お答えします", {
+  name: "AI Assistant",
+  avatar: "🤖",
+});
+```
+
+### チャットコンテナ
+
+メッセージをスクロール可能な領域に表示し、新しいメッセージが追加されると自動的に最下部にスクロールします。
+
+```typescript
+kt.chat_container(() => {
+  for (const msg of state.messages) {
+    kt.chat_message(msg.role, msg.content);
+  }
+}, { height: "400px" });
+```
+
+オプション:
+- `height`: コンテナの高さ（デフォルト: "400px"）
+
+**自動スクロールの動作:**
+- 新しいメッセージが追加されると自動的に最下部にスクロール
+- ユーザーが上にスクロールすると自動スクロールは一時停止
+- ユーザーが最下部に戻ると自動スクロールが再開
+
+### ロール別スタイリング
+
+| ロール | 説明 | スタイル |
+|--------|------|----------|
+| `user` | ユーザーのメッセージ | 右寄せ、薄い青背景 |
+| `assistant` | アシスタントの応答 | 左寄せ、白背景 |
+| `system` | システム通知 | 左寄せ、薄い黄色背景、イタリック |
+
+---
+
 ## セッションステート
 
 セッションステートを使うと、ユーザーの操作間で状態を保持できます。
@@ -608,7 +697,7 @@ const script = () => {
   return undefined;
 };
 
-export default createApp(script);
+export default await createApp(script);
 ```
 
 ---
@@ -705,7 +794,130 @@ const script = () => {
   return undefined;
 };
 
-export default createApp(script);
+export default await createApp(script);
+```
+
+---
+
+## 実践: チャットアプリ
+
+Chat APIを使って、シンプルなチャットアプリを作成します。
+
+```typescript
+import { createApp, kt, createTypedSessionState } from "kantan-ui";
+
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+type ChatState = {
+  messages: Message[];
+  inputText: string;
+};
+
+const state = createTypedSessionState<ChatState>({
+  messages: [],
+  inputText: "",
+});
+
+// シンプルな応答生成（実際にはLLM APIを呼び出す）
+function generateResponse(userMessage: string): string {
+  if (userMessage.includes("こんにちは")) {
+    return "こんにちは！何かお手伝いできることはありますか？";
+  }
+  if (userMessage.includes("時間")) {
+    return `現在の時刻は ${new Date().toLocaleTimeString()} です。`;
+  }
+  return "すみません、よく分かりませんでした。もう一度お願いします。";
+}
+
+const script = () => {
+  kt.title("チャットアプリ");
+  kt.divider();
+
+  // チャットメッセージ表示エリア
+  kt.chat_container(() => {
+    if (state.messages.length === 0) {
+      kt.chat_message("system", "チャットを開始してください");
+    }
+
+    for (const msg of state.messages) {
+      kt.chat_message(msg.role, msg.content);
+    }
+  }, { height: "400px" });
+
+  kt.divider();
+
+  // メッセージ入力
+  const input = kt.text_area("メッセージ", state.inputText, {
+    key: "chat_input",
+    placeholder: "メッセージを入力...",
+    rows: 2,
+  });
+  state.inputText = input;
+
+  // 送信ボタン
+  if (kt.button("送信", { key: "send_btn" })) {
+    if (state.inputText.trim() !== "") {
+      // ユーザーメッセージを追加
+      state.messages.push({
+        role: "user",
+        content: state.inputText,
+      });
+
+      // アシスタントの応答を生成
+      const response = generateResponse(state.inputText);
+      state.messages.push({
+        role: "assistant",
+        content: response,
+      });
+
+      // 入力をクリア
+      state.inputText = "";
+    }
+  }
+
+  // チャット履歴のクリア
+  if (state.messages.length > 0) {
+    if (kt.button("履歴をクリア", { key: "clear_btn" })) {
+      state.messages = [];
+    }
+  }
+
+  return undefined;
+};
+
+export default await createApp(script);
+```
+
+### 発展: LLM APIとの連携
+
+実際のチャットボットでは、OpenAI APIなどと連携できます:
+
+```typescript
+// 注意: これは同期的な例です
+// 実際のストリーミング応答には追加の実装が必要です
+
+async function callLLM(messages: Message[]): Promise<string> {
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4",
+      messages: messages.map(m => ({
+        role: m.role,
+        content: m.content,
+      })),
+    }),
+  });
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
 ```
 
 ---
@@ -717,13 +929,15 @@ export default createApp(script);
 ### 基本設定
 
 ```typescript
-const kantanApp = createApp(script, {
+// 全ランタイム共通: await createApp でアプリを作成
+export default await createApp(script, {
+  port: 3000,            // サーバーポート（Bun.serve互換）
+  hostname: "0.0.0.0",   // ホスト名（省略可）
   session: {
     scope: "tab",        // "tab" または "browser"
     ttl: 24 * 60 * 60 * 1000,  // セッションの有効期限（24時間）
   },
 });
-export default kantanApp;
 ```
 
 ### セッションスコープ
@@ -769,7 +983,12 @@ const script = () => {
   return undefined;
 };
 
-export default createApp(script, {
+export default await createApp(script, {
+  // サーバー設定（Bun.serve互換）
+  port: 3000,
+  hostname: "0.0.0.0",
+
+  // セッション設定
   session: {
     sessionKey: "__my_app_session",
     ttl: 7 * 24 * 60 * 60 * 1000,  // 1週間
@@ -782,6 +1001,8 @@ export default createApp(script, {
       path: "/",
     },
   },
+
+  // クライアント設定
   client: {
     maxReconnectAttempts: 10,
     baseReconnectDelay: 500,
@@ -789,6 +1010,8 @@ export default createApp(script, {
     pingInterval: 15000,
     pongTimeout: 30000,
   },
+
+  // ストリーミング設定
   streaming: {
     enabled: false,
     flushThreshold: 5,
@@ -807,6 +1030,7 @@ export default createApp(script, {
 - ✅ フォームウィジェット（checkbox, toggle, radio, number_input, text_area, multiselect）
 - ✅ データ表示（table）
 - ✅ レイアウト（tabs）
+- ✅ チャットUI（chat_message, chat_container）
 - ✅ ページ設定（set_page_config, rerun）
 - ✅ セッションステート管理
 - ✅ WebSocketリアルタイム通信
@@ -888,7 +1112,7 @@ const script = () => {
   return undefined;
 };
 
-export default createApp(script);
+export default await createApp(script);
 ```
 
 シンプルで、型安全で、高速。これがkantan-uiです。

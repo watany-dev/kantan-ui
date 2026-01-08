@@ -14,19 +14,19 @@ type LanguageRules = HighlightRule[];
  */
 const typescriptRules: LanguageRules = [
 	// コメント（先に処理）
-	{ pattern: /\/\/.*$/gm, className: "kt-code-comment" },
+	{ pattern: /\/\/.*$/gm, className: "kt-hl-comment" },
 	// 文字列
-	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-code-string" },
-	{ pattern: /'(?:[^'\\]|\\.)*'/g, className: "kt-code-string" },
-	{ pattern: /`(?:[^`\\]|\\.)*`/g, className: "kt-code-string" },
+	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-hl-string" },
+	{ pattern: /'(?:[^'\\]|\\.)*'/g, className: "kt-hl-string" },
+	{ pattern: /`(?:[^`\\]|\\.)*`/g, className: "kt-hl-string" },
 	// キーワード
 	{
 		pattern:
 			/\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|class|interface|type|import|export|from|default|async|await|new|this|typeof|instanceof|in|of|try|catch|finally|throw|void|null|undefined|true|false)\b/g,
-		className: "kt-code-keyword",
+		className: "kt-hl-keyword",
 	},
 	// 数値
-	{ pattern: /\b\d+\.?\d*\b/g, className: "kt-code-number" },
+	{ pattern: /\b\d+\.?\d*\b/g, className: "kt-hl-number" },
 ];
 
 /**
@@ -34,20 +34,20 @@ const typescriptRules: LanguageRules = [
  */
 const pythonRules: LanguageRules = [
 	// コメント
-	{ pattern: /#.*$/gm, className: "kt-code-comment" },
+	{ pattern: /#.*$/gm, className: "kt-hl-comment" },
 	// 文字列
-	{ pattern: /"""[\s\S]*?"""/g, className: "kt-code-string" },
-	{ pattern: /'''[\s\S]*?'''/g, className: "kt-code-string" },
-	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-code-string" },
-	{ pattern: /'(?:[^'\\]|\\.)*'/g, className: "kt-code-string" },
+	{ pattern: /"""[\s\S]*?"""/g, className: "kt-hl-string" },
+	{ pattern: /'''[\s\S]*?'''/g, className: "kt-hl-string" },
+	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-hl-string" },
+	{ pattern: /'(?:[^'\\]|\\.)*'/g, className: "kt-hl-string" },
 	// キーワード
 	{
 		pattern:
 			/\b(def|class|if|elif|else|for|while|return|import|from|as|try|except|finally|raise|with|lambda|pass|break|continue|and|or|not|in|is|None|True|False|global|nonlocal|yield|async|await)\b/g,
-		className: "kt-code-keyword",
+		className: "kt-hl-keyword",
 	},
 	// 数値
-	{ pattern: /\b\d+\.?\d*\b/g, className: "kt-code-number" },
+	{ pattern: /\b\d+\.?\d*\b/g, className: "kt-hl-number" },
 ];
 
 /**
@@ -55,11 +55,11 @@ const pythonRules: LanguageRules = [
  */
 const jsonRules: LanguageRules = [
 	// 文字列（キーと値）
-	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-code-string" },
+	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-hl-string" },
 	// キーワード（true, false, null）
-	{ pattern: /\b(true|false|null)\b/g, className: "kt-code-keyword" },
+	{ pattern: /\b(true|false|null)\b/g, className: "kt-hl-keyword" },
 	// 数値
-	{ pattern: /-?\b\d+\.?\d*(?:[eE][+-]?\d+)?\b/g, className: "kt-code-number" },
+	{ pattern: /-?\b\d+\.?\d*(?:[eE][+-]?\d+)?\b/g, className: "kt-hl-number" },
 ];
 
 /**
@@ -67,18 +67,18 @@ const jsonRules: LanguageRules = [
  */
 const bashRules: LanguageRules = [
 	// コメント
-	{ pattern: /#.*$/gm, className: "kt-code-comment" },
+	{ pattern: /#.*$/gm, className: "kt-hl-comment" },
 	// 文字列
-	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-code-string" },
-	{ pattern: /'[^']*'/g, className: "kt-code-string" },
+	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-hl-string" },
+	{ pattern: /'[^']*'/g, className: "kt-hl-string" },
 	// キーワード
 	{
 		pattern:
 			/\b(if|then|else|elif|fi|for|while|do|done|case|esac|function|return|exit|echo|cd|ls|cat|grep|sed|awk|export|source|alias|unalias|set|unset|local|readonly)\b/g,
-		className: "kt-code-keyword",
+		className: "kt-hl-keyword",
 	},
 	// 数値
-	{ pattern: /\b\d+\b/g, className: "kt-code-number" },
+	{ pattern: /\b\d+\b/g, className: "kt-hl-number" },
 ];
 
 /**
@@ -86,12 +86,12 @@ const bashRules: LanguageRules = [
  */
 const htmlRules: LanguageRules = [
 	// コメント
-	{ pattern: /&lt;!--[\s\S]*?--&gt;/g, className: "kt-code-comment" },
+	{ pattern: /&lt;!--[\s\S]*?--&gt;/g, className: "kt-hl-comment" },
 	// タグ
-	{ pattern: /&lt;\/?[a-zA-Z][a-zA-Z0-9]*(?:\s[^&]*)?&gt;/g, className: "kt-code-keyword" },
+	{ pattern: /&lt;\/?[a-zA-Z][a-zA-Z0-9]*(?:\s[^&]*)?&gt;/g, className: "kt-hl-tag" },
 	// 文字列（属性値）
-	{ pattern: /"[^"]*"/g, className: "kt-code-string" },
-	{ pattern: /'[^']*'/g, className: "kt-code-string" },
+	{ pattern: /"[^"]*"/g, className: "kt-hl-string" },
+	{ pattern: /'[^']*'/g, className: "kt-hl-string" },
 ];
 
 /**
@@ -99,14 +99,14 @@ const htmlRules: LanguageRules = [
  */
 const cssRules: LanguageRules = [
 	// コメント
-	{ pattern: /\/\*[\s\S]*?\*\//g, className: "kt-code-comment" },
+	{ pattern: /\/\*[\s\S]*?\*\//g, className: "kt-hl-comment" },
 	// 文字列
-	{ pattern: /"[^"]*"/g, className: "kt-code-string" },
-	{ pattern: /'[^']*'/g, className: "kt-code-string" },
-	// キーワード（プロパティ名）
-	{ pattern: /[a-z-]+(?=\s*:)/g, className: "kt-code-keyword" },
+	{ pattern: /"[^"]*"/g, className: "kt-hl-string" },
+	{ pattern: /'[^']*'/g, className: "kt-hl-string" },
+	// プロパティ名
+	{ pattern: /[a-z-]+(?=\s*:)/g, className: "kt-hl-property" },
 	// 数値（単位付き）
-	{ pattern: /-?\d+\.?\d*(px|em|rem|%|vh|vw|s|ms)?/g, className: "kt-code-number" },
+	{ pattern: /-?\d+\.?\d*(px|em|rem|%|vh|vw|s|ms)?/g, className: "kt-hl-number" },
 ];
 
 /**
@@ -114,17 +114,71 @@ const cssRules: LanguageRules = [
  */
 const sqlRules: LanguageRules = [
 	// コメント
-	{ pattern: /--.*$/gm, className: "kt-code-comment" },
+	{ pattern: /--.*$/gm, className: "kt-hl-comment" },
 	// 文字列
-	{ pattern: /'[^']*'/g, className: "kt-code-string" },
+	{ pattern: /'[^']*'/g, className: "kt-hl-string" },
 	// キーワード（大文字小文字問わず）
 	{
 		pattern:
 			/\b(SELECT|FROM|WHERE|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|TABLE|INDEX|INTO|VALUES|SET|AND|OR|NOT|NULL|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AS|ORDER|BY|GROUP|HAVING|LIMIT|OFFSET|UNION|DISTINCT|COUNT|SUM|AVG|MIN|MAX|CASE|WHEN|THEN|ELSE|END)\b/gi,
-		className: "kt-code-keyword",
+		className: "kt-hl-keyword",
 	},
 	// 数値
-	{ pattern: /\b\d+\.?\d*\b/g, className: "kt-code-number" },
+	{ pattern: /\b\d+\.?\d*\b/g, className: "kt-hl-number" },
+];
+
+/**
+ * Go のハイライトルール
+ */
+const goRules: LanguageRules = [
+	// コメント
+	{ pattern: /\/\/.*$/gm, className: "kt-hl-comment" },
+	{ pattern: /\/\*[\s\S]*?\*\//g, className: "kt-hl-comment" },
+	// 文字列
+	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-hl-string" },
+	{ pattern: /`[^`]*`/g, className: "kt-hl-string" },
+	// キーワード
+	{
+		pattern:
+			/\b(break|case|chan|const|continue|default|defer|else|fallthrough|for|func|go|goto|if|import|interface|map|package|range|return|select|struct|switch|type|var|nil|true|false|iota)\b/g,
+		className: "kt-hl-keyword",
+	},
+	// 組み込み型
+	{
+		pattern:
+			/\b(bool|byte|complex64|complex128|error|float32|float64|int|int8|int16|int32|int64|rune|string|uint|uint8|uint16|uint32|uint64|uintptr)\b/g,
+		className: "kt-hl-type",
+	},
+	// 数値
+	{ pattern: /\b\d+\.?\d*\b/g, className: "kt-hl-number" },
+];
+
+/**
+ * Rust のハイライトルール
+ */
+const rustRules: LanguageRules = [
+	// コメント
+	{ pattern: /\/\/.*$/gm, className: "kt-hl-comment" },
+	{ pattern: /\/\*[\s\S]*?\*\//g, className: "kt-hl-comment" },
+	// 文字列
+	{ pattern: /"(?:[^"\\]|\\.)*"/g, className: "kt-hl-string" },
+	{ pattern: /r#*"[^"]*"#*/g, className: "kt-hl-string" },
+	// キーワード
+	{
+		pattern:
+			/\b(as|async|await|break|const|continue|crate|dyn|else|enum|extern|false|fn|for|if|impl|in|let|loop|match|mod|move|mut|pub|ref|return|self|Self|static|struct|super|trait|true|type|unsafe|use|where|while)\b/g,
+		className: "kt-hl-keyword",
+	},
+	// 組み込み型
+	{
+		pattern:
+			/\b(bool|char|str|u8|u16|u32|u64|u128|usize|i8|i16|i32|i64|i128|isize|f32|f64|Option|Result|String|Vec|Box|Rc|Arc|Cell|RefCell)\b/g,
+		className: "kt-hl-type",
+	},
+	// マクロ
+	{ pattern: /\b[a-z_][a-z0-9_]*!/g, className: "kt-hl-function" },
+	// 数値
+	{ pattern: /\b\d+\.?\d*\b/g, className: "kt-hl-number" },
 ];
 
 /**
@@ -137,6 +191,8 @@ const languageAliases: Record<string, string> = {
 	py: "python",
 	sh: "bash",
 	shell: "bash",
+	golang: "go",
+	rs: "rust",
 };
 
 /**
@@ -150,6 +206,8 @@ export const languageRules: Record<string, LanguageRules> = {
 	html: htmlRules,
 	css: cssRules,
 	sql: sqlRules,
+	go: goRules,
+	rust: rustRules,
 };
 
 /**
