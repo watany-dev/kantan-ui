@@ -311,3 +311,106 @@ describe("sidebar widget APIs", () => {
 		expect(ctx.getSidebarHtml()).toContain('type="radio"');
 	});
 });
+
+describe("sidebar layout, feedback, and data APIs", () => {
+	let ctx: RenderContext;
+	let mockManager: MockSessionManager;
+
+	beforeEach(() => {
+		ctx = new RenderContext();
+		setRenderContext(ctx);
+		resetWidgetCounter();
+		mockManager = new MockSessionManager();
+		setSessionManager(mockManager as never);
+		setCurrentSessionId("test-session");
+	});
+
+	afterEach(() => {
+		setRenderContext(null);
+		resetWidgetCounter();
+		resetSessionManager();
+		setCurrentSessionId(null);
+	});
+
+	describe("layout APIs", () => {
+		it("should support sidebar.container()", () => {
+			sidebar.container(() => {
+				sidebar.write("Container content");
+			});
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-container");
+			expect(html).toContain("Container content");
+		});
+
+		it("should support sidebar.columns()", () => {
+			sidebar.columns([
+				() => sidebar.write("Left"),
+				() => sidebar.write("Right"),
+			]);
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-columns");
+			expect(html).toContain("Left");
+			expect(html).toContain("Right");
+		});
+
+		it("should support sidebar.expander()", () => {
+			sidebar.expander("Details", () => {
+				sidebar.write("Hidden content");
+			});
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-expander");
+			expect(html).toContain("Details");
+			expect(html).toContain("Hidden content");
+		});
+
+		it("should support sidebar.tabs()", () => {
+			const [tab1, tab2] = sidebar.tabs(["Tab 1", "Tab 2"]);
+
+			tab1(() => {
+				sidebar.write("Tab 1 content");
+			});
+			tab2(() => {
+				sidebar.write("Tab 2 content");
+			});
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-tabs");
+			expect(html).toContain("Tab 1");
+			expect(html).toContain("Tab 1 content");
+		});
+	});
+
+	describe("feedback APIs", () => {
+		it("should support sidebar.progress()", () => {
+			sidebar.progress(50);
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-progress");
+		});
+
+		it("should support sidebar.spinner()", () => {
+			sidebar.spinner("Loading...");
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-spinner");
+			expect(html).toContain("Loading...");
+		});
+	});
+
+	describe("data APIs", () => {
+		it("should support sidebar.table()", () => {
+			sidebar.table([
+				{ name: "Alice", age: 30 },
+				{ name: "Bob", age: 25 },
+			]);
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-table");
+			expect(html).toContain("Alice");
+			expect(html).toContain("Bob");
+		});
+	});
+});

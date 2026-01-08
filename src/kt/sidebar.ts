@@ -95,7 +95,11 @@ export interface SidebarAPI extends SidebarAPIs {
 // Implementation
 // ============================================
 
-import { withSidebarContext } from "./layout";
+import * as chat from "./chat";
+import * as data from "./data";
+import * as feedback from "./feedback";
+import * as formModule from "./form";
+import { columns, container, expander, tabs, withSidebarContext } from "./layout";
 import * as output from "./output";
 import * as widgets from "./widgets";
 
@@ -142,6 +146,29 @@ const sidebarAPIs: Record<string, (...args: any[]) => any> = {
 	toggle: widgets.toggle,
 	multiselect: widgets.multiselect,
 	download_button: widgets.download_button,
+
+	// Feedback APIs (toast除外)
+	progress: feedback.progress,
+	spinner: feedback.spinner,
+
+	// Data APIs
+	table: data.table,
+
+	// Layout APIs (sidebar除外)
+	container: container,
+	columns: columns,
+	expander: expander,
+	tabs: tabs,
+
+	// Chat APIs
+	chat_message: chat.chat_message,
+	chat_container: chat.chat_container,
+
+	// Form APIs
+	form: formModule.form,
+	form_submit_button: formModule.form_submit_button,
+	validation_error: formModule.validation_error,
+	validation_errors: formModule.validation_errors,
 };
 
 // コールバック記法のベース関数
