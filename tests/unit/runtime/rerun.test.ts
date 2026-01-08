@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { sidebar } from "../../../src/kt/layout";
+import { write } from "../../../src/kt/output";
 import { AbortError } from "../../../src/runtime/abort";
 import { rerun } from "../../../src/runtime/rerun";
 
@@ -54,5 +56,31 @@ describe("rerun with AbortSignal", () => {
 		);
 
 		expect(result.mainHtml).toBe("<div>With context</div>");
+	});
+});
+
+describe("rerun sidebarWidth", () => {
+	it("should return default sidebarWidth", () => {
+		const result = rerun(() => {
+			write("test");
+		});
+		expect(result.sidebarWidth).toBe("280px");
+	});
+
+	it("should return default sidebarWidth for string return type", () => {
+		const result = rerun(() => "<div>test</div>");
+		expect(result.sidebarWidth).toBe("280px");
+	});
+
+	it("should return custom sidebarWidth when set", () => {
+		const result = rerun(() => {
+			sidebar(
+				() => {
+					write("sidebar");
+				},
+				{ width: "400px" },
+			);
+		});
+		expect(result.sidebarWidth).toBe("400px");
 	});
 });
