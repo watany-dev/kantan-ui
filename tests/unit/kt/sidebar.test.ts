@@ -479,9 +479,7 @@ describe("sidebar layout, feedback, and data APIs", () => {
 
 	describe("chat APIs", () => {
 		it("should support sidebar.chat_message()", () => {
-			sidebar.chat_message("user", () => {
-				sidebar.write("Hello from sidebar");
-			});
+			sidebar.chat_message("user", "Hello from sidebar");
 
 			const html = ctx.getSidebarHtml();
 			expect(html).toContain("kt-chat-message");
@@ -491,9 +489,7 @@ describe("sidebar layout, feedback, and data APIs", () => {
 
 		it("should support sidebar.chat_container()", () => {
 			sidebar.chat_container(() => {
-				sidebar.chat_message("user", () => {
-					sidebar.write("Message in container");
-				});
+				sidebar.chat_message("user", "Message in container");
 			});
 
 			const html = ctx.getSidebarHtml();
@@ -528,7 +524,7 @@ describe("sidebar layout, feedback, and data APIs", () => {
 		});
 
 		it("should support sidebar.validation_error()", () => {
-			sidebar.validation_error("name", "Required field");
+			sidebar.validation_error("Required field");
 
 			const html = ctx.getSidebarHtml();
 			expect(html).toContain("Required field");
@@ -536,7 +532,7 @@ describe("sidebar layout, feedback, and data APIs", () => {
 		});
 
 		it("should support sidebar.validation_errors()", () => {
-			sidebar.validation_errors({ name: "Required", email: "Invalid format" });
+			sidebar.validation_errors(["Required", "Invalid format"]);
 
 			const html = ctx.getSidebarHtml();
 			expect(html).toContain("Required");
