@@ -4,6 +4,11 @@ export type FlushCallback = (html: string, itemCount: number) => void;
 /** レンダリングターゲット */
 export type RenderTarget = "main" | "sidebar";
 
+/** サイドバー設定 */
+export interface SidebarConfig {
+	width?: string;
+}
+
 /**
  * レンダリングコンテキスト
  * スクリプト実行中にHTMLを自動収集するためのバッファ
@@ -16,6 +21,7 @@ export class RenderContext {
 	private flushCallback: FlushCallback | null = null;
 	private flushThreshold = 0; // 0 = 無効（フラッシュしない）
 	private flushedCount = 0;
+	private sidebarConfig: SidebarConfig | null = null;
 
 	/**
 	 * フラッシュコールバックを設定
@@ -109,6 +115,20 @@ export class RenderContext {
 	}
 
 	/**
+	 * サイドバー設定を設定
+	 */
+	setSidebarConfig(config: SidebarConfig): void {
+		this.sidebarConfig = config;
+	}
+
+	/**
+	 * サイドバー設定を取得
+	 */
+	getSidebarConfig(): SidebarConfig | null {
+		return this.sidebarConfig;
+	}
+
+	/**
 	 * バッファを結合してHTMLを取得（後方互換性のため維持、メインのみ返す）
 	 */
 	getHtml(): string {
@@ -123,6 +143,7 @@ export class RenderContext {
 		this.sidebarBuffer = [];
 		this.currentTarget = "main";
 		this.flushedCount = 0;
+		this.sidebarConfig = null;
 	}
 
 	/**

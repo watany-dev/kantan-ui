@@ -14,15 +14,31 @@
  * kt.sidebar.title("Settings");
  * kt.sidebar.button("Reset");
  * ```
+ *
+ * @example カスタム幅
+ * ```typescript
+ * kt.sidebar(() => {
+ *   kt.title("Wide Sidebar");
+ * }, { width: "350px" });
+ * ```
  */
 
 import * as chatModule from "./chat";
+import { requireRenderContext } from "./context";
 import * as dataModule from "./data";
 import * as feedbackModule from "./feedback";
 import * as formModuleNS from "./form";
 import { columns, container, expander, tabs, withSidebarContext } from "./layout";
 import * as outputModule from "./output";
 import * as widgetsModule from "./widgets";
+
+/**
+ * サイドバー設定
+ */
+export interface SidebarConfig {
+	/** サイドバーの幅（例: "350px", "25vw"） */
+	width?: string;
+}
 
 /**
  * サイドバーで使用可能なAPI群
@@ -88,7 +104,7 @@ interface SidebarAPIs {
  * サイドバーAPI（コールバック記法 + オブジェクト記法）
  */
 export interface SidebarAPI extends SidebarAPIs {
-	(content: () => void): void;
+	(content: () => void, config?: SidebarConfig): void;
 }
 
 // ============================================
@@ -164,7 +180,11 @@ const sidebarAPIs: Record<string, (...args: any[]) => any> = {
 };
 
 // コールバック記法のベース関数
-function sidebarCallback(content: () => void): void {
+function sidebarCallback(content: () => void, config?: SidebarConfig): void {
+	if (config) {
+		const ctx = requireRenderContext();
+		ctx.setSidebarConfig(config);
+	}
 	withSidebarContext(content);
 }
 
