@@ -16,6 +16,7 @@ export class RenderContext {
 	private flushCallback: FlushCallback | null = null;
 	private flushThreshold = 0; // 0 = 無効（フラッシュしない）
 	private flushedCount = 0;
+	private sidebarWidth = "280px";
 
 	/**
 	 * フラッシュコールバックを設定
@@ -109,6 +110,20 @@ export class RenderContext {
 	}
 
 	/**
+	 * サイドバーの幅を設定
+	 */
+	setSidebarWidth(width: string): void {
+		this.sidebarWidth = width;
+	}
+
+	/**
+	 * サイドバーの幅を取得
+	 */
+	getSidebarWidth(): string {
+		return this.sidebarWidth;
+	}
+
+	/**
 	 * バッファを結合してHTMLを取得（後方互換性のため維持、メインのみ返す）
 	 */
 	getHtml(): string {
@@ -123,6 +138,7 @@ export class RenderContext {
 		this.sidebarBuffer = [];
 		this.currentTarget = "main";
 		this.flushedCount = 0;
+		this.sidebarWidth = "280px";
 	}
 
 	/**
