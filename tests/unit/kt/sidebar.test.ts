@@ -325,9 +325,12 @@ describe("sidebar config", () => {
 	});
 
 	it("should set sidebar config with width", () => {
-		sidebar(() => {
-			write("Wide sidebar content");
-		}, { width: "350px" });
+		sidebar(
+			() => {
+				write("Wide sidebar content");
+			},
+			{ width: "350px" },
+		);
 
 		expect(ctx.getSidebarConfig()).toEqual({ width: "350px" });
 		expect(ctx.getSidebarHtml()).toContain("Wide sidebar content");
