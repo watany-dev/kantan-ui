@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { wrapForSidebar } from "../../../src/kt/sidebar";
+import { sidebar, wrapForSidebar } from "../../../src/kt/sidebar";
 import { write } from "../../../src/kt/output";
 
 describe("wrapForSidebar", () => {
@@ -71,5 +71,130 @@ describe("wrapForSidebar", () => {
 
 		expect(wrappedGreet("World")).toBe("Hello, World!");
 		expect(wrappedGreet("World", "Hi")).toBe("Hi, World!");
+	});
+});
+
+describe("sidebar object notation", () => {
+	let ctx: RenderContext;
+
+	beforeEach(() => {
+		ctx = new RenderContext();
+		setRenderContext(ctx);
+	});
+
+	afterEach(() => {
+		setRenderContext(null);
+	});
+
+	describe("callback notation (backward compatibility)", () => {
+		it("should support callback notation", () => {
+			sidebar(() => {
+				write("Callback content");
+			});
+
+			expect(ctx.getSidebarHtml()).toContain("Callback content");
+			expect(ctx.getMainHtml()).toBe("");
+		});
+	});
+
+	describe("output APIs", () => {
+		it("should support sidebar.write()", () => {
+			sidebar.write("Hello from sidebar");
+
+			expect(ctx.getSidebarHtml()).toContain("Hello from sidebar");
+			expect(ctx.getMainHtml()).toBe("");
+		});
+
+		it("should support sidebar.title()", () => {
+			sidebar.title("Sidebar Title");
+
+			expect(ctx.getSidebarHtml()).toContain("Sidebar Title");
+			expect(ctx.getSidebarHtml()).toContain("kt-title");
+		});
+
+		it("should support sidebar.header()", () => {
+			sidebar.header("Header Text");
+
+			expect(ctx.getSidebarHtml()).toContain("Header Text");
+			expect(ctx.getSidebarHtml()).toContain("kt-header");
+		});
+
+		it("should support sidebar.subheader()", () => {
+			sidebar.subheader("Subheader Text");
+
+			expect(ctx.getSidebarHtml()).toContain("Subheader Text");
+			expect(ctx.getSidebarHtml()).toContain("kt-subheader");
+		});
+
+		it("should support sidebar.divider()", () => {
+			sidebar.divider();
+
+			expect(ctx.getSidebarHtml()).toContain("kt-divider");
+		});
+
+		it("should support sidebar.code()", () => {
+			sidebar.code("const x = 1;", "typescript");
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("kt-code");
+			expect(html).toContain("const");
+			expect(html).toContain("x = ");
+		});
+	});
+
+	describe("alert APIs", () => {
+		it("should support sidebar.success()", () => {
+			sidebar.success("Success message");
+
+			expect(ctx.getSidebarHtml()).toContain("Success message");
+			expect(ctx.getSidebarHtml()).toContain("kt-alert-success");
+		});
+
+		it("should support sidebar.error()", () => {
+			sidebar.error("Error message");
+
+			expect(ctx.getSidebarHtml()).toContain("Error message");
+			expect(ctx.getSidebarHtml()).toContain("kt-alert-error");
+		});
+
+		it("should support sidebar.warning()", () => {
+			sidebar.warning("Warning message");
+
+			expect(ctx.getSidebarHtml()).toContain("Warning message");
+			expect(ctx.getSidebarHtml()).toContain("kt-alert-warning");
+		});
+
+		it("should support sidebar.info()", () => {
+			sidebar.info("Info message");
+
+			expect(ctx.getSidebarHtml()).toContain("Info message");
+			expect(ctx.getSidebarHtml()).toContain("kt-alert-info");
+		});
+	});
+
+	describe("mixed usage", () => {
+		it("should work with mixed callback and object notation", () => {
+			sidebar.title("Settings");
+			sidebar(() => {
+				write("Callback content");
+			});
+			sidebar.write("More content");
+
+			const html = ctx.getSidebarHtml();
+			expect(html).toContain("Settings");
+			expect(html).toContain("Callback content");
+			expect(html).toContain("More content");
+		});
+
+		it("should not affect main content", () => {
+			write("Main content");
+			sidebar.write("Sidebar content");
+			write("More main content");
+
+			expect(ctx.getMainHtml()).toContain("Main content");
+			expect(ctx.getMainHtml()).toContain("More main content");
+			expect(ctx.getMainHtml()).not.toContain("Sidebar content");
+			expect(ctx.getSidebarHtml()).toContain("Sidebar content");
+		});
 	});
 });

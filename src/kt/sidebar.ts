@@ -96,6 +96,7 @@ export interface SidebarAPI extends SidebarAPIs {
 // ============================================
 
 import { withSidebarContext } from "./layout";
+import * as output from "./output";
 
 /**
  * 関数をサイドバーコンテキストでラップ
@@ -106,3 +107,62 @@ export function wrapForSidebar<F extends (...args: never[]) => unknown>(fn: F): 
 		return withSidebarContext(() => fn(...args)) as ReturnType<F>;
 	}) as F;
 }
+
+// サイドバーで使用可能なAPI群（実装）
+// biome-ignore lint/suspicious/noExplicitAny: Dynamic API mapping requires any type
+const sidebarAPIs: Record<string, (...args: any[]) => any> = {
+	// Output APIs
+	write: output.write,
+	title: output.title,
+	header: output.header,
+	subheader: output.subheader,
+	text: output.text,
+	divider: output.divider,
+	html: output.html,
+	json: output.json,
+	code: output.code,
+	markdown: output.markdown,
+
+	// Alert APIs
+	success: output.success,
+	error: output.error,
+	warning: output.warning,
+	info: output.info,
+};
+
+// コールバック記法のベース関数
+function sidebarCallback(content: () => void): void {
+	withSidebarContext(content);
+}
+
+// ラップ済みAPI のキャッシュ
+// biome-ignore lint/suspicious/noExplicitAny: Cache for wrapped functions
+const wrappedCache = new Map<string, (...args: any[]) => any>();
+
+/**
+ * サイドバーAPI（Proxy実装）
+ * コールバック記法とオブジェクト記法の両方をサポート
+ */
+export const sidebar: SidebarAPI = new Proxy(sidebarCallback as SidebarAPI, {
+	get(_target, prop: string | symbol): unknown {
+		if (typeof prop !== "string") {
+			return undefined;
+		}
+
+		// キャッシュから取得
+		const cached = wrappedCache.get(prop);
+		if (cached) {
+			return cached;
+		}
+
+		// APIが存在する場合、ラップして返す
+		const api = sidebarAPIs[prop];
+		if (api) {
+			const wrapped = wrapForSidebar(api);
+			wrappedCache.set(prop, wrapped);
+			return wrapped;
+		}
+
+		return undefined;
+	},
+});
