@@ -98,6 +98,69 @@ test.describe("Layout API - Sidebar", () => {
 	});
 });
 
+test.describe("Layout API - Sidebar Responsive", () => {
+	test("mobile: sidebar uses fixed positioning", async ({ page }) => {
+		await page.setViewportSize({ width: 375, height: 667 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "fixed");
+	});
+
+	test("mobile: overlay is visible when sidebar expanded", async ({ page }) => {
+		await page.setViewportSize({ width: 375, height: 667 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveAttribute("data-state", "expanded");
+
+		// オーバーレイが表示される
+		const overlay = page.locator(".kt-sidebar-overlay");
+		await expect(overlay).toBeVisible();
+	});
+
+	test("mobile: clicking overlay closes sidebar", async ({ page }) => {
+		await page.setViewportSize({ width: 375, height: 667 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		const overlay = page.locator(".kt-sidebar-overlay");
+
+		// 初期状態は展開
+		await expect(sidebar).toHaveAttribute("data-state", "expanded");
+
+		// オーバーレイをクリック
+		await overlay.click();
+
+		// サイドバーが閉じる
+		await expect(sidebar).toHaveAttribute("data-state", "collapsed");
+	});
+
+	test("desktop: sidebar uses relative positioning", async ({ page }) => {
+		await page.setViewportSize({ width: 1280, height: 800 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "relative");
+	});
+
+	test("boundary: 768px triggers mobile layout", async ({ page }) => {
+		await page.setViewportSize({ width: 768, height: 1024 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "fixed");
+	});
+
+	test("boundary: 769px uses desktop layout", async ({ page }) => {
+		await page.setViewportSize({ width: 769, height: 1024 });
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "relative");
+	});
+});
+
 test.describe("Layout API - Columns", () => {
 	test("kt.columns() creates flex container with kt-columns class", async ({ page }) => {
 		await gotoAndWait(page);

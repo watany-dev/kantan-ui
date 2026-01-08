@@ -312,6 +312,72 @@ describe("sidebar widget APIs", () => {
 	});
 });
 
+describe("sidebar config", () => {
+	let ctx: RenderContext;
+
+	beforeEach(() => {
+		ctx = new RenderContext();
+		setRenderContext(ctx);
+	});
+
+	afterEach(() => {
+		setRenderContext(null);
+	});
+
+	it("should set sidebar config with width", () => {
+		sidebar(
+			() => {
+				write("Wide sidebar content");
+			},
+			{ width: "350px" },
+		);
+
+		expect(ctx.getSidebarConfig()).toEqual({ width: "350px" });
+		expect(ctx.getSidebarHtml()).toContain("Wide sidebar content");
+	});
+
+	it("should not set config when not provided", () => {
+		sidebar(() => {
+			write("Normal sidebar");
+		});
+
+		expect(ctx.getSidebarConfig()).toBeNull();
+	});
+});
+
+describe("sidebar proxy edge cases", () => {
+	let ctx: RenderContext;
+
+	beforeEach(() => {
+		ctx = new RenderContext();
+		setRenderContext(ctx);
+	});
+
+	afterEach(() => {
+		setRenderContext(null);
+	});
+
+	it("should return undefined for symbol properties", () => {
+		const sym = Symbol("test");
+		// biome-ignore lint/suspicious/noExplicitAny: Testing edge case
+		const result = (sidebar as any)[sym];
+		expect(result).toBeUndefined();
+	});
+
+	it("should return undefined for non-existent API", () => {
+		// biome-ignore lint/suspicious/noExplicitAny: Testing edge case
+		const result = (sidebar as any).nonExistentMethod;
+		expect(result).toBeUndefined();
+	});
+
+	it("should cache wrapped APIs", () => {
+		// Call the same API twice to test caching
+		const firstWrite = sidebar.write;
+		const secondWrite = sidebar.write;
+		expect(firstWrite).toBe(secondWrite);
+	});
+});
+
 describe("sidebar layout, feedback, and data APIs", () => {
 	let ctx: RenderContext;
 	let mockManager: MockSessionManager;

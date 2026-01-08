@@ -134,9 +134,12 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 		const baseLayoutClass = pageConfig.layout === "wide" ? "kt-layout-wide" : "kt-layout-centered";
 
 		// サイドバーがある場合のHTML構造を生成
+		const sidebarStyle = initialResult.sidebarConfig?.width
+			? ` style="--kt-sidebar-width: ${initialResult.sidebarConfig.width}"`
+			: "";
 		const bodyContent = initialResult.hasSidebar
 			? html`<div class="kt-layout-sidebar">
-					<aside class="kt-sidebar" data-state="expanded">
+					<aside class="kt-sidebar"${raw(sidebarStyle)} data-state="expanded">
 						<div id="kt-sidebar-content" class="kt-sidebar-content">${raw(initialResult.sidebarHtml)}</div>
 						<button class="kt-sidebar-toggle" type="button" aria-label="Toggle sidebar">
 							<span class="kt-sidebar-toggle-icon"></span>
@@ -366,11 +369,13 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 
 						// サイドバーの差分計算
 						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
-							patches.push({
-								type: "replaceNode",
-								id: "kt-sidebar-content",
-								html: `<div id="kt-sidebar-content" class="kt-sidebar-content">${newResult.sidebarHtml}</div>`,
-							});
+							const sidebarDiffResult = diff(session.lastSidebarHtml ?? "", newResult.sidebarHtml);
+							const sidebarPatches = toWebSocketPatches(
+								sidebarDiffResult,
+								newResult.sidebarHtml,
+								"kt-sidebar-content",
+							);
+							patches.push(...sidebarPatches);
 						}
 
 						session.lastHtml = newResult.mainHtml;

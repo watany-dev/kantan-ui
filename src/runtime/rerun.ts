@@ -1,4 +1,9 @@
-import { type FlushCallback, RenderContext, setRenderContext } from "../kt/context";
+import {
+	type FlushCallback,
+	RenderContext,
+	type SidebarConfig,
+	setRenderContext,
+} from "../kt/context";
 import { setCurrentSessionId } from "../session/state";
 import { resetWidgetCounter } from "../widgets/registry";
 import { AbortError } from "./abort";
@@ -22,6 +27,8 @@ export interface RerunResult {
 	sidebarHtml: string;
 	/** サイドバーが使用されているか */
 	hasSidebar: boolean;
+	/** サイドバー設定（幅など） */
+	sidebarConfig: SidebarConfig | null;
 }
 
 /**
@@ -98,6 +105,7 @@ export function rerun(
 				mainHtml: result,
 				sidebarHtml: "",
 				hasSidebar: false,
+				sidebarConfig: null,
 			};
 		}
 
@@ -105,6 +113,7 @@ export function rerun(
 			mainHtml: renderContext.getMainHtml(),
 			sidebarHtml: renderContext.getSidebarHtml(),
 			hasSidebar: renderContext.hasSidebar(),
+			sidebarConfig: renderContext.getSidebarConfig(),
 		};
 	} finally {
 		// コンテキストをクリア

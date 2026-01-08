@@ -148,10 +148,15 @@ function applyPatch(patch) {
         console.error("Blocked potentially unsafe HTML content");
         return;
       }
-      const app = document.getElementById("app");
+      const rootId = patch.rootId || "app";
+      const root = document.getElementById(rootId);
+      if (!root) {
+        console.error("Root element not found:", rootId);
+        return;
+      }
       const nodes = createChildNodesFromHtml(patch.html);
       // replaceChildren()で効率的にバッチ置換
-      app.replaceChildren(...nodes);
+      root.replaceChildren(...nodes);
       break;
     }
     case "replaceNode": {
