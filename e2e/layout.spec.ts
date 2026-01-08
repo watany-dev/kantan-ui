@@ -96,6 +96,38 @@ test.describe("Layout API - Sidebar", () => {
 		// サイドバーのカウントも更新される（再レンダリング後）
 		await expect(sidebar).toContainText("Counter: 1");
 	});
+
+	test("sidebar counter increments correctly through diff updates", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		const incrementBtn = page.locator('[data-kt-event="click"]', { hasText: "+ Increment" });
+
+		// 複数回インクリメントして差分更新が正しく動作することを確認
+		await incrementBtn.click();
+		await expect(sidebar).toContainText("Counter: 1");
+
+		await incrementBtn.click();
+		await expect(sidebar).toContainText("Counter: 2");
+
+		await incrementBtn.click();
+		await expect(sidebar).toContainText("Counter: 3");
+	});
+
+	test("sidebar structure remains intact after updates", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const sidebarContent = page.locator("#kt-sidebar-content");
+		const incrementBtn = page.locator('[data-kt-event="click"]', { hasText: "+ Increment" });
+
+		// サイドバーコンテンツ要素が存在することを確認
+		await expect(sidebarContent).toBeVisible();
+
+		// 更新後もサイドバーコンテンツ要素が維持されることを確認
+		await incrementBtn.click();
+		await expect(sidebarContent).toBeVisible();
+		await expect(sidebarContent).toContainText("Settings");
+	});
 });
 
 test.describe("Layout API - Columns", () => {
