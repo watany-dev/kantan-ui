@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
-import { sidebar, wrapForSidebar } from "../../../src/kt/sidebar";
 import { write } from "../../../src/kt/output";
+import { sidebar, wrapForSidebar } from "../../../src/kt/sidebar";
 import { resetSessionManager, setSessionManager } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
@@ -344,10 +344,7 @@ describe("sidebar layout, feedback, and data APIs", () => {
 		});
 
 		it("should support sidebar.columns()", () => {
-			sidebar.columns([
-				() => sidebar.write("Left"),
-				() => sidebar.write("Right"),
-			]);
+			sidebar.columns([() => sidebar.write("Left"), () => sidebar.write("Right")]);
 
 			const html = ctx.getSidebarHtml();
 			expect(html).toContain("kt-columns");
