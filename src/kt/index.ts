@@ -32,6 +32,7 @@ import * as feedback from "./feedback";
 import * as formModule from "./form";
 import * as layout from "./layout";
 import * as output from "./output";
+import { sidebar } from "./sidebar";
 import * as widgets from "./widgets";
 
 export const kt = {
@@ -76,7 +77,7 @@ export const kt = {
 	columns: layout.columns,
 	expander: layout.expander,
 	tabs: layout.tabs,
-	sidebar: layout.sidebar,
+	sidebar,
 
 	// Form APIs
 	form: formModule.form,
