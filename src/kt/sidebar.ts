@@ -24,7 +24,7 @@
  */
 
 import * as chatModule from "./chat";
-import { type SidebarConfig, requireRenderContext } from "./context";
+import { requireRenderContext, type SidebarConfig } from "./context";
 import * as dataModule from "./data";
 import * as feedbackModule from "./feedback";
 import * as formModuleNS from "./form";
