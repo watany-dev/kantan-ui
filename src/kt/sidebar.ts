@@ -90,3 +90,19 @@ export interface SidebarAPIs {
 export interface SidebarAPI extends SidebarAPIs {
 	(content: () => void): void;
 }
+
+// ============================================
+// Implementation
+// ============================================
+
+import { withSidebarContext } from "./layout";
+
+/**
+ * 関数をサイドバーコンテキストでラップ
+ * 呼び出し時に自動的にサイドバーバッファに出力される
+ */
+export function wrapForSidebar<F extends (...args: never[]) => unknown>(fn: F): F {
+	return ((...args: Parameters<F>): ReturnType<F> => {
+		return withSidebarContext(() => fn(...args)) as ReturnType<F>;
+	}) as F;
+}
