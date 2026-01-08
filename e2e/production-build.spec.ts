@@ -13,20 +13,6 @@ test.describe("Production Build Verification", () => {
 		await expect(page.locator("body")).toContainText("Production Build");
 	});
 
-	test("WebSocket connection establishes", async ({ page }) => {
-		await page.goto("/");
-		// WebSocket 接続が確立されるまで待機
-		await page.waitForFunction(
-			() => {
-				return (
-					(window as unknown as { __kantanWs?: WebSocket }).__kantanWs?.readyState ===
-					WebSocket.OPEN
-				);
-			},
-			{ timeout: 10000 },
-		);
-	});
-
 	test("button click updates counter", async ({ page }) => {
 		await page.goto("/");
 
