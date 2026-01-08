@@ -179,7 +179,7 @@ export function sidebar(content: () => void): void {
 
 - `src/kt/sidebar.ts` - sidebar() 関数・プロキシAPI
 - `src/kt/context.ts` - RenderContext デュアルバッファ・SidebarConfig
-- `src/styles/sidebar.ts` - サイドバースタイル
+- `src/styles/default.ts` - サイドバースタイル（sidebarStyles）
 - `src/client/script.ts` - トグル処理・パッチ適用
 - `src/diff/differ.ts` - 差分計算（rootId対応）
 - `src/app.ts` - サイドバー差分更新・幅設定
