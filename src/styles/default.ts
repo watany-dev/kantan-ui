@@ -436,10 +436,15 @@ const sidebarStyles = `
     width: 0;
     min-width: 0;
     overflow: visible;
+    pointer-events: none;
   }
 
   .kt-sidebar[data-state="collapsed"] .kt-sidebar-content {
     display: none;
+  }
+
+  .kt-sidebar[data-state="collapsed"] .kt-sidebar-toggle {
+    pointer-events: auto;
   }
 
   /* サイドバーコンテンツ */
