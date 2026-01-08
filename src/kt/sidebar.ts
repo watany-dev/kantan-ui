@@ -28,7 +28,7 @@ import * as widgetsModule from "./widgets";
  * サイドバーで使用可能なAPI群
  * 除外: set_page_config, rerun, toast, sidebar自身
  */
-export interface SidebarAPIs {
+interface SidebarAPIs {
 	// Output APIs
 	write: typeof outputModule.write;
 	title: typeof outputModule.title;

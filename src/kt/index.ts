@@ -33,6 +33,9 @@ import * as formModule from "./form";
 import * as layout from "./layout";
 import * as output from "./output";
 import { sidebar } from "./sidebar";
+
+export type { SidebarAPI } from "./sidebar";
+
 import * as widgets from "./widgets";
 
 export const kt = {
