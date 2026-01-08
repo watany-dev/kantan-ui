@@ -44,6 +44,7 @@ export default defineConfig({
 				"**/streaming.spec.ts",
 				"**/patch-operations.spec.ts",
 				"**/error-handling.spec.ts",
+				"**/production-build.spec.ts",
 			],
 		},
 		{
