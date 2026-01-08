@@ -239,7 +239,7 @@ export function expander(label: string, content: () => void, config: ExpanderCon
 }
 
 // ============================================
-// Sidebar API
+// Sidebar Context Helper
 // ============================================
 
 /**
@@ -248,6 +248,8 @@ export function expander(label: string, content: () => void, config: ExpanderCon
  *
  * @param fn - サイドバーコンテキストで実行する関数
  * @returns 関数の戻り値
+ *
+ * @internal サイドバーAPIは src/kt/sidebar.ts で実装
  */
 export function withSidebarContext<T>(fn: () => T): T {
 	const ctx = requireRenderContext();
@@ -259,29 +261,4 @@ export function withSidebarContext<T>(fn: () => T): T {
 	} finally {
 		ctx.setTarget(previousTarget);
 	}
-}
-
-/**
- * サイドバーにコンテンツを追加
- *
- * @param content - サイドバー内に表示するコンテンツ
- *
- * @example
- * ```typescript
- * kt.sidebar(() => {
- *   kt.title("Settings");
- *   const theme = kt.selectbox("Theme", ["Light", "Dark"]);
- *   kt.divider();
- *   if (kt.button("Reset")) {
- *     // リセット処理
- *   }
- * });
- *
- * // メインコンテンツ
- * kt.title("Main Content");
- * kt.write("This is the main area.");
- * ```
- */
-export function sidebar(content: () => void): void {
-	withSidebarContext(content);
 }

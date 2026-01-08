@@ -5,11 +5,11 @@ import {
 	container,
 	expander,
 	renderTabsHeader,
-	sidebar,
 	tabs,
 	withSidebarContext,
 } from "../../../src/kt/layout";
 import { write } from "../../../src/kt/output";
+import { sidebar } from "../../../src/kt/sidebar";
 import { resetSessionManager, setSessionManager } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
