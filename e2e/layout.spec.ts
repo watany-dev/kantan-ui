@@ -204,3 +204,21 @@ test.describe("Layout API - Expander", () => {
 		await expect(content).toContainText("This content is visible by default");
 	});
 });
+
+test.describe("Layout API - Sidebar (Mobile)", () => {
+	test.use({ viewport: { width: 375, height: 667 } });
+
+	test("sidebar uses fixed positioning on mobile", async ({ page }) => {
+		await gotoAndWait(page);
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "fixed");
+	});
+
+	test("sidebar toggle button is larger on mobile", async ({ page }) => {
+		await gotoAndWait(page);
+		const toggle = page.locator(".kt-sidebar-toggle");
+		const box = await toggle.boundingBox();
+		expect(box?.width).toBeGreaterThanOrEqual(40);
+		expect(box?.height).toBeGreaterThanOrEqual(40);
+	});
+});
