@@ -32,9 +32,7 @@ const script = () => {
 		state.counter = Math.max(0, state.counter - 1);
 	}
 
-	kt.html(
-		`<div id="counter-display" class="kt-write">Current count: ${state.counter}</div>`,
-	);
+	kt.html(`<div id="counter-display" class="kt-write">Current count: ${state.counter}</div>`);
 
 	kt.divider();
 
