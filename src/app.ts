@@ -64,8 +64,10 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 
 	const app = new Hono();
 
-	// ミドルウェア設定
-	app.use("*", logger());
+	// ミドルウェア設定（CI環境ではログを抑制）
+	if (!process.env["CI"]) {
+		app.use("*", logger());
+	}
 	app.use(
 		"*",
 		secureHeaders({

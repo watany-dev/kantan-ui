@@ -217,7 +217,6 @@ jobs:
         run: bun run test:e2e
         env:
           CI: true
-          DEBUG: pw:webserver
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v6
