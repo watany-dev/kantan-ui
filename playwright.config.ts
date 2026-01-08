@@ -8,7 +8,7 @@ export default defineConfig({
 	fullyParallel: true, // 全テストを並列実行（各テストは独立したブラウザコンテキスト）
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
-	workers: 3, // 3プロジェクトを並列実行（各プロジェクトは別サーバー/ポート）
+	workers: 4, // プロジェクトを並列実行（各プロジェクトは別サーバー/ポート）
 	reporter: "html",
 	/* タイムアウト設定の一元管理 */
 	timeout: 30000, // テスト全体のタイムアウト
@@ -106,6 +106,21 @@ export default defineConfig({
 			},
 			testMatch: "**/error-handling.spec.ts",
 		},
+		{
+			name: "chromium-production",
+			use: {
+				...devices["Desktop Chrome"],
+				baseURL: "http://localhost:3005",
+				launchOptions: process.env.CI
+					? {
+							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+						}
+					: {
+							executablePath: chromiumPath,
+						},
+			},
+			testMatch: "**/production-build.spec.ts",
+		},
 	],
 	webServer: [
 		{
@@ -143,6 +158,14 @@ export default defineConfig({
 		{
 			command: "bun run src/server-error-test.ts",
 			url: "http://localhost:3004",
+			reuseExistingServer: !process.env.CI,
+			timeout: 60000,
+			stdout: "pipe",
+			stderr: "pipe",
+		},
+		{
+			command: "bun run scripts/serve-dist.ts",
+			url: "http://localhost:3005",
 			reuseExistingServer: !process.env.CI,
 			timeout: 60000,
 			stdout: "pipe",
