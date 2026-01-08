@@ -97,6 +97,7 @@ export interface SidebarAPI extends SidebarAPIs {
 
 import { withSidebarContext } from "./layout";
 import * as output from "./output";
+import * as widgets from "./widgets";
 
 /**
  * 関数をサイドバーコンテキストでラップ
@@ -128,6 +129,19 @@ const sidebarAPIs: Record<string, (...args: any[]) => any> = {
 	error: output.error,
 	warning: output.warning,
 	info: output.info,
+
+	// Widget APIs
+	button: widgets.button,
+	slider: widgets.slider,
+	text_input: widgets.text_input,
+	selectbox: widgets.selectbox,
+	checkbox: widgets.checkbox,
+	radio: widgets.radio,
+	number_input: widgets.number_input,
+	text_area: widgets.text_area,
+	toggle: widgets.toggle,
+	multiselect: widgets.multiselect,
+	download_button: widgets.download_button,
 };
 
 // コールバック記法のベース関数

@@ -2,6 +2,33 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import { sidebar, wrapForSidebar } from "../../../src/kt/sidebar";
 import { write } from "../../../src/kt/output";
+import { resetSessionManager, setSessionManager } from "../../../src/session/manager";
+import { setCurrentSessionId } from "../../../src/session/state";
+import { resetWidgetCounter } from "../../../src/widgets/registry";
+
+// Mock SessionManager
+class MockSessionManager {
+	private states = new Map<string, Record<string, unknown>>();
+	getSession(id: string) {
+		return { id, state: this.states.get(id) ?? {} };
+	}
+	getState(sessionId: string): Record<string, unknown> | undefined {
+		return this.states.get(sessionId);
+	}
+	setState(sessionId: string, key: string, value: unknown): void {
+		if (!this.states.has(sessionId)) {
+			this.states.set(sessionId, {});
+		}
+		const state = this.states.get(sessionId);
+		if (state) {
+			state[key] = value;
+		}
+	}
+	hasState(sessionId: string, key: string): boolean {
+		const state = this.states.get(sessionId);
+		return state ? key in state : false;
+	}
+}
 
 describe("wrapForSidebar", () => {
 	let ctx: RenderContext;
@@ -196,5 +223,91 @@ describe("sidebar object notation", () => {
 			expect(ctx.getMainHtml()).not.toContain("Sidebar content");
 			expect(ctx.getSidebarHtml()).toContain("Sidebar content");
 		});
+	});
+});
+
+describe("sidebar widget APIs", () => {
+	let ctx: RenderContext;
+	let mockManager: MockSessionManager;
+
+	beforeEach(() => {
+		ctx = new RenderContext();
+		setRenderContext(ctx);
+		resetWidgetCounter();
+		mockManager = new MockSessionManager();
+		setSessionManager(mockManager as never);
+		setCurrentSessionId("test-session");
+	});
+
+	afterEach(() => {
+		setRenderContext(null);
+		resetWidgetCounter();
+		resetSessionManager();
+		setCurrentSessionId(null);
+	});
+
+	it("should support sidebar.button()", () => {
+		const clicked = sidebar.button("Click me");
+
+		expect(clicked).toBe(false);
+		expect(ctx.getSidebarHtml()).toContain("Click me");
+		expect(ctx.getSidebarHtml()).toContain("kt-button");
+		expect(ctx.getMainHtml()).toBe("");
+	});
+
+	it("should support sidebar.slider()", () => {
+		const value = sidebar.slider("Volume", 0, 100, 50);
+
+		expect(value).toBe(50);
+		expect(ctx.getSidebarHtml()).toContain("Volume");
+		expect(ctx.getSidebarHtml()).toContain("kt-slider");
+	});
+
+	it("should support sidebar.text_input()", () => {
+		const value = sidebar.text_input("Name", "default");
+
+		expect(value).toBe("default");
+		expect(ctx.getSidebarHtml()).toContain("Name");
+		expect(ctx.getSidebarHtml()).toContain("kt-text-input");
+	});
+
+	it("should support sidebar.selectbox()", () => {
+		const value = sidebar.selectbox("Theme", ["Light", "Dark"], "Light");
+
+		expect(value).toBe("Light");
+		expect(ctx.getSidebarHtml()).toContain("Theme");
+		expect(ctx.getSidebarHtml()).toContain("kt-selectbox");
+	});
+
+	it("should support sidebar.checkbox()", () => {
+		const checked = sidebar.checkbox("Enable feature", false);
+
+		expect(checked).toBe(false);
+		expect(ctx.getSidebarHtml()).toContain("Enable feature");
+		expect(ctx.getSidebarHtml()).toContain('type="checkbox"');
+	});
+
+	it("should support sidebar.toggle()", () => {
+		const toggled = sidebar.toggle("Dark mode", false);
+
+		expect(toggled).toBe(false);
+		expect(ctx.getSidebarHtml()).toContain("Dark mode");
+		expect(ctx.getSidebarHtml()).toContain("kt-toggle");
+	});
+
+	it("should support sidebar.number_input()", () => {
+		const value = sidebar.number_input("Count", 0, 100, 10);
+
+		expect(value).toBe(10);
+		expect(ctx.getSidebarHtml()).toContain("Count");
+		expect(ctx.getSidebarHtml()).toContain('type="number"');
+	});
+
+	it("should support sidebar.radio()", () => {
+		const value = sidebar.radio("Size", ["S", "M", "L"], "M");
+
+		expect(value).toBe("M");
+		expect(ctx.getSidebarHtml()).toContain("Size");
+		expect(ctx.getSidebarHtml()).toContain('type="radio"');
 	});
 });
