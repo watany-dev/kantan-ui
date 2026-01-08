@@ -365,7 +365,17 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						}
 
 						// サイドバーの差分計算
-						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
+						if (newResult.hasSidebar && session.lastSidebarHtml !== undefined) {
+							const sidebarDiffResult = diff(session.lastSidebarHtml, newResult.sidebarHtml);
+							const sidebarFullHtml = `<div id="kt-sidebar-content" class="kt-sidebar-content">${newResult.sidebarHtml}</div>`;
+							const sidebarPatches = toWebSocketPatches(
+								sidebarDiffResult,
+								sidebarFullHtml,
+								"kt-sidebar-content",
+							);
+							patches.push(...sidebarPatches);
+						} else if (newResult.hasSidebar) {
+							// 初回レンダリング時はreplaceNode
 							patches.push({
 								type: "replaceNode",
 								id: "kt-sidebar-content",
