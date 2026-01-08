@@ -24,7 +24,7 @@
  */
 
 import * as chatModule from "./chat";
-import { requireRenderContext } from "./context";
+import { type SidebarConfig, requireRenderContext } from "./context";
 import * as dataModule from "./data";
 import * as feedbackModule from "./feedback";
 import * as formModuleNS from "./form";
@@ -32,13 +32,8 @@ import { columns, container, expander, tabs, withSidebarContext } from "./layout
 import * as outputModule from "./output";
 import * as widgetsModule from "./widgets";
 
-/**
- * サイドバー設定
- */
-export interface SidebarConfig {
-	/** サイドバーの幅（例: "350px", "25vw"） */
-	width?: string;
-}
+// Re-export SidebarConfig for external API compatibility
+export type { SidebarConfig };
 
 /**
  * サイドバーで使用可能なAPI群
