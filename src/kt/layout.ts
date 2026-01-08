@@ -269,8 +269,13 @@ export interface SidebarConfig {
  * kt.title("Main");
  * ```
  */
-export function sidebar(content: () => void, _config?: SidebarConfig): void {
+export function sidebar(content: () => void, config?: SidebarConfig): void {
 	const ctx = requireRenderContext();
+
+	// 幅の設定（指定があれば更新）
+	if (config?.width) {
+		ctx.setSidebarWidth(config.width);
+	}
 
 	// ターゲットをサイドバーに切り替え
 	const previousTarget = ctx.getTarget();
