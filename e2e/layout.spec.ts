@@ -96,6 +96,38 @@ test.describe("Layout API - Sidebar", () => {
 		// サイドバーのカウントも更新される（再レンダリング後）
 		await expect(sidebar).toContainText("Counter: 1");
 	});
+
+	test("sidebar counter increments correctly through diff updates", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const sidebar = page.locator(".kt-sidebar");
+		const incrementBtn = page.locator('[data-kt-event="click"]', { hasText: "+ Increment" });
+
+		// 複数回インクリメントして差分更新が正しく動作することを確認
+		await incrementBtn.click();
+		await expect(sidebar).toContainText("Counter: 1");
+
+		await incrementBtn.click();
+		await expect(sidebar).toContainText("Counter: 2");
+
+		await incrementBtn.click();
+		await expect(sidebar).toContainText("Counter: 3");
+	});
+
+	test("sidebar structure remains intact after updates", async ({ page }) => {
+		await gotoAndWait(page);
+
+		const sidebarContent = page.locator("#kt-sidebar-content");
+		const incrementBtn = page.locator('[data-kt-event="click"]', { hasText: "+ Increment" });
+
+		// サイドバーコンテンツ要素が存在することを確認
+		await expect(sidebarContent).toBeVisible();
+
+		// 更新後もサイドバーコンテンツ要素が維持されることを確認
+		await incrementBtn.click();
+		await expect(sidebarContent).toBeVisible();
+		await expect(sidebarContent).toContainText("Settings");
+	});
 });
 
 test.describe("Layout API - Columns", () => {
@@ -202,5 +234,67 @@ test.describe("Layout API - Expander", () => {
 		await expect(expandedExpander).toHaveAttribute("open");
 		await expect(content).toBeVisible();
 		await expect(content).toContainText("This content is visible by default");
+	});
+});
+
+test.describe("Layout API - Sidebar (Mobile)", () => {
+	test.use({ viewport: { width: 375, height: 667 } });
+
+	test("sidebar uses fixed positioning on mobile", async ({ page }) => {
+		await gotoAndWait(page);
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "fixed");
+	});
+
+	test("sidebar toggle button is larger on mobile", async ({ page }) => {
+		await gotoAndWait(page);
+		const toggle = page.locator(".kt-sidebar-toggle");
+		const box = await toggle.boundingBox();
+		expect(box?.width).toBeGreaterThanOrEqual(40);
+		expect(box?.height).toBeGreaterThanOrEqual(40);
+	});
+
+	test("sidebar overlay appears when expanded on mobile", async ({ page }) => {
+		await gotoAndWait(page);
+		const overlay = page.locator(".kt-sidebar-overlay");
+		const sidebar = page.locator(".kt-sidebar");
+
+		await expect(sidebar).toHaveAttribute("data-state", "expanded");
+		await expect(overlay).toBeVisible();
+	});
+
+	test("clicking overlay closes sidebar on mobile", async ({ page }) => {
+		await gotoAndWait(page);
+		const overlay = page.locator(".kt-sidebar-overlay");
+		const sidebar = page.locator(".kt-sidebar");
+
+		await overlay.click();
+		await expect(sidebar).toHaveAttribute("data-state", "collapsed");
+	});
+});
+
+test.describe("Layout API - Sidebar (Tablet 768px)", () => {
+	test.use({ viewport: { width: 768, height: 1024 } });
+
+	test("sidebar uses fixed positioning at exactly 768px", async ({ page }) => {
+		await gotoAndWait(page);
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "fixed");
+	});
+});
+
+test.describe("Layout API - Sidebar (Desktop)", () => {
+	test.use({ viewport: { width: 1280, height: 800 } });
+
+	test("sidebar uses relative positioning on desktop", async ({ page }) => {
+		await gotoAndWait(page);
+		const sidebar = page.locator(".kt-sidebar");
+		await expect(sidebar).toHaveCSS("position", "relative");
+	});
+
+	test("sidebar overlay is hidden on desktop", async ({ page }) => {
+		await gotoAndWait(page);
+		const overlay = page.locator(".kt-sidebar-overlay");
+		await expect(overlay).not.toBeVisible();
 	});
 });

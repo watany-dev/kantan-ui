@@ -672,3 +672,85 @@ describe("diff error handling", () => {
 		expect(result.hasChanges).toBe(true);
 	});
 });
+
+describe("toWebSocketPatches with rootId", () => {
+	it("should return replaceNode when rootId is provided and fallback is needed", () => {
+		// insertパッチがある場合にrootIdを指定するとreplaceNodeになる
+		const result = {
+			patches: [
+				{
+					type: "insert" as const,
+					parentId: "__root__",
+					index: 0,
+					html: "<button>New</button>",
+				},
+			],
+			hasChanges: true,
+		};
+		const fullHtml = '<div id="sidebar-content"><button>New</button></div>';
+		const patches = toWebSocketPatches(result, fullHtml, "kt-sidebar-content");
+
+		expect(patches).toHaveLength(1);
+		expect(patches[0]).toEqual({
+			type: "replaceNode",
+			id: "kt-sidebar-content",
+			html: fullHtml,
+		});
+	});
+
+	it("should return replaceRoot when rootId is not provided and fallback is needed", () => {
+		const result = {
+			patches: [
+				{
+					type: "insert" as const,
+					parentId: "__root__",
+					index: 0,
+					html: "<button>New</button>",
+				},
+			],
+			hasChanges: true,
+		};
+		const fullHtml = "<div>html</div>";
+		const patches = toWebSocketPatches(result, fullHtml);
+
+		expect(patches).toHaveLength(1);
+		expect(patches[0]).toEqual({
+			type: "replaceRoot",
+			html: fullHtml,
+		});
+	});
+
+	it("should return replaceNode when rootId provided and patches exceed threshold", () => {
+		const manyPatches = Array.from({ length: 11 }, (_, i) => ({
+			type: "replace" as const,
+			id: `item-${i}`,
+			html: `<div>Item ${i}</div>`,
+		}));
+		const result = { patches: manyPatches, hasChanges: true };
+		const fullHtml = '<div id="container">All items</div>';
+		const patches = toWebSocketPatches(result, fullHtml, "kt-sidebar-content");
+
+		expect(patches).toHaveLength(1);
+		expect(patches[0]).toEqual({
+			type: "replaceNode",
+			id: "kt-sidebar-content",
+			html: fullHtml,
+		});
+	});
+
+	it("should not use rootId when patches are below threshold and no insert", () => {
+		const result = {
+			patches: [{ type: "replace" as const, id: "btn-1", html: "<button>Updated</button>" }],
+			hasChanges: true,
+		};
+		const patches = toWebSocketPatches(result, "<div>full</div>", "kt-sidebar-content");
+
+		// 個別のreplaceNodeが使用される（rootIdは不要）
+		expect(patches).toHaveLength(1);
+		expect(patches[0]).toEqual({
+			type: "replaceNode",
+			id: "btn-1",
+			html: "<button>Updated</button>",
+		});
+	});
+});

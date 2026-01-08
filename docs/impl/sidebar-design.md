@@ -470,6 +470,95 @@ export interface PageConfig {
 
 ---
 
+## ネスト呼び出しの挙動
+
+### サポートされるパターン
+
+`kt.sidebar()` はネストして呼び出すことができます。内側の `kt.sidebar()` 呼び出し内のコンテンツも、すべてサイドバーバッファに出力されます。
+
+```typescript
+kt.sidebar(() => {
+  kt.write("Level 1");
+
+  kt.sidebar(() => {
+    kt.write("Level 2 - still in sidebar");
+  });
+
+  kt.write("Back to Level 1 - still in sidebar");
+});
+
+kt.write("Main content");
+```
+
+**出力結果:**
+- サイドバー: "Level 1", "Level 2 - still in sidebar", "Back to Level 1 - still in sidebar"
+- メイン: "Main content"
+
+### 実装詳細
+
+`kt.sidebar()` は内部で以下の処理を行います：
+
+1. 現在のターゲット（`main` または `sidebar`）を保存
+2. ターゲットを `sidebar` に切り替え
+3. コールバックを実行
+4. ターゲットを元に戻す（`try/finally` で保証）
+
+```typescript
+export function sidebar(content: () => void, config?: SidebarConfig): void {
+  const ctx = requireRenderContext();
+  const previousTarget = ctx.getTarget(); // "main" or "sidebar"
+  ctx.setTarget("sidebar");
+
+  try {
+    content();
+  } finally {
+    ctx.setTarget(previousTarget); // 必ず復元
+  }
+}
+```
+
+ネスト呼び出し時：
+- 外側の `sidebar()` で `previousTarget = "main"`、`currentTarget = "sidebar"`
+- 内側の `sidebar()` で `previousTarget = "sidebar"`、`currentTarget = "sidebar"`
+- 内側終了時に `currentTarget = "sidebar"`（変わらず）
+- 外側終了時に `currentTarget = "main"`（復元）
+
+### 非推奨パターン
+
+以下のパターンは技術的には動作しますが、コードの可読性のため推奨しません：
+
+```typescript
+// 非推奨: 深いネスト
+kt.sidebar(() => {
+  kt.sidebar(() => {
+    kt.sidebar(() => {
+      kt.write("Deeply nested");
+    });
+  });
+});
+
+// 推奨: フラットな構造
+kt.sidebar(() => {
+  kt.write("All sidebar content here");
+});
+```
+
+### エラーハンドリング
+
+コールバック内で例外が発生しても、ターゲットは正しく復元されます：
+
+```typescript
+kt.sidebar(() => {
+  kt.write("Before error");
+  throw new Error("Something went wrong");
+  kt.write("After error"); // 実行されない
+});
+
+kt.write("This goes to main"); // ターゲットは正しくmainに戻っている
+```
+
+---
+
 ## アーキテクチャ設計
 
 ### 現状の問題点

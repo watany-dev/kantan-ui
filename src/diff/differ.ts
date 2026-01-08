@@ -81,24 +81,36 @@ export function diff(oldHtml: string, newHtml: string): DiffResult {
 /**
  * 差分パッチをWebSocketパッチ形式に変換
  * 差分が多すぎる場合やID追跡できない変更がある場合はreplaceRootにフォールバック
+ *
+ * @param diffResult - 差分計算結果
+ * @param fullHtml - フォールバック用の完全HTML
+ * @param rootId - フォールバック時のターゲットID（指定時はreplaceNodeを使用）
  */
-export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Patch[] {
+export function toWebSocketPatches(
+	diffResult: DiffResult,
+	fullHtml: string,
+	rootId?: string,
+): Patch[] {
 	if (!diffResult.hasChanges) {
 		return [];
 	}
 
-	// ID追跡できない変更がある場合（hasChangesはtrueだがpatchesが空）
-	// または差分が多すぎる場合はreplaceRootにフォールバック
-	if (diffResult.patches.length === 0 || diffResult.patches.length > PATCH_THRESHOLD) {
-		return [{ type: "replaceRoot", html: fullHtml } satisfies ReplaceRootPatch];
-	}
+	// フォールバック条件
+	const shouldFallback =
+		diffResult.patches.length === 0 ||
+		diffResult.patches.length > PATCH_THRESHOLD ||
+		diffResult.patches.some((p) => p.type === "insert");
 
-	// insertパッチがある場合はreplaceRootにフォールバック
-	// insertのインデックスはID付き要素間の順序で計算されるが、
-	// クライアント側ではすべてのDOM子要素に対してインデックスを適用するため、
-	// ID無し要素が混在している場合に誤った位置に挿入される
-	const hasInsertPatches = diffResult.patches.some((p) => p.type === "insert");
-	if (hasInsertPatches) {
+	if (shouldFallback) {
+		if (rootId) {
+			return [
+				{
+					type: "replaceNode",
+					id: rootId,
+					html: fullHtml,
+				} satisfies ReplaceNodePatch,
+			];
+		}
 		return [{ type: "replaceRoot", html: fullHtml } satisfies ReplaceRootPatch];
 	}
 

@@ -135,7 +135,7 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 
 		// サイドバーがある場合のHTML構造を生成
 		const bodyContent = initialResult.hasSidebar
-			? html`<div class="kt-layout-sidebar">
+			? html`<div class="kt-layout-sidebar" style="--kt-sidebar-width: ${initialResult.sidebarWidth};">
 					<aside class="kt-sidebar" data-state="expanded">
 						<div id="kt-sidebar-content" class="kt-sidebar-content">${raw(initialResult.sidebarHtml)}</div>
 						<button class="kt-sidebar-toggle" type="button" aria-label="Toggle sidebar">
@@ -365,7 +365,17 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						}
 
 						// サイドバーの差分計算
-						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
+						if (newResult.hasSidebar && session.lastSidebarHtml !== undefined) {
+							const sidebarDiffResult = diff(session.lastSidebarHtml, newResult.sidebarHtml);
+							const sidebarFullHtml = `<div id="kt-sidebar-content" class="kt-sidebar-content">${newResult.sidebarHtml}</div>`;
+							const sidebarPatches = toWebSocketPatches(
+								sidebarDiffResult,
+								sidebarFullHtml,
+								"kt-sidebar-content",
+							);
+							patches.push(...sidebarPatches);
+						} else if (newResult.hasSidebar) {
+							// 初回レンダリング時はreplaceNode
 							patches.push({
 								type: "replaceNode",
 								id: "kt-sidebar-content",

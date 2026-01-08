@@ -317,3 +317,26 @@ describe("RenderContext dual buffer", () => {
 		expect(ctx.hasSidebar()).toBe(false);
 	});
 });
+
+describe("RenderContext sidebarWidth", () => {
+	let ctx: RenderContext;
+
+	beforeEach(() => {
+		ctx = new RenderContext();
+	});
+
+	it("should have default sidebar width of 280px", () => {
+		expect(ctx.getSidebarWidth()).toBe("280px");
+	});
+
+	it("should set custom sidebar width", () => {
+		ctx.setSidebarWidth("350px");
+		expect(ctx.getSidebarWidth()).toBe("350px");
+	});
+
+	it("should reset sidebar width on clear", () => {
+		ctx.setSidebarWidth("400px");
+		ctx.clear();
+		expect(ctx.getSidebarWidth()).toBe("280px");
+	});
+});

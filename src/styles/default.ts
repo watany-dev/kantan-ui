@@ -421,8 +421,8 @@ const sidebarStyles = `
   /* サイドバー */
   .kt-sidebar {
     position: relative;
-    width: 280px;
-    min-width: 280px;
+    width: var(--kt-sidebar-width, 280px);
+    min-width: var(--kt-sidebar-width, 280px);
     background: #f8f9fa;
     border-right: 1px solid #e9ecef;
     display: flex;
@@ -511,8 +511,8 @@ const sidebarStyles = `
 
     .kt-sidebar[data-state="collapsed"] {
       transform: translateX(-100%);
-      width: 280px;
-      min-width: 280px;
+      width: var(--kt-sidebar-width, 280px);
+      min-width: var(--kt-sidebar-width, 280px);
     }
 
     .kt-sidebar-toggle {

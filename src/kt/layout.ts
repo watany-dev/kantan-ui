@@ -253,24 +253,29 @@ export interface SidebarConfig {
  * @param content - サイドバー内に表示するコンテンツ
  * @param config - オプション設定
  *
+ * @remarks
+ * - ネスト呼び出しがサポートされています
+ * - 内側の `kt.sidebar()` 内のコンテンツもサイドバーバッファに出力されます
+ * - コールバック内で例外が発生しても、ターゲットは `try/finally` により正しく復元されます
+ *
  * @example
  * ```typescript
  * kt.sidebar(() => {
  *   kt.title("Settings");
- *   const theme = kt.selectbox("Theme", ["Light", "Dark"]);
- *   kt.divider();
- *   if (kt.button("Reset")) {
- *     // リセット処理
- *   }
+ *   kt.write("Sidebar content");
  * });
  *
  * // メインコンテンツ
- * kt.title("Main Content");
- * kt.write("This is the main area.");
+ * kt.title("Main");
  * ```
  */
-export function sidebar(content: () => void, _config?: SidebarConfig): void {
+export function sidebar(content: () => void, config?: SidebarConfig): void {
 	const ctx = requireRenderContext();
+
+	// 幅の設定（指定があれば更新）
+	if (config?.width) {
+		ctx.setSidebarWidth(config.width);
+	}
 
 	// ターゲットをサイドバーに切り替え
 	const previousTarget = ctx.getTarget();

@@ -22,6 +22,8 @@ export interface RerunResult {
 	sidebarHtml: string;
 	/** サイドバーが使用されているか */
 	hasSidebar: boolean;
+	/** サイドバーの幅 */
+	sidebarWidth: string;
 }
 
 /**
@@ -98,6 +100,7 @@ export function rerun(
 				mainHtml: result,
 				sidebarHtml: "",
 				hasSidebar: false,
+				sidebarWidth: "280px",
 			};
 		}
 
@@ -105,6 +108,7 @@ export function rerun(
 			mainHtml: renderContext.getMainHtml(),
 			sidebarHtml: renderContext.getSidebarHtml(),
 			hasSidebar: renderContext.hasSidebar(),
+			sidebarWidth: renderContext.getSidebarWidth(),
 		};
 	} finally {
 		// コンテキストをクリア

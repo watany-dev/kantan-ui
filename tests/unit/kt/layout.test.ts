@@ -490,5 +490,35 @@ describe("Layout APIs", () => {
 				}),
 			).toThrow("RenderContext is not available");
 		});
+
+		it("should set custom width via config", () => {
+			sidebar(
+				() => {
+					write("content");
+				},
+				{ width: "350px" },
+			);
+
+			expect(ctx.getSidebarWidth()).toBe("350px");
+		});
+
+		it("should keep default width when not specified", () => {
+			sidebar(() => {
+				write("content");
+			});
+
+			expect(ctx.getSidebarWidth()).toBe("280px");
+		});
+
+		it("should keep default width when config is empty object", () => {
+			sidebar(
+				() => {
+					write("content");
+				},
+				{},
+			);
+
+			expect(ctx.getSidebarWidth()).toBe("280px");
+		});
 	});
 });
