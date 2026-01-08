@@ -1,5 +1,17 @@
 # kantan-ui リファクタリング計画書
 
+更新日: 2026-01-08
+
+## 実装状況サマリー
+
+| Phase | 内容 | 状態 |
+|-------|------|------|
+| Phase 1 | Quick Wins（バリデーション、HTML属性、定数、エラーメッセージ） | ✅ **完了** |
+| Phase 2 | Widget系リファクタリング | ❌ 未実装 |
+| Phase 3 | Session/State リファクタリング | ❌ 未実装 |
+| Phase 4 | 複雑なモジュールのリファクタリング | ❌ 未実装 |
+| Phase 5 | コード品質向上 | ❌ 未実装 |
+
 ## 概要
 
 本計画書は、kantan-uiコードベースのリファクタリングを段階的に実施するためのタスク分解です。
@@ -7,9 +19,15 @@
 
 ---
 
-## Phase 1: Quick Wins（低難易度・高効果）
+## Phase 1: Quick Wins（低難易度・高効果）✅ 完了
 
-### Task 1.1: 汎用バリデーション関数の抽出
+実装コミット:
+- `e26634b` refactor: extract common validation functions
+- `d6a0509` refactor: add HTML attribute builder helpers
+- `22d3d5b` refactor: consolidate constants into dedicated files
+- `957c368` refactor: extract error message helper functions
+
+### Task 1.1: 汎用バリデーション関数の抽出 ✅
 **対象ファイル**: `src/widgets/core.ts`
 **見積工数**: 30分
 **削減行数**: 約70行
