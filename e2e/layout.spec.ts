@@ -221,4 +221,22 @@ test.describe("Layout API - Sidebar (Mobile)", () => {
 		expect(box?.width).toBeGreaterThanOrEqual(40);
 		expect(box?.height).toBeGreaterThanOrEqual(40);
 	});
+
+	test("sidebar overlay appears when expanded on mobile", async ({ page }) => {
+		await gotoAndWait(page);
+		const overlay = page.locator(".kt-sidebar-overlay");
+		const sidebar = page.locator(".kt-sidebar");
+
+		await expect(sidebar).toHaveAttribute("data-state", "expanded");
+		await expect(overlay).toBeVisible();
+	});
+
+	test("clicking overlay closes sidebar on mobile", async ({ page }) => {
+		await gotoAndWait(page);
+		const overlay = page.locator(".kt-sidebar-overlay");
+		const sidebar = page.locator(".kt-sidebar");
+
+		await overlay.click();
+		await expect(sidebar).toHaveAttribute("data-state", "collapsed");
+	});
 });
