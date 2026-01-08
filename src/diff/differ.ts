@@ -97,7 +97,9 @@ export function toWebSocketPatches(
 	// ID追跡できない変更がある場合（hasChangesはtrueだがpatchesが空）
 	// または差分が多すぎる場合はreplaceRootにフォールバック
 	if (diffResult.patches.length === 0 || diffResult.patches.length > PATCH_THRESHOLD) {
-		return [{ type: "replaceRoot", html: fullHtml, rootId } satisfies ReplaceRootPatch];
+		return [
+			{ type: "replaceRoot", html: fullHtml, ...(rootId && { rootId }) } satisfies ReplaceRootPatch,
+		];
 	}
 
 	// insertパッチがある場合はreplaceRootにフォールバック
@@ -106,7 +108,9 @@ export function toWebSocketPatches(
 	// ID無し要素が混在している場合に誤った位置に挿入される
 	const hasInsertPatches = diffResult.patches.some((p) => p.type === "insert");
 	if (hasInsertPatches) {
-		return [{ type: "replaceRoot", html: fullHtml, rootId } satisfies ReplaceRootPatch];
+		return [
+			{ type: "replaceRoot", html: fullHtml, ...(rootId && { rootId }) } satisfies ReplaceRootPatch,
+		];
 	}
 
 	return diffResult.patches.map((p): Patch => {
