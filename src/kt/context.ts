@@ -1,12 +1,18 @@
 /** フラッシュコールバックの型 */
 export type FlushCallback = (html: string, itemCount: number) => void;
 
+/** レンダリングターゲット */
+export type RenderTarget = "main" | "sidebar";
+
 /**
  * レンダリングコンテキスト
  * スクリプト実行中にHTMLを自動収集するためのバッファ
+ * メインエリアとサイドバーエリアの2つのバッファを持つ
  */
 export class RenderContext {
-	private buffer: string[] = [];
+	private mainBuffer: string[] = [];
+	private sidebarBuffer: string[] = [];
+	private currentTarget: RenderTarget = "main";
 	private flushCallback: FlushCallback | null = null;
 	private flushThreshold = 0; // 0 = 無効（フラッシュしない）
 	private flushedCount = 0;
@@ -29,60 +35,101 @@ export class RenderContext {
 	}
 
 	/**
-	 * HTMLをバッファに追加
+	 * 現在のターゲットを設定
 	 */
-	append(html: string): void {
-		this.buffer.push(html);
-		this.maybeFlush();
+	setTarget(target: RenderTarget): void {
+		this.currentTarget = target;
 	}
 
 	/**
-	 * しきい値に達していたらフラッシュを実行
+	 * 現在のターゲットを取得
+	 */
+	getTarget(): RenderTarget {
+		return this.currentTarget;
+	}
+
+	/**
+	 * HTMLをバッファに追加（現在のターゲットに応じて振り分け）
+	 */
+	append(html: string): void {
+		if (this.currentTarget === "sidebar") {
+			this.sidebarBuffer.push(html);
+		} else {
+			this.mainBuffer.push(html);
+			this.maybeFlush(); // ストリーミングはメインのみ
+		}
+	}
+
+	/**
+	 * しきい値に達していたらフラッシュを実行（メインバッファのみ）
 	 */
 	private maybeFlush(): void {
 		if (
 			this.flushThreshold > 0 &&
 			this.flushCallback &&
-			this.buffer.length - this.flushedCount >= this.flushThreshold
+			this.mainBuffer.length - this.flushedCount >= this.flushThreshold
 		) {
 			this.flush();
 		}
 	}
 
 	/**
-	 * 未フラッシュのバッファをフラッシュ
+	 * 未フラッシュのバッファをフラッシュ（メインバッファのみ）
 	 */
 	flush(): void {
-		if (!this.flushCallback || this.flushedCount >= this.buffer.length) {
+		if (!this.flushCallback || this.flushedCount >= this.mainBuffer.length) {
 			return;
 		}
-		const unflushed = this.buffer.slice(this.flushedCount);
+		const unflushed = this.mainBuffer.slice(this.flushedCount);
 		const html = unflushed.join("\n");
 		const itemCount = unflushed.length;
-		this.flushedCount = this.buffer.length;
+		this.flushedCount = this.mainBuffer.length;
 		this.flushCallback(html, itemCount);
 	}
 
 	/**
-	 * バッファを結合してHTMLを取得
+	 * メインエリアのHTMLを取得
+	 */
+	getMainHtml(): string {
+		return this.mainBuffer.join("\n");
+	}
+
+	/**
+	 * サイドバーのHTMLを取得
+	 */
+	getSidebarHtml(): string {
+		return this.sidebarBuffer.join("\n");
+	}
+
+	/**
+	 * サイドバーが使用されているか
+	 */
+	hasSidebar(): boolean {
+		return this.sidebarBuffer.length > 0;
+	}
+
+	/**
+	 * バッファを結合してHTMLを取得（後方互換性のため維持、メインのみ返す）
 	 */
 	getHtml(): string {
-		return this.buffer.join("\n");
+		return this.mainBuffer.join("\n");
 	}
 
 	/**
 	 * バッファをクリア
 	 */
 	clear(): void {
-		this.buffer = [];
+		this.mainBuffer = [];
+		this.sidebarBuffer = [];
+		this.currentTarget = "main";
 		this.flushedCount = 0;
 	}
 
 	/**
-	 * バッファが空かどうか
+	 * メインバッファが空かどうか
 	 */
 	isEmpty(): boolean {
-		return this.buffer.length === 0;
+		return this.mainBuffer.length === 0;
 	}
 
 	/**

@@ -410,6 +410,137 @@ const chatStyles = `
   }
 `;
 
+/** サイドバースタイル */
+const sidebarStyles = `
+  /* サイドバーレイアウトコンテナ */
+  .kt-layout-sidebar {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* サイドバー */
+  .kt-sidebar {
+    position: relative;
+    width: 280px;
+    min-width: 280px;
+    background: #f8f9fa;
+    border-right: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow-y: auto;
+    transition: width 0.3s ease, min-width 0.3s ease;
+  }
+
+  .kt-sidebar[data-state="collapsed"] {
+    width: 0;
+    min-width: 0;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .kt-sidebar[data-state="collapsed"] .kt-sidebar-content {
+    display: none;
+  }
+
+  .kt-sidebar[data-state="collapsed"] .kt-sidebar-toggle {
+    pointer-events: auto;
+  }
+
+  /* サイドバーコンテンツ */
+  .kt-sidebar-content {
+    padding: 1rem;
+    flex: 1;
+  }
+
+  /* サイドバートグルボタン */
+  .kt-sidebar-toggle {
+    position: absolute;
+    top: 1rem;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    border: 1px solid #e9ecef;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .kt-sidebar[data-state="collapsed"] .kt-sidebar-toggle {
+    right: -36px;
+  }
+
+  .kt-sidebar-toggle:hover {
+    background: #f8f9fa;
+  }
+
+  .kt-sidebar-toggle-icon {
+    width: 6px;
+    height: 6px;
+    border-left: 2px solid #495057;
+    border-bottom: 2px solid #495057;
+    transform: rotate(45deg);
+    transition: transform 0.2s;
+  }
+
+  .kt-sidebar[data-state="collapsed"] .kt-sidebar-toggle-icon {
+    transform: rotate(-135deg);
+  }
+
+  /* メインエリア（サイドバーレイアウト時） */
+  .kt-layout-sidebar .kt-main {
+    flex: 1;
+    padding: 0 1rem;
+    min-width: 0;
+  }
+
+  /* レスポンシブ対応 */
+  @media (max-width: 768px) {
+    .kt-sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 100;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+    }
+
+    .kt-sidebar[data-state="collapsed"] {
+      transform: translateX(-100%);
+      width: 280px;
+      min-width: 280px;
+    }
+
+    .kt-sidebar-toggle {
+      right: -40px;
+      width: 40px;
+      height: 40px;
+      border-radius: 0 4px 4px 0;
+    }
+
+    /* オーバーレイ */
+    .kt-sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 99;
+    }
+
+    .kt-sidebar:not([data-state="collapsed"]) ~ .kt-sidebar-overlay {
+      display: block;
+    }
+
+    .kt-layout-sidebar .kt-main {
+      width: 100%;
+    }
+  }
+`;
+
 /** フォームスタイル */
 const formStyles = `
   /* Form */
@@ -469,6 +600,7 @@ export const defaultStyles = [
 	layoutStyles,
 	tableStyles,
 	chatStyles,
+	sidebarStyles,
 	formStyles,
 ].join("\n");
 
@@ -483,5 +615,6 @@ export {
 	markdownStyles,
 	feedbackStyles,
 	layoutStyles,
+	sidebarStyles,
 	formStyles,
 };

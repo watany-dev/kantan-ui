@@ -196,3 +196,124 @@ describe("RenderContext global functions", () => {
 		expect(requireRenderContext()).toBe(ctx);
 	});
 });
+
+describe("RenderContext dual buffer", () => {
+	let ctx: RenderContext;
+
+	beforeEach(() => {
+		ctx = new RenderContext();
+	});
+
+	it("should append to main buffer by default", () => {
+		ctx.append("<div>main</div>");
+		expect(ctx.getMainHtml()).toBe("<div>main</div>");
+		expect(ctx.getSidebarHtml()).toBe("");
+	});
+
+	it("should have main as default target", () => {
+		expect(ctx.getTarget()).toBe("main");
+	});
+
+	it("should append to sidebar buffer when target is sidebar", () => {
+		ctx.setTarget("sidebar");
+		ctx.append("<div>sidebar</div>");
+		expect(ctx.getSidebarHtml()).toBe("<div>sidebar</div>");
+		expect(ctx.getMainHtml()).toBe("");
+	});
+
+	it("should switch targets correctly", () => {
+		ctx.append("<div>main1</div>");
+		ctx.setTarget("sidebar");
+		ctx.append("<div>sidebar</div>");
+		ctx.setTarget("main");
+		ctx.append("<div>main2</div>");
+
+		expect(ctx.getMainHtml()).toBe("<div>main1</div>\n<div>main2</div>");
+		expect(ctx.getSidebarHtml()).toBe("<div>sidebar</div>");
+	});
+
+	it("should report hasSidebar correctly", () => {
+		expect(ctx.hasSidebar()).toBe(false);
+		ctx.setTarget("sidebar");
+		ctx.append("<div>content</div>");
+		expect(ctx.hasSidebar()).toBe(true);
+	});
+
+	it("should clear both buffers", () => {
+		ctx.append("<div>main</div>");
+		ctx.setTarget("sidebar");
+		ctx.append("<div>sidebar</div>");
+		ctx.clear();
+
+		expect(ctx.getMainHtml()).toBe("");
+		expect(ctx.getSidebarHtml()).toBe("");
+		expect(ctx.getTarget()).toBe("main");
+	});
+
+	it("should maintain backward compatibility with getHtml()", () => {
+		ctx.append("<div>main content</div>");
+		ctx.setTarget("sidebar");
+		ctx.append("<div>sidebar content</div>");
+
+		// getHtml() should return main buffer only for backward compatibility
+		expect(ctx.getHtml()).toBe("<div>main content</div>");
+	});
+
+	it("should only flush main buffer", () => {
+		const flushes: string[] = [];
+		ctx.setFlushCallback((html) => {
+			flushes.push(html);
+		}, 2);
+
+		ctx.append("<div>main1</div>");
+		ctx.setTarget("sidebar");
+		ctx.append("<div>sidebar1</div>");
+		ctx.append("<div>sidebar2</div>");
+		ctx.setTarget("main");
+		ctx.append("<div>main2</div>"); // This should trigger flush
+
+		expect(flushes.length).toBe(1);
+		expect(flushes[0]).toBe("<div>main1</div>\n<div>main2</div>");
+	});
+
+	it("should preserve sidebar content on flush", () => {
+		ctx.setFlushCallback(() => {}, 1);
+
+		ctx.setTarget("sidebar");
+		ctx.append("<div>sidebar content</div>");
+		ctx.setTarget("main");
+		ctx.append("<div>main</div>"); // triggers flush
+
+		expect(ctx.getSidebarHtml()).toBe("<div>sidebar content</div>");
+	});
+
+	it("should check isEmpty based on main buffer only", () => {
+		expect(ctx.isEmpty()).toBe(true);
+		ctx.setTarget("sidebar");
+		ctx.append("<div>sidebar</div>");
+		// Main buffer is still empty
+		expect(ctx.isEmpty()).toBe(true);
+		ctx.setTarget("main");
+		ctx.append("<div>main</div>");
+		expect(ctx.isEmpty()).toBe(false);
+	});
+
+	it("should handle multiple sidebar appends", () => {
+		ctx.setTarget("sidebar");
+		ctx.append("<div>item1</div>");
+		ctx.append("<div>item2</div>");
+		ctx.append("<div>item3</div>");
+
+		expect(ctx.getSidebarHtml()).toBe("<div>item1</div>\n<div>item2</div>\n<div>item3</div>");
+	});
+
+	it("should reset target to main after clear", () => {
+		ctx.setTarget("sidebar");
+		ctx.append("<div>sidebar</div>");
+		expect(ctx.getTarget()).toBe("sidebar");
+
+		ctx.clear();
+		expect(ctx.getTarget()).toBe("main");
+		expect(ctx.hasSidebar()).toBe(false);
+	});
+});

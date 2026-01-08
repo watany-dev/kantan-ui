@@ -18,7 +18,8 @@ test.describe("Output API - kt.title and kt.write", () => {
 		await gotoAndWait(page);
 
 		// kt.write() が <div class="kt-write"> を出力することを確認
-		const writeElements = page.locator("div.kt-write");
+		// サイドバーにも kt-write があるため、メインコンテンツ領域を指定
+		const writeElements = page.locator(".kt-main div.kt-write");
 		await expect(writeElements.first()).toBeVisible();
 
 		// 最初のkt.write()の内容を確認

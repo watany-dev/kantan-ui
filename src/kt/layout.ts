@@ -237,3 +237,50 @@ export function expander(label: string, content: () => void, config: ExpanderCon
 	content();
 	ctx.append("</div></details>");
 }
+
+// ============================================
+// Sidebar API
+// ============================================
+
+export interface SidebarConfig {
+	/** サイドバーの幅（デフォルト: "280px"） */
+	width?: string;
+}
+
+/**
+ * サイドバーにコンテンツを追加
+ *
+ * @param content - サイドバー内に表示するコンテンツ
+ * @param config - オプション設定
+ *
+ * @example
+ * ```typescript
+ * kt.sidebar(() => {
+ *   kt.title("Settings");
+ *   const theme = kt.selectbox("Theme", ["Light", "Dark"]);
+ *   kt.divider();
+ *   if (kt.button("Reset")) {
+ *     // リセット処理
+ *   }
+ * });
+ *
+ * // メインコンテンツ
+ * kt.title("Main Content");
+ * kt.write("This is the main area.");
+ * ```
+ */
+export function sidebar(content: () => void, _config?: SidebarConfig): void {
+	const ctx = requireRenderContext();
+
+	// ターゲットをサイドバーに切り替え
+	const previousTarget = ctx.getTarget();
+	ctx.setTarget("sidebar");
+
+	try {
+		// コールバックを実行（kt.* はサイドバーバッファに出力される）
+		content();
+	} finally {
+		// ターゲットを元に戻す
+		ctx.setTarget(previousTarget);
+	}
+}

@@ -14,4 +14,5 @@ export {
 	jsonStyles,
 	layoutStyles,
 	markdownStyles,
+	sidebarStyles,
 } from "./default";
