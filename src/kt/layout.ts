@@ -242,16 +242,10 @@ export function expander(label: string, content: () => void, config: ExpanderCon
 // Sidebar API
 // ============================================
 
-export interface SidebarConfig {
-	/** サイドバーの幅（デフォルト: "280px"） */
-	width?: string;
-}
-
 /**
  * サイドバーにコンテンツを追加
  *
  * @param content - サイドバー内に表示するコンテンツ
- * @param config - オプション設定
  *
  * @example
  * ```typescript
@@ -269,7 +263,7 @@ export interface SidebarConfig {
  * kt.write("This is the main area.");
  * ```
  */
-export function sidebar(content: () => void, _config?: SidebarConfig): void {
+export function sidebar(content: () => void): void {
 	const ctx = requireRenderContext();
 
 	// ターゲットをサイドバーに切り替え
