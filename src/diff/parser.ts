@@ -243,30 +243,53 @@ function groupSiblings(
 }
 
 /**
+ * 兄弟グループからID→orderのインデックスマップを構築 O(k)
+ * findIndexのO(k)検索をO(1)のマップ検索に置き換えるための事前計算
+ */
+function buildSiblingIndexMap(
+	siblingGroups: Map<string | null, ParsedNode[]>,
+): Map<string, number> {
+	const indexMap = new Map<string, number>();
+
+	for (const [, siblings] of siblingGroups) {
+		for (let i = 0; i < siblings.length; i++) {
+			const sibling = siblings[i];
+			if (sibling) {
+				indexMap.set(sibling.id, i);
+			}
+		}
+	}
+
+	return indexMap;
+}
+
+/**
  * パースされたノードから親子関係と順序を計算してVNodeを構築
- * 計算量: O(k²) - 親マップ構築がO(k²)、それ以外はO(k)
+ * 計算量: O(k log k) - 親マップ構築のソートがボトルネック
  */
 function buildNodeTree(parsedNodes: ParsedNode[]): VNode[] {
-	// Step 1: 親マップを事前計算 O(k²)
+	// Step 1: 親マップを事前計算 O(k log k)
 	const parentMap = buildParentMap(parsedNodes);
 
-	// Step 2: 兄弟をグループ化 O(k)
+	// Step 2: 兄弟をグループ化 O(k log k) - グループ内ソートあり
 	const siblingGroups = groupSiblings(parsedNodes, parentMap);
 
-	// Step 3: VNodeを構築 O(k)
+	// Step 3: 兄弟インデックスマップを構築 O(k)
+	const siblingIndexMap = buildSiblingIndexMap(siblingGroups);
+
+	// Step 4: VNodeを構築 O(k)
 	const nodes: VNode[] = [];
 
 	for (const node of parsedNodes) {
 		const parentId = parentMap.get(node.id) ?? null;
-		const siblings = siblingGroups.get(parentId) || [];
-		const order = siblings.findIndex((s) => s.id === node.id);
+		const order = siblingIndexMap.get(node.id) ?? 0;
 
 		nodes.push({
 			id: node.id,
 			tag: node.tag,
 			html: node.html,
 			parentId,
-			order: order >= 0 ? order : 0,
+			order,
 		});
 	}
 
