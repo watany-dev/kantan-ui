@@ -366,11 +366,16 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 
 						// サイドバーの差分計算
 						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
-							patches.push({
-								type: "replaceNode",
-								id: "kt-sidebar-content",
-								html: `<div id="kt-sidebar-content" class="kt-sidebar-content">${newResult.sidebarHtml}</div>`,
-							});
+							const sidebarDiffResult = diff(
+								session.lastSidebarHtml ?? "",
+								newResult.sidebarHtml,
+							);
+							const sidebarPatches = toWebSocketPatches(
+								sidebarDiffResult,
+								newResult.sidebarHtml,
+								"kt-sidebar-content",
+							);
+							patches.push(...sidebarPatches);
 						}
 
 						session.lastHtml = newResult.mainHtml;

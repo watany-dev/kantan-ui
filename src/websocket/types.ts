@@ -52,6 +52,8 @@ export type Patch =
 export interface ReplaceRootPatch {
 	type: "replaceRoot";
 	html: string;
+	/** ターゲット要素ID（デフォルト: "app"） */
+	rootId?: string;
 }
 
 export interface ReplaceNodePatch {

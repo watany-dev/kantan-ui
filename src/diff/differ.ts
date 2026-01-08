@@ -81,8 +81,15 @@ export function diff(oldHtml: string, newHtml: string): DiffResult {
 /**
  * 差分パッチをWebSocketパッチ形式に変換
  * 差分が多すぎる場合やID追跡できない変更がある場合はreplaceRootにフォールバック
+ * @param diffResult - 差分結果
+ * @param fullHtml - 完全なHTML（フォールバック用）
+ * @param rootId - ターゲット要素ID（デフォルト: undefined = "app"）
  */
-export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Patch[] {
+export function toWebSocketPatches(
+	diffResult: DiffResult,
+	fullHtml: string,
+	rootId?: string,
+): Patch[] {
 	if (!diffResult.hasChanges) {
 		return [];
 	}
@@ -90,7 +97,7 @@ export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Pa
 	// ID追跡できない変更がある場合（hasChangesはtrueだがpatchesが空）
 	// または差分が多すぎる場合はreplaceRootにフォールバック
 	if (diffResult.patches.length === 0 || diffResult.patches.length > PATCH_THRESHOLD) {
-		return [{ type: "replaceRoot", html: fullHtml } satisfies ReplaceRootPatch];
+		return [{ type: "replaceRoot", html: fullHtml, rootId } satisfies ReplaceRootPatch];
 	}
 
 	// insertパッチがある場合はreplaceRootにフォールバック
@@ -99,7 +106,7 @@ export function toWebSocketPatches(diffResult: DiffResult, fullHtml: string): Pa
 	// ID無し要素が混在している場合に誤った位置に挿入される
 	const hasInsertPatches = diffResult.patches.some((p) => p.type === "insert");
 	if (hasInsertPatches) {
-		return [{ type: "replaceRoot", html: fullHtml } satisfies ReplaceRootPatch];
+		return [{ type: "replaceRoot", html: fullHtml, rootId } satisfies ReplaceRootPatch];
 	}
 
 	return diffResult.patches.map((p): Patch => {
