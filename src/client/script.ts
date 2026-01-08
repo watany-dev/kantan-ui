@@ -166,10 +166,14 @@ function applyPatch(patch) {
       }
       const el = document.getElementById(patch.id);
       if (el) {
-        // フォーカス中のinput/textarea要素、またはそれを含む要素はスキップ（レースコンディション防止）
+        // フォーカス中のテキスト入力要素、またはそれを含む要素はスキップ（レースコンディション防止）
+        // range, checkbox, radio などテキスト入力以外は除外
         const activeEl = document.activeElement;
         if (activeEl && (activeEl instanceof HTMLInputElement || activeEl instanceof HTMLTextAreaElement)) {
-          if (el === activeEl || (el.contains && el.contains(activeEl))) {
+          const textInputTypes = ['text', 'search', 'tel', 'url', 'email', 'password', ''];
+          const isTextInput = activeEl instanceof HTMLTextAreaElement ||
+            (activeEl instanceof HTMLInputElement && textInputTypes.includes(activeEl.type));
+          if (isTextInput && (el === activeEl || (el.contains && el.contains(activeEl)))) {
             return;
           }
         }
