@@ -412,6 +412,16 @@ const chatStyles = `
 
 /** サイドバースタイル */
 const sidebarStyles = `
+  /* CSS変数（サイドバー用） */
+  :root {
+    --kt-sidebar-width: 280px;
+    --kt-sidebar-bg: #f8f9fa;
+    --kt-sidebar-border-color: #e9ecef;
+    --kt-sidebar-z-index: 100;
+    --kt-sidebar-toggle-z-index: 101;
+    --kt-sidebar-overlay-z-index: 99;
+  }
+
   /* サイドバーレイアウトコンテナ */
   .kt-layout-sidebar {
     display: flex;
@@ -421,20 +431,18 @@ const sidebarStyles = `
   /* サイドバー */
   .kt-sidebar {
     position: relative;
-    width: 280px;
-    min-width: 280px;
-    background: #f8f9fa;
-    border-right: 1px solid #e9ecef;
+    flex: 0 0 var(--kt-sidebar-width);
+    background: var(--kt-sidebar-bg);
+    border-right: 1px solid var(--kt-sidebar-border-color);
     display: flex;
     flex-direction: column;
     height: 100vh;
     overflow-y: auto;
-    transition: width 0.3s ease, min-width 0.3s ease;
+    transition: flex-basis 0.3s ease;
   }
 
   .kt-sidebar[data-state="collapsed"] {
-    width: 0;
-    min-width: 0;
+    flex-basis: 0;
     overflow: visible;
     pointer-events: none;
   }
@@ -462,12 +470,12 @@ const sidebarStyles = `
     height: 24px;
     border-radius: 50%;
     background: white;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--kt-sidebar-border-color);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1001;
+    z-index: var(--kt-sidebar-toggle-z-index);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
 
@@ -476,7 +484,7 @@ const sidebarStyles = `
   }
 
   .kt-sidebar-toggle:hover {
-    background: #f8f9fa;
+    background: var(--kt-sidebar-bg);
   }
 
   .kt-sidebar-toggle-icon {
@@ -505,14 +513,14 @@ const sidebarStyles = `
       position: fixed;
       left: 0;
       top: 0;
-      z-index: 100;
+      flex-basis: var(--kt-sidebar-width);
+      z-index: var(--kt-sidebar-z-index);
       box-shadow: 2px 0 8px rgba(0,0,0,0.15);
     }
 
     .kt-sidebar[data-state="collapsed"] {
       transform: translateX(-100%);
-      width: 280px;
-      min-width: 280px;
+      flex-basis: var(--kt-sidebar-width);
     }
 
     .kt-sidebar-toggle {
@@ -528,7 +536,7 @@ const sidebarStyles = `
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.5);
-      z-index: 99;
+      z-index: var(--kt-sidebar-overlay-z-index);
     }
 
     .kt-sidebar:not([data-state="collapsed"]) ~ .kt-sidebar-overlay {

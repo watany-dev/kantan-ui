@@ -263,7 +263,9 @@ function autoScrollChat() {
 const sidebarToggleScript = `
 function initSidebarToggle() {
   const sidebar = document.querySelector(".kt-sidebar");
-  if (!sidebar) return;
+  // 初期化済み or サイドバーなしの場合はスキップ
+  if (!sidebar || sidebar.dataset.ktSidebarInit) return;
+  sidebar.dataset.ktSidebarInit = "true";
 
   const toggle = sidebar.querySelector(".kt-sidebar-toggle");
   const overlay = document.querySelector(".kt-sidebar-overlay");
@@ -281,11 +283,6 @@ function initSidebarToggle() {
       sidebar.setAttribute("data-state", "collapsed");
     });
   }
-}
-
-// DOM更新後にサイドバー初期化を再実行
-function reinitSidebar() {
-  initSidebarToggle();
 }`;
 
 /**
