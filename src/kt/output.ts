@@ -1,9 +1,9 @@
-import { ALERT_ICONS, type AlertType } from "../constants";
 import { escapeHtml } from "../utils/html";
 import { applyHighlight } from "./code/highlighter";
 import { requireRenderContext } from "./context";
 import { parseMarkdown } from "./markdown/parser";
 import { sanitizeMarkdownHtml } from "./markdown/sanitizer";
+import { type MessageType, messageIcons } from "./theme";
 
 /**
  * テキストまたはHTMLを出力
@@ -86,9 +86,9 @@ export interface AlertConfig {
 	border?: string;
 }
 
-function alert(type: AlertType, message: string, config: AlertConfig = {}): void {
+function alert(type: MessageType, message: string, config: AlertConfig = {}): void {
 	const ctx = requireRenderContext();
-	const icon = escapeHtml(config.icon ?? ALERT_ICONS[type]);
+	const icon = escapeHtml(config.icon ?? messageIcons[type]);
 
 	// カスタムカラーが指定されている場合はインラインスタイルを生成
 	const styles: string[] = [];

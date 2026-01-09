@@ -1,6 +1,7 @@
-import { SPINNER_SIZES, type SpinnerSize, TOAST_COLORS, type ToastType } from "../constants";
+import { SPINNER_SIZES, type SpinnerSize } from "../constants";
 import { escapeHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
+import { type MessageType, messageColors } from "./theme";
 
 // ============================================
 // Progress API
@@ -40,7 +41,7 @@ export interface SpinnerConfig {
 // ============================================
 
 export interface ToastConfig {
-	type?: ToastType;
+	type?: MessageType;
 	duration?: number;
 }
 
@@ -151,7 +152,7 @@ export function toast(message: string, config: ToastConfig = {}): void {
 
 	const type = config.type ?? "success";
 	const duration = config.duration ?? 4000;
-	const colors = TOAST_COLORS[type];
+	const colors = messageColors[type];
 
 	ctx.append(
 		`<div class="kt-toast kt-toast-${type}" data-duration="${duration}" style="background: ${colors.bg}; border: 1px solid ${colors.border}; padding: 12px 16px; border-radius: 4px; margin: 8px 0; display: flex; align-items: center;"><span class="kt-toast-icon" style="margin-right: 8px;">${colors.icon}</span><span class="kt-toast-message">${escapeHtml(message)}</span></div>`,
