@@ -1,7 +1,7 @@
 import { SPINNER_SIZES, type SpinnerSize } from "../constants";
-import { type MessageType, messageColors } from "./theme";
 import { escapeHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
+import { type MessageType, messageColors } from "./theme";
 
 // ============================================
 // Progress API

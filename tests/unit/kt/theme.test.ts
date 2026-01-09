@@ -4,10 +4,10 @@ import {
 	type AlertType,
 	type MessageColorScheme,
 	type MessageType,
-	TOAST_COLORS,
-	type ToastType,
 	messageColors,
 	messageIcons,
+	TOAST_COLORS,
+	type ToastType,
 } from "../../../src/kt/theme";
 
 describe("Theme", () => {
