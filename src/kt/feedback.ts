@@ -6,11 +6,24 @@ import { requireRenderContext } from "./context";
 // Progress API
 // ============================================
 
+/**
+ * Progress value interpretation format
+ * - "auto": Values > 1 are treated as percentage (0-100), others as fraction (0-1)
+ * - "fraction": Always interpret as fraction (0-1)
+ * - "percentage": Always interpret as percentage (0-100)
+ */
+export type ProgressFormat = "auto" | "fraction" | "percentage";
+
 export interface ProgressConfig {
 	label?: string;
 	color?: string;
 	/** Show animated stripes effect (useful for indeterminate progress) */
 	animated?: boolean;
+	/**
+	 * How to interpret the progress value
+	 * @default "auto"
+	 */
+	format?: ProgressFormat;
 }
 
 // ============================================
@@ -32,6 +45,24 @@ export interface ToastConfig {
 }
 
 /**
+ * Normalize progress value based on format
+ */
+function normalizeProgressValue(value: number, format: ProgressFormat): number {
+	switch (format) {
+		case "fraction":
+			// Always interpret as 0-1, then convert to percentage
+			return value * 100;
+		case "percentage":
+			// Always interpret as 0-100
+			return value;
+		case "auto":
+		default:
+			// Values > 1 are treated as percentage, otherwise as fraction
+			return value > 1 ? value : value * 100;
+	}
+}
+
+/**
  * プログレスバーを表示
  *
  * @param value - 進捗値 (0-1 または 0-100)
@@ -39,18 +70,26 @@ export interface ToastConfig {
  *
  * @example
  * ```typescript
+ * // Auto format (default): automatically detects based on value
  * kt.progress(0.5);  // 50%
  * kt.progress(75);   // 75% (0-100を自動正規化)
  * kt.progress(0.75, { label: "Downloading... 75%" });
+ *
+ * // Fraction format: always interpret as 0-1
+ * kt.progress(0.5, { format: "fraction" });  // 50%
+ * kt.progress(0.75, { format: "fraction" }); // 75%
+ *
+ * // Percentage format: always interpret as 0-100
+ * kt.progress(50, { format: "percentage" });  // 50%
+ * kt.progress(75, { format: "percentage" });  // 75%
  * ```
  */
 export function progress(value: number, config: ProgressConfig = {}): void {
 	const ctx = requireRenderContext();
 
-	// 0-100 を 0-1 に正規化
-	const normalizedValue = value > 1 ? value / 100 : value;
-	// 0-100% にクランプ
-	const percentage = Math.min(Math.max(normalizedValue * 100, 0), 100);
+	const format = config.format ?? "auto";
+	// Normalize based on format and clamp to 0-100%
+	const percentage = Math.min(Math.max(normalizeProgressValue(value, format), 0), 100);
 	const color = config.color ?? "#3498db";
 	const animatedClass = config.animated ? " kt-progress-animated" : "";
 

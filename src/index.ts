@@ -27,6 +27,7 @@ export type {
 	ChatMessageConfig,
 	ChatRole,
 } from "./kt/chat";
+export type { ProgressConfig, ProgressFormat } from "./kt/feedback";
 export {
 	getPageConfig,
 	type PageConfig,
