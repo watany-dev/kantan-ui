@@ -6,11 +6,11 @@
 // Alert & Toast (re-export from theme)
 // ============================================
 
-export {
-	type AlertType,
-	type MessageColorScheme,
-	type MessageType,
-	type ToastType,
+export type {
+	AlertType,
+	MessageColorScheme,
+	MessageType,
+	ToastType,
 } from "../kt/theme";
 
 // ============================================
