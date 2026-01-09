@@ -156,3 +156,21 @@ export function validateMultiselect(options: string[], defaultValue?: string[]):
 export function initializeMultiselectState(widgetId: string, defaultValue?: string[]): string[] {
 	return initializeWidgetState(widgetId, defaultValue ?? []);
 }
+
+/**
+ * 日付入力のstate管理
+ * 初期値をstateに保存し、現在値を返す
+ * デフォルト値が指定されない場合は空文字列を使用
+ */
+export function initializeDateInputState(widgetId: string, defaultValue?: string): string {
+	return initializeWidgetState(widgetId, defaultValue ?? "");
+}
+
+/**
+ * 時刻入力のstate管理
+ * 初期値をstateに保存し、現在値を返す
+ * デフォルト値が指定されない場合は空文字列を使用
+ */
+export function initializeTimeInputState(widgetId: string, defaultValue?: string): string {
+	return initializeWidgetState(widgetId, defaultValue ?? "");
+}

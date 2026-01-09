@@ -108,3 +108,20 @@ export interface MultiselectConfig {
 	maxSelections?: number;
 	disabled?: boolean;
 }
+
+export interface DateInputConfig {
+	label: string;
+	defaultValue?: string;
+	min?: string;
+	max?: string;
+	key?: string;
+	disabled?: boolean;
+}
+
+export interface TimeInputConfig {
+	label: string;
+	defaultValue?: string;
+	step?: number;
+	key?: string;
+	disabled?: boolean;
+}

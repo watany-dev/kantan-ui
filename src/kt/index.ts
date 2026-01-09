@@ -100,4 +100,6 @@ export const kt = {
 	text_area: widgets.text_area,
 	toggle: widgets.toggle,
 	multiselect: widgets.multiselect,
+	date_input: widgets.date_input,
+	time_input: widgets.time_input,
 };

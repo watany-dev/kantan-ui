@@ -1,5 +1,6 @@
 import { button as imperativeButton, renderButton } from "../widgets/button";
 import { checkbox as imperativeCheckbox, renderCheckbox } from "../widgets/checkbox";
+import { date_input as imperativeDateInput, renderDateInput } from "../widgets/date-input";
 import { download_button as imperativeDownloadButton } from "../widgets/download-button";
 import { multiselect as imperativeMultiselect, renderMultiselect } from "../widgets/multiselect";
 import { number_input as imperativeNumberInput, renderNumberInput } from "../widgets/number-input";
@@ -8,10 +9,12 @@ import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/se
 import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
 import { text_area as imperativeTextArea, renderTextArea } from "../widgets/text-area";
 import { text_input as imperativeTextInput, renderTextInput } from "../widgets/text-input";
+import { time_input as imperativeTimeInput, renderTimeInput } from "../widgets/time-input";
 import { toggle as imperativeToggle, renderToggle } from "../widgets/toggle";
 import type {
 	ButtonConfig,
 	CheckboxConfig,
+	DateInputConfig,
 	DownloadButtonConfig,
 	MultiselectConfig,
 	NumberInputConfig,
@@ -20,6 +23,7 @@ import type {
 	SliderConfig,
 	TextAreaConfig,
 	TextInputConfig,
+	TimeInputConfig,
 	ToggleConfig,
 } from "../widgets/types";
 import { wrapWidget } from "./widget-helper";
@@ -198,5 +202,37 @@ export function multiselect(
 		config,
 		(cfg) => imperativeMultiselect(label, options, defaultValue, cfg),
 		(value, cfg) => renderMultiselect(label, options, value, cfg),
+	);
+}
+
+/**
+ * 日付入力ウィジェット（宣言的API）
+ * HTMLを自動出力し、現在の値を返す（"YYYY-MM-DD" 形式）
+ */
+export function date_input(
+	label: string,
+	defaultValue?: string,
+	config?: Partial<DateInputConfig>,
+): string {
+	return wrapWidget(
+		config,
+		(cfg) => imperativeDateInput(label, defaultValue, cfg),
+		(value, cfg) => renderDateInput(label, value, cfg),
+	);
+}
+
+/**
+ * 時刻入力ウィジェット（宣言的API）
+ * HTMLを自動出力し、現在の値を返す（"HH:MM" 形式）
+ */
+export function time_input(
+	label: string,
+	defaultValue?: string,
+	config?: Partial<TimeInputConfig>,
+): string {
+	return wrapWidget(
+		config,
+		(cfg) => imperativeTimeInput(label, defaultValue, cfg),
+		(value, cfg) => renderTimeInput(label, value, cfg),
 	);
 }
