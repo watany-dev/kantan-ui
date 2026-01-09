@@ -68,6 +68,26 @@ describe("time_input", () => {
 
 			expect(value).toBe("23:59");
 		});
+
+		it("should accept Date object as default value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const dateObj = new Date(2024, 0, 1, 14, 30); // 14:30
+			const value = time_input("Alarm", dateObj);
+
+			expect(value).toBe("14:30");
+		});
+
+		it("should accept Date object with seconds when step < 60", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const dateObj = new Date(2024, 0, 1, 14, 30, 45); // 14:30:45
+			const value = time_input("Alarm", dateObj, { step: 1 });
+
+			expect(value).toBe("14:30:45");
+		});
 	});
 
 	describe("renderTimeInput", () => {

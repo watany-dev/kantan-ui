@@ -111,16 +111,16 @@ export interface MultiselectConfig {
 
 export interface DateInputConfig {
 	label: string;
-	defaultValue?: string;
-	min?: string;
-	max?: string;
+	defaultValue?: string | Date;
+	min?: string | Date;
+	max?: string | Date;
 	key?: string;
 	disabled?: boolean;
 }
 
 export interface TimeInputConfig {
 	label: string;
-	defaultValue?: string;
+	defaultValue?: string | Date;
 	step?: number;
 	key?: string;
 	disabled?: boolean;

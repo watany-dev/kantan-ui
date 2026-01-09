@@ -68,6 +68,16 @@ describe("date_input", () => {
 
 			expect(value).toBe("2024-07-04");
 		});
+
+		it("should accept Date object as default value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const dateObj = new Date(2000, 0, 15); // January 15, 2000
+			const value = date_input("Birthday", dateObj);
+
+			expect(value).toBe("2000-01-15");
+		});
 	});
 
 	describe("renderDateInput", () => {
@@ -96,6 +106,16 @@ describe("date_input", () => {
 			const html = renderDateInput("Birthday", "", {
 				min: "1900-01-01",
 				max: "2024-12-31",
+			});
+
+			expect(html).toContain('min="1900-01-01"');
+			expect(html).toContain('max="2024-12-31"');
+		});
+
+		it("should accept Date objects for min and max", () => {
+			const html = renderDateInput("Birthday", "", {
+				min: new Date(1900, 0, 1), // January 1, 1900
+				max: new Date(2024, 11, 31), // December 31, 2024
 			});
 
 			expect(html).toContain('min="1900-01-01"');

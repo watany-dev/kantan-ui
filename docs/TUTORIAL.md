@@ -385,7 +385,7 @@ kt.write(`選択された日付: ${birthday}`);
 
 パラメータ:
 - 第1引数: ラベル
-- 第2引数: デフォルト値（"YYYY-MM-DD"形式、省略時は空文字列）
+- 第2引数: デフォルト値（`"YYYY-MM-DD"`形式の文字列、または`Date`オブジェクト、省略時は空文字列）
 - オプション: `{ key, min, max, disabled }`
 
 ```typescript
@@ -394,6 +394,20 @@ const eventDate = kt.date_input("イベント日", "2024-06-01", {
   min: "2024-01-01",
   max: "2024-12-31",
   key: "event_date"
+});
+```
+
+Dateオブジェクトも使用できます:
+
+```typescript
+// Dateオブジェクトをデフォルト値として使用
+const today = new Date();
+const selectedDate = kt.date_input("日付", today);
+
+// min/maxにもDateオブジェクトを指定可能
+const reservation = kt.date_input("予約日", new Date(), {
+  min: new Date(),                    // 今日以降
+  max: new Date(2025, 11, 31),        // 2025年12月31日まで
 });
 ```
 
@@ -410,7 +424,7 @@ kt.write(`設定時刻: ${alarm}`);
 
 パラメータ:
 - 第1引数: ラベル
-- 第2引数: デフォルト値（"HH:MM"形式、省略時は空文字列）
+- 第2引数: デフォルト値（`"HH:MM"`形式の文字列、または`Date`オブジェクト、省略時は空文字列）
 - オプション: `{ key, step, disabled }`
 
 ```typescript
@@ -425,6 +439,17 @@ const meetingTime = kt.time_input("会議時間", "09:00", {
   step: 900,  // 15分 = 900秒
   key: "meeting_time"
 });
+```
+
+Dateオブジェクトも使用できます:
+
+```typescript
+// Dateオブジェクトをデフォルト値として使用
+const now = new Date();
+const selectedTime = kt.time_input("時刻", now);  // 現在時刻
+
+// 秒も含める場合
+const preciseNow = kt.time_input("正確な時刻", now, { step: 1 });
 ```
 
 **戻り値**: `"HH:MM"` または `"HH:MM:SS"` 形式の文字列（stepによる）

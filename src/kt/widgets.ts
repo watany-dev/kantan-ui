@@ -208,10 +208,15 @@ export function multiselect(
 /**
  * 日付入力ウィジェット（宣言的API）
  * HTMLを自動出力し、現在の値を返す（"YYYY-MM-DD" 形式）
+ *
+ * @param label - ラベル
+ * @param defaultValue - デフォルト値（string または Date）
+ * @param config - 設定（min, max も Date 対応）
+ * @returns "YYYY-MM-DD" 形式の文字列
  */
 export function date_input(
 	label: string,
-	defaultValue?: string,
+	defaultValue?: string | Date,
 	config?: Partial<DateInputConfig>,
 ): string {
 	return wrapWidget(
@@ -223,11 +228,16 @@ export function date_input(
 
 /**
  * 時刻入力ウィジェット（宣言的API）
- * HTMLを自動出力し、現在の値を返す（"HH:MM" 形式）
+ * HTMLを自動出力し、現在の値を返す（"HH:MM" または "HH:MM:SS" 形式）
+ *
+ * @param label - ラベル
+ * @param defaultValue - デフォルト値（string または Date）
+ * @param config - 設定
+ * @returns "HH:MM" または "HH:MM:SS" 形式の文字列
  */
 export function time_input(
 	label: string,
-	defaultValue?: string,
+	defaultValue?: string | Date,
 	config?: Partial<TimeInputConfig>,
 ): string {
 	return wrapWidget(
