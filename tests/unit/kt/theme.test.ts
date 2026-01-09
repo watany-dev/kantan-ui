@@ -1,13 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-	ALERT_ICONS,
 	type AlertType,
 	type MessageColorScheme,
 	type MessageType,
+	type ToastType,
 	messageColors,
 	messageIcons,
-	TOAST_COLORS,
-	type ToastType,
 } from "../../../src/kt/theme";
 
 describe("Theme", () => {
@@ -65,15 +63,7 @@ describe("Theme", () => {
 		});
 	});
 
-	describe("legacy aliases", () => {
-		it("ALERT_ICONS should be same as messageIcons", () => {
-			expect(ALERT_ICONS).toBe(messageIcons);
-		});
-
-		it("TOAST_COLORS should be same as messageColors", () => {
-			expect(TOAST_COLORS).toBe(messageColors);
-		});
-
+	describe("legacy type aliases", () => {
 		it("AlertType should be compatible with MessageType", () => {
 			const alertType: AlertType = "success";
 			const messageType: MessageType = alertType;

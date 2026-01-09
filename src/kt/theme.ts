@@ -68,13 +68,3 @@ export type AlertType = MessageType;
  * @deprecated Use MessageType instead
  */
 export type ToastType = MessageType;
-
-/**
- * @deprecated Use messageIcons instead
- */
-export const ALERT_ICONS = messageIcons;
-
-/**
- * @deprecated Use messageColors instead
- */
-export const TOAST_COLORS = messageColors;
