@@ -39,6 +39,7 @@ export {
 	requireRenderContext,
 	setRenderContext,
 } from "./kt/context";
+export type { ProgressConfig, ProgressFormat } from "./kt/feedback";
 export type { RerunContext, Script } from "./runtime";
 // Runtime
 export { clearContext, getContext, rerun, setContext } from "./runtime";

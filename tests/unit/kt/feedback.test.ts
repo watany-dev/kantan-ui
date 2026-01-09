@@ -101,6 +101,60 @@ describe("Feedback APIs", () => {
 			expect(html).toContain("kt-progress-animated");
 			expect(html).toContain("background: #ff0000");
 		});
+
+		describe("format option", () => {
+			it("should use auto format by default (0.5 -> 50%)", () => {
+				progress(0.5);
+				expect(ctx.getHtml()).toContain("width: 50%");
+			});
+
+			it("should use auto format by default (75 -> 75%)", () => {
+				progress(75);
+				expect(ctx.getHtml()).toContain("width: 75%");
+			});
+
+			it("should interpret value as fraction with format='fraction' (0.5 -> 50%)", () => {
+				progress(0.5, { format: "fraction" });
+				expect(ctx.getHtml()).toContain("width: 50%");
+			});
+
+			it("should interpret 0.75 as 75% with format='fraction'", () => {
+				progress(0.75, { format: "fraction" });
+				expect(ctx.getHtml()).toContain("width: 75%");
+			});
+
+			it("should interpret value as percentage with format='percentage' (50 -> 50%)", () => {
+				progress(50, { format: "percentage" });
+				expect(ctx.getHtml()).toContain("width: 50%");
+			});
+
+			it("should interpret 0.5 as 0.5% with format='percentage'", () => {
+				progress(0.5, { format: "percentage" });
+				expect(ctx.getHtml()).toContain("width: 0.5%");
+			});
+
+			it("should clamp fraction format values to 0-1 range", () => {
+				progress(-0.5, { format: "fraction" });
+				expect(ctx.getHtml()).toContain("width: 0%");
+
+				ctx = new RenderContext();
+				setRenderContext(ctx);
+
+				progress(1.5, { format: "fraction" });
+				expect(ctx.getHtml()).toContain("width: 100%");
+			});
+
+			it("should clamp percentage format values to 0-100 range", () => {
+				progress(-10, { format: "percentage" });
+				expect(ctx.getHtml()).toContain("width: 0%");
+
+				ctx = new RenderContext();
+				setRenderContext(ctx);
+
+				progress(150, { format: "percentage" });
+				expect(ctx.getHtml()).toContain("width: 100%");
+			});
+		});
 	});
 
 	describe("spinner", () => {
