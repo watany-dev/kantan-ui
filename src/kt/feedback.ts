@@ -55,7 +55,6 @@ function normalizeProgressValue(value: number, format: ProgressFormat): number {
 		case "percentage":
 			// Always interpret as 0-100
 			return value;
-		case "auto":
 		default:
 			// Values > 1 are treated as percentage, otherwise as fraction
 			return value > 1 ? value : value * 100;
