@@ -11,7 +11,8 @@
 | 2 | image, audio, video | ❌ 未実装 |
 | 3 | metric | ❌ 未実装 |
 | 4 | line_chart, bar_chart | ❌ 未実装 |
-| 5 | date_input, time_input, color_picker | ❌ 未実装 |
+| 5 | date_input, time_input | ✅ 実装済み |
+| 5b | color_picker | ❌ 未実装 |
 | 6 | dataframe | ❌ 未実装 |
 | 7 | file_uploader | ❌ 未実装 |
 | 8 | sidebar | ✅ 実装済み |
@@ -45,7 +46,7 @@ container, columns, expander, tabs, **sidebar**
 form, form_submit_button
 
 ### 入力ウィジェット
-text_input, text_area, number_input, slider
+text_input, text_area, number_input, slider, **date_input**, **time_input**
 
 ### 選択ウィジェット
 button, checkbox, toggle, radio, selectbox, multiselect
@@ -149,17 +150,48 @@ export function metric(
 
 ---
 
-## Iteration 5: 日付・時刻入力 ❌ 未実装
+## Iteration 5: 日付・時刻入力 ✅ 部分実装
 
-### kt.date_input()
+### kt.date_input() ✅
 
 **工数**: 1日
 
-### kt.time_input()
+実装コミット:
+- `3fc0955` feat: add date_input and time_input widgets
+
+```typescript
+interface DateInputConfig {
+  key?: string;
+  min?: string;      // "YYYY-MM-DD"形式
+  max?: string;      // "YYYY-MM-DD"形式
+  disabled?: boolean;
+}
+
+// 使用例
+const birthday = kt.date_input("誕生日", "2000-01-15", {
+  min: "1900-01-01",
+  max: "2024-12-31",
+});
+// 戻り値: "YYYY-MM-DD" 形式の文字列
+```
+
+### kt.time_input() ✅
 
 **工数**: 0.5日
 
-### kt.color_picker()
+```typescript
+interface TimeInputConfig {
+  key?: string;
+  step?: number;     // 秒単位（1 = 秒表示、60 = 分刻み、900 = 15分刻み）
+  disabled?: boolean;
+}
+
+// 使用例
+const alarm = kt.time_input("アラーム", "08:30", { step: 60 });
+// 戻り値: "HH:MM" または "HH:MM:SS" 形式の文字列
+```
+
+### kt.color_picker() ❌ 未実装
 
 **工数**: 0.5日
 
@@ -226,10 +258,13 @@ export function file_uploader(
 
 1. **高**: file_uploader - ファイルアップロードは需要が高い
 2. **中**: metric - ダッシュボード用途に有用
-3. **中**: date_input, time_input - フォーム機能の充実
+3. **中**: color_picker - フォーム機能の充実
 4. **低**: image, audio, video - シンプルなHTMLタグ生成
 5. **低**: dataframe - table()で代替可能
 6. **低**: charts - 工数が大きい
+
+### 実装済み
+- ✅ date_input, time_input (Iteration 5)
 
 ---
 

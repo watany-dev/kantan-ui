@@ -181,6 +181,15 @@ const bio = kt.text_area("Bio", "Tell us about yourself...", { key: "bio" });
 
 // マルチセレクト - 選択された値の配列を返す
 const tags = kt.multiselect("Tags", ["Tech", "Design", "Business"], [], { key: "tags" });
+
+// 日付入力 - "YYYY-MM-DD"形式の文字列を返す
+const birthday = kt.date_input("Birthday", "2000-01-15", {
+  min: "1900-01-01",
+  max: "2024-12-31",
+});
+
+// 時刻入力 - "HH:MM"形式の文字列を返す
+const alarm = kt.time_input("Alarm", "08:30", { step: 60 });
 ```
 
 #### Chat API
@@ -363,6 +372,8 @@ src/
     ├── radio.ts
     ├── number-input.ts
     ├── multiselect.ts
+    ├── date-input.ts  # 日付入力
+    ├── time-input.ts  # 時刻入力
     ├── core.ts       # 共通処理
     ├── registry.ts   # ウィジェットID管理
     ├── types.ts      # ウィジェット型定義

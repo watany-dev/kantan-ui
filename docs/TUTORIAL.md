@@ -374,6 +374,61 @@ const skills = kt.multiselect("スキル", ["JS", "TS", "Python", "Go"], [], {
 });
 ```
 
+### 日付入力
+
+日付を選択するピッカーです。HTML5の`<input type="date">`を使用します。
+
+```typescript
+const birthday = kt.date_input("誕生日", "2000-01-15");
+kt.write(`選択された日付: ${birthday}`);
+```
+
+パラメータ:
+- 第1引数: ラベル
+- 第2引数: デフォルト値（"YYYY-MM-DD"形式、省略時は空文字列）
+- オプション: `{ key, min, max, disabled }`
+
+```typescript
+// 日付範囲を制限
+const eventDate = kt.date_input("イベント日", "2024-06-01", {
+  min: "2024-01-01",
+  max: "2024-12-31",
+  key: "event_date"
+});
+```
+
+**戻り値**: `"YYYY-MM-DD"` 形式の文字列（例: `"2024-06-15"`）
+
+### 時刻入力
+
+時刻を選択するピッカーです。HTML5の`<input type="time">`を使用します。
+
+```typescript
+const alarm = kt.time_input("アラーム", "08:30");
+kt.write(`設定時刻: ${alarm}`);
+```
+
+パラメータ:
+- 第1引数: ラベル
+- 第2引数: デフォルト値（"HH:MM"形式、省略時は空文字列）
+- オプション: `{ key, step, disabled }`
+
+```typescript
+// 秒単位の精度を有効化
+const preciseTime = kt.time_input("正確な時刻", "12:30:00", {
+  step: 1,  // 1秒単位
+  key: "precise_time"
+});
+
+// 15分刻みのスケジュール
+const meetingTime = kt.time_input("会議時間", "09:00", {
+  step: 900,  // 15分 = 900秒
+  key: "meeting_time"
+});
+```
+
+**戻り値**: `"HH:MM"` または `"HH:MM:SS"` 形式の文字列（stepによる）
+
 ---
 
 ## データ表示
@@ -1028,8 +1083,9 @@ export default await createApp(script, {
 - ✅ テキスト出力（title, header, write, divider, html）
 - ✅ 基本ウィジェット（button, slider, text_input, selectbox, download_button）
 - ✅ フォームウィジェット（checkbox, toggle, radio, number_input, text_area, multiselect）
+- ✅ 日付・時刻入力（date_input, time_input）
 - ✅ データ表示（table）
-- ✅ レイアウト（tabs）
+- ✅ レイアウト（tabs, sidebar, columns, container, expander）
 - ✅ チャットUI（chat_message, chat_container）
 - ✅ ページ設定（set_page_config, rerun）
 - ✅ セッションステート管理
@@ -1043,10 +1099,10 @@ export default await createApp(script, {
 ### 今後の予定（Phase 3-B/C）
 
 - キャッシュ: `kt.cache_data()`, `kt.cache_resource()`
-- レイアウト: `kt.sidebar()`, `kt.columns()`
 - データウィジェット: `kt.dataframe()`, `kt.file_uploader()`
 - チャート: `kt.line_chart()`, `kt.bar_chart()`
-- 追加ウィジェット: `kt.date_input()`, `kt.time_input()`
+- 追加ウィジェット: `kt.color_picker()`, `kt.metric()`
+- メディア: `kt.image()`, `kt.audio()`, `kt.video()`
 - プラグインシステム
 
 ### 関連ドキュメント

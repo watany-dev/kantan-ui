@@ -5,8 +5,8 @@ import {
 	setSessionManager,
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
-import { resetWidgetCounter } from "../../../src/widgets/registry";
 import { date_input, renderDateInput } from "../../../src/widgets/date-input";
+import { resetWidgetCounter } from "../../../src/widgets/registry";
 
 describe("date_input", () => {
 	let manager: SessionManager;
