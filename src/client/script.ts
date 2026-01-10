@@ -338,6 +338,139 @@ function sendEventDebounced(widgetId, value, sendFn) {
   debounceTimers.set(widgetId, timer);
 }
 
+// File upload handling
+const FILE_UPLOAD_DEFAULT_MAX_SIZE = 200 * 1024 * 1024;
+const FILE_UPLOAD_CHUNK_SIZE = 1 * 1024 * 1024;
+
+function arrayBufferToBase64(buffer) {
+  if (buffer.byteLength === 0) return "";
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function getMaxFileSize(element) {
+  const maxSizeStr = element.dataset && element.dataset.maxSize;
+  if (!maxSizeStr) return FILE_UPLOAD_DEFAULT_MAX_SIZE;
+  const maxSize = parseInt(maxSizeStr, 10);
+  if (isNaN(maxSize) || maxSize <= 0) return FILE_UPLOAD_DEFAULT_MAX_SIZE;
+  return maxSize;
+}
+
+function validateFileSize(fileSize, maxSize) {
+  if (fileSize > maxSize) {
+    const fileSizeMB = (fileSize / (1024 * 1024)).toFixed(2);
+    const maxSizeMB = (maxSize / (1024 * 1024)).toFixed(2);
+    return { valid: false, error: "File size (" + fileSizeMB + "MB) exceeds maximum allowed size (" + maxSizeMB + "MB)" };
+  }
+  return { valid: true };
+}
+
+function validateFileType(filename, mimeType, accept) {
+  if (!accept) return { valid: true };
+  const acceptTypes = accept.split(",").map(function(t) { return t.trim().toLowerCase(); });
+  const lowerFilename = filename.toLowerCase();
+  const lowerMime = mimeType.toLowerCase();
+  for (let i = 0; i < acceptTypes.length; i++) {
+    const acceptType = acceptTypes[i];
+    if (acceptType.startsWith(".") && lowerFilename.endsWith(acceptType)) return { valid: true };
+    if (acceptType.endsWith("/*")) {
+      const category = acceptType.slice(0, -2);
+      if (lowerMime.startsWith(category + "/")) return { valid: true };
+    }
+    if (lowerMime === acceptType) return { valid: true };
+  }
+  return { valid: false, error: 'File type "' + mimeType + '" is not allowed. Accepted types: ' + accept };
+}
+
+function handleFileUpload(inputElement) {
+  const files = inputElement.files;
+  if (!files || files.length === 0) return;
+
+  const widgetId = inputElement.id;
+  const maxSize = getMaxFileSize(inputElement);
+  const accept = inputElement.accept || undefined;
+  const multiple = inputElement.multiple;
+
+  // Process files
+  const filesToProcess = multiple ? Array.from(files) : [files[0]];
+
+  for (let i = 0; i < filesToProcess.length; i++) {
+    const file = filesToProcess[i];
+
+    // Validate size
+    const sizeResult = validateFileSize(file.size, maxSize);
+    if (!sizeResult.valid) {
+      console.error("File upload error:", sizeResult.error);
+      showUploadError(inputElement, sizeResult.error);
+      continue;
+    }
+
+    // Validate type
+    const typeResult = validateFileType(file.name, file.type, accept);
+    if (!typeResult.valid) {
+      console.error("File upload error:", typeResult.error);
+      showUploadError(inputElement, typeResult.error);
+      continue;
+    }
+
+    // Read and send file
+    const reader = new FileReader();
+    reader.onload = function() {
+      const data = reader.result;
+      if (!(data instanceof ArrayBuffer)) {
+        console.error("Failed to read file as ArrayBuffer");
+        return;
+      }
+
+      const base64Data = arrayBufferToBase64(data);
+      const message = {
+        type: "file_upload",
+        widgetId: widgetId,
+        filename: file.name,
+        mimeType: file.type || "application/octet-stream",
+        size: file.size,
+        data: base64Data,
+        isChunked: false
+      };
+
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(message));
+      } else {
+        console.error("WebSocket not connected");
+      }
+    };
+    reader.onerror = function() {
+      console.error("Failed to read file:", reader.error);
+    };
+    reader.readAsArrayBuffer(file);
+  }
+}
+
+function showUploadError(inputElement, error) {
+  const container = inputElement.closest(".kt-file-uploader-container");
+  if (!container) return;
+
+  let errorDiv = container.querySelector(".kt-file-uploader-error");
+  if (!errorDiv) {
+    errorDiv = document.createElement("div");
+    errorDiv.className = "kt-file-uploader-error";
+    errorDiv.style.cssText = "color:#dc3545;font-size:0.875rem;margin-top:4px;";
+    container.appendChild(errorDiv);
+  }
+  errorDiv.textContent = error;
+
+  // Clear error after 5 seconds
+  setTimeout(function() {
+    if (errorDiv.parentNode) {
+      errorDiv.parentNode.removeChild(errorDiv);
+    }
+  }, 5000);
+}
+
 function setupEventDelegation(sendEvent) {
   const app = document.getElementById("app");
 
@@ -420,6 +553,12 @@ function setupEventDelegation(sendEvent) {
   app.addEventListener("change", (e) => {
     const target = e.target;
     if (!target.dataset || target.dataset.ktEvent !== "change") return;
+
+    // File input handler
+    if (target.type === "file" && target.id) {
+      handleFileUpload(target);
+      return;
+    }
 
     // Checkbox with id (kt.checkbox, kt.toggle)
     if (target.type === "checkbox" && target.id) {
