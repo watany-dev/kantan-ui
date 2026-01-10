@@ -72,7 +72,16 @@ export function sanitizeCssValue(value: string): string {
 
 	let sanitized = value.trim();
 
-	// 危険なパターンをチェック（完全拒否するパターン）
+	// Step 1: セミコロン以降を除去（追加のCSSプロパティ注入を防止）
+	const semicolonIndex = sanitized.indexOf(";");
+	if (semicolonIndex !== -1) {
+		sanitized = sanitized.substring(0, semicolonIndex).trim();
+	}
+
+	// Step 2: 波括弧を除去
+	sanitized = sanitized.replace(/[{}]/g, "").trim();
+
+	// Step 3: 残りの値に対して危険なパターンをチェック（完全拒否するパターン）
 	// url()やexpression()が含まれている場合は空文字列を返す
 	if (/url\s*\(/i.test(sanitized)) {
 		return "";
@@ -88,15 +97,6 @@ export function sanitizeCssValue(value: string): string {
 	if (/(javascript|vbscript)\s*:/i.test(sanitized)) {
 		return "";
 	}
-
-	// セミコロン以降を除去（追加のCSSプロパティ注入を防止）
-	const semicolonIndex = sanitized.indexOf(";");
-	if (semicolonIndex !== -1) {
-		sanitized = sanitized.substring(0, semicolonIndex).trim();
-	}
-
-	// 波括弧を除去
-	sanitized = sanitized.replace(/[{}]/g, "").trim();
 
 	return sanitized;
 }

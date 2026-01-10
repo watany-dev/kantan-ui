@@ -246,6 +246,35 @@ describe("Layout APIs", () => {
 			// スタイルなしの場合はstyle属性がないか空
 			expect(html).toMatch(/<div class="kt-container">/);
 		});
+
+		describe("security: CSS injection prevention", () => {
+			it("should sanitize height value to prevent CSS injection", () => {
+				container(
+					() => {
+						write("Content");
+					},
+					{ height: "100px; background: url('http://evil.com')" },
+				);
+				const html = ctx.getHtml();
+				// 悪意のあるCSSが除去されている
+				expect(html).not.toContain("url(");
+				expect(html).not.toContain("evil.com");
+				// 有効な値は残っている
+				expect(html).toContain("height: 100px");
+			});
+
+			it("should reject completely invalid height values", () => {
+				container(
+					() => {
+						write("Content");
+					},
+					{ height: "javascript:alert(1)" },
+				);
+				const html = ctx.getHtml();
+				// 無効な値は空になる
+				expect(html).not.toContain("javascript");
+			});
+		});
 	});
 
 	describe("without render context", () => {
@@ -339,6 +368,27 @@ describe("Layout APIs", () => {
 			columns([() => write("A"), () => write("B")], { responsive: false });
 			const html = ctx.getHtml();
 			expect(html).not.toContain("kt-columns-responsive");
+		});
+
+		describe("security: CSS injection prevention", () => {
+			it("should sanitize gap value to prevent CSS injection", () => {
+				columns([() => write("A"), () => write("B")], {
+					gap: "1rem; background: url('http://evil.com')",
+				});
+				const html = ctx.getHtml();
+				// 悪意のあるCSSが除去されている
+				expect(html).not.toContain("url(");
+				expect(html).not.toContain("evil.com");
+				// 有効な値は残っている
+				expect(html).toContain("gap: 1rem");
+			});
+
+			it("should reject completely invalid gap values", () => {
+				columns([() => write("A"), () => write("B")], { gap: "expression(alert(1))" });
+				const html = ctx.getHtml();
+				// 無効な値は空になるか、デフォルト値が使用される
+				expect(html).not.toContain("expression");
+			});
 		});
 	});
 
