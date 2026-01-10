@@ -4,6 +4,9 @@ export type SessionId = string;
 // ダウンロードID
 export type DownloadId = string;
 
+// アップロードID
+export type UploadId = string;
+
 // ダウンロードデータ
 export interface DownloadData {
 	data: ArrayBuffer;

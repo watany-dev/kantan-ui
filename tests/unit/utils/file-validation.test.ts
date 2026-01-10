@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-	type FileValidationConfig,
-	validateUploadedFile,
-} from "../../../src/utils/file-validation";
+import { validateUploadedFile } from "../../../src/utils/file-validation";
 
 /**
  * Create a valid PNG file data
@@ -38,27 +35,6 @@ function createValidPng(): ArrayBuffer {
 		0x00,
 		0x00,
 		0x00, // bit depth, color type, etc.
-	]).buffer;
-}
-
-/**
- * Create a valid JPEG file data
- */
-function createValidJpeg(): ArrayBuffer {
-	return new Uint8Array([
-		0xff,
-		0xd8,
-		0xff,
-		0xe0, // JPEG SOI + APP0
-		0x00,
-		0x10, // length
-		0x4a,
-		0x46,
-		0x49,
-		0x46,
-		0x00, // JFIF identifier
-		0x01,
-		0x01, // version
 	]).buffer;
 }
 
