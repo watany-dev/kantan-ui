@@ -2,6 +2,34 @@ import { escapeHtml } from "../utils/html";
 import type { ImageConfig, ImageSource } from "./types";
 
 /**
+ * ソースタイプ
+ */
+type SourceType = "url" | "dataUri" | "svg" | "binary" | "blob";
+
+/**
+ * 画像ソースのタイプを判別
+ */
+export function detectSourceType(source: ImageSource): SourceType {
+	if (source instanceof Uint8Array || source instanceof ArrayBuffer) {
+		return "binary";
+	}
+	if (source instanceof Blob) {
+		return "blob";
+	}
+	if (typeof source === "string") {
+		if (source.startsWith("data:")) {
+			return "dataUri";
+		}
+		if (source.trimStart().startsWith("<svg")) {
+			return "svg";
+		}
+		// URL または相対パス
+		return "url";
+	}
+	throw new Error("Unsupported image source type");
+}
+
+/**
  * alt属性の値を決定
  * - alt指定時はaltを使用
  * - alt未指定・caption指定時はcaptionを使用
@@ -73,9 +101,29 @@ function resolveFigureStyle(config?: Partial<ImageConfig>): string {
 }
 
 /**
+ * 文字列ソースをsrc属性用に解決
+ */
+function resolveStringSrc(source: string): string {
+	const type = detectSourceType(source);
+
+	switch (type) {
+		case "dataUri":
+			// data URIはそのまま使用
+			return source;
+		case "svg":
+			// SVGは後のイテレーションで実装
+			return source;
+		default:
+			// URL または相対パス
+			return source;
+	}
+}
+
+/**
  * 単一画像のHTMLをレンダリング
  */
 function renderSingleImage(source: string, config?: Partial<ImageConfig>, index?: number): string {
+	const src = resolveStringSrc(source);
 	const alt = escapeHtml(resolveAlt(config, index));
 	const caption = resolveCaption(config, index);
 	const figureClass = resolveFigureClass(config);
@@ -85,7 +133,7 @@ function renderSingleImage(source: string, config?: Partial<ImageConfig>, index?
 		? `<figcaption class="kt-image-caption">${escapeHtml(caption)}</figcaption>`
 		: "";
 
-	return `<figure class="${figureClass}"${figureStyle}><img src="${escapeHtml(source)}" alt="${alt}" class="kt-image-img" loading="lazy" />${captionHtml}</figure>`;
+	return `<figure class="${figureClass}"${figureStyle}><img src="${escapeHtml(src)}" alt="${alt}" class="kt-image-img" loading="lazy" />${captionHtml}</figure>`;
 }
 
 /**
@@ -100,7 +148,7 @@ export function renderImage(
 		return "";
 	}
 
-	// 文字列の場合はURLとして扱う
+	// 文字列の場合
 	if (typeof source === "string") {
 		return renderSingleImage(source, config);
 	}

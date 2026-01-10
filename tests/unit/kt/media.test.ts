@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import { image } from "../../../src/kt/media";
+import { detectSourceType } from "../../../src/widgets/image";
 
 describe("Media APIs", () => {
 	let ctx: RenderContext;
@@ -123,6 +124,34 @@ describe("Media APIs", () => {
 				image("https://example.com/photo.jpg");
 				const html = ctx.getHtml();
 				expect(html).not.toContain("style=");
+			});
+		});
+
+		describe("data URI", () => {
+			const base64Pixel =
+				"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+			it("should render data URI image", () => {
+				image(base64Pixel);
+				const html = ctx.getHtml();
+				expect(html).toContain('src="data:image/png;base64,');
+				expect(html).toContain('<figure class="kt-image">');
+			});
+
+			it("should detect data URI source type", () => {
+				expect(detectSourceType(base64Pixel)).toBe("dataUri");
+			});
+
+			it("should detect URL source type", () => {
+				expect(detectSourceType("https://example.com/photo.jpg")).toBe("url");
+				expect(detectSourceType("http://example.com/photo.jpg")).toBe("url");
+				expect(detectSourceType("/images/photo.jpg")).toBe("url");
+			});
+
+			it("should render data URI with caption", () => {
+				image(base64Pixel, { caption: "1x1 pixel" });
+				const html = ctx.getHtml();
+				expect(html).toContain("1x1 pixel</figcaption>");
 			});
 		});
 	});
