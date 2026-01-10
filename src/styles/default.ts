@@ -549,6 +549,42 @@ const sidebarStyles = `
   }
 `;
 
+/** 画像スタイル */
+const imageStyles = `
+  /* Image */
+  .kt-image {
+    margin: 0;
+    padding: 0;
+    display: inline-block;
+    max-width: 100%;
+  }
+
+  .kt-image-img {
+    display: block;
+    width: var(--kt-image-width, auto);
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  .kt-image-caption {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--kt-text-secondary, #6b7280);
+    text-align: center;
+  }
+
+  /* Container width */
+  .kt-image-container-width {
+    display: block;
+    width: 100%;
+  }
+
+  .kt-image-container-width .kt-image-img {
+    width: 100%;
+  }
+`;
+
 /** フォームスタイル */
 const formStyles = `
   /* Form */
@@ -609,6 +645,7 @@ export const defaultStyles = [
 	tableStyles,
 	chatStyles,
 	sidebarStyles,
+	imageStyles,
 	formStyles,
 ].join("\n");
 
@@ -624,5 +661,6 @@ export {
 	feedbackStyles,
 	layoutStyles,
 	sidebarStyles,
+	imageStyles,
 	formStyles,
 };

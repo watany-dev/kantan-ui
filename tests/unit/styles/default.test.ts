@@ -6,6 +6,7 @@ import {
 	defaultStyles,
 	feedbackStyles,
 	formStyles,
+	imageStyles,
 	jsonStyles,
 	layoutStyles,
 	markdownStyles,
@@ -31,6 +32,7 @@ describe("Default Styles", () => {
 			expect(defaultStyles).toContain(".kt-columns");
 			expect(defaultStyles).toContain(".kt-expander");
 			expect(defaultStyles).toContain(".kt-sidebar");
+			expect(defaultStyles).toContain(".kt-image");
 			expect(defaultStyles).toContain(".kt-form");
 		});
 	});
@@ -194,6 +196,28 @@ describe("Default Styles", () => {
 		it("should include validation error styles", () => {
 			expect(formStyles).toContain(".kt-validation-error");
 			expect(formStyles).toContain(".kt-validation-errors");
+		});
+	});
+
+	describe("imageStyles", () => {
+		it("should include image class", () => {
+			expect(imageStyles).toContain(".kt-image");
+		});
+
+		it("should include image element class", () => {
+			expect(imageStyles).toContain(".kt-image-img");
+		});
+
+		it("should include caption class", () => {
+			expect(imageStyles).toContain(".kt-image-caption");
+		});
+
+		it("should include container width class", () => {
+			expect(imageStyles).toContain(".kt-image-container-width");
+		});
+
+		it("should include CSS variable for width", () => {
+			expect(imageStyles).toContain("--kt-image-width");
 		});
 	});
 

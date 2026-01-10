@@ -11,6 +11,7 @@ export {
 	defaultStyles,
 	feedbackStyles,
 	formStyles,
+	imageStyles,
 	jsonStyles,
 	layoutStyles,
 	markdownStyles,
