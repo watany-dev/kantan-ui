@@ -48,5 +48,52 @@ describe("Media APIs", () => {
 			expect(html).toContain("&lt;script&gt;");
 			expect(html).not.toContain("<script>");
 		});
+
+		describe("caption and alt", () => {
+			it("should output figcaption when caption is specified", () => {
+				image("https://example.com/photo.jpg", { caption: "Sample image" });
+				const html = ctx.getHtml();
+				expect(html).toContain('<figcaption class="kt-image-caption">Sample image</figcaption>');
+			});
+
+			it("should use caption as alt when alt is not specified", () => {
+				image("https://example.com/photo.jpg", { caption: "Sample image" });
+				const html = ctx.getHtml();
+				expect(html).toContain('alt="Sample image"');
+			});
+
+			it("should use alt when explicitly specified", () => {
+				image("https://example.com/photo.jpg", {
+					caption: "Caption text",
+					alt: "Alt text",
+				});
+				const html = ctx.getHtml();
+				expect(html).toContain('alt="Alt text"');
+				expect(html).toContain("Caption text</figcaption>");
+			});
+
+			it("should escape HTML in caption", () => {
+				image("https://example.com/photo.jpg", {
+					caption: "<script>alert('xss')</script>",
+				});
+				const html = ctx.getHtml();
+				expect(html).toContain("&lt;script&gt;");
+				expect(html).not.toContain("<script>alert");
+			});
+
+			it("should escape HTML in alt", () => {
+				image("https://example.com/photo.jpg", {
+					alt: "<img onerror=alert(1)>",
+				});
+				const html = ctx.getHtml();
+				expect(html).toContain("&lt;img onerror=alert(1)&gt;");
+			});
+
+			it("should set empty alt when both caption and alt are not specified", () => {
+				image("https://example.com/photo.jpg", {});
+				const html = ctx.getHtml();
+				expect(html).toContain('alt=""');
+			});
+		});
 	});
 });
