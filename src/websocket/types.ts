@@ -1,6 +1,6 @@
 // クライアント → サーバ
 export interface ClientMessage {
-	type: "event" | "init" | "pong";
+	type: "event" | "init" | "pong" | "file_upload";
 	widgetId?: string;
 	value?: unknown;
 	sessionId?: string; // 既存セッションIDを送信
@@ -8,15 +8,49 @@ export interface ClientMessage {
 	lastSeq?: number;
 }
 
+/** ファイルアップロードメッセージ */
+export interface FileUploadMessage {
+	type: "file_upload";
+	widgetId: string;
+	filename: string;
+	mimeType: string;
+	size: number;
+	data: string; // Base64エンコードされたデータ
+	isChunked: boolean;
+	totalChunks?: number;
+	chunkIndex?: number;
+}
+
+/** FileUploadMessageの型ガード */
+export function isFileUploadMessage(data: unknown): data is FileUploadMessage {
+	if (typeof data !== "object" || data === null) return false;
+	const msg = data as Record<string, unknown>;
+	if (msg.type !== "file_upload") return false;
+	if (typeof msg.widgetId !== "string") return false;
+	if (typeof msg.filename !== "string") return false;
+	if (typeof msg.mimeType !== "string") return false;
+	if (typeof msg.size !== "number") return false;
+	if (typeof msg.data !== "string") return false;
+	if (typeof msg.isChunked !== "boolean") return false;
+	return true;
+}
+
 /** ClientMessageの型ガード */
 export function isClientMessage(data: unknown): data is ClientMessage {
 	if (typeof data !== "object" || data === null) return false;
 	const msg = data as Record<string, unknown>;
-	if (msg["type"] !== "event" && msg["type"] !== "init" && msg["type"] !== "pong") return false;
+	if (
+		msg.type !== "event" &&
+		msg.type !== "init" &&
+		msg.type !== "pong" &&
+		msg.type !== "file_upload"
+	) {
+		return false;
+	}
 	// null も許可（localStorage.getItem が null を返す場合）
-	if (msg["widgetId"] != null && typeof msg["widgetId"] !== "string") return false;
-	if (msg["sessionId"] != null && typeof msg["sessionId"] !== "string") return false;
-	if (msg["lastSeq"] != null && typeof msg["lastSeq"] !== "number") return false;
+	if (msg.widgetId != null && typeof msg.widgetId !== "string") return false;
+	if (msg.sessionId != null && typeof msg.sessionId !== "string") return false;
+	if (msg.lastSeq != null && typeof msg.lastSeq !== "number") return false;
 	return true;
 }
 
