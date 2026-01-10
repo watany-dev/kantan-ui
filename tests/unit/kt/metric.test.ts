@@ -174,4 +174,49 @@ describe("kt.metric", () => {
 			expect(html).toContain("kt-metric-delta-neutral");
 		});
 	});
+
+	describe("help", () => {
+		it("should render help tooltip when help is provided", () => {
+			metric("Revenue", "$1,234", { help: "Monthly revenue" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-metric-help");
+			expect(html).toContain("Monthly revenue");
+		});
+
+		it("should escape HTML in help text", () => {
+			metric("Revenue", "$1,234", { help: "<script>xss</script>" });
+			const html = ctx.getHtml();
+			expect(html).not.toContain("<script>");
+			expect(html).toContain("&lt;script&gt;");
+		});
+
+		it("should not render help when help is undefined", () => {
+			metric("Revenue", "$1,234");
+			const html = ctx.getHtml();
+			expect(html).not.toContain("kt-metric-help");
+		});
+	});
+
+	describe("label_visibility", () => {
+		it("should show label by default (visible)", () => {
+			metric("Revenue", "$1,234");
+			const html = ctx.getHtml();
+			expect(html).toContain("Revenue");
+			expect(html).toContain("kt-metric-label");
+		});
+
+		it("should hide label visually but keep for screen readers (hidden)", () => {
+			metric("Revenue", "$1,234", { label_visibility: "hidden" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-sr-only");
+			expect(html).toContain("Revenue");
+		});
+
+		it("should completely remove label (collapsed)", () => {
+			metric("Revenue", "$1,234", { label_visibility: "collapsed" });
+			const html = ctx.getHtml();
+			expect(html).not.toContain("Revenue");
+			expect(html).not.toContain("kt-metric-label");
+		});
+	});
 });

@@ -127,6 +127,24 @@ export function metric(label: string, value: string | number, config?: MetricCon
 
 	const escapedLabel = escapeHtml(label);
 	const escapedValue = escapeHtml(String(value));
+	const labelVisibility = config?.label_visibility ?? "visible";
+
+	// Label部分の生成
+	let labelHtml = "";
+	if (labelVisibility === "visible") {
+		labelHtml = `<div class="kt-metric-label">${escapedLabel}</div>`;
+	} else if (labelVisibility === "hidden") {
+		// スクリーンリーダー向けに保持
+		labelHtml = `<div class="kt-metric-label kt-sr-only">${escapedLabel}</div>`;
+	}
+	// collapsed の場合は labelHtml は空のまま
+
+	// Help部分の生成
+	let helpHtml = "";
+	if (config?.help) {
+		const escapedHelp = escapeHtml(config.help);
+		helpHtml = `<span class="kt-metric-help" title="${escapedHelp}">?</span>`;
+	}
 
 	// Delta部分の生成
 	let deltaHtml = "";
@@ -143,6 +161,6 @@ export function metric(label: string, value: string | number, config?: MetricCon
 	}
 
 	ctx.append(
-		`<div class="kt-metric"><div class="kt-metric-label">${escapedLabel}</div><div class="kt-metric-value">${escapedValue}</div>${deltaHtml}</div>`,
+		`<div class="kt-metric">${labelHtml}${helpHtml}<div class="kt-metric-value">${escapedValue}</div>${deltaHtml}</div>`,
 	);
 }
