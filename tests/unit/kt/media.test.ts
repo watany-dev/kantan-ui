@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import { image } from "../../../src/kt/media";
-import { detectSourceType } from "../../../src/widgets/image";
+import { detectSourceType, svgToDataUri } from "../../../src/widgets/image";
 
 describe("Media APIs", () => {
 	let ctx: RenderContext;
@@ -152,6 +152,43 @@ describe("Media APIs", () => {
 				image(base64Pixel, { caption: "1x1 pixel" });
 				const html = ctx.getHtml();
 				expect(html).toContain("1x1 pixel</figcaption>");
+			});
+		});
+
+		describe("SVG string", () => {
+			const svgCircle =
+				'<svg width="100" height="100"><circle cx="50" cy="50" r="40" fill="red" /></svg>';
+
+			it("should detect SVG source type", () => {
+				expect(detectSourceType(svgCircle)).toBe("svg");
+				expect(detectSourceType("  <svg></svg>")).toBe("svg");
+			});
+
+			it("should convert SVG to data URI", () => {
+				const dataUri = svgToDataUri(svgCircle);
+				expect(dataUri.startsWith("data:image/svg+xml,")).toBe(true);
+				expect(dataUri).toContain(encodeURIComponent("<svg"));
+			});
+
+			it("should render SVG as data URI image", () => {
+				image(svgCircle);
+				const html = ctx.getHtml();
+				expect(html).toContain('src="data:image/svg+xml,');
+				expect(html).toContain('<figure class="kt-image">');
+			});
+
+			it("should render SVG with caption", () => {
+				image(svgCircle, { caption: "Red circle" });
+				const html = ctx.getHtml();
+				expect(html).toContain("Red circle</figcaption>");
+			});
+
+			it("should not include raw SVG in output for XSS prevention", () => {
+				image(svgCircle);
+				const html = ctx.getHtml();
+				// SVGタグが直接出力されていないことを確認
+				expect(html).not.toContain("<svg");
+				expect(html).not.toContain("<circle");
 			});
 		});
 	});

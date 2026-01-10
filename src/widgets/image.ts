@@ -101,6 +101,15 @@ function resolveFigureStyle(config?: Partial<ImageConfig>): string {
 }
 
 /**
+ * SVG文字列をdata URIに変換
+ * インラインSVGを<img>タグで安全に表示するため
+ */
+export function svgToDataUri(svg: string): string {
+	const encoded = encodeURIComponent(svg);
+	return `data:image/svg+xml,${encoded}`;
+}
+
+/**
  * 文字列ソースをsrc属性用に解決
  */
 function resolveStringSrc(source: string): string {
@@ -111,8 +120,8 @@ function resolveStringSrc(source: string): string {
 			// data URIはそのまま使用
 			return source;
 		case "svg":
-			// SVGは後のイテレーションで実装
-			return source;
+			// SVGをdata URIに変換（XSSを防止）
+			return svgToDataUri(source);
 		default:
 			// URL または相対パス
 			return source;
