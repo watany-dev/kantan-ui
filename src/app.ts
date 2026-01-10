@@ -202,6 +202,11 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 				"Content-Type": download.mime,
 				"Content-Disposition": `attachment; filename="${encodeURIComponent(download.filename)}"`,
 				"Content-Length": download.data.byteLength.toString(),
+				// Security headers to prevent MIME sniffing and XSS
+				"X-Content-Type-Options": "nosniff",
+				"Content-Security-Policy": "sandbox",
+				"X-Frame-Options": "DENY",
+				"Cache-Control": "no-store",
 			},
 		});
 	});
