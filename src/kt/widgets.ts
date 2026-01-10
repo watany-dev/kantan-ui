@@ -2,9 +2,11 @@ import { button as imperativeButton, renderButton } from "../widgets/button";
 import { checkbox as imperativeCheckbox, renderCheckbox } from "../widgets/checkbox";
 import { date_input as imperativeDateInput, renderDateInput } from "../widgets/date-input";
 import { download_button as imperativeDownloadButton } from "../widgets/download-button";
+import { getFileUploaderValue, renderFileUploader } from "../widgets/file-uploader";
 import { multiselect as imperativeMultiselect, renderMultiselect } from "../widgets/multiselect";
 import { number_input as imperativeNumberInput, renderNumberInput } from "../widgets/number-input";
 import { radio as imperativeRadio, renderRadio } from "../widgets/radio";
+import { generateWidgetId } from "../widgets/registry";
 import { selectbox as imperativeSelectbox, renderSelectbox } from "../widgets/selectbox";
 import { slider as imperativeSlider, renderSlider } from "../widgets/slider";
 import { text_area as imperativeTextArea, renderTextArea } from "../widgets/text-area";
@@ -16,6 +18,7 @@ import type {
 	CheckboxConfig,
 	DateInputConfig,
 	DownloadButtonConfig,
+	FileUploaderConfig,
 	MultiselectConfig,
 	NumberInputConfig,
 	RadioConfig,
@@ -25,7 +28,9 @@ import type {
 	TextInputConfig,
 	TimeInputConfig,
 	ToggleConfig,
+	UploadedFile,
 } from "../widgets/types";
+import { requireRenderContext } from "./context";
 import { wrapWidget } from "./widget-helper";
 
 /**
@@ -245,4 +250,46 @@ export function time_input(
 		(cfg) => imperativeTimeInput(label, defaultValue, cfg),
 		(value, cfg) => renderTimeInput(label, value, cfg),
 	);
+}
+
+/**
+ * ファイルアップローダーウィジェット（宣言的API）
+ * HTMLを自動出力し、アップロードされたファイルを返す
+ *
+ * @param label - ラベル
+ * @param config - 設定（accept, multiple, maxSize など）
+ * @returns 単一モード: UploadedFile | null, 複数モード: UploadedFile[]
+ *
+ * @example
+ * ```typescript
+ * // 単一ファイル
+ * const file = kt.file_uploader("Upload file");
+ * if (file) {
+ *   kt.write(`Uploaded: ${file.name}`);
+ * }
+ *
+ * // 複数ファイル
+ * const files = kt.file_uploader("Upload files", { multiple: true });
+ * for (const file of files) {
+ *   kt.write(`Uploaded: ${file.name}`);
+ * }
+ *
+ * // 画像のみ許可
+ * const image = kt.file_uploader("Upload image", { accept: "image/*" });
+ * ```
+ */
+export function file_uploader(
+	label: string,
+	config?: Partial<FileUploaderConfig>,
+): UploadedFile | UploadedFile[] | null {
+	const ctx = requireRenderContext();
+	const id = generateWidgetId(config?.key);
+	const configWithId = { ...config, key: id };
+	const multiple = config?.multiple ?? false;
+
+	// HTMLをレンダリングして出力
+	ctx.append(renderFileUploader(label, configWithId));
+
+	// 現在の値を取得して返す
+	return getFileUploaderValue(id, multiple);
 }
