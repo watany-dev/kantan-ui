@@ -272,6 +272,40 @@ describe("Media APIs", () => {
 				const html = ctx.getHtml();
 				expect(html).toBe("");
 			});
+
+			it("should return empty string for empty string source", () => {
+				image("");
+				const html = ctx.getHtml();
+				expect(html).toBe("");
+			});
+
+			it("should return empty string for whitespace-only source", () => {
+				image("   ");
+				const html = ctx.getHtml();
+				expect(html).toBe("");
+			});
+
+			it("should return empty string for newline-only source", () => {
+				image("\n\t\n");
+				const html = ctx.getHtml();
+				expect(html).toBe("");
+			});
+
+			it("should skip empty strings in gallery", () => {
+				image(["https://example.com/1.jpg", "", "https://example.com/2.jpg"]);
+				const html = ctx.getHtml();
+				expect(html).toContain('<div class="kt-image-gallery">');
+				expect(html).toContain('src="https://example.com/1.jpg"');
+				expect(html).toContain('src="https://example.com/2.jpg"');
+				// Only 2 figures, not 3
+				expect((html.match(/<figure/g) || []).length).toBe(2);
+			});
+
+			it("should return empty string for gallery with only empty strings", () => {
+				image(["", "   ", "\n"]);
+				const html = ctx.getHtml();
+				expect(html).toBe("");
+			});
 		});
 
 		describe("multiple images (gallery)", () => {

@@ -194,11 +194,22 @@ function renderGallery(sources: ImageSource[], config?: Partial<ImageConfig>): s
 		return "";
 	}
 
-	// 各画像をレンダリング
-	const images = sources.map((source, index) => {
-		const stringSrc = convertToStringSrc(source, config);
-		return renderSingleImage(stringSrc, config, index);
-	});
+	// 各画像をレンダリング（空文字列はスキップ）
+	const images: string[] = [];
+	for (let index = 0; index < sources.length; index++) {
+		const source = sources[index];
+		// 空文字列または空白のみの場合はスキップ
+		if (typeof source === "string" && !source.trim()) {
+			continue;
+		}
+		const stringSrc = convertToStringSrc(source as ImageSource, config);
+		images.push(renderSingleImage(stringSrc, config, index));
+	}
+
+	// 全てスキップされた場合は空文字列を返す
+	if (images.length === 0) {
+		return "";
+	}
 
 	// ギャラリーラッパーで囲む
 	return `<div class="kt-image-gallery">${images.join("")}</div>`;
@@ -218,6 +229,10 @@ export function renderImage(
 
 	// 文字列の場合
 	if (typeof source === "string") {
+		// 空文字列または空白のみの場合は空文字列を返す
+		if (!source.trim()) {
+			return "";
+		}
 		return renderSingleImage(source, config);
 	}
 
