@@ -1,3 +1,4 @@
+import { sanitizeCssLength } from "../utils/css";
 import { escapeHtml } from "../utils/html";
 import { generateWidgetId, getWidgetValue, setWidgetValue } from "../widgets/registry";
 import { requireRenderContext } from "./context";
@@ -131,8 +132,11 @@ export function container(content: () => void, config: ContainerConfig = {}): vo
 	}
 
 	if (config.height) {
-		styles.push(`height: ${config.height}`);
-		styles.push("overflow: auto");
+		const safeHeight = sanitizeCssLength(config.height);
+		if (safeHeight) {
+			styles.push(`height: ${safeHeight}`);
+			styles.push("overflow: auto");
+		}
 	}
 
 	const styleAttr = styles.length > 0 ? ` style="${styles.join("; ")};"` : "";
@@ -180,14 +184,15 @@ export interface ColumnsConfig {
  */
 export function columns(contents: Array<() => void>, config: ColumnsConfig = {}): void {
 	const ctx = requireRenderContext();
-	const gap = config.gap ?? "1rem";
+	const rawGap = config.gap ?? "1rem";
+	const safeGap = sanitizeCssLength(rawGap) || "1rem";
 	const ratios = config.ratios ?? contents.map(() => 1);
 	const totalRatio = ratios.reduce((a, b) => a + b, 0);
 	// Responsive is true by default
 	const responsive = config.responsive !== false;
 	const responsiveClass = responsive ? " kt-columns-responsive" : "";
 
-	ctx.append(`<div class="kt-columns${responsiveClass}" style="display: flex; gap: ${gap};">`);
+	ctx.append(`<div class="kt-columns${responsiveClass}" style="display: flex; gap: ${safeGap};">`);
 
 	contents.forEach((content, i) => {
 		const ratio = ratios[i] ?? 1;

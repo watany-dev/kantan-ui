@@ -1,3 +1,4 @@
+import { sanitizeCssLength } from "../utils/css";
 import { escapeHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
 import { parseMarkdown } from "./markdown/parser";
@@ -82,7 +83,8 @@ export function chat_message(role: ChatRole, content: string, config?: ChatMessa
  */
 export function chat_container(content: () => void, config: ChatContainerConfig = {}): void {
 	const ctx = requireRenderContext();
-	const height = config.height ?? "400px";
+	const rawHeight = config.height ?? "400px";
+	const height = sanitizeCssLength(rawHeight) || "400px";
 
 	ctx.append(
 		`<div class="kt-chat-container" data-kt-chat-container style="height: ${height}; overflow-y: auto;">`,

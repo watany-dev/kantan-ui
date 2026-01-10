@@ -135,5 +135,36 @@ describe("text_input", () => {
 
 			expect(html).toContain('type="text"');
 		});
+
+		describe("security: runtime type validation", () => {
+			it("should fallback to text type for invalid type values", () => {
+				// TypeScriptの型システムをバイパスしても安全
+				const html = renderTextInput("Name", "", {
+					type: "invalid-type" as "text",
+				});
+
+				expect(html).toContain('type="text"');
+				expect(html).not.toContain("invalid-type");
+			});
+
+			it("should fallback to text type for XSS attempt in type", () => {
+				const html = renderTextInput("Name", "", {
+					type: '"><script>alert(1)</script><input type="' as "text",
+				});
+
+				expect(html).toContain('type="text"');
+				expect(html).not.toContain("<script>");
+			});
+
+			it("should validate numeric maxLength", () => {
+				// 不正な値が渡されても問題ない
+				const html = renderTextInput("Name", "", {
+					maxLength: "10; onclick=alert(1)" as unknown as number,
+				});
+
+				// 不正な値は無視されるか、数値として解釈される
+				expect(html).not.toContain("onclick");
+			});
+		});
 	});
 });

@@ -4,6 +4,30 @@ import { generateWidgetId } from "./registry";
 import type { TextInputConfig } from "./types";
 
 /**
+ * 有効なinput type値のホワイトリスト
+ */
+const VALID_INPUT_TYPES = ["text", "password", "email", "tel", "url"] as const;
+
+/**
+ * input typeを検証し、無効な場合は"text"を返す
+ */
+function validateInputType(type: unknown): string {
+	if (typeof type === "string" && (VALID_INPUT_TYPES as readonly string[]).includes(type)) {
+		return type;
+	}
+	return "text";
+}
+
+/**
+ * 数値属性を検証し、無効な場合はundefinedを返す
+ */
+function validateNumericAttr(value: unknown): number | undefined {
+	if (value === undefined || value === null) return undefined;
+	const num = Number(value);
+	return Number.isFinite(num) ? num : undefined;
+}
+
+/**
  * テキスト入力ウィジェット
  * 現在の入力値を返す（初回はデフォルト値）
  */
@@ -27,8 +51,13 @@ export function renderTextInput(
 	const id = generateWidgetId(config?.key);
 	const placeholder = config?.placeholder ?? "";
 	const disabled = config?.disabled ? " disabled" : "";
-	const maxLength = config?.maxLength ? ` maxlength="${config.maxLength}"` : "";
-	const inputType = config?.type ?? "text";
+
+	// 実行時型検証: maxLengthは数値のみ許可
+	const validMaxLength = validateNumericAttr(config?.maxLength);
+	const maxLength = validMaxLength !== undefined ? ` maxlength="${validMaxLength}"` : "";
+
+	// 実行時型検証: typeはホワイトリストのみ許可
+	const inputType = validateInputType(config?.type);
 
 	return `<div id="${id}-container" class="kt-text-input-container">
   <label for="${id}" class="kt-text-input-label">${escapeHtml(label)}</label>

@@ -1,4 +1,5 @@
 import { SPINNER_SIZES, type SpinnerSize } from "../constants";
+import { sanitizeCssColor } from "../utils/css";
 import { escapeHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
 import { type MessageType, messageColors } from "./theme";
@@ -90,7 +91,8 @@ export function progress(value: number, config: ProgressConfig = {}): void {
 	const format = config.format ?? "auto";
 	// Normalize based on format and clamp to 0-100%
 	const percentage = Math.min(Math.max(normalizeProgressValue(value, format), 0), 100);
-	const color = config.color ?? "#3498db";
+	const rawColor = config.color ?? "#3498db";
+	const color = sanitizeCssColor(rawColor) || "#3498db";
 	const animatedClass = config.animated ? " kt-progress-animated" : "";
 
 	const labelHtml = config.label
