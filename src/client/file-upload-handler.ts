@@ -30,7 +30,10 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
  * @param chunkSize チャンクサイズ（バイト）
  * @returns Base64エンコードされたチャンクの配列
  */
-export function createFileChunks(data: ArrayBuffer, chunkSize: number = DEFAULT_CHUNK_SIZE): string[] {
+export function createFileChunks(
+	data: ArrayBuffer,
+	chunkSize: number = DEFAULT_CHUNK_SIZE,
+): string[] {
 	if (data.byteLength === 0) {
 		return [];
 	}
