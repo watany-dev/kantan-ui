@@ -2,6 +2,7 @@ export { button, renderButton } from "./button";
 export { checkbox, renderCheckbox } from "./checkbox";
 export { date_input, renderDateInput } from "./date-input";
 export { download_button, renderDownloadButton } from "./download-button";
+export { renderImage } from "./image";
 export { multiselect, renderMultiselect } from "./multiselect";
 export { number_input, renderNumberInput } from "./number-input";
 export { radio, renderRadio } from "./radio";

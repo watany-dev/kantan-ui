@@ -36,6 +36,7 @@ import { sidebar } from "./sidebar";
 
 export type { SidebarAPI } from "./sidebar";
 
+import * as media from "./media";
 import * as widgets from "./widgets";
 
 export const kt = {
@@ -87,6 +88,9 @@ export const kt = {
 	form_submit_button: formModule.form_submit_button,
 	validation_error: formModule.validation_error,
 	validation_errors: formModule.validation_errors,
+
+	// Media APIs
+	image: media.image,
 
 	// Widget APIs
 	button: widgets.button,
