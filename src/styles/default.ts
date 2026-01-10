@@ -583,6 +583,18 @@ const imageStyles = `
   .kt-image-container-width .kt-image-img {
     width: 100%;
   }
+
+  /* Gallery (multiple images) */
+  .kt-image-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .kt-image-gallery .kt-image {
+    flex: 0 0 auto;
+  }
 `;
 
 /** フォームスタイル */

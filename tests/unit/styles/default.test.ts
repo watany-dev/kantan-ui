@@ -219,6 +219,16 @@ describe("Default Styles", () => {
 		it("should include CSS variable for width", () => {
 			expect(imageStyles).toContain("--kt-image-width");
 		});
+
+		it("should include gallery class", () => {
+			expect(imageStyles).toContain(".kt-image-gallery");
+		});
+
+		it("should include gallery flex layout", () => {
+			expect(imageStyles).toContain("display: flex");
+			expect(imageStyles).toContain("flex-wrap: wrap");
+			expect(imageStyles).toContain("gap: 1rem");
+		});
 	});
 
 	describe("sidebarStyles", () => {
