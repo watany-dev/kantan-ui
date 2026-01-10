@@ -144,5 +144,35 @@ describe("time_input", () => {
 			expect(html).toContain('value="12:30:45"');
 			expect(html).toContain('step="1"');
 		});
+
+		describe("security: runtime type validation", () => {
+			it("should validate numeric step attribute", () => {
+				// 不正な値が渡されても問題ない
+				const html = renderTimeInput("Alarm", "", {
+					step: "60; onclick=alert(1)" as unknown as number,
+				});
+
+				// 不正な値は無視されるか、数値として解釈される
+				expect(html).not.toContain("onclick");
+				expect(html).not.toContain("alert");
+			});
+
+			it("should not render step for NaN values", () => {
+				const html = renderTimeInput("Alarm", "", {
+					step: Number.NaN,
+				});
+
+				expect(html).not.toContain("step=");
+			});
+
+			it("should handle Infinity in step", () => {
+				const html = renderTimeInput("Alarm", "", {
+					step: Number.POSITIVE_INFINITY,
+				});
+
+				// Infinityは不正なので無視される
+				expect(html).not.toContain("Infinity");
+			});
+		});
 	});
 });

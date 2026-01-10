@@ -5,6 +5,15 @@ import { generateWidgetId } from "./registry";
 import type { TimeInputConfig } from "./types";
 
 /**
+ * 数値属性を検証し、無効な場合はundefinedを返す
+ */
+function validateNumericAttr(value: unknown): number | undefined {
+	if (value === undefined || value === null) return undefined;
+	const num = Number(value);
+	return Number.isFinite(num) ? num : undefined;
+}
+
+/**
  * 時刻入力ウィジェット
  * 現在の入力値を返す（初回はデフォルト値）
  * 値は "HH:MM" または "HH:MM:SS" 形式の文字列
@@ -36,7 +45,10 @@ export function renderTimeInput(
 ): string {
 	const id = generateWidgetId(config?.key);
 	const disabled = config?.disabled ? " disabled" : "";
-	const stepAttr = config?.step ? ` step="${config.step}"` : "";
+
+	// 実行時型検証: stepは数値のみ許可
+	const validStep = validateNumericAttr(config?.step);
+	const stepAttr = validStep !== undefined ? ` step="${validStep}"` : "";
 
 	return `<div id="${id}-container" class="kt-time-input-container">
   <label for="${id}" class="kt-time-input-label">${escapeHtml(label)}</label>
