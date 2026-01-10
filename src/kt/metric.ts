@@ -33,6 +33,58 @@ export interface MetricConfig {
 	label_visibility?: "visible" | "hidden" | "collapsed";
 }
 
+type DeltaDirection = "positive" | "negative" | "neutral";
+
+/**
+ * delta値から方向（positive/negative/neutral）を判定
+ */
+function getDeltaDirection(delta: string | number): DeltaDirection {
+	if (typeof delta === "number") {
+		if (delta > 0) return "positive";
+		if (delta < 0) return "negative";
+		return "neutral";
+	}
+
+	// 文字列の場合: 先頭の符号を確認
+	const trimmed = delta.trim();
+	if (trimmed.startsWith("+")) return "positive";
+	if (trimmed.startsWith("-") || trimmed.startsWith("−")) return "negative";
+
+	// 数値のみの文字列を解析
+	const num = Number.parseFloat(trimmed);
+	if (!Number.isNaN(num)) {
+		if (num > 0) return "positive";
+		if (num < 0) return "negative";
+	}
+
+	return "neutral";
+}
+
+/**
+ * delta値を表示用文字列にフォーマット
+ */
+function formatDelta(delta: string | number): string {
+	if (typeof delta === "number") {
+		if (delta > 0) return `+${delta}`;
+		return String(delta);
+	}
+	return delta;
+}
+
+/**
+ * 方向に応じたアイコンを取得
+ */
+function getDeltaIcon(direction: DeltaDirection): string {
+	switch (direction) {
+		case "positive":
+			return "▲";
+		case "negative":
+			return "▼";
+		default:
+			return "";
+	}
+}
+
 /**
  * メトリクス（KPI）を表示
  *
@@ -49,13 +101,25 @@ export interface MetricConfig {
  * kt.metric("Response Time", "120ms", { delta: "+15ms", delta_color: "inverse" });
  * ```
  */
-export function metric(label: string, value: string | number, _config?: MetricConfig): void {
+export function metric(label: string, value: string | number, config?: MetricConfig): void {
 	const ctx = requireRenderContext();
 
 	const escapedLabel = escapeHtml(label);
 	const escapedValue = escapeHtml(String(value));
 
+	// Delta部分の生成
+	let deltaHtml = "";
+	if (config?.delta !== undefined) {
+		const direction = getDeltaDirection(config.delta);
+		const icon = getDeltaIcon(direction);
+		const formattedDelta = formatDelta(config.delta);
+		const escapedDelta = escapeHtml(formattedDelta);
+
+		const iconHtml = icon ? `<span class="kt-metric-delta-icon">${icon}</span>` : "";
+		deltaHtml = `<div class="kt-metric-delta kt-metric-delta-${direction}">${iconHtml}<span class="kt-metric-delta-text">${escapedDelta}</span></div>`;
+	}
+
 	ctx.append(
-		`<div class="kt-metric"><div class="kt-metric-label">${escapedLabel}</div><div class="kt-metric-value">${escapedValue}</div></div>`,
+		`<div class="kt-metric"><div class="kt-metric-label">${escapedLabel}</div><div class="kt-metric-value">${escapedValue}</div>${deltaHtml}</div>`,
 	);
 }
