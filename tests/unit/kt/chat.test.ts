@@ -166,5 +166,25 @@ describe("Chat APIs", () => {
 			setRenderContext(null);
 			expect(() => chat_container(() => {})).toThrow("RenderContext is not available");
 		});
+
+		describe("security: CSS injection prevention", () => {
+			it("should sanitize height value to prevent CSS injection", () => {
+				chat_container(() => {}, { height: "400px; background: url('http://evil.com')" });
+				const html = ctx.getHtml();
+				// 悪意のあるCSSが除去されている
+				expect(html).not.toContain("url(");
+				expect(html).not.toContain("evil.com");
+				// 有効な値は残っている
+				expect(html).toContain("height: 400px");
+			});
+
+			it("should use default height for invalid values", () => {
+				chat_container(() => {}, { height: "javascript:alert(1)" });
+				const html = ctx.getHtml();
+				// 無効な値の場合はデフォルト値が使用される
+				expect(html).not.toContain("javascript");
+				expect(html).toContain("height: 400px");
+			});
+		});
 	});
 });

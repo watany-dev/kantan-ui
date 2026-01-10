@@ -102,6 +102,26 @@ describe("Feedback APIs", () => {
 			expect(html).toContain("background: #ff0000");
 		});
 
+		describe("security: CSS injection prevention", () => {
+			it("should sanitize color value to prevent CSS injection", () => {
+				progress(0.5, { color: "#ff0000; } .x { background: url('http://evil.com')" });
+				const html = ctx.getHtml();
+				// 悪意のあるCSSが除去されている
+				expect(html).not.toContain("url(");
+				expect(html).not.toContain("evil.com");
+				// 有効な値は残っている
+				expect(html).toContain("background: #ff0000");
+			});
+
+			it("should use default color for invalid values", () => {
+				progress(0.5, { color: "javascript:alert(1)" });
+				const html = ctx.getHtml();
+				// 無効な値の場合はデフォルト値が使用される
+				expect(html).not.toContain("javascript");
+				expect(html).toContain("background: #3498db");
+			});
+		});
+
 		describe("format option", () => {
 			it("should use auto format by default (0.5 -> 50%)", () => {
 				progress(0.5);
