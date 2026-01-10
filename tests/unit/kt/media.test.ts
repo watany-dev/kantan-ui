@@ -95,5 +95,35 @@ describe("Media APIs", () => {
 				expect(html).toContain('alt=""');
 			});
 		});
+
+		describe("size control", () => {
+			it("should set width as CSS variable when width is specified", () => {
+				image("https://example.com/photo.jpg", { width: 300 });
+				const html = ctx.getHtml();
+				expect(html).toContain('style="--kt-image-width: 300px"');
+			});
+
+			it("should add container-width class when useContainerWidth is true", () => {
+				image("https://example.com/photo.jpg", { useContainerWidth: true });
+				const html = ctx.getHtml();
+				expect(html).toContain('class="kt-image kt-image-container-width"');
+			});
+
+			it("should ignore width when useContainerWidth is true", () => {
+				image("https://example.com/photo.jpg", {
+					width: 300,
+					useContainerWidth: true,
+				});
+				const html = ctx.getHtml();
+				expect(html).toContain("kt-image-container-width");
+				expect(html).not.toContain("--kt-image-width");
+			});
+
+			it("should not include style attribute when no size is specified", () => {
+				image("https://example.com/photo.jpg");
+				const html = ctx.getHtml();
+				expect(html).not.toContain("style=");
+			});
+		});
 	});
 });

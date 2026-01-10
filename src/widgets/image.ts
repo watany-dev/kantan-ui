@@ -43,17 +43,49 @@ function resolveCaption(config?: Partial<ImageConfig>, index?: number): string |
 }
 
 /**
+ * figureのクラスを決定
+ */
+function resolveFigureClass(config?: Partial<ImageConfig>): string {
+	const classes = ["kt-image"];
+
+	// useContainerWidth が優先
+	if (config?.useContainerWidth) {
+		classes.push("kt-image-container-width");
+	}
+
+	return classes.join(" ");
+}
+
+/**
+ * figureのstyle属性を決定
+ */
+function resolveFigureStyle(config?: Partial<ImageConfig>): string {
+	// useContainerWidth が指定されている場合は width を無視
+	if (config?.useContainerWidth) {
+		return "";
+	}
+
+	if (config?.width !== undefined) {
+		return ` style="--kt-image-width: ${config.width}px"`;
+	}
+
+	return "";
+}
+
+/**
  * 単一画像のHTMLをレンダリング
  */
 function renderSingleImage(source: string, config?: Partial<ImageConfig>, index?: number): string {
 	const alt = escapeHtml(resolveAlt(config, index));
 	const caption = resolveCaption(config, index);
+	const figureClass = resolveFigureClass(config);
+	const figureStyle = resolveFigureStyle(config);
 
 	const captionHtml = caption
 		? `<figcaption class="kt-image-caption">${escapeHtml(caption)}</figcaption>`
 		: "";
 
-	return `<figure class="kt-image"><img src="${escapeHtml(source)}" alt="${alt}" class="kt-image-img" loading="lazy" />${captionHtml}</figure>`;
+	return `<figure class="${figureClass}"${figureStyle}><img src="${escapeHtml(source)}" alt="${alt}" class="kt-image-img" loading="lazy" />${captionHtml}</figure>`;
 }
 
 /**
