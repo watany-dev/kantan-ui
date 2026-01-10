@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import { image } from "../../../src/kt/media";
-import { detectSourceType, svgToDataUri } from "../../../src/widgets/image";
+import { binaryToDataUri, detectSourceType, svgToDataUri } from "../../../src/widgets/image";
 
 describe("Media APIs", () => {
 	let ctx: RenderContext;
@@ -94,6 +94,19 @@ describe("Media APIs", () => {
 				image("https://example.com/photo.jpg", {});
 				const html = ctx.getHtml();
 				expect(html).toContain('alt=""');
+			});
+
+			it("should use first element when alt is an array", () => {
+				image("https://example.com/photo.jpg", { alt: ["First alt", "Second alt"] });
+				const html = ctx.getHtml();
+				expect(html).toContain('alt="First alt"');
+			});
+
+			it("should use first element when caption is an array", () => {
+				image("https://example.com/photo.jpg", { caption: ["First caption", "Second caption"] });
+				const html = ctx.getHtml();
+				expect(html).toContain('alt="First caption"');
+				expect(html).toContain("First caption</figcaption>");
 			});
 		});
 
@@ -189,6 +202,76 @@ describe("Media APIs", () => {
 				// SVGタグが直接出力されていないことを確認
 				expect(html).not.toContain("<svg");
 				expect(html).not.toContain("<circle");
+			});
+		});
+
+		describe("binary data", () => {
+			// 1x1 transparent PNG as Uint8Array
+			const pngBytes = new Uint8Array([
+				0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+				0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
+				0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00,
+				0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+				0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+			]);
+
+			it("should detect binary source type", () => {
+				expect(detectSourceType(pngBytes)).toBe("binary");
+				expect(detectSourceType(pngBytes.buffer)).toBe("binary");
+			});
+
+			it("should convert Uint8Array to data URI", () => {
+				const dataUri = binaryToDataUri(pngBytes, "image/png");
+				expect(dataUri.startsWith("data:image/png;base64,")).toBe(true);
+			});
+
+			it("should convert ArrayBuffer to data URI", () => {
+				const dataUri = binaryToDataUri(pngBytes.buffer, "image/png");
+				expect(dataUri.startsWith("data:image/png;base64,")).toBe(true);
+			});
+
+			it("should render Uint8Array image with mimeType", () => {
+				image(pngBytes, { mimeType: "image/png" });
+				const html = ctx.getHtml();
+				expect(html).toContain('src="data:image/png;base64,');
+				expect(html).toContain('<figure class="kt-image">');
+			});
+
+			it("should render ArrayBuffer image with mimeType", () => {
+				image(pngBytes.buffer, { mimeType: "image/png" });
+				const html = ctx.getHtml();
+				expect(html).toContain('src="data:image/png;base64,');
+			});
+
+			it("should throw error when mimeType is not specified", () => {
+				expect(() => image(pngBytes)).toThrow("mimeType is required for binary image data");
+			});
+
+			it("should render binary image with caption", () => {
+				image(pngBytes, { mimeType: "image/png", caption: "Test image" });
+				const html = ctx.getHtml();
+				expect(html).toContain("Test image</figcaption>");
+			});
+		});
+
+		describe("Blob detection", () => {
+			it("should detect Blob source type", () => {
+				const blob = new Blob(["test"], { type: "image/png" });
+				expect(detectSourceType(blob)).toBe("blob");
+			});
+		});
+
+		describe("error handling", () => {
+			it("should throw error for unsupported source type", () => {
+				// @ts-expect-error: testing invalid input
+				expect(() => detectSourceType(123)).toThrow("Unsupported image source type");
+			});
+
+			it("should return empty string for array source (not yet implemented)", () => {
+				// 配列はイテレーション9で実装予定
+				image(["https://example.com/1.jpg", "https://example.com/2.jpg"]);
+				const html = ctx.getHtml();
+				expect(html).toBe("");
 			});
 		});
 	});

@@ -38,6 +38,7 @@ export function detectSourceType(source: ImageSource): SourceType {
 function resolveAlt(config?: Partial<ImageConfig>, index?: number): string {
 	// alt が明示的に指定されている場合
 	if (config?.alt !== undefined) {
+		// 配列の場合はイテレーション9で実装
 		if (Array.isArray(config.alt)) {
 			return config.alt[index ?? 0] ?? "";
 		}
@@ -46,6 +47,7 @@ function resolveAlt(config?: Partial<ImageConfig>, index?: number): string {
 
 	// caption をフォールバックとして使用
 	if (config?.caption !== undefined) {
+		// 配列の場合はイテレーション9で実装
 		if (Array.isArray(config.caption)) {
 			return config.caption[index ?? 0] ?? "";
 		}
@@ -110,6 +112,24 @@ export function svgToDataUri(svg: string): string {
 }
 
 /**
+ * バイナリデータをdata URIに変換
+ *
+ * @param data - Uint8Array または ArrayBuffer
+ * @param mimeType - MIMEタイプ（例: "image/png", "image/jpeg"）
+ * @returns data URI文字列
+ */
+export function binaryToDataUri(data: Uint8Array | ArrayBuffer, mimeType: string): string {
+	const bytes = data instanceof ArrayBuffer ? new Uint8Array(data) : data;
+	let binary = "";
+	const len = bytes.byteLength;
+	for (let i = 0; i < len; i++) {
+		binary += String.fromCharCode(bytes[i] as number);
+	}
+	const base64 = btoa(binary);
+	return `data:${mimeType};base64,${base64}`;
+}
+
+/**
  * 文字列ソースをsrc属性用に解決
  */
 function resolveStringSrc(source: string): string {
@@ -162,6 +182,15 @@ export function renderImage(
 		return renderSingleImage(source, config);
 	}
 
-	// バイナリデータは後のイテレーションで実装
+	// Uint8Array または ArrayBuffer の場合
+	if (source instanceof Uint8Array || source instanceof ArrayBuffer) {
+		if (!config?.mimeType) {
+			throw new Error("mimeType is required for binary image data");
+		}
+		const dataUri = binaryToDataUri(source, config.mimeType);
+		return renderSingleImage(dataUri, config);
+	}
+
+	// Blob は後のイテレーションで対応（非同期処理が必要）
 	return "";
 }
