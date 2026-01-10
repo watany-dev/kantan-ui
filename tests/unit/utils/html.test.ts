@@ -69,6 +69,41 @@ describe("buildStyleAttr", () => {
 	it("should return empty string when all values are excluded", () => {
 		expect(buildStyleAttr({ a: undefined, b: null, c: "" })).toBe("");
 	});
+
+	describe("security: CSS injection prevention", () => {
+		it("should sanitize CSS values with injection attempts", () => {
+			const result = buildStyleAttr({
+				color: "red; background: url('http://evil.com')",
+			});
+			// セミコロン以降が除去される
+			expect(result).not.toContain("url(");
+			expect(result).not.toContain("evil.com");
+			expect(result).toContain("color: red");
+		});
+
+		it("should reject url() in CSS values", () => {
+			const result = buildStyleAttr({
+				background: "url('http://evil.com')",
+			});
+			// url()は空文字列になる
+			expect(result).not.toContain("url(");
+		});
+
+		it("should reject expression() in CSS values", () => {
+			const result = buildStyleAttr({
+				background: "expression(alert(1))",
+			});
+			expect(result).not.toContain("expression");
+		});
+
+		it("should pass through numeric values safely", () => {
+			const result = buildStyleAttr({
+				"z-index": 100,
+				opacity: 0.5,
+			});
+			expect(result).toBe('style="z-index: 100; opacity: 0.5"');
+		});
+	});
 });
 
 describe("buildClassAttr", () => {

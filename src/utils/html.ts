@@ -24,6 +24,7 @@ export function buildAttributes(
  * CSSスタイル属性をビルドする
  * @param styles スタイルプロパティと値のオブジェクト。値がundefined/null/空文字列は除外される
  * @returns style属性文字列（style="..."形式、空の場合は空文字列）
+ * @security CSS値はサニタイズされ、危険なパターン（url(), expression()等）は除去される
  */
 export function buildStyleAttr(styles: Record<string, string | number | undefined | null>): string {
 	const parts: string[] = [];
@@ -31,9 +32,51 @@ export function buildStyleAttr(styles: Record<string, string | number | undefine
 		if (value === undefined || value === null || value === "") {
 			continue;
 		}
-		parts.push(`${key}: ${value}`);
+		// 数値はそのまま使用（安全）
+		if (typeof value === "number") {
+			parts.push(`${key}: ${value}`);
+		} else {
+			// 文字列の場合はサニタイズ
+			const safeValue = sanitizeCssValueForStyle(value);
+			if (safeValue) {
+				parts.push(`${key}: ${safeValue}`);
+			}
+		}
 	}
 	return parts.length > 0 ? `style="${parts.join("; ")}"` : "";
+}
+
+/**
+ * CSS値をサニタイズ（buildStyleAttr用の内部関数）
+ * 危険なパターンを除去し、安全な値のみを返す
+ */
+function sanitizeCssValueForStyle(value: string): string {
+	let sanitized = value.trim();
+
+	// セミコロン以降を除去（追加のCSSプロパティ注入を防止）
+	const semicolonIndex = sanitized.indexOf(";");
+	if (semicolonIndex !== -1) {
+		sanitized = sanitized.substring(0, semicolonIndex).trim();
+	}
+
+	// 波括弧を除去
+	sanitized = sanitized.replace(/[{}]/g, "").trim();
+
+	// 危険なパターンをチェック（完全拒否）
+	if (/url\s*\(/i.test(sanitized)) {
+		return "";
+	}
+	if (/expression\s*\(/i.test(sanitized)) {
+		return "";
+	}
+	if (/<[^>]*>/.test(sanitized)) {
+		return "";
+	}
+	if (/(javascript|vbscript)\s*:/i.test(sanitized)) {
+		return "";
+	}
+
+	return sanitized;
 }
 
 /**
