@@ -188,6 +188,48 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Image Section =====
+	kt.header("Image");
+
+	kt.subheader("URL Image");
+	kt.image("https://via.placeholder.com/300x150?text=Demo+Image", {
+		caption: "A placeholder image",
+		width: 300,
+		key: "demo_image",
+	});
+
+	kt.subheader("Data URI Image");
+	// 1x1 red pixel PNG
+	kt.image(
+		"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==",
+		{
+			caption: "A 1x1 red pixel",
+			key: "data_uri_image",
+		},
+	);
+
+	kt.subheader("SVG Image");
+	kt.image('<svg width="100" height="100"><circle cx="50" cy="50" r="40" fill="#3498db"/></svg>', {
+		caption: "A simple SVG circle",
+		key: "svg_image",
+	});
+
+	kt.subheader("Image Gallery");
+	kt.image(
+		[
+			"https://via.placeholder.com/150x100?text=Image+1",
+			"https://via.placeholder.com/150x100?text=Image+2",
+			"https://via.placeholder.com/150x100?text=Image+3",
+		],
+		{
+			caption: ["First image", "Second image", "Third image"],
+			width: 150,
+			key: "gallery_images",
+		},
+	);
+
+	kt.divider();
+
 	// ===== Layout Section =====
 	kt.header("Layout");
 

@@ -125,3 +125,51 @@ export interface TimeInputConfig {
 	key?: string;
 	disabled?: boolean;
 }
+
+/**
+ * 画像ソースの型
+ * - string: URL, data URI, または SVG文字列
+ * - Uint8Array: バイナリデータ（mimeType必須）
+ * - ArrayBuffer: バイナリデータ（mimeType必須）
+ * - Blob: Blobオブジェクト
+ */
+export type ImageSource = string | Uint8Array | ArrayBuffer | Blob;
+
+export interface ImageConfig {
+	/**
+	 * 画像のキャプション
+	 * 複数画像の場合は配列で指定
+	 */
+	caption?: string | string[];
+
+	/**
+	 * 画像の幅（ピクセル）
+	 * useContainerWidth と併用不可
+	 */
+	width?: number;
+
+	/**
+	 * コンテナ幅に合わせる
+	 * true の場合、width は無視される
+	 */
+	useContainerWidth?: boolean;
+
+	/**
+	 * アクセシビリティ用の代替テキスト
+	 * 指定しない場合は caption が使用される
+	 * 複数画像の場合は配列で指定
+	 */
+	alt?: string | string[];
+
+	/**
+	 * バイナリデータのMIMEタイプ
+	 * Uint8Array / ArrayBuffer 使用時は必須
+	 * @example "image/png", "image/jpeg", "image/webp"
+	 */
+	mimeType?: string;
+
+	/**
+	 * ウィジェットの一意キー
+	 */
+	key?: string;
+}
