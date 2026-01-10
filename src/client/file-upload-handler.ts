@@ -246,20 +246,17 @@ export function readFileAsArrayBuffer(file: File): Promise<FileReadResult> {
 /**
  * ファイルを検証して読み込む
  */
-export async function validateAndReadFile(
-	file: File,
-	options: FileReadOptions,
-): Promise<FileReadResult> {
+export function validateAndReadFile(file: File, options: FileReadOptions): Promise<FileReadResult> {
 	// サイズ検証
 	const sizeResult = validateFileSize(file.size, options.maxSize);
 	if (!sizeResult.valid) {
-		return { success: false, error: sizeResult.error };
+		return Promise.resolve({ success: false, error: sizeResult.error });
 	}
 
 	// タイプ検証
 	const typeResult = validateFileType(file.name, file.type, options.accept);
 	if (!typeResult.valid) {
-		return { success: false, error: typeResult.error };
+		return Promise.resolve({ success: false, error: typeResult.error });
 	}
 
 	// ファイル読み込み
