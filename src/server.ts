@@ -198,6 +198,16 @@ const script = () => {
 		key: "demo_image",
 	});
 
+	kt.subheader("Data URI Image");
+	// 1x1 red pixel PNG
+	kt.image(
+		"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==",
+		{
+			caption: "A 1x1 red pixel",
+			key: "data_uri_image",
+		},
+	);
+
 	kt.subheader("SVG Image");
 	kt.image('<svg width="100" height="100"><circle cx="50" cy="50" r="40" fill="#3498db"/></svg>', {
 		caption: "A simple SVG circle",

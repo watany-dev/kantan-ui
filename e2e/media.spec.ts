@@ -42,6 +42,30 @@ test.describe("Media API - kt.image", () => {
 		});
 	});
 
+	test.describe("Data URI Image", () => {
+		test("renders data URI image correctly", async ({ page }) => {
+			await gotoAndWait(page);
+
+			// data URI画像がキャプションで表示されることを確認
+			const caption = page.locator("figcaption.kt-image-caption").filter({
+				hasText: "A 1x1 red pixel",
+			});
+			await expect(caption).toBeVisible();
+		});
+
+		test("data URI image has correct src attribute", async ({ page }) => {
+			await gotoAndWait(page);
+
+			// data URI画像のsrc属性を確認
+			const caption = page.locator("figcaption.kt-image-caption").filter({
+				hasText: "A 1x1 red pixel",
+			});
+			const figure = caption.locator("..");
+			const img = figure.locator("img.kt-image-img");
+			await expect(img).toHaveAttribute("src", /^data:image\/png;base64,/);
+		});
+	});
+
 	test.describe("SVG Image", () => {
 		test("renders SVG as data URI image", async ({ page }) => {
 			await gotoAndWait(page);
