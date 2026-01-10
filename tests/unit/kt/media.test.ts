@@ -267,11 +267,122 @@ describe("Media APIs", () => {
 				expect(() => detectSourceType(123)).toThrow("Unsupported image source type");
 			});
 
-			it("should return empty string for array source (not yet implemented)", () => {
-				// 配列はイテレーション9で実装予定
-				image(["https://example.com/1.jpg", "https://example.com/2.jpg"]);
+			it("should return empty string for empty array", () => {
+				image([]);
 				const html = ctx.getHtml();
 				expect(html).toBe("");
+			});
+		});
+
+		describe("multiple images (gallery)", () => {
+			it("should render gallery wrapper for array of URLs", () => {
+				image(["https://example.com/1.jpg", "https://example.com/2.jpg"]);
+				const html = ctx.getHtml();
+				expect(html).toContain('<div class="kt-image-gallery">');
+				expect(html).toContain("</div>");
+			});
+
+			it("should render each image in the gallery", () => {
+				image([
+					"https://example.com/1.jpg",
+					"https://example.com/2.jpg",
+					"https://example.com/3.jpg",
+				]);
+				const html = ctx.getHtml();
+				expect(html).toContain('src="https://example.com/1.jpg"');
+				expect(html).toContain('src="https://example.com/2.jpg"');
+				expect(html).toContain('src="https://example.com/3.jpg"');
+				// 3つのfigure要素があること
+				expect((html.match(/<figure/g) || []).length).toBe(3);
+			});
+
+			it("should apply individual captions from array", () => {
+				image(["https://example.com/1.jpg", "https://example.com/2.jpg"], {
+					caption: ["Image 1", "Image 2"],
+				});
+				const html = ctx.getHtml();
+				expect(html).toContain("Image 1</figcaption>");
+				expect(html).toContain("Image 2</figcaption>");
+			});
+
+			it("should apply individual alt texts from array", () => {
+				image(["https://example.com/1.jpg", "https://example.com/2.jpg"], {
+					alt: ["Alt 1", "Alt 2"],
+				});
+				const html = ctx.getHtml();
+				expect(html).toContain('alt="Alt 1"');
+				expect(html).toContain('alt="Alt 2"');
+			});
+
+			it("should use caption as alt fallback for each image", () => {
+				image(["https://example.com/1.jpg", "https://example.com/2.jpg"], {
+					caption: ["Caption 1", "Caption 2"],
+				});
+				const html = ctx.getHtml();
+				expect(html).toContain('alt="Caption 1"');
+				expect(html).toContain('alt="Caption 2"');
+			});
+
+			it("should use same caption for all images when caption is string", () => {
+				image(["https://example.com/1.jpg", "https://example.com/2.jpg"], {
+					caption: "Same caption",
+				});
+				const html = ctx.getHtml();
+				// 2つの同じキャプションがあること
+				expect((html.match(/Same caption<\/figcaption>/g) || []).length).toBe(2);
+			});
+
+			it("should handle caption array shorter than images", () => {
+				image(
+					["https://example.com/1.jpg", "https://example.com/2.jpg", "https://example.com/3.jpg"],
+					{ caption: ["Caption 1"] },
+				);
+				const html = ctx.getHtml();
+				// 最初の画像のみキャプションあり
+				expect(html).toContain("Caption 1</figcaption>");
+				// figcaptionは1つのみ
+				expect((html.match(/<figcaption/g) || []).length).toBe(1);
+			});
+
+			it("should apply width to all gallery images", () => {
+				image(["https://example.com/1.jpg", "https://example.com/2.jpg"], {
+					width: 200,
+				});
+				const html = ctx.getHtml();
+				// 2つのfigure要素に同じwidth指定
+				expect((html.match(/--kt-image-width: 200px/g) || []).length).toBe(2);
+			});
+
+			it("should render mixed source types in gallery", () => {
+				const svgCircle = '<svg width="50" height="50"><circle cx="25" cy="25" r="20" /></svg>';
+				image(["https://example.com/photo.jpg", svgCircle]);
+				const html = ctx.getHtml();
+				expect(html).toContain('<div class="kt-image-gallery">');
+				expect(html).toContain('src="https://example.com/photo.jpg"');
+				expect(html).toContain('src="data:image/svg+xml,');
+			});
+
+			it("should render binary data in gallery", () => {
+				// 1x1 transparent PNG as Uint8Array
+				const pngBytes = new Uint8Array([
+					0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+					0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
+					0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0x00,
+					0x01, 0x00, 0x00, 0x05, 0x00, 0x01, 0x0d, 0x0a, 0x2d, 0xb4, 0x00, 0x00, 0x00, 0x00, 0x49,
+					0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+				]);
+				image(["https://example.com/photo.jpg", pngBytes], { mimeType: "image/png" });
+				const html = ctx.getHtml();
+				expect(html).toContain('<div class="kt-image-gallery">');
+				expect(html).toContain('src="https://example.com/photo.jpg"');
+				expect(html).toContain('src="data:image/png;base64,');
+			});
+
+			it("should throw error for binary data in gallery without mimeType", () => {
+				const pngBytes = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+				expect(() => image(["https://example.com/photo.jpg", pngBytes])).toThrow(
+					"mimeType is required for binary image data",
+				);
 			});
 		});
 	});

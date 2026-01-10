@@ -149,6 +149,26 @@ function resolveStringSrc(source: string): string {
 }
 
 /**
+ * ImageSourceを文字列ソースに変換
+ * バイナリデータはdata URIに変換
+ */
+function convertToStringSrc(source: ImageSource, config?: Partial<ImageConfig>): string {
+	if (typeof source === "string") {
+		return resolveStringSrc(source);
+	}
+
+	if (source instanceof Uint8Array || source instanceof ArrayBuffer) {
+		if (!config?.mimeType) {
+			throw new Error("mimeType is required for binary image data");
+		}
+		return binaryToDataUri(source, config.mimeType);
+	}
+
+	// Blob は非同期処理が必要なため未対応
+	throw new Error("Blob source is not yet supported");
+}
+
+/**
  * 単一画像のHTMLをレンダリング
  */
 function renderSingleImage(source: string, config?: Partial<ImageConfig>, index?: number): string {
@@ -166,15 +186,34 @@ function renderSingleImage(source: string, config?: Partial<ImageConfig>, index?
 }
 
 /**
+ * 複数画像のギャラリーHTMLをレンダリング
+ */
+function renderGallery(sources: ImageSource[], config?: Partial<ImageConfig>): string {
+	// 空配列の場合は空文字列を返す
+	if (sources.length === 0) {
+		return "";
+	}
+
+	// 各画像をレンダリング
+	const images = sources.map((source, index) => {
+		const stringSrc = convertToStringSrc(source, config);
+		return renderSingleImage(stringSrc, config, index);
+	});
+
+	// ギャラリーラッパーで囲む
+	return `<div class="kt-image-gallery">${images.join("")}</div>`;
+}
+
+/**
  * 画像のHTMLをレンダリング
  */
 export function renderImage(
 	source: ImageSource | ImageSource[],
 	config?: Partial<ImageConfig>,
 ): string {
-	// 配列の場合は後のイテレーションで実装
+	// 配列の場合はギャラリーとしてレンダリング
 	if (Array.isArray(source)) {
-		return "";
+		return renderGallery(source, config);
 	}
 
 	// 文字列の場合
