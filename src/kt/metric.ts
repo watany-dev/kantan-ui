@@ -86,6 +86,27 @@ function getDeltaIcon(direction: DeltaDirection): string {
 }
 
 /**
+ * delta_colorモードに基づいて表示用のクラス名を決定
+ */
+function getDeltaColorClass(
+	direction: DeltaDirection,
+	colorMode: "normal" | "inverse" | "off",
+): DeltaDirection {
+	if (colorMode === "off") {
+		return "neutral";
+	}
+
+	if (colorMode === "inverse") {
+		if (direction === "positive") return "negative";
+		if (direction === "negative") return "positive";
+		return "neutral";
+	}
+
+	// normal mode
+	return direction;
+}
+
+/**
  * メトリクス（KPI）を表示
  *
  * ダッシュボードやKPI表示で使用する、値と変化量を表示するコンポーネント。
@@ -111,12 +132,14 @@ export function metric(label: string, value: string | number, config?: MetricCon
 	let deltaHtml = "";
 	if (config?.delta !== undefined) {
 		const direction = getDeltaDirection(config.delta);
+		const colorMode = config.delta_color ?? "normal";
+		const colorClass = getDeltaColorClass(direction, colorMode);
 		const icon = getDeltaIcon(direction);
 		const formattedDelta = formatDelta(config.delta);
 		const escapedDelta = escapeHtml(formattedDelta);
 
 		const iconHtml = icon ? `<span class="kt-metric-delta-icon">${icon}</span>` : "";
-		deltaHtml = `<div class="kt-metric-delta kt-metric-delta-${direction}">${iconHtml}<span class="kt-metric-delta-text">${escapedDelta}</span></div>`;
+		deltaHtml = `<div class="kt-metric-delta kt-metric-delta-${colorClass}">${iconHtml}<span class="kt-metric-delta-text">${escapedDelta}</span></div>`;
 	}
 
 	ctx.append(

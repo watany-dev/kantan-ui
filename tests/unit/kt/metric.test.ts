@@ -126,4 +126,52 @@ describe("kt.metric", () => {
 			expect(html).toContain("kt-metric-delta-neutral");
 		});
 	});
+
+	describe("delta_color", () => {
+		it("should use normal mode by default (positive=green)", () => {
+			metric("Revenue", "$1,234", { delta: "+12%" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-metric-delta-positive");
+		});
+
+		it("should use normal mode by default (negative=red)", () => {
+			metric("Revenue", "$1,234", { delta: "-5%" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-metric-delta-negative");
+		});
+
+		it("should invert colors in inverse mode (positive shows red)", () => {
+			metric("Response Time", "120ms", { delta: "+15ms", delta_color: "inverse" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-metric-delta-negative");
+			expect(html).not.toContain("kt-metric-delta-positive");
+		});
+
+		it("should invert colors in inverse mode (negative shows green)", () => {
+			metric("Response Time", "120ms", { delta: "-15ms", delta_color: "inverse" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-metric-delta-positive");
+			expect(html).not.toContain("kt-metric-delta-negative");
+		});
+
+		it("should show neutral color in off mode", () => {
+			metric("Users", 100, { delta: "+50", delta_color: "off" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-metric-delta-neutral");
+			expect(html).not.toContain("kt-metric-delta-positive");
+		});
+
+		it("should show neutral color in off mode for negative delta", () => {
+			metric("Users", 100, { delta: "-50", delta_color: "off" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-metric-delta-neutral");
+			expect(html).not.toContain("kt-metric-delta-negative");
+		});
+
+		it("should keep neutral as neutral in inverse mode", () => {
+			metric("Users", 100, { delta: 0, delta_color: "inverse" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-metric-delta-neutral");
+		});
+	});
 });
