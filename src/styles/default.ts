@@ -724,6 +724,82 @@ const formStyles = `
   }
 `;
 
+/** Empty Placeholder Styles */
+const emptyStyles = `
+  /* Empty Placeholder Container */
+  .kt-empty {
+    display: contents;
+  }
+
+  /* Empty placeholder when truly empty */
+  .kt-empty:empty {
+    display: none;
+  }
+
+  /* Spinner in placeholder */
+  .kt-spinner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+  }
+
+  .kt-spinner::before {
+    content: "";
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--kt-color-border, #dee2e6);
+    border-top-color: var(--kt-color-primary, #0d6efd);
+    border-radius: 50%;
+    animation: kt-spin 0.8s linear infinite;
+  }
+
+  .kt-spinner-text {
+    color: var(--kt-color-text, #212529);
+  }
+
+  @keyframes kt-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Progress in placeholder */
+  .kt-progress-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0.5rem 0;
+  }
+
+  .kt-progress-text {
+    font-size: 0.875rem;
+    color: var(--kt-color-text-secondary, #6c757d);
+  }
+
+  .kt-progress {
+    width: 100%;
+    height: 0.5rem;
+    border-radius: 0.25rem;
+    appearance: none;
+    background: var(--kt-color-border, #dee2e6);
+  }
+
+  .kt-progress::-webkit-progress-bar {
+    background: var(--kt-color-border, #dee2e6);
+    border-radius: 0.25rem;
+  }
+
+  .kt-progress::-webkit-progress-value {
+    background: var(--kt-color-primary, #0d6efd);
+    border-radius: 0.25rem;
+    transition: width 0.2s ease;
+  }
+
+  .kt-progress::-moz-progress-bar {
+    background: var(--kt-color-primary, #0d6efd);
+    border-radius: 0.25rem;
+  }
+`;
+
 /**
  * 全デフォルトスタイルを結合
  */
@@ -741,6 +817,7 @@ export const defaultStyles = [
 	imageStyles,
 	metricStyles,
 	formStyles,
+	emptyStyles,
 ].join("\n");
 
 /**
@@ -757,4 +834,5 @@ export {
 	sidebarStyles,
 	imageStyles,
 	formStyles,
+	emptyStyles,
 };

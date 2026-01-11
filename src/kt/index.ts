@@ -28,17 +28,17 @@ import * as chat from "./chat";
 import * as config from "./config";
 import * as control from "./control";
 import * as data from "./data";
+import { empty } from "./empty";
 import * as feedback from "./feedback";
 import * as formModule from "./form";
 import * as layout from "./layout";
-import * as output from "./output";
-import { sidebar } from "./sidebar";
-
-export type { SidebarAPI } from "./sidebar";
-
 import * as media from "./media";
 import * as metricModule from "./metric";
+import * as output from "./output";
+import { sidebar } from "./sidebar";
 import * as widgets from "./widgets";
+
+export type { SidebarAPI } from "./sidebar";
 
 export const kt = {
 	// Config APIs
@@ -84,6 +84,7 @@ export const kt = {
 	expander: layout.expander,
 	tabs: layout.tabs,
 	sidebar,
+	empty,
 
 	// Form APIs
 	form: formModule.form,

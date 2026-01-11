@@ -335,6 +335,35 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Empty Placeholder Section =====
+	kt.header("Empty Placeholder");
+
+	kt.subheader("Dynamic Status");
+	const statusPlaceholder = kt.empty({ key: "status_placeholder" });
+
+	// ボタンでプレースホルダーの状態を変更
+	if (kt.button("Show Spinner", { key: "btn_show_spinner" })) {
+		statusPlaceholder.spinner("Processing...");
+	}
+	if (kt.button("Show Success", { key: "btn_show_success" })) {
+		statusPlaceholder.success("Operation completed!");
+	}
+	if (kt.button("Show Error", { key: "btn_show_error" })) {
+		statusPlaceholder.error("Something went wrong!");
+	}
+	if (kt.button("Clear Status", { key: "btn_clear_status" })) {
+		statusPlaceholder.empty();
+	}
+
+	kt.subheader("Progress Demo");
+	const progressPlaceholder = kt.empty({ key: "progress_placeholder" });
+
+	if (kt.button("Show Progress", { key: "btn_show_progress" })) {
+		progressPlaceholder.progress(0.5, { text: "50% complete" });
+	}
+
+	kt.divider();
+
 	// ===== Form Section =====
 	kt.header("Form");
 	kt.form("contact_form", () => {
