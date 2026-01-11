@@ -23,6 +23,7 @@ import { defaultStyles } from "./styles";
 import { createErrorMessageJson } from "./utils/error";
 import { createWebSocketAdapterAsync } from "./websocket";
 import { handleFileUpload } from "./websocket/file-upload-handler";
+import { validateOrigin } from "./websocket/origin-validation";
 import type { Patch } from "./websocket/types";
 import {
 	type ClientMessage,
@@ -218,8 +219,20 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 			const cookieSessionId =
 				config.session.scope === "browser" ? getCookie(c, config.session.sessionKey) : undefined;
 
+			// Origin検証のための情報を事前に取得
+			const origin = c.req.header("Origin");
+			const host = c.req.header("Host");
+			const shouldValidateOrigin = config.security.validateWebSocketOrigin;
+			const allowedOrigins = config.security.allowedOrigins;
+
 			return {
 				onOpen: (_evt, ws) => {
+					// Origin検証（設定で有効な場合のみ）
+					if (shouldValidateOrigin && !validateOrigin(origin, host, allowedOrigins)) {
+						ws.close(4003, "Origin not allowed");
+						return;
+					}
+
 					sessionManager.initializePong(ws);
 				},
 				onMessage: (event, ws) => {
