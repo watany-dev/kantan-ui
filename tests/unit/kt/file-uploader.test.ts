@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { setRenderContext } from "../../../src/kt/context";
-import type { RenderContext } from "../../../src/kt/types";
+import { type RenderContext, setRenderContext } from "../../../src/kt/context";
 import { SessionManager, setSessionManager } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import { resetWidgetCounter } from "../../../src/widgets/registry";

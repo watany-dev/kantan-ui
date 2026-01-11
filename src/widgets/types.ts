@@ -276,14 +276,3 @@ export interface InternalUploadData {
 	/** Upload timestamp */
 	uploadedAt: number;
 }
-
-/**
- * File upload error codes
- */
-export type FileUploadErrorCode =
-	| "SIZE_EXCEEDED"
-	| "TYPE_NOT_ALLOWED"
-	| "DANGEROUS_FILE"
-	| "MIME_MISMATCH"
-	| "POLYGLOT_DETECTED"
-	| "LIMIT_EXCEEDED";
