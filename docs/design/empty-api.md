@@ -669,12 +669,47 @@ test.describe("kt.empty", () => {
 
 kantan-ui は rerun モデルを採用しており、状態変更時にスクリプト全体が再実行される。
 
-**課題**: `placeholder.write()` 呼び出し時の挙動
+**重要な制限事項**:
 
-**解決策**:
-1. 同一rerun内では、状態更新が即座に反映される
-2. 状態は `setWidgetValue` で保存され、次回rerun時に復元される
-3. プレースホルダーコンテナのHTMLは `kt.empty()` 呼び出し時に生成される
+kantan-ui のアーキテクチャでは、プレースホルダーの状態更新は**次回のrerunまで表示に反映されません**。
+
+```typescript
+// 以下のコードでは、ボタンクリック時にスピナーは表示されない
+const status = kt.empty({ key: "status" });
+if (kt.button("Process")) {
+  status.spinner("Processing...");  // 状態は保存されるが、HTMLは既に生成済み
+}
+```
+
+**動作フロー**:
+1. `kt.empty()` が呼ばれる → 現在の状態（空）でHTMLを生成
+2. `kt.button()` が `true` を返す（クリックされた）
+3. `status.spinner()` が呼ばれる → 状態を「スピナー」に更新
+4. rerun完了 → クライアントには空のプレースホルダーが送信される
+5. **次回rerun時に**スピナーが表示される
+
+**推奨される使用パターン**:
+
+```typescript
+// パターン1: 状態に基づく条件分岐
+const status = kt.empty({ key: "status" });
+const isProcessing = getState("isProcessing", false);
+
+if (isProcessing) {
+  status.spinner("Processing...");
+}
+
+if (kt.button("Start") && !isProcessing) {
+  setState("isProcessing", true);
+  // 処理開始
+}
+
+// パターン2: 非同期処理後の状態更新
+// （WebSocket経由で状態が更新され、自動的にrerunがトリガーされる）
+```
+
+**Streamlitとの違い**:
+Streamlit の `st.empty()` は即座にUIを更新できますが、これはStreamlitがWebSocket経由でリアルタイムにDOMを操作する仕組みを持っているためです。kantan-ui の現在のアーキテクチャでは、状態変更は次回rerunまで反映されません。
 
 ### 7.2 ウィジェットメソッドの戻り値
 
