@@ -87,6 +87,10 @@ export interface SecurityConfig {
 	maxEventsPerSecond?: number;
 	/** レート制限超過時のクールダウン期間（ミリ秒、デフォルト: 1000） */
 	rateLimitCooldown?: number;
+	/** WebSocket接続時のOrigin検証を有効化（デフォルト: true） */
+	validateWebSocketOrigin?: boolean;
+	/** 許可するOriginのリスト（未設定時はHostと一致で許可） */
+	allowedOrigins?: string[];
 }
 
 /**

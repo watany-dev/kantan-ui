@@ -3,6 +3,7 @@ import {
 	DEFAULT_CLIENT_CONFIG,
 	DEFAULT_CONFIG,
 	DEFAULT_COOKIE_CONFIG,
+	DEFAULT_SECURITY_CONFIG,
 	DEFAULT_SESSION_CONFIG,
 	DEFAULT_STREAMING_CONFIG,
 	resolveConfig,
@@ -78,6 +79,28 @@ describe("Config Defaults", () => {
 			expect(DEFAULT_CONFIG.session).toEqual(DEFAULT_SESSION_CONFIG);
 			expect(DEFAULT_CONFIG.client).toEqual(DEFAULT_CLIENT_CONFIG);
 			expect(DEFAULT_CONFIG.streaming).toEqual(DEFAULT_STREAMING_CONFIG);
+		});
+	});
+
+	describe("DEFAULT_SECURITY_CONFIG", () => {
+		it("should have validateWebSocketOrigin enabled by default", () => {
+			expect(DEFAULT_SECURITY_CONFIG.validateWebSocketOrigin).toBe(true);
+		});
+
+		it("should have empty allowedOrigins by default", () => {
+			expect(DEFAULT_SECURITY_CONFIG.allowedOrigins).toEqual([]);
+		});
+
+		it("should have correct default maxPatchSize (1MB)", () => {
+			expect(DEFAULT_SECURITY_CONFIG.maxPatchSize).toBe(1024 * 1024);
+		});
+
+		it("should have correct default maxEventsPerSecond", () => {
+			expect(DEFAULT_SECURITY_CONFIG.maxEventsPerSecond).toBe(100);
+		});
+
+		it("should have correct default rateLimitCooldown", () => {
+			expect(DEFAULT_SECURITY_CONFIG.rateLimitCooldown).toBe(1000);
 		});
 	});
 });
@@ -225,5 +248,30 @@ describe("resolveConfig", () => {
 		expect(resolved.session.cookie.httpOnly).toBe(true);
 		expect(resolved.session.cookie.secure).toBe("auto");
 		expect(resolved.session.cookie.sameSite).toBe("Lax");
+	});
+
+	it("should override security config values", () => {
+		const resolved = resolveConfig({
+			security: {
+				validateWebSocketOrigin: false,
+				allowedOrigins: ["https://example.com", "https://app.example.com"],
+			},
+		});
+
+		expect(resolved.security.validateWebSocketOrigin).toBe(false);
+		expect(resolved.security.allowedOrigins).toEqual([
+			"https://example.com",
+			"https://app.example.com",
+		]);
+		// Default should still be used for other fields
+		expect(resolved.security.maxPatchSize).toBe(1024 * 1024);
+		expect(resolved.security.maxEventsPerSecond).toBe(100);
+	});
+
+	it("should use default security config when not provided", () => {
+		const resolved = resolveConfig({});
+
+		expect(resolved.security.validateWebSocketOrigin).toBe(true);
+		expect(resolved.security.allowedOrigins).toEqual([]);
 	});
 });

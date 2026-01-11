@@ -55,6 +55,8 @@ export const DEFAULT_SECURITY_CONFIG: Required<SecurityConfig> = {
 	maxPatchSize: 1024 * 1024, // 1MB
 	maxEventsPerSecond: 100,
 	rateLimitCooldown: 1000, // 1秒
+	validateWebSocketOrigin: true,
+	allowedOrigins: [],
 };
 
 /**
