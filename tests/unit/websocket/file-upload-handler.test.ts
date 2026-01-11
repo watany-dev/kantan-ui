@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SessionManager, setSessionManager } from "../../../src/session/manager";
 import { base64ToArrayBuffer, handleFileUpload } from "../../../src/websocket/file-upload-handler";
 import type { FileUploadMessage } from "../../../src/websocket/types";
@@ -193,18 +193,17 @@ describe("file-upload-handler", () => {
 			expect(retrievedContent).toBe(content);
 		});
 
-		it("rejects file exceeding size limit", () => {
-			// Create data larger than allowed (> 200MB would be huge, so we test the error path differently)
-			// We'll create a file with correct size but validation will check against limits
-			const largeData = new Uint8Array(1024);
-			const base64 = btoa(String.fromCharCode(...largeData));
+		it("rejects file with size mismatch (larger claim)", () => {
+			// Test size mismatch: claimed size is larger than actual data
+			const data = new Uint8Array(1024);
+			const base64 = btoa(String.fromCharCode(...data));
 
 			const message: FileUploadMessage = {
 				type: "file_upload",
 				widgetId: "uploader1",
 				filename: "large.bin",
 				mimeType: "application/octet-stream",
-				size: 300 * 1024 * 1024, // Claim 300MB but actual data is smaller
+				size: 2048, // Claim 2KB but actual data is 1KB
 				data: base64,
 				isChunked: false,
 			};
@@ -276,6 +275,176 @@ describe("file-upload-handler", () => {
 			const upload = manager.getUpload(sessionId, result.uploadId);
 			expect(upload?.originalName).not.toContain("..");
 			expect(upload?.originalName).not.toContain("/");
+		});
+	});
+
+	describe("rate limiting integration", () => {
+		let manager: SessionManager;
+		let sessionId: string;
+
+		beforeEach(() => {
+			vi.useFakeTimers();
+			manager = new SessionManager(
+				{},
+				{
+					fileUploadRateLimit: {
+						maxUploadsPerMinute: 2,
+						maxBytesPerMinute: 1024, // 1KB
+						maxConcurrentUploads: 1,
+						uploadRateLimitCooldown: 1000,
+					},
+				},
+			);
+			setSessionManager(manager);
+			const session = manager.createSession();
+			sessionId = session.id;
+		});
+
+		afterEach(() => {
+			manager.stopCleanupInterval();
+			vi.useRealTimers();
+		});
+
+		it("rejects upload when count limit exceeded", () => {
+			const content = "test";
+			const data = new TextEncoder().encode(content);
+			const base64 = btoa(String.fromCharCode(...data));
+
+			const message: FileUploadMessage = {
+				type: "file_upload",
+				widgetId: "uploader1",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				size: data.length,
+				data: base64,
+				isChunked: false,
+			};
+
+			// First upload should succeed
+			const result1 = handleFileUpload(message, sessionId, manager);
+			expect(result1.success).toBe(true);
+
+			// Second upload should succeed
+			const result2 = handleFileUpload(message, sessionId, manager);
+			expect(result2.success).toBe(true);
+
+			// Third upload should be rate limited
+			const result3 = handleFileUpload(message, sessionId, manager);
+			expect(result3.success).toBe(false);
+			expect(result3.error?.code).toBe("UPLOAD_RATE_LIMITED");
+		});
+
+		it("rejects upload when bytes limit exceeded", () => {
+			// Create 800 byte file
+			const data = new Uint8Array(800);
+			const base64 = btoa(String.fromCharCode(...data));
+
+			const message: FileUploadMessage = {
+				type: "file_upload",
+				widgetId: "uploader1",
+				filename: "test.bin",
+				mimeType: "application/octet-stream",
+				size: data.length,
+				data: base64,
+				isChunked: false,
+			};
+
+			// First upload should succeed (800 bytes)
+			const result1 = handleFileUpload(message, sessionId, manager);
+			expect(result1.success).toBe(true);
+
+			// Second upload should be rate limited (would exceed 1KB)
+			const result2 = handleFileUpload(message, sessionId, manager);
+			expect(result2.success).toBe(false);
+			expect(result2.error?.code).toBe("UPLOAD_RATE_LIMITED");
+		});
+
+		it("rejects when concurrent upload limit exceeded", () => {
+			const content = "test";
+			const data = new TextEncoder().encode(content);
+			const base64 = btoa(String.fromCharCode(...data));
+
+			// Simulate concurrent upload in progress
+			manager.incrementConcurrentUploads(sessionId);
+
+			const message: FileUploadMessage = {
+				type: "file_upload",
+				widgetId: "uploader1",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				size: data.length,
+				data: base64,
+				isChunked: false,
+			};
+
+			const result = handleFileUpload(message, sessionId, manager);
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("UPLOAD_RATE_LIMITED");
+		});
+
+		it("provides retryAfter when rate limited", () => {
+			const content = "test";
+			const data = new TextEncoder().encode(content);
+			const base64 = btoa(String.fromCharCode(...data));
+
+			const message: FileUploadMessage = {
+				type: "file_upload",
+				widgetId: "uploader1",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				size: data.length,
+				data: base64,
+				isChunked: false,
+			};
+
+			// Exhaust the limit
+			handleFileUpload(message, sessionId, manager);
+			handleFileUpload(message, sessionId, manager);
+
+			// Third upload should be rate limited with retryAfter
+			const result = handleFileUpload(message, sessionId, manager);
+			expect(result.success).toBe(false);
+			expect(result.retryAfter).toBeDefined();
+			expect(result.retryAfter).toBeGreaterThan(0);
+		});
+
+		it("correctly tracks concurrent uploads", () => {
+			const content = "test";
+			const data = new TextEncoder().encode(content);
+			const base64 = btoa(String.fromCharCode(...data));
+
+			const message: FileUploadMessage = {
+				type: "file_upload",
+				widgetId: "uploader1",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				size: data.length,
+				data: base64,
+				isChunked: false,
+			};
+
+			// Before upload
+			expect(manager.getConcurrentUploads(sessionId)).toBe(0);
+
+			// Successful upload should decrement after completion
+			handleFileUpload(message, sessionId, manager);
+			expect(manager.getConcurrentUploads(sessionId)).toBe(0);
+		});
+
+		it("decrements concurrent uploads on validation failure", () => {
+			// Create data with invalid base64
+			const message: FileUploadMessage = {
+				type: "file_upload",
+				widgetId: "uploader1",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				size: 10,
+				data: "invalid-base64!!!",
+				isChunked: false,
+			};
+
+			handleFileUpload(message, sessionId, manager);
+			expect(manager.getConcurrentUploads(sessionId)).toBe(0);
 		});
 	});
 });

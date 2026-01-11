@@ -15,6 +15,7 @@ export type UploadErrorCode =
 	| "DECODE_ERROR"
 	| "VALIDATION_ERROR"
 	| "SESSION_LIMIT"
+	| "UPLOAD_RATE_LIMITED"
 	| "UNKNOWN";
 
 /** アップロード結果 */
@@ -25,6 +26,8 @@ export interface UploadResult {
 		code: UploadErrorCode;
 		message: string;
 	};
+	/** レート制限時の再試行可能時間（ミリ秒） */
+	retryAfter?: number;
 }
 
 /**
@@ -50,11 +53,31 @@ export function handleFileUpload(
 	sessionId: string,
 	sessionManager: SessionManager,
 ): UploadResult {
+	// レート制限チェック
+	const rateLimitResult = sessionManager.checkFileUploadRateLimit(sessionId, message.size);
+	if (!rateLimitResult.allowed) {
+		const result: UploadResult = {
+			success: false,
+			error: {
+				code: "UPLOAD_RATE_LIMITED",
+				message: `Rate limit exceeded: ${rateLimitResult.reason}`,
+			},
+		};
+		if (rateLimitResult.retryAfter !== undefined) {
+			result.retryAfter = rateLimitResult.retryAfter;
+		}
+		return result;
+	}
+
+	// 同時アップロード数をインクリメント
+	sessionManager.incrementConcurrentUploads(sessionId);
+
 	// Base64デコード
 	let data: ArrayBuffer;
 	try {
 		data = base64ToArrayBuffer(message.data);
 	} catch {
+		sessionManager.decrementConcurrentUploads(sessionId);
 		return {
 			success: false,
 			error: {
@@ -66,6 +89,7 @@ export function handleFileUpload(
 
 	// サイズ検証（クライアントからのサイズ情報と実際のデータサイズを比較）
 	if (data.byteLength !== message.size) {
+		sessionManager.decrementConcurrentUploads(sessionId);
 		return {
 			success: false,
 			error: {
@@ -84,6 +108,7 @@ export function handleFileUpload(
 	});
 
 	if (!validation.valid) {
+		sessionManager.decrementConcurrentUploads(sessionId);
 		const firstError = validation.errors[0];
 		return {
 			success: false,
@@ -103,6 +128,7 @@ export function handleFileUpload(
 	);
 
 	if (!uploadId) {
+		sessionManager.decrementConcurrentUploads(sessionId);
 		return {
 			success: false,
 			error: {
@@ -119,6 +145,10 @@ export function handleFileUpload(
 
 	// 新しいアップロードIDを追加
 	sessionManager.setState(sessionId, message.widgetId, [...currentUploadIds, uploadId]);
+
+	// アップロード完了を記録
+	sessionManager.decrementConcurrentUploads(sessionId);
+	sessionManager.recordFileUploadCompletion(sessionId, data.byteLength);
 
 	return {
 		success: true,

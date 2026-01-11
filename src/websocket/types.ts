@@ -76,7 +76,8 @@ export interface ServerMessage {
 			| "DANGEROUS_FILE"
 			| "DECODE_ERROR"
 			| "VALIDATION_ERROR"
-			| "SESSION_LIMIT";
+			| "SESSION_LIMIT"
+			| "UPLOAD_RATE_LIMITED";
 		message: string;
 		/** レート制限時: 再試行までのミリ秒 */
 		retryAfter?: number;
