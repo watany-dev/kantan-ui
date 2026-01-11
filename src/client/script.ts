@@ -386,6 +386,87 @@ function validateFileType(filename, mimeType, accept) {
   return { valid: false, error: 'File type "' + mimeType + '" is not allowed. Accepted types: ' + accept };
 }
 
+// Progress UI functions
+function formatBytes(bytes) {
+  if (bytes === 0) return "0 B";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + " GB";
+}
+
+function getWidgetContainer(widgetId) {
+  return document.getElementById(widgetId + "-container");
+}
+
+function updateUploadProgress(widgetId, percent, uploadedBytes, totalBytes) {
+  const container = getWidgetContainer(widgetId);
+  if (!container) return;
+
+  const progressDiv = container.querySelector(".kt-file-uploader-progress");
+  const fill = container.querySelector(".kt-progress-fill");
+  const percentText = container.querySelector(".kt-progress-percent");
+  const sizeText = container.querySelector(".kt-progress-size");
+
+  if (progressDiv) progressDiv.style.display = "block";
+  if (fill) {
+    fill.style.width = percent + "%";
+    fill.classList.remove("indeterminate");
+  }
+  if (percentText) percentText.textContent = Math.round(percent) + "%";
+  if (sizeText) sizeText.textContent = formatBytes(uploadedBytes) + " / " + formatBytes(totalBytes);
+}
+
+function showUploadIndeterminate(widgetId) {
+  const container = getWidgetContainer(widgetId);
+  if (!container) return;
+
+  const progressDiv = container.querySelector(".kt-file-uploader-progress");
+  const fill = container.querySelector(".kt-progress-fill");
+  const percentText = container.querySelector(".kt-progress-percent");
+
+  if (progressDiv) progressDiv.style.display = "block";
+  if (fill) fill.classList.add("indeterminate");
+  if (percentText) percentText.textContent = "Processing...";
+}
+
+function hideUploadProgress(widgetId) {
+  const container = getWidgetContainer(widgetId);
+  if (!container) return;
+
+  const progressDiv = container.querySelector(".kt-file-uploader-progress");
+  if (progressDiv) progressDiv.style.display = "none";
+}
+
+function showUploadComplete(widgetId, filename, uploadId) {
+  const container = getWidgetContainer(widgetId);
+  if (!container) return;
+
+  hideUploadProgress(widgetId);
+
+  const completeDiv = container.querySelector(".kt-file-uploader-complete");
+  if (completeDiv) {
+    completeDiv.style.display = "flex";
+    const filenameSpan = completeDiv.querySelector(".kt-file-name");
+    if (filenameSpan) filenameSpan.textContent = filename;
+    const removeBtn = completeDiv.querySelector(".kt-file-remove");
+    if (removeBtn) removeBtn.dataset.uploadId = uploadId;
+  }
+
+  container.classList.add("kt-upload-complete");
+}
+
+function hideUploadError(widgetId) {
+  const container = getWidgetContainer(widgetId);
+  if (!container) return;
+
+  const errorDiv = container.querySelector(".kt-file-uploader-error");
+  if (errorDiv) errorDiv.style.display = "none";
+}
+
+// Map to track pending uploads for completion handling
+const pendingUploads = new Map();
+
 function handleFileUpload(inputElement) {
   const files = inputElement.files;
   if (!files || files.length === 0) return;
@@ -394,6 +475,9 @@ function handleFileUpload(inputElement) {
   const maxSize = getMaxFileSize(inputElement);
   const accept = inputElement.accept || undefined;
   const multiple = inputElement.multiple;
+
+  // Clear previous error
+  hideUploadError(widgetId);
 
   // Process files
   const filesToProcess = multiple ? Array.from(files) : [files[0]];
@@ -417,16 +501,36 @@ function handleFileUpload(inputElement) {
       continue;
     }
 
+    // Show initial progress
+    updateUploadProgress(widgetId, 0, 0, file.size);
+
     // Read and send file
     const reader = new FileReader();
+
+    // Track reading progress
+    reader.onprogress = function(event) {
+      if (event.lengthComputable) {
+        const percent = (event.loaded / event.total) * 50; // Reading is 0-50%
+        updateUploadProgress(widgetId, percent, event.loaded, event.total);
+      }
+    };
+
     reader.onload = function() {
       const data = reader.result;
       if (!(data instanceof ArrayBuffer)) {
         console.error("Failed to read file as ArrayBuffer");
+        hideUploadProgress(widgetId);
         return;
       }
 
+      // Show encoding progress (50-75%)
+      updateUploadProgress(widgetId, 50, file.size / 2, file.size);
+
       const base64Data = arrayBufferToBase64(data);
+
+      // Show sending progress (75-90%)
+      updateUploadProgress(widgetId, 75, file.size * 0.75, file.size);
+
       const message = {
         type: "file_upload",
         widgetId: widgetId,
@@ -439,14 +543,47 @@ function handleFileUpload(inputElement) {
 
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify(message));
+        // Show server processing (90%)
+        updateUploadProgress(widgetId, 90, file.size * 0.9, file.size);
+        // Store pending upload for completion handling
+        pendingUploads.set(widgetId, { filename: file.name, size: file.size });
       } else {
         console.error("WebSocket not connected");
+        hideUploadProgress(widgetId);
+        showUploadError(inputElement, "Connection lost. Please try again.");
       }
     };
+
     reader.onerror = function() {
       console.error("Failed to read file:", reader.error);
+      hideUploadProgress(widgetId);
+      showUploadError(inputElement, "Failed to read file");
     };
+
     reader.readAsArrayBuffer(file);
+  }
+}
+
+// Handle upload result from server
+function handleUploadResult(msg) {
+  const widgetId = msg.widgetId;
+  const pending = pendingUploads.get(widgetId);
+
+  if (msg.success && msg.uploadId) {
+    const filename = pending ? pending.filename : "File";
+    showUploadComplete(widgetId, filename, msg.uploadId);
+    pendingUploads.delete(widgetId);
+  } else if (msg.error) {
+    hideUploadProgress(widgetId);
+    const container = getWidgetContainer(widgetId);
+    if (container) {
+      const errorDiv = container.querySelector(".kt-file-uploader-error");
+      if (errorDiv) {
+        errorDiv.style.display = "block";
+        errorDiv.textContent = msg.error.message || "Upload failed";
+      }
+    }
+    pendingUploads.delete(widgetId);
   }
 }
 
@@ -678,6 +815,10 @@ function connect() {
       // Auto-scroll chat containers
       initChatAutoScroll();
       autoScrollChat();
+    }
+
+    if (msg.type === "upload_result") {
+      handleUploadResult(msg);
     }
   };
 

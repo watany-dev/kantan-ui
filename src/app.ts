@@ -448,13 +448,29 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						if (!uploadResult.success) {
 							// エラーをクライアントに送信
 							ws.send(
-								createErrorMessageJson(
-									uploadResult.error?.code ?? "UNKNOWN",
-									uploadResult.error?.message ?? "File upload failed",
-								),
+								JSON.stringify({
+									type: "upload_result",
+									widgetId: parsed.widgetId,
+									success: false,
+									error: {
+										code: uploadResult.error?.code ?? "UNKNOWN",
+										message: uploadResult.error?.message ?? "File upload failed",
+									},
+									retryAfter: uploadResult.retryAfter,
+								}),
 							);
 							return;
 						}
+
+						// アップロード成功通知をクライアントに送信
+						ws.send(
+							JSON.stringify({
+								type: "upload_result",
+								widgetId: parsed.widgetId,
+								success: true,
+								uploadId: uploadResult.uploadId,
+							}),
+						);
 
 						// アップロード成功 - rerunを実行してUIを更新
 						const streamingOptions: StreamingOptions | undefined = config.streaming.enabled
