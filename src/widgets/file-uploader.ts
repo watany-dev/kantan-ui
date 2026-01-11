@@ -117,8 +117,31 @@ export function renderFileUploader(label: string, config: Partial<FileUploaderCo
 		? `\n  <div class="kt-file-uploader-help">${escapeHtml(config.help)}</div>`
 		: "";
 
+	// プログレス表示HTML
+	const progressHtml = `
+  <div class="kt-file-uploader-progress" style="display: none">
+    <div class="kt-progress-bar">
+      <div class="kt-progress-fill" style="width: 0%"></div>
+    </div>
+    <div class="kt-progress-text">
+      <span class="kt-progress-percent">0%</span>
+      <span class="kt-progress-size"></span>
+    </div>
+  </div>`;
+
+	// アップロード完了表示HTML
+	const completeHtml = `
+  <div class="kt-file-uploader-complete" style="display: none">
+    <span class="kt-file-name"></span>
+    <button type="button" class="kt-file-remove" data-upload-id="">×</button>
+  </div>`;
+
+	// エラー表示HTML
+	const errorHtml = `
+  <div class="kt-file-uploader-error" style="display: none"></div>`;
+
 	return `<div id="${id}-container" class="kt-file-uploader-container">
   <label for="${id}" class="kt-file-uploader-label">${escapeHtml(label)}</label>
-  <input type="file" id="${id}" class="kt-file-uploader" data-kt-event="change"${acceptAttr}${multipleAttr}${disabledAttr} data-max-size="${maxSize}" data-strict-mode="${strictMode}" data-detect-polyglot="${detectPolyglot}" data-verify-magic-bytes="${verifyMagicBytes}" />${helpHtml}
+  <input type="file" id="${id}" class="kt-file-uploader" data-kt-event="change"${acceptAttr}${multipleAttr}${disabledAttr} data-max-size="${maxSize}" data-strict-mode="${strictMode}" data-detect-polyglot="${detectPolyglot}" data-verify-magic-bytes="${verifyMagicBytes}" />${helpHtml}${progressHtml}${completeHtml}${errorHtml}
 </div>`;
 }

@@ -113,4 +113,63 @@ describe("renderFileUploader", () => {
 		expect(html).toContain('data-detect-polyglot="true"');
 		expect(html).toContain('data-verify-magic-bytes="true"');
 	});
+
+	describe("progress indicator", () => {
+		it("includes progress container element", () => {
+			const html = renderFileUploader("Upload", {});
+			expect(html).toContain("kt-file-uploader-progress");
+		});
+
+		it("includes progress bar element", () => {
+			const html = renderFileUploader("Upload", {});
+			expect(html).toContain("kt-progress-bar");
+			expect(html).toContain("kt-progress-fill");
+		});
+
+		it("includes progress text elements", () => {
+			const html = renderFileUploader("Upload", {});
+			expect(html).toContain("kt-progress-text");
+			expect(html).toContain("kt-progress-percent");
+			expect(html).toContain("kt-progress-size");
+		});
+
+		it("progress is initially hidden", () => {
+			const html = renderFileUploader("Upload", {});
+			expect(html).toMatch(/kt-file-uploader-progress[^>]*style="display:\s*none"/);
+		});
+	});
+
+	describe("upload complete display", () => {
+		it("includes complete container element", () => {
+			const html = renderFileUploader("Upload", {});
+			expect(html).toContain("kt-file-uploader-complete");
+		});
+
+		it("includes file name placeholder", () => {
+			const html = renderFileUploader("Upload", {});
+			expect(html).toContain("kt-file-name");
+		});
+
+		it("includes remove button", () => {
+			const html = renderFileUploader("Upload", {});
+			expect(html).toContain("kt-file-remove");
+		});
+
+		it("complete display is initially hidden", () => {
+			const html = renderFileUploader("Upload", {});
+			expect(html).toMatch(/kt-file-uploader-complete[^>]*style="display:\s*none"/);
+		});
+	});
+
+	describe("error display", () => {
+		it("includes error container element", () => {
+			const html = renderFileUploader("Upload", {});
+			expect(html).toContain("kt-file-uploader-error");
+		});
+
+		it("error is initially hidden", () => {
+			const html = renderFileUploader("Upload", {});
+			expect(html).toMatch(/kt-file-uploader-error[^>]*style="display:\s*none"/);
+		});
+	});
 });
