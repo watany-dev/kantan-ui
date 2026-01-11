@@ -39,6 +39,7 @@ export {
 	requireRenderContext,
 	setRenderContext,
 } from "./kt/context";
+export { empty } from "./kt/empty";
 export type { ProgressConfig, ProgressFormat } from "./kt/feedback";
 export type { RerunContext, Script } from "./runtime";
 // Runtime
@@ -107,14 +108,19 @@ export {
 	time_input,
 	toggle,
 } from "./widgets";
+export { createPlaceholder } from "./widgets/placeholder";
 export type {
 	ButtonConfig,
 	CheckboxConfig,
 	DateInputConfig,
 	DownloadButtonConfig,
+	EmptyConfig,
 	FileUploaderConfig,
 	MultiselectConfig,
 	NumberInputConfig,
+	Placeholder,
+	PlaceholderContentType,
+	PlaceholderState,
 	RadioConfig,
 	SelectboxConfig,
 	SliderConfig,

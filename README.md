@@ -269,6 +269,53 @@ tab3(() => {
 });
 ```
 
+#### Empty Placeholder API
+
+動的に更新可能なプレースホルダーを作成します。Streamlitの`st.empty()`と同様に使用できます。
+
+```typescript
+// プレースホルダーを作成
+const status = kt.empty({ key: "status" });
+
+// ボタンクリックで動的にコンテンツを変更
+if (kt.button("Start Process")) {
+  status.spinner("Processing...");
+}
+
+if (kt.button("Complete")) {
+  status.success("Done!");
+}
+
+if (kt.button("Show Error")) {
+  status.error("Something went wrong!");
+}
+
+if (kt.button("Clear")) {
+  status.empty();  // コンテンツをクリア
+}
+
+// プログレスバーを表示
+const progress = kt.empty({ key: "progress" });
+if (kt.button("Show Progress")) {
+  progress.progress(0.75, { text: "75% complete" });
+}
+```
+
+**Placeholderオブジェクトのメソッド:**
+- `write(content)` - テキスト/数値/真偽値を表示
+- `text(content)` - プレーンテキストを表示
+- `markdown(content)` - Markdownを表示
+- `html(content)` - 生HTMLを表示
+- `json(data)` - JSONをフォーマット表示
+- `code(content, language?)` - コードブロックを表示
+- `success(message)` - 成功アラート
+- `error(message)` - エラーアラート
+- `warning(message)` - 警告アラート
+- `info(message)` - 情報アラート
+- `progress(value, config?)` - プログレスバー（0.0〜1.0）
+- `spinner(text?)` - ローディングスピナー
+- `empty()` - コンテンツをクリア
+
 ### セッション状態管理
 
 ユーザーごとのセッション状態を管理します。Streamlitの`st.session_state`と同様に使用できます。
@@ -354,6 +401,7 @@ src/
 │   ├── control.ts    # 制御API（rerun）
 │   ├── chat.ts       # チャットAPI（chat_message, chat_container）
 │   ├── data.ts       # データ表示（table）
+│   ├── empty.ts      # Emptyプレースホルダー（empty）
 │   ├── layout.ts     # レイアウト（tabs）
 │   ├── output.ts     # 出力API（title, write, headerなど）
 │   ├── widgets.ts    # ウィジェットAPI（button, sliderなど）
@@ -395,6 +443,7 @@ src/
     ├── file-uploader.ts # ファイルアップロード
     ├── uploaded-file.ts # UploadedFileファクトリ
     ├── image.ts      # 画像表示
+    ├── placeholder.ts # プレースホルダー
     ├── core.ts       # 共通処理
     ├── registry.ts   # ウィジェットID管理
     ├── types.ts      # ウィジェット型定義

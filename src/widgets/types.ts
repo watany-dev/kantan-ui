@@ -276,3 +276,110 @@ export interface InternalUploadData {
 	/** Upload timestamp */
 	uploadedAt: number;
 }
+
+// ============================================================================
+// Empty (Placeholder) Types
+// ============================================================================
+
+/**
+ * Configuration options for kt.empty()
+ */
+export interface EmptyConfig {
+	/** Widget key for state persistence */
+	key?: string;
+}
+
+/**
+ * Placeholder content type
+ */
+export type PlaceholderContentType =
+	| "empty"
+	| "write"
+	| "text"
+	| "markdown"
+	| "html"
+	| "json"
+	| "code"
+	| "success"
+	| "error"
+	| "warning"
+	| "info"
+	| "progress"
+	| "spinner"
+	| "button"
+	| "image";
+
+/**
+ * Internal placeholder state stored in session
+ */
+export interface PlaceholderState {
+	/** Current HTML content */
+	html: string;
+
+	/** Content type */
+	contentType: PlaceholderContentType;
+
+	/** Widget value (for button, etc.) */
+	widgetValue?: unknown;
+}
+
+/**
+ * Progress bar configuration
+ */
+export interface ProgressConfig {
+	/** Text to display alongside the progress bar */
+	text?: string;
+}
+
+/**
+ * Placeholder object for dynamic content updates
+ * Similar to Streamlit's st.empty()
+ */
+export interface Placeholder {
+	// ========== Identifier ==========
+	/** Placeholder ID */
+	readonly id: string;
+
+	// ========== Output Methods ==========
+	/** Display text/number/boolean */
+	write(content: string | number | boolean): void;
+
+	/** Display plain text */
+	text(content: string): void;
+
+	/** Display markdown */
+	markdown(content: string): void;
+
+	/** Display raw HTML (caution: XSS risk) */
+	html(content: string): void;
+
+	/** Display formatted JSON */
+	json(data: unknown): void;
+
+	/** Display code block */
+	code(content: string, language?: string): void;
+
+	// ========== Alert Methods ==========
+	/** Success message */
+	success(message: string): void;
+
+	/** Error message */
+	error(message: string): void;
+
+	/** Warning message */
+	warning(message: string): void;
+
+	/** Info message */
+	info(message: string): void;
+
+	// ========== Feedback Methods ==========
+	/** Progress bar (0.0 ~ 1.0) */
+	progress(value: number, config?: ProgressConfig): void;
+
+	/** Spinner (loading indicator) */
+	spinner(text?: string): void;
+
+	// ========== Control Methods ==========
+	/** Clear content */
+	empty(): void;
+}

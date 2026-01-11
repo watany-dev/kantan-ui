@@ -649,6 +649,103 @@ tab2(() => {
 
 ---
 
+## Emptyプレースホルダー
+
+動的に更新可能なプレースホルダーを作成します。Streamlitの`st.empty()`と同様に、コンテンツを後から変更できます。
+
+### 基本的な使い方
+
+```typescript
+// プレースホルダーを作成
+const status = kt.empty({ key: "status" });
+
+// 動的にコンテンツを変更
+if (kt.button("処理開始")) {
+  status.spinner("処理中...");
+}
+
+if (kt.button("完了")) {
+  status.success("処理が完了しました！");
+}
+
+if (kt.button("クリア")) {
+  status.empty();  // コンテンツをクリア
+}
+```
+
+### ユースケース
+
+**ローディング表示 → 結果表示**
+
+```typescript
+const result = kt.empty({ key: "result" });
+
+if (kt.button("データを取得")) {
+  result.spinner("読み込み中...");
+  // 実際のアプリではここで非同期処理を行う
+  result.success("データを取得しました！");
+}
+```
+
+**進捗表示**
+
+```typescript
+const progress = kt.empty({ key: "progress" });
+
+if (kt.button("処理を開始")) {
+  progress.progress(0.25, { text: "25% 完了" });
+  // 処理が進むたびに更新
+  progress.progress(0.75, { text: "75% 完了" });
+  progress.success("完了！");
+}
+```
+
+**条件付きアラート**
+
+```typescript
+const alert = kt.empty({ key: "alert" });
+
+const value = kt.number_input("値を入力", 0, 100, 50);
+
+if (value > 80) {
+  alert.error("値が大きすぎます！");
+} else if (value < 20) {
+  alert.warning("値が小さすぎます");
+} else {
+  alert.empty();  // 正常な範囲内ではクリア
+}
+```
+
+### 利用可能なメソッド
+
+| メソッド | 説明 |
+|---------|------|
+| `write(content)` | テキスト/数値/真偽値を表示 |
+| `text(content)` | プレーンテキストを表示 |
+| `markdown(content)` | Markdownを表示 |
+| `html(content)` | 生HTMLを表示 |
+| `json(data)` | JSONをフォーマット表示 |
+| `code(content, language?)` | コードブロックを表示 |
+| `success(message)` | 成功アラートを表示 |
+| `error(message)` | エラーアラートを表示 |
+| `warning(message)` | 警告アラートを表示 |
+| `info(message)` | 情報アラートを表示 |
+| `progress(value, config?)` | プログレスバーを表示（0.0〜1.0） |
+| `spinner(text?)` | ローディングスピナーを表示 |
+| `empty()` | コンテンツをクリア |
+
+```typescript
+const placeholder = kt.empty({ key: "demo" });
+
+// 様々なコンテンツを表示
+placeholder.write("テキスト");
+placeholder.markdown("**太字** と *斜体*");
+placeholder.json({ name: "Alice", age: 30 });
+placeholder.code("const x = 1;", "typescript");
+```
+
+---
+
 ## チャットUI
 
 チャットアプリケーションを構築するためのAPIです。
