@@ -102,6 +102,26 @@ describe("Config Defaults", () => {
 		it("should have correct default rateLimitCooldown", () => {
 			expect(DEFAULT_SECURITY_CONFIG.rateLimitCooldown).toBe(1000);
 		});
+
+		describe("fileUploadRateLimit", () => {
+			it("should have default maxUploadsPerMinute of 30", () => {
+				expect(DEFAULT_SECURITY_CONFIG.fileUploadRateLimit.maxUploadsPerMinute).toBe(30);
+			});
+
+			it("should have default maxBytesPerMinute of 100MB", () => {
+				expect(DEFAULT_SECURITY_CONFIG.fileUploadRateLimit.maxBytesPerMinute).toBe(
+					100 * 1024 * 1024,
+				);
+			});
+
+			it("should have default maxConcurrentUploads of 3", () => {
+				expect(DEFAULT_SECURITY_CONFIG.fileUploadRateLimit.maxConcurrentUploads).toBe(3);
+			});
+
+			it("should have default uploadRateLimitCooldown of 5000ms", () => {
+				expect(DEFAULT_SECURITY_CONFIG.fileUploadRateLimit.uploadRateLimitCooldown).toBe(5000);
+			});
+		});
 	});
 });
 
@@ -273,5 +293,22 @@ describe("resolveConfig", () => {
 
 		expect(resolved.security.validateWebSocketOrigin).toBe(true);
 		expect(resolved.security.allowedOrigins).toEqual([]);
+	});
+
+	it("should override fileUploadRateLimit config values", () => {
+		const resolved = resolveConfig({
+			security: {
+				fileUploadRateLimit: {
+					maxUploadsPerMinute: 10,
+					maxBytesPerMinute: 50 * 1024 * 1024,
+				},
+			},
+		});
+
+		expect(resolved.security.fileUploadRateLimit.maxUploadsPerMinute).toBe(10);
+		expect(resolved.security.fileUploadRateLimit.maxBytesPerMinute).toBe(50 * 1024 * 1024);
+		// Defaults should be used for unspecified fields
+		expect(resolved.security.fileUploadRateLimit.maxConcurrentUploads).toBe(3);
+		expect(resolved.security.fileUploadRateLimit.uploadRateLimitCooldown).toBe(5000);
 	});
 });

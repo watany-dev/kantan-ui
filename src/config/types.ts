@@ -78,6 +78,20 @@ export interface StreamingConfig {
 }
 
 /**
+ * ファイルアップロード専用レート制限設定
+ */
+export interface FileUploadRateLimitConfig {
+	/** 1分あたりの最大アップロード数（デフォルト: 30） */
+	maxUploadsPerMinute?: number;
+	/** 1分あたりの最大アップロードサイズ（バイト、デフォルト: 100MB） */
+	maxBytesPerMinute?: number;
+	/** 同時アップロード数の上限（デフォルト: 3） */
+	maxConcurrentUploads?: number;
+	/** レート制限超過時のクールダウン（ミリ秒、デフォルト: 5000） */
+	uploadRateLimitCooldown?: number;
+}
+
+/**
  * セキュリティ設定
  */
 export interface SecurityConfig {
@@ -91,6 +105,8 @@ export interface SecurityConfig {
 	validateWebSocketOrigin?: boolean;
 	/** 許可するOriginのリスト（未設定時はHostと一致で許可） */
 	allowedOrigins?: string[];
+	/** ファイルアップロード専用のレート制限 */
+	fileUploadRateLimit?: FileUploadRateLimitConfig;
 }
 
 /**
