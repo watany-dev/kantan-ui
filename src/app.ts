@@ -22,8 +22,14 @@ import { SessionManager, setSessionManager } from "./session";
 import { defaultStyles } from "./styles";
 import { createErrorMessageJson } from "./utils/error";
 import { createWebSocketAdapterAsync } from "./websocket";
+import { handleFileUpload } from "./websocket/file-upload-handler";
 import type { Patch } from "./websocket/types";
-import { type ClientMessage, isClientMessage, type ServerMessage } from "./websocket/types";
+import {
+	type ClientMessage,
+	isClientMessage,
+	isFileUploadMessage,
+	type ServerMessage,
+} from "./websocket/types";
 
 export interface KantanAppOptions extends KantanConfig {
 	/** サーバーポート（Bun.serve互換） */
@@ -196,6 +202,11 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 				"Content-Type": download.mime,
 				"Content-Disposition": `attachment; filename="${encodeURIComponent(download.filename)}"`,
 				"Content-Length": download.data.byteLength.toString(),
+				// Security headers to prevent MIME sniffing and XSS
+				"X-Content-Type-Options": "nosniff",
+				"Content-Security-Policy": "sandbox",
+				"X-Frame-Options": "DENY",
+				"Cache-Control": "no-store",
 			},
 		});
 	});
@@ -359,6 +370,102 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 							undefined,
 							streamingOptions,
 						);
+
+						// 差分計算（メインコンテンツ）
+						let patches: Patch[];
+						if (session.lastHtml) {
+							const diffResult = diff(session.lastHtml, newResult.mainHtml);
+							patches = toWebSocketPatches(diffResult, newResult.mainHtml);
+						} else {
+							patches = [{ type: "replaceRoot", html: newResult.mainHtml }];
+						}
+
+						// サイドバーの差分計算
+						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
+							const sidebarDiffResult = diff(session.lastSidebarHtml ?? "", newResult.sidebarHtml);
+							const sidebarPatches = toWebSocketPatches(
+								sidebarDiffResult,
+								newResult.sidebarHtml,
+								"kt-sidebar-content",
+							);
+							patches.push(...sidebarPatches);
+						}
+
+						session.lastHtml = newResult.mainHtml;
+						session.lastSidebarHtml = newResult.sidebarHtml;
+
+						if (patches.length > 0) {
+							const seq = sessionManager.addPatchToHistory(session.id, patches);
+							const message: ServerMessage = {
+								type: "patch",
+								patches,
+								seq,
+							};
+							sessionManager.broadcast(session.id, JSON.stringify(message));
+						}
+					} else if (data.type === "file_upload" && isFileUploadMessage(parsed)) {
+						// ファイルアップロード処理
+						const uploadSessionId = cookieSessionId ?? data.sessionId;
+						if (!uploadSessionId) {
+							console.error("File upload received without sessionId");
+							ws.send(
+								createErrorMessageJson(
+									"SESSION_ID_REQUIRED",
+									"sessionId is required for file upload messages.",
+								),
+							);
+							return;
+						}
+
+						const session = sessionManager.getSession(uploadSessionId);
+						if (!session) {
+							console.error("Session not found for file upload:", uploadSessionId);
+							ws.send(
+								createErrorMessageJson(
+									"SESSION_NOT_FOUND",
+									"Session not found. Please refresh or reconnect.",
+								),
+							);
+							return;
+						}
+
+						// ファイルアップロード処理
+						const uploadResult = handleFileUpload(parsed, uploadSessionId, sessionManager);
+
+						if (!uploadResult.success) {
+							// エラーをクライアントに送信
+							ws.send(
+								createErrorMessageJson(
+									uploadResult.error?.code ?? "UNKNOWN",
+									uploadResult.error?.message ?? "File upload failed",
+								),
+							);
+							return;
+						}
+
+						// アップロード成功 - rerunを実行してUIを更新
+						const streamingOptions: StreamingOptions | undefined = config.streaming.enabled
+							? {
+									onFlush: (htmlContent, _itemCount) => {
+										const streamMessage: ServerMessage = {
+											type: "patch",
+											patches: [{ type: "streamAppend", html: htmlContent }],
+											partial: true,
+										};
+										sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
+									},
+									flushThreshold: config.streaming.flushThreshold,
+								}
+							: undefined;
+
+						const newResult = rerun(
+							script,
+							{ widgetId: parsed.widgetId, value: uploadResult.uploadId },
+							session.id,
+							undefined,
+							streamingOptions,
+						);
+						session.lastAccessedAt = new Date();
 
 						// 差分計算（メインコンテンツ）
 						let patches: Patch[];

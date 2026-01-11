@@ -3,6 +3,8 @@ import { DEFAULT_SECURITY_CONFIG, DEFAULT_SESSION_CONFIG } from "../config";
 import type { ResolvedSessionConfig, SecurityConfig, SessionConfig } from "../config/types";
 import { MAX_PATCH_HISTORY } from "../constants";
 import { isUUID } from "../utils/type-guards";
+import type { InternalUploadData } from "../widgets/types";
+import { FILE_UPLOAD_LIMITS } from "../widgets/types";
 import type {
 	DownloadData,
 	DownloadId,
@@ -11,6 +13,7 @@ import type {
 	Session,
 	SessionId,
 	SessionState,
+	UploadId,
 } from "./types";
 
 /** レート制限の状態 */
@@ -69,6 +72,9 @@ export class SessionManager {
 	// ダウンロードデータ（Blobストリーミング用）
 	private downloadData = new Map<DownloadId, DownloadData>();
 	private static readonly DOWNLOAD_TTL = 60 * 1000; // 1分間有効
+
+	// アップロードデータ（セッション毎に管理）
+	private uploadData = new Map<SessionId, Map<UploadId, InternalUploadData>>();
 
 	// Web標準 TextEncoder（バイトサイズ計算用）
 	private static readonly textEncoder = new TextEncoder();
@@ -382,6 +388,7 @@ export class SessionManager {
 		this.processingFlags.delete(id);
 		this.rateLimitStates.delete(id);
 		this.abortControllers.delete(id);
+		this.uploadData.delete(id); // アップロードデータも削除
 		return deleted;
 	}
 
@@ -602,6 +609,121 @@ export class SessionManager {
 				this.downloadData.delete(id);
 			}
 		}
+	}
+
+	// ============================================================================
+	// Upload Management
+	// ============================================================================
+
+	/**
+	 * アップロードデータを登録し、アップロードIDを返す
+	 * @returns アップロードID。セッションが無効またはファイル数制限超過の場合はnull
+	 */
+	registerUpload(
+		sessionId: SessionId,
+		data: ArrayBuffer,
+		filename: string,
+		mime: string,
+	): UploadId | null {
+		// セッション存在確認
+		const session = this.sessions.get(sessionId);
+		if (!session) {
+			return null;
+		}
+
+		// セッション毎のアップロードマップを取得または作成
+		let sessionUploads = this.uploadData.get(sessionId);
+		if (!sessionUploads) {
+			sessionUploads = new Map();
+			this.uploadData.set(sessionId, sessionUploads);
+		}
+
+		// ファイル数制限チェック
+		if (sessionUploads.size >= FILE_UPLOAD_LIMITS.MAX_FILES_PER_SESSION) {
+			return null;
+		}
+
+		// アップロードID生成
+		const uploadId = crypto.randomUUID();
+
+		// アップロードデータを保存
+		const uploadData: InternalUploadData = {
+			id: uploadId,
+			originalName: filename,
+			verifiedMime: mime,
+			data: data,
+			size: data.byteLength,
+			uploadedAt: Date.now(),
+		};
+
+		sessionUploads.set(uploadId, uploadData);
+
+		return uploadId;
+	}
+
+	/**
+	 * アップロードデータを取得
+	 * ダウンロードと異なり、取得後も削除されない
+	 */
+	getUpload(sessionId: SessionId, uploadId: UploadId): InternalUploadData | null {
+		const sessionUploads = this.uploadData.get(sessionId);
+		if (!sessionUploads) {
+			return null;
+		}
+		return sessionUploads.get(uploadId) ?? null;
+	}
+
+	/**
+	 * アップロードデータを削除
+	 * @returns 削除成功した場合true
+	 */
+	removeUpload(sessionId: SessionId, uploadId: UploadId): boolean {
+		const sessionUploads = this.uploadData.get(sessionId);
+		if (!sessionUploads) {
+			return false;
+		}
+		return sessionUploads.delete(uploadId);
+	}
+
+	/**
+	 * セッションのアップロード数を取得
+	 */
+	getUploadCount(sessionId: SessionId): number {
+		return this.uploadData.get(sessionId)?.size ?? 0;
+	}
+
+	/**
+	 * セッションの全アップロードを取得
+	 */
+	getSessionUploads(sessionId: SessionId): InternalUploadData[] {
+		const sessionUploads = this.uploadData.get(sessionId);
+		if (!sessionUploads) {
+			return [];
+		}
+		return Array.from(sessionUploads.values());
+	}
+
+	/**
+	 * 期限切れのアップロードをクリーンアップ
+	 */
+	cleanupExpiredUploads(): number {
+		const now = Date.now();
+		let cleaned = 0;
+
+		for (const [sessionId, uploads] of this.uploadData) {
+			for (const [uploadId, data] of uploads) {
+				if (now - data.uploadedAt > FILE_UPLOAD_LIMITS.UPLOAD_TTL_MS) {
+					uploads.delete(uploadId);
+					cleaned++;
+				}
+			}
+			// 空のセッションマップは削除
+			if (uploads.size === 0) {
+				this.uploadData.delete(sessionId);
+			}
+		}
+
+		return cleaned;
 	}
 }
 

@@ -10,6 +10,7 @@ Webスタンダードと [Hono](https://hono.dev/) のみに依存する、Strea
 - **セッション管理** - 複数ユーザーの状態を自動管理
 - **接続安定性** - Ping/Pong、自動再接続、シーケンス番号による欠落パッチ復元
 - **ストリーミング** - 大量UIの段階的レンダリング対応
+- **セキュリティ** - ファイルアップロード時のマジックバイト検証、Polyglot検出、XSS対策
 - **商用対応** - 拡張性、性能、セキュリティを考慮した設計
 
 ## クイックスタート
@@ -190,6 +191,19 @@ const birthday = kt.date_input("Birthday", "2000-01-15", {
 
 // 時刻入力 - "HH:MM"形式の文字列を返す
 const alarm = kt.time_input("Alarm", "08:30", { step: 60 });
+
+// ファイルアップロード - UploadedFileオブジェクトを返す
+const file = kt.file_uploader("Upload file", { accept: "image/*", maxSize: 5 * 1024 * 1024 });
+if (file) {
+  kt.write(`Uploaded: ${file.name} (${file.size} bytes)`);
+  const content = file.text();  // または file.arrayBuffer()
+}
+
+// 複数ファイル
+const files = kt.file_uploader("Upload files", { multiple: true });
+for (const f of files) {
+  kt.write(`${f.name}: ${f.type}`);
+}
 ```
 
 #### Chat API
@@ -355,6 +369,10 @@ src/
 │   └── index.ts
 ├── utils/            # ユーティリティ
 │   ├── html.ts       # HTMLエスケープなど
+│   ├── sanitize.ts   # ファイル名サニタイズ
+│   ├── magic-bytes.ts # マジックバイト検証
+│   ├── polyglot-detection.ts # Polyglot検出
+│   ├── file-validation.ts # ファイル検証統合
 │   └── type-guards.ts
 ├── websocket/        # WebSocket処理
 │   ├── handler.ts    # WebSocketハンドラ
@@ -374,6 +392,9 @@ src/
     ├── multiselect.ts
     ├── date-input.ts  # 日付入力
     ├── time-input.ts  # 時刻入力
+    ├── file-uploader.ts # ファイルアップロード
+    ├── uploaded-file.ts # UploadedFileファクトリ
+    ├── image.ts      # 画像表示
     ├── core.ts       # 共通処理
     ├── registry.ts   # ウィジェットID管理
     ├── types.ts      # ウィジェット型定義

@@ -1,5 +1,21 @@
 # File Uploader API 設計書
 
+## 実装ステータス
+
+> **✅ 実装完了** (2026-01-11)
+>
+> 全フェーズ（Phase 1〜8）の実装が完了しています。
+> - セキュリティユーティリティ（ファイル名サニタイズ、マジックバイト検証、Polyglot検出）
+> - UploadedFile インターフェース
+> - セッション管理（アップロードデータ管理）
+> - file_uploader ウィジェット（ロジック・レンダリング・宣言的API）
+> - クライアント側処理（ファイル読み込み・Base64エンコード・WebSocket送信）
+> - サーバー側処理（検証・保存・エラーハンドリング）
+> - セキュアダウンロード
+> - 型エクスポート・公開API
+>
+> **1600件のテストが通過、カバレッジ: 96.17% statements, 91.41% branches, 98.13% functions, 96.57% lines**
+
 ## 1. 概要
 
 ### 1.1 目的
@@ -457,47 +473,57 @@ src/
 ### 6.1 クライアント → サーバー
 
 ```typescript
-// ファイルアップロードメッセージ
+// ファイルアップロードメッセージ（実装済み）
 interface FileUploadMessage {
   type: "file_upload";
+  /** 対象ウィジェットID */
   widgetId: string;
-  files: FileUploadData[];
-}
-
-interface FileUploadData {
   /** 元のファイル名 */
   filename: string;
   /** ブラウザが報告したMIMEタイプ */
-  mime: string;
+  mimeType: string;
   /** ファイルサイズ（バイト） */
   size: number;
-  /** Base64エンコードされたデータ */
+  /** Base64エンコードされたデータ（またはチャンク） */
   data: string;
-  /** チャンクインデックス（分割時） */
-  chunkIndex?: number;
-  /** 総チャンク数（分割時） */
+  /** チャンク分割されているか */
+  isChunked: boolean;
+  /** 総チャンク数（分割時のみ） */
   totalChunks?: number;
+  /** チャンクインデックス（分割時のみ） */
+  chunkIndex?: number;
 }
+
+// ファイルチャンクメッセージ（1MB超のファイル用）- 将来実装予定
+// interface FileChunkMessage {
+//   type: "file_chunk";
+//   widgetId: string;
+//   uploadId: string;
+//   chunkIndex: number;
+//   data: string;
+// }
 ```
 
 ### 6.2 サーバー → クライアント
 
 ```typescript
-// アップロードエラー
-interface FileUploadErrorMessage {
-  type: "file_upload_error";
-  widgetId: string;
-  error: FileUploadErrorCode;
-  message: string;
+// アップロードエラーはServerMessageのerrorフィールドで送信
+interface ServerMessage {
+  type: "error";
+  error: {
+    code: UploadErrorCode;
+    message: string;
+  };
 }
 
-type FileUploadErrorCode =
-  | "SIZE_EXCEEDED"
-  | "TYPE_NOT_ALLOWED"
-  | "DANGEROUS_FILE"
-  | "MIME_MISMATCH"
-  | "POLYGLOT_DETECTED"
-  | "LIMIT_EXCEEDED";
+// アップロードエラーコード（実装済み）
+type UploadErrorCode =
+  | "SIZE_EXCEEDED"      // ファイルサイズ超過
+  | "TYPE_NOT_ALLOWED"   // ファイルタイプ不許可
+  | "DANGEROUS_FILE"     // 危険なファイル検出
+  | "DECODE_ERROR"       // Base64デコードエラー
+  | "VALIDATION_ERROR"   // 検証エラー
+  | "SESSION_LIMIT";     // セッション当たりのファイル数上限
 ```
 
 ---
@@ -1065,21 +1091,63 @@ describe("secure file download", () => {
 
 ### 実装前
 
-- [ ] 既存のウィジェット実装パターンを確認
-- [ ] SessionManagerの現在の実装を確認
-- [ ] クライアント側イベント処理の仕組みを確認
+- [x] 既存のウィジェット実装パターンを確認
+- [x] SessionManagerの現在の実装を確認
+- [x] クライアント側イベント処理の仕組みを確認
 
 ### 各イテレーション後
 
-- [ ] `bun run lint:fix` 実行
-- [ ] `bun run test` 実行（該当テストがパス）
-- [ ] コミット
+- [x] `bun run lint:fix` 実行
+- [x] `bun run test` 実行（該当テストがパス）
+- [x] コミット
 
 ### 完了時
 
-- [ ] `bun run ci` 全パス
-- [ ] 全セキュリティ対策が実装されている
-- [ ] E2Eテストがパス
+- [x] `bun run ci` 全パス（1600テスト通過）
+- [x] 全セキュリティ対策が実装されている
+- [x] knip（dead-code検出）パス - 未使用エクスポートなし
+- [ ] E2Eテストがパス（Playwright環境設定が必要）
+
+### 実装されたファイル
+
+**セキュリティユーティリティ**
+- `src/utils/sanitize.ts` - ファイル名サニタイズ、セキュアID生成
+- `src/utils/magic-bytes.ts` - マジックバイト検証
+- `src/utils/polyglot-detection.ts` - Polyglot検出
+- `src/utils/file-validation.ts` - 統合検証関数
+
+**コアモデル**
+- `src/widgets/types.ts` - FileUploaderConfig, FILE_UPLOAD_LIMITS
+- `src/widgets/uploaded-file.ts` - UploadedFile実装
+
+**セッション管理**
+- `src/session/manager.ts` - registerUpload, getUpload, removeUpload
+
+**ウィジェット**
+- `src/widgets/file-uploader.ts` - ロジック・レンダリング
+- `src/kt/widgets.ts` - kt.file_uploader 宣言的API
+
+**クライアント**
+- `src/client/file-upload-handler.ts` - Base64エンコード、チャンク分割、検証ユーティリティ
+- `src/client/script.ts` - WebSocket送信処理
+
+**サーバー**
+- `src/websocket/file-upload-handler.ts` - アップロード受信・検証
+- `src/websocket/types.ts` - FileUploadMessage型
+- `src/app.ts` - WebSocketハンドラー統合、セキュアダウンロード
+
+**テスト**
+- `tests/unit/utils/sanitize.test.ts`
+- `tests/unit/utils/magic-bytes.test.ts`
+- `tests/unit/utils/polyglot-detection.test.ts`
+- `tests/unit/utils/file-validation.test.ts`
+- `tests/unit/widgets/uploaded-file.test.ts`
+- `tests/unit/session/upload-management.test.ts`
+- `tests/unit/widgets/file-uploader.test.ts`
+- `tests/unit/widgets/file-uploader-render.test.ts`
+- `tests/unit/kt/file-uploader.test.ts`
+- `tests/unit/client/file-upload-handler.test.ts`
+- `tests/unit/websocket/file-upload-handler.test.ts`
 
 ---
 

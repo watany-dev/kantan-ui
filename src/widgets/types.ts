@@ -173,3 +173,106 @@ export interface ImageConfig {
 	 */
 	key?: string;
 }
+
+// ============================================================================
+// File Uploader Types
+// ============================================================================
+
+/**
+ * File upload limits
+ */
+export const FILE_UPLOAD_LIMITS = {
+	/** Default maximum file size: 200MB */
+	DEFAULT_MAX_SIZE: 200 * 1024 * 1024,
+
+	/** Absolute maximum file size: 1GB (cannot be exceeded by config) */
+	ABSOLUTE_MAX_SIZE: 1 * 1024 * 1024 * 1024,
+
+	/** Maximum files per session */
+	MAX_FILES_PER_SESSION: 100,
+
+	/** Upload data TTL: 10 minutes */
+	UPLOAD_TTL_MS: 10 * 60 * 1000,
+
+	/** Chunk size threshold: 1MB */
+	CHUNK_SIZE: 1 * 1024 * 1024,
+} as const;
+
+/**
+ * Represents an uploaded file
+ * Follows Web standard File/Blob API interface
+ */
+export interface UploadedFile {
+	/** Sanitized filename */
+	readonly name: string;
+
+	/** File size in bytes */
+	readonly size: number;
+
+	/** Verified MIME type */
+	readonly type: string;
+
+	/** Get binary data (defensive copy) */
+	arrayBuffer(): ArrayBuffer;
+
+	/** Get content as text (UTF-8) */
+	text(): string;
+
+	/** Get content as ReadableStream */
+	stream(): ReadableStream<Uint8Array>;
+}
+
+/**
+ * Configuration options for file_uploader
+ */
+export interface FileUploaderConfig {
+	/** Accepted file types (MIME type or extension) */
+	accept?: string | readonly string[];
+
+	/** Allow multiple files (default: false) */
+	multiple?: boolean;
+
+	/** Maximum file size in bytes (default: 200MB) */
+	maxSize?: number;
+
+	/** Widget key */
+	key?: string;
+
+	/** Disable the widget */
+	disabled?: boolean;
+
+	/** Help text */
+	help?: string;
+
+	/** Strict mode: treat warnings as errors (default: false) */
+	strictMode?: boolean;
+
+	/** Enable polyglot detection (default: true) */
+	detectPolyglot?: boolean;
+
+	/** Enable magic bytes verification (default: true) */
+	verifyMagicBytes?: boolean;
+}
+
+/**
+ * Internal upload data stored in session
+ */
+export interface InternalUploadData {
+	/** Internal identifier (UUID) */
+	id: string;
+
+	/** Original filename (sanitized, for display) */
+	originalName: string;
+
+	/** Verified MIME type */
+	verifiedMime: string;
+
+	/** Raw binary data */
+	data: ArrayBuffer;
+
+	/** File size in bytes */
+	size: number;
+
+	/** Upload timestamp */
+	uploadedAt: number;
+}
