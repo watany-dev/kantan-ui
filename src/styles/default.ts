@@ -756,6 +756,5 @@ export {
 	layoutStyles,
 	sidebarStyles,
 	imageStyles,
-	metricStyles,
 	formStyles,
 };
