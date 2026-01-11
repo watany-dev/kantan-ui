@@ -964,5 +964,4 @@ export {
 	sidebarStyles,
 	imageStyles,
 	formStyles,
-	fileUploaderStyles,
 };

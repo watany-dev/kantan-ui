@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SessionManager, setSessionManager } from "../../../src/session/manager";
+import * as fileValidation from "../../../src/utils/file-validation";
 import { base64ToArrayBuffer, handleFileUpload } from "../../../src/websocket/file-upload-handler";
 import type { FileUploadMessage } from "../../../src/websocket/types";
 
@@ -158,6 +159,62 @@ describe("file-upload-handler", () => {
 			const result = handleFileUpload(message, sessionId, manager);
 			expect(result.success).toBe(false);
 			expect(result.error?.code).toBe("DANGEROUS_FILE");
+		});
+
+		it("returns SIZE_EXCEEDED when validation fails with size error", () => {
+			const validateSpy = vi.spyOn(fileValidation, "validateUploadedFile").mockReturnValueOnce({
+				valid: false,
+				errors: [{ code: "SIZE_EXCEEDED", message: "File too large" }],
+				sanitizedFilename: "test.txt",
+			});
+
+			const content = "test";
+			const data = new TextEncoder().encode(content);
+			const base64 = btoa(String.fromCharCode(...data));
+
+			const message: FileUploadMessage = {
+				type: "file_upload",
+				widgetId: "uploader1",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				size: data.length,
+				data: base64,
+				isChunked: false,
+			};
+
+			const result = handleFileUpload(message, sessionId, manager);
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("SIZE_EXCEEDED");
+
+			validateSpy.mockRestore();
+		});
+
+		it("returns TYPE_NOT_ALLOWED when validation fails with type error", () => {
+			const validateSpy = vi.spyOn(fileValidation, "validateUploadedFile").mockReturnValueOnce({
+				valid: false,
+				errors: [{ code: "TYPE_NOT_ALLOWED", message: "File type not allowed" }],
+				sanitizedFilename: "test.txt",
+			});
+
+			const content = "test";
+			const data = new TextEncoder().encode(content);
+			const base64 = btoa(String.fromCharCode(...data));
+
+			const message: FileUploadMessage = {
+				type: "file_upload",
+				widgetId: "uploader1",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				size: data.length,
+				data: base64,
+				isChunked: false,
+			};
+
+			const result = handleFileUpload(message, sessionId, manager);
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("TYPE_NOT_ALLOWED");
+
+			validateSpy.mockRestore();
 		});
 
 		it("retrieves uploaded file data", () => {

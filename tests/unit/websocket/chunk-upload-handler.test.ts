@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SessionManager } from "../../../src/session/manager";
+import * as fileValidation from "../../../src/utils/file-validation";
 import {
 	handleChunkUploadComplete,
 	handleChunkUploadData,
@@ -128,6 +129,57 @@ describe("chunk-upload-handler", () => {
 
 			strictManager.stopCleanupInterval();
 		});
+
+		it("includes retryAfter when rate limited with cooldown", () => {
+			// Configure with cooldown
+			const strictManager = new SessionManager(
+				{},
+				{
+					fileUploadRateLimit: {
+						maxUploadsPerMinute: 1,
+						maxBytesPerMinute: 100,
+						maxConcurrentUploads: 10,
+						uploadRateLimitCooldown: 5000,
+					},
+				},
+			);
+			const strictSession = strictManager.createSession();
+
+			// First upload completes (simulate bytes recorded)
+			const message1: ChunkUploadStartMessage = {
+				type: "chunk_upload_start",
+				widgetId: "uploader1",
+				uploadId: "upload-1",
+				filename: "test1.txt",
+				mimeType: "text/plain",
+				totalSize: 100,
+				totalChunks: 1,
+				chunkSize: 100,
+			};
+			handleChunkUploadStart(message1, strictSession.id, strictManager);
+			strictManager.recordFileUploadCompletion(strictSession.id, 100);
+			strictManager.decrementConcurrentUploads(strictSession.id);
+
+			// Second upload should fail due to bytes limit with retryAfter
+			const message2: ChunkUploadStartMessage = {
+				type: "chunk_upload_start",
+				widgetId: "uploader1",
+				uploadId: "upload-2",
+				filename: "test2.txt",
+				mimeType: "text/plain",
+				totalSize: 100,
+				totalChunks: 1,
+				chunkSize: 100,
+			};
+
+			const result = handleChunkUploadStart(message2, strictSession.id, strictManager);
+
+			expect(result.status).toBe("error");
+			expect(result.error?.code).toBe("UPLOAD_RATE_LIMITED");
+			expect(result.retryAfter).toBeDefined();
+
+			strictManager.stopCleanupInterval();
+		});
 	});
 
 	describe("handleChunkUploadData", () => {
@@ -200,7 +252,7 @@ describe("chunk-upload-handler", () => {
 			expect(result.error?.code).toBe("DUPLICATE_CHUNK");
 		});
 
-		it("returns error for invalid chunk index", () => {
+		it("returns error for chunk index out of range (too high)", () => {
 			const startMessage: ChunkUploadStartMessage = {
 				type: "chunk_upload_start",
 				widgetId: "uploader1",
@@ -217,6 +269,32 @@ describe("chunk-upload-handler", () => {
 				type: "chunk_upload_data",
 				uploadId: "upload-123",
 				chunkIndex: 5, // Out of range
+				data: "SGVsbG8=",
+			};
+
+			const result = handleChunkUploadData(dataMessage, manager);
+
+			expect(result.status).toBe("error");
+			expect(result.error?.code).toBe("INVALID_CHUNK_INDEX");
+		});
+
+		it("returns error for negative chunk index", () => {
+			const startMessage: ChunkUploadStartMessage = {
+				type: "chunk_upload_start",
+				widgetId: "uploader1",
+				uploadId: "upload-123",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				totalSize: 1024,
+				totalChunks: 1,
+				chunkSize: 1024,
+			};
+			handleChunkUploadStart(startMessage, sessionId, manager);
+
+			const dataMessage: ChunkUploadDataMessage = {
+				type: "chunk_upload_data",
+				uploadId: "upload-123",
+				chunkIndex: -1, // Negative index
 				data: "SGVsbG8=",
 			};
 
@@ -334,6 +412,90 @@ describe("chunk-upload-handler", () => {
 
 			expect(result.status).toBe("error");
 			expect(result.error?.code).toBe("DANGEROUS_FILE");
+		});
+
+		it("returns SIZE_EXCEEDED when validation fails with size error", () => {
+			const validateSpy = vi.spyOn(fileValidation, "validateUploadedFile").mockReturnValueOnce({
+				valid: false,
+				errors: [{ code: "SIZE_EXCEEDED", message: "File too large" }],
+				sanitizedFilename: "test.txt",
+			});
+
+			const startMessage: ChunkUploadStartMessage = {
+				type: "chunk_upload_start",
+				widgetId: "uploader1",
+				uploadId: "upload-size-test",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				totalSize: 5,
+				totalChunks: 1,
+				chunkSize: 5,
+			};
+			handleChunkUploadStart(startMessage, sessionId, manager);
+
+			handleChunkUploadData(
+				{
+					type: "chunk_upload_data",
+					uploadId: "upload-size-test",
+					chunkIndex: 0,
+					data: "SGVsbG8=",
+				},
+				manager,
+			);
+
+			const completeMessage: ChunkUploadEndMessage = {
+				type: "chunk_upload_end",
+				uploadId: "upload-size-test",
+			};
+
+			const result = handleChunkUploadComplete(completeMessage, sessionId, manager);
+
+			expect(result.status).toBe("error");
+			expect(result.error?.code).toBe("SIZE_EXCEEDED");
+
+			validateSpy.mockRestore();
+		});
+
+		it("returns TYPE_NOT_ALLOWED when validation fails with type error", () => {
+			const validateSpy = vi.spyOn(fileValidation, "validateUploadedFile").mockReturnValueOnce({
+				valid: false,
+				errors: [{ code: "TYPE_NOT_ALLOWED", message: "File type not allowed" }],
+				sanitizedFilename: "test.txt",
+			});
+
+			const startMessage: ChunkUploadStartMessage = {
+				type: "chunk_upload_start",
+				widgetId: "uploader1",
+				uploadId: "upload-type-test",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				totalSize: 5,
+				totalChunks: 1,
+				chunkSize: 5,
+			};
+			handleChunkUploadStart(startMessage, sessionId, manager);
+
+			handleChunkUploadData(
+				{
+					type: "chunk_upload_data",
+					uploadId: "upload-type-test",
+					chunkIndex: 0,
+					data: "SGVsbG8=",
+				},
+				manager,
+			);
+
+			const completeMessage: ChunkUploadEndMessage = {
+				type: "chunk_upload_end",
+				uploadId: "upload-type-test",
+			};
+
+			const result = handleChunkUploadComplete(completeMessage, sessionId, manager);
+
+			expect(result.status).toBe("error");
+			expect(result.error?.code).toBe("TYPE_NOT_ALLOWED");
+
+			validateSpy.mockRestore();
 		});
 
 		it("updates widget state with upload ID", () => {
