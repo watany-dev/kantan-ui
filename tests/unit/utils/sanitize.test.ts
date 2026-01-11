@@ -250,4 +250,18 @@ describe("generateSecureFileId", () => {
 			expect(id).toMatch(/^[a-f0-9-]+$/);
 		}
 	});
+
+	it("generates valid UUID v4 format", () => {
+		const id = generateSecureFileId();
+		// UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+		// where y is one of [89ab]
+		expect(id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+	});
+
+	it("generates IDs of consistent length", () => {
+		for (let i = 0; i < 50; i++) {
+			const id = generateSecureFileId();
+			expect(id.length).toBe(36); // UUID length with hyphens
+		}
+	});
 });

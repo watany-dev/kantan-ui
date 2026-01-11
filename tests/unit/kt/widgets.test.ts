@@ -3,6 +3,7 @@ import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import {
 	button,
 	checkbox,
+	date_input,
 	multiselect,
 	number_input,
 	radio,
@@ -10,6 +11,7 @@ import {
 	slider,
 	text_area,
 	text_input,
+	time_input,
 	toggle,
 } from "../../../src/kt/widgets";
 import { clearContext, setContext } from "../../../src/runtime/context";
@@ -598,6 +600,50 @@ describe("Declarative Widget APIs", () => {
 			const value = multiselect("Tags", ["A", "B", "C"], [], { key: "my_multiselect" });
 
 			expect(value).toEqual(["A", "C"]);
+		});
+
+		it("date_input should render and return default value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const value = date_input("Birthday", "2000-01-15");
+
+			expect(value).toBe("2000-01-15");
+			const html = ctx.getHtml();
+			expect(html).toContain('type="date"');
+			expect(html).toContain("Birthday");
+		});
+
+		it("date_input should use existing stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "widget_0", "2023-12-25");
+
+			const value = date_input("Birthday", "2000-01-01");
+
+			expect(value).toBe("2023-12-25");
+		});
+
+		it("time_input should render and return default value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const value = time_input("Meeting time", "14:30");
+
+			expect(value).toBe("14:30");
+			const html = ctx.getHtml();
+			expect(html).toContain('type="time"');
+			expect(html).toContain("Meeting time");
+		});
+
+		it("time_input should use existing stored value", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+			manager.setState(session.id, "widget_0", "09:00");
+
+			const value = time_input("Meeting time", "14:30");
+
+			expect(value).toBe("09:00");
 		});
 	});
 });
