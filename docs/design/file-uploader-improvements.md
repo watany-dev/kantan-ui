@@ -881,6 +881,403 @@ if (config.security?.requireCsrfToken) {
 
 ---
 
+## 実行計画（TDDイテレーション）
+
+各イテレーションは以下の条件を満たす:
+- **最小の変更単位**で完結
+- **`bun run ci` がパス**（lint, build, test:coverage, test:e2e）
+- 1イテレーション = 1コミット
+
+### CI構成
+```bash
+bun run ci = bun run lint          # Biome
+           + bun run build         # TypeScript ビルド
+           + bun run test:coverage # Vitest ユニットテスト
+           + bun run test:e2e      # Playwright E2Eテスト
+```
+
+---
+
+### Feature 1: CSRF対策（Origin検証）
+
+#### Iteration 1.1: 設定型の追加
+```
+[Red]   tests/unit/config/security.test.ts
+        - validateWebSocketOrigin のデフォルト値テスト
+        - allowedOrigins のデフォルト値テスト
+
+[Green] src/config/types.ts
+        + validateWebSocketOrigin?: boolean
+        + allowedOrigins?: string[]
+
+        src/config/defaults.ts
+        + validateWebSocketOrigin: true
+        + allowedOrigins: []
+
+[CI]    bun run ci → PASS
+[Commit] feat(config): add WebSocket origin validation settings
+```
+
+#### Iteration 1.2: Origin検証関数の実装
+```
+[Red]   tests/unit/websocket/origin-validation.test.ts
+        - validateOrigin(origin, host, []) → true（same-origin）
+        - validateOrigin(origin, host, []) → false（cross-origin）
+        - validateOrigin(origin, host, ['example.com']) → true（許可リスト）
+        - validateOrigin(undefined, host, []) → true（Originなし）
+
+[Green] src/websocket/origin-validation.ts
+        + export function validateOrigin(
+            origin: string | undefined,
+            host: string | undefined,
+            allowedOrigins: string[]
+          ): boolean
+
+[CI]    bun run ci → PASS
+[Commit] feat(websocket): add origin validation function
+```
+
+#### Iteration 1.3: WebSocketハンドラーへの統合
+```
+[Red]   tests/unit/app/websocket-origin.test.ts
+        - 不正なOriginでWebSocket接続拒否のテスト
+
+[Green] src/app.ts
+        + import { validateOrigin } from './websocket/origin-validation'
+        + onOpen時にOrigin検証、失敗時は ws.close(4003)
+
+[Refactor] 必要に応じてエラーメッセージ定数化
+
+[CI]    bun run ci → PASS
+[Commit] feat(websocket): integrate origin validation on connection
+```
+
+---
+
+### Feature 2: ファイルアップロードレート制限
+
+#### Iteration 2.1: 設定型の追加
+```
+[Red]   tests/unit/config/file-upload-rate-limit.test.ts
+        - FileUploadRateLimitConfig のデフォルト値テスト
+
+[Green] src/config/types.ts
+        + interface FileUploadRateLimitConfig {
+            maxUploadsPerMinute?: number    // 30
+            maxBytesPerMinute?: number      // 100MB
+            maxConcurrentUploads?: number   // 3
+            uploadRateLimitCooldown?: number // 5000
+          }
+        + SecurityConfig.fileUploadRateLimit?: FileUploadRateLimitConfig
+
+        src/config/defaults.ts
+        + fileUploadRateLimit のデフォルト値
+
+[CI]    bun run ci → PASS
+[Commit] feat(config): add file upload rate limit settings
+```
+
+#### Iteration 2.2: レート制限状態管理
+```
+[Red]   tests/unit/session/file-upload-rate-limit.test.ts
+        - checkFileUploadRateLimit() の基本テスト
+        - アップロード数制限のテスト
+        - バイト数制限のテスト
+        - 同時アップロード制限のテスト
+        - ウィンドウリセットのテスト
+
+[Green] src/session/manager.ts
+        + interface FileUploadRateLimitState { ... }
+        + private fileUploadRateLimitStates: Map<SessionId, FileUploadRateLimitState>
+        + checkFileUploadRateLimit(sessionId, fileSize): FileUploadRateLimitResult
+        + incrementConcurrentUploads(sessionId): void
+        + decrementConcurrentUploads(sessionId): void
+        + recordUploadCompletion(sessionId, size): void
+
+[CI]    bun run ci → PASS
+[Commit] feat(session): add file upload rate limit state management
+```
+
+#### Iteration 2.3: アップロードハンドラーへの統合
+```
+[Red]   tests/unit/websocket/file-upload-handler.test.ts
+        + レート制限超過時のエラーレスポンステスト
+
+[Green] src/websocket/file-upload-handler.ts
+        + handleFileUpload() 内でレート制限チェック
+        + エラー時は { code: "UPLOAD_RATE_LIMITED", retryAfter } を返す
+
+[CI]    bun run ci → PASS
+[Commit] feat(file-upload): integrate rate limiting
+```
+
+---
+
+### Feature 3: プログレス表示
+
+#### Iteration 3.1: プログレスHTML生成
+```
+[Red]   tests/unit/widgets/file-uploader-render.test.ts
+        + プログレスコンテナのHTML生成テスト
+        + 完了表示コンテナのHTML生成テスト
+
+[Green] src/widgets/file-uploader.ts
+        + renderFileUploader() にプログレス/完了用のHTML追加
+        （style="display:none" で初期非表示）
+
+[CI]    bun run ci → PASS
+[Commit] feat(file-uploader): add progress indicator HTML structure
+```
+
+#### Iteration 3.2: プログレス更新関数（クライアント）
+```
+[Red]   tests/unit/client/file-upload-progress.test.ts
+        + updateProgress() のDOM操作テスト
+        + showUploadComplete() のDOM操作テスト
+        + formatBytes() のテスト
+
+[Green] src/client/file-upload-handler.ts
+        + export function updateProgress(widgetId, percent, uploaded, total)
+        + export function showUploadComplete(widgetId, filename, uploadId)
+        + export function formatBytes(bytes): string
+
+[CI]    bun run ci → PASS
+[Commit] feat(client): add progress update functions
+```
+
+#### Iteration 3.3: クライアントスクリプトへの統合
+```
+[Red]   e2e/file-uploader-progress.spec.ts
+        + アップロード中にプログレスバーが表示されるテスト
+        + アップロード完了後にファイル名が表示されるテスト
+
+[Green] src/client/script.ts
+        + handleFileUpload() 内でプログレス表示呼び出し
+        + reader.onprogress でプログレス更新
+
+[CI]    bun run ci → PASS
+[Commit] feat(client): integrate progress indicator in file upload
+```
+
+#### Iteration 3.4: CSS追加
+```
+[Green] src/styles/components.css (または該当ファイル)
+        + .kt-file-uploader-progress { ... }
+        + .kt-progress-bar { ... }
+        + .kt-progress-fill { ... }
+        + @keyframes progress-shimmer { ... }
+
+[CI]    bun run ci → PASS
+[Commit] style(file-uploader): add progress indicator CSS
+```
+
+---
+
+### Feature 4: E2Eテスト
+
+#### Iteration 4.1: テストフィクスチャ作成
+```
+[Green] e2e/fixtures/test-text.txt      (echo "test content")
+        e2e/fixtures/test-small.bin     (1KB binary)
+
+        e2e/helpers.ts
+        + export async function uploadFile(page, selector, filePath)
+        + export async function getUploadError(page, widgetId)
+
+[CI]    bun run ci → PASS
+[Commit] test(e2e): add file upload test fixtures and helpers
+```
+
+#### Iteration 4.2: 基本アップロードテスト
+```
+[Green] e2e/file-uploader.spec.ts
+        + describe("基本機能")
+          - 単一ファイルアップロード成功
+          - 複数ファイルアップロード成功
+
+[CI]    bun run ci → PASS
+[Commit] test(e2e): add basic file upload tests
+```
+
+#### Iteration 4.3: バリデーションテスト
+```
+[Green] e2e/file-uploader.spec.ts
+        + describe("バリデーション")
+          - サイズ超過エラー表示
+          - 許可されていないファイルタイプエラー表示
+
+[CI]    bun run ci → PASS
+[Commit] test(e2e): add file validation E2E tests
+```
+
+#### Iteration 4.4: セキュリティテスト
+```
+[Green] e2e/fixtures/fake-image.png     (テキスト内容で拡張子詐称)
+
+        e2e/file-uploader.spec.ts
+        + describe("セキュリティ")
+          - 実行ファイル拒否テスト
+          - パストラバーサル無害化テスト
+
+[CI]    bun run ci → PASS
+[Commit] test(e2e): add file upload security E2E tests
+```
+
+---
+
+### Feature 5: チャンクアップロード
+
+#### Iteration 5.1: メッセージ型定義
+```
+[Red]   tests/unit/websocket/types.test.ts
+        + isChunkUploadStartMessage() 型ガードテスト
+        + isChunkUploadDataMessage() 型ガードテスト
+
+[Green] src/websocket/types.ts
+        + interface ChunkUploadStartMessage { ... }
+        + interface ChunkUploadDataMessage { ... }
+        + interface ChunkUploadCompleteMessage { ... }
+        + interface ChunkUploadResponse { ... }
+        + 型ガード関数
+
+[CI]    bun run ci → PASS
+[Commit] feat(websocket): add chunk upload message types
+```
+
+#### Iteration 5.2: サーバー側チャンク状態管理
+```
+[Red]   tests/unit/session/chunk-upload.test.ts
+        + startChunkUpload() テスト
+        + receiveChunk() テスト
+        + completeChunkUpload() テスト
+        + タイムアウトテスト
+
+[Green] src/session/manager.ts
+        + interface ChunkUploadState { ... }
+        + private chunkUploads: Map<string, ChunkUploadState>
+        + startChunkUpload(sessionId, message): string
+        + receiveChunk(uploadId, chunkIndex, data): boolean
+        + completeChunkUpload(uploadId): ArrayBuffer | null
+        + cleanupExpiredChunkUploads(): void
+
+[CI]    bun run ci → PASS
+[Commit] feat(session): add chunk upload state management
+```
+
+#### Iteration 5.3: サーバー側メッセージハンドラー
+```
+[Red]   tests/unit/websocket/chunk-upload-handler.test.ts
+        + handleChunkUploadStart() テスト
+        + handleChunkUploadData() テスト
+        + handleChunkUploadComplete() テスト
+
+[Green] src/websocket/chunk-upload-handler.ts
+        + handleChunkUploadStart(message, sessionId, manager): ChunkUploadResponse
+        + handleChunkUploadData(message, manager): ChunkUploadResponse
+        + handleChunkUploadComplete(message, sessionId, manager): ChunkUploadResponse
+
+[CI]    bun run ci → PASS
+[Commit] feat(websocket): add chunk upload message handlers
+```
+
+#### Iteration 5.4: app.tsへのルーティング追加
+```
+[Red]   tests/unit/app/chunk-upload-routing.test.ts
+        + チャンクメッセージのルーティングテスト
+
+[Green] src/app.ts
+        + onMessage内でchunk_upload_*メッセージのルーティング追加
+
+[CI]    bun run ci → PASS
+[Commit] feat(app): add chunk upload message routing
+```
+
+#### Iteration 5.5: クライアント側チャンク送信
+```
+[Red]   tests/unit/client/chunk-upload.test.ts
+        + shouldUseChunkedUpload() テスト
+        + createFileChunks() テスト
+        + sendChunk() テスト
+
+[Green] src/client/file-upload-handler.ts
+        + shouldUseChunkedUpload(fileSize): boolean
+        + async handleChunkedUpload(file, widgetId): Promise<void>
+        + sendChunk(uploadId, chunkIndex, data): Promise<void>
+        + waitForChunkAck(uploadId, chunkIndex): Promise<void>
+
+[CI]    bun run ci → PASS
+[Commit] feat(client): add chunked upload support
+```
+
+#### Iteration 5.6: クライアントスクリプトへの統合
+```
+[Red]   e2e/file-uploader-chunk.spec.ts
+        + 大きいファイル（>10MB）のチャンクアップロードテスト
+        + プログレス表示の更新テスト
+
+[Green] src/client/script.ts
+        + handleFileUpload() 内で shouldUseChunkedUpload() 分岐
+        + 10MB以上で handleChunkedUpload() 呼び出し
+
+[CI]    bun run ci → PASS
+[Commit] feat(client): integrate chunked upload in file handler
+```
+
+---
+
+## イテレーション一覧
+
+| # | Feature | Iteration | 主な変更 |
+|---|---------|-----------|---------|
+| 1 | CSRF対策 | 1.1 | 設定型追加 |
+| 2 | CSRF対策 | 1.2 | Origin検証関数 |
+| 3 | CSRF対策 | 1.3 | WebSocketハンドラー統合 |
+| 4 | レート制限 | 2.1 | 設定型追加 |
+| 5 | レート制限 | 2.2 | 状態管理 |
+| 6 | レート制限 | 2.3 | ハンドラー統合 |
+| 7 | プログレス | 3.1 | HTML構造 |
+| 8 | プログレス | 3.2 | 更新関数 |
+| 9 | プログレス | 3.3 | スクリプト統合 |
+| 10 | プログレス | 3.4 | CSS追加 |
+| 11 | E2Eテスト | 4.1 | フィクスチャ・ヘルパー |
+| 12 | E2Eテスト | 4.2 | 基本テスト |
+| 13 | E2Eテスト | 4.3 | バリデーションテスト |
+| 14 | E2Eテスト | 4.4 | セキュリティテスト |
+| 15 | チャンク | 5.1 | メッセージ型 |
+| 16 | チャンク | 5.2 | 状態管理 |
+| 17 | チャンク | 5.3 | ハンドラー |
+| 18 | チャンク | 5.4 | ルーティング |
+| 19 | チャンク | 5.5 | クライアント実装 |
+| 20 | チャンク | 5.6 | 統合・E2E |
+
+**合計: 20イテレーション**
+
+---
+
+## 実行順序の推奨
+
+依存関係を考慮した最適な実行順序:
+
+```
+Phase 1 (セキュリティ基盤):
+  1.1 → 1.2 → 1.3 (CSRF)
+  ↓
+Phase 2 (機能強化):
+  2.1 → 2.2 → 2.3 (レート制限)
+  ↓
+  4.1 → 4.2 (E2E基盤)
+  ↓
+Phase 3 (UX向上):
+  3.1 → 3.2 → 3.3 → 3.4 (プログレス)
+  ↓
+  4.3 → 4.4 (E2Eバリデーション・セキュリティ)
+  ↓
+Phase 4 (大規模ファイル対応):
+  5.1 → 5.2 → 5.3 → 5.4 → 5.5 → 5.6 (チャンク)
+```
+
+---
+
 ## 参考資料
 
 - [OWASP File Upload Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html)
