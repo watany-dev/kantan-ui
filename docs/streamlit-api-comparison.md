@@ -1,0 +1,339 @@
+# Streamlit API vs kantan-ui 比較・未実装API分析
+
+## 概要
+
+このドキュメントは、Streamlit (v1.52.0+) と kantan-ui の API を比較し、未実装 API の優先度と実装難易度を分析したものです。
+
+---
+
+## 凡例
+
+### 実装状況
+- ✅ 実装済み
+- ⚠️ 部分実装
+- ❌ 未実装
+
+### 優先度
+- **P0**: 必須 - 基本的なアプリ構築に不可欠
+- **P1**: 高 - 多くのユースケースで必要
+- **P2**: 中 - 特定のユースケースで有用
+- **P3**: 低 - ニッチなユースケース向け
+
+### 実装難易度
+- **Easy**: 1-2日で実装可能、既存パターンの拡張
+- **Medium**: 3-5日、新しいコンポーネント設計が必要
+- **Hard**: 1-2週間、複雑なロジックや外部依存が必要
+- **Very Hard**: 2週間以上、大規模な設計変更が必要
+
+---
+
+## 1. Input Widgets (入力ウィジェット)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.button` | `kt.button` | ✅ | - | - | 実装済み |
+| `st.download_button` | `kt.download_button` | ✅ | - | - | 実装済み |
+| `st.link_button` | - | ❌ | P2 | Easy | リンク付きボタン |
+| `st.page_link` | - | ❌ | P2 | Medium | マルチページ前提 |
+| `st.checkbox` | `kt.checkbox` | ✅ | - | - | 実装済み |
+| `st.radio` | `kt.radio` | ✅ | - | - | 実装済み |
+| `st.selectbox` | `kt.selectbox` | ✅ | - | - | 実装済み |
+| `st.multiselect` | `kt.multiselect` | ✅ | - | - | 実装済み |
+| `st.toggle` | `kt.toggle` | ✅ | - | - | 実装済み |
+| `st.slider` | `kt.slider` | ✅ | - | - | 実装済み |
+| `st.select_slider` | - | ❌ | P2 | Medium | リストから選択するスライダー |
+| `st.number_input` | `kt.number_input` | ✅ | - | - | 実装済み |
+| `st.text_input` | `kt.text_input` | ✅ | - | - | 実装済み |
+| `st.text_area` | `kt.text_area` | ✅ | - | - | 実装済み |
+| `st.date_input` | `kt.date_input` | ✅ | - | - | 実装済み |
+| `st.time_input` | `kt.time_input` | ✅ | - | - | 実装済み |
+| `st.datetime_input` | - | ❌ | P1 | Medium | 2025年新機能、日付+時刻統合 |
+| `st.file_uploader` | `kt.file_uploader` | ✅ | - | - | 実装済み |
+| `st.camera_input` | - | ❌ | P2 | Hard | カメラからの画像取得 |
+| `st.audio_input` | - | ❌ | P2 | Hard | マイク録音 |
+| `st.color_picker` | - | ❌ | P1 | Easy | カラーピッカー |
+| `st.pills` | - | ❌ | P2 | Medium | ピル型選択UI |
+| `st.segmented_control` | - | ❌ | P2 | Medium | セグメントコントロール |
+| `st.feedback` | - | ❌ | P2 | Medium | 評価/センチメント入力 |
+| `st.data_editor` | - | ❌ | P1 | Very Hard | インタラクティブなデータ編集 |
+| `st.chat_input` | - | ❌ | P0 | Medium | チャット入力ウィジェット |
+
+---
+
+## 2. Data Display (データ表示)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.dataframe` | - | ❌ | P0 | Hard | インタラクティブなデータフレーム |
+| `st.table` | `kt.table` | ✅ | - | - | 実装済み |
+| `st.metric` | `kt.metric` | ✅ | - | - | 実装済み |
+| `st.json` | `kt.json` | ✅ | - | - | 実装済み |
+| `st.column_config.*` | - | ❌ | P2 | Hard | カラム設定API |
+
+---
+
+## 3. Chart Elements (チャート)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.line_chart` | - | ❌ | P0 | Hard | 折れ線グラフ |
+| `st.area_chart` | - | ❌ | P1 | Hard | エリアチャート |
+| `st.bar_chart` | - | ❌ | P0 | Hard | 棒グラフ |
+| `st.scatter_chart` | - | ❌ | P1 | Hard | 散布図 |
+| `st.map` | - | ❌ | P2 | Very Hard | 地図表示 |
+| `st.pyplot` | - | ❌ | P3 | Very Hard | Matplotlib統合 |
+| `st.altair_chart` | - | ❌ | P2 | Very Hard | Vega-Lite/Altair統合 |
+| `st.plotly_chart` | - | ❌ | P2 | Very Hard | Plotly統合 |
+| `st.pydeck_chart` | - | ❌ | P3 | Very Hard | PyDeck統合 |
+| `st.graphviz_chart` | - | ❌ | P3 | Hard | GraphViz統合 |
+
+---
+
+## 4. Text Elements (テキスト)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.write` | `kt.write` | ✅ | - | - | 実装済み |
+| `st.title` | `kt.title` | ✅ | - | - | 実装済み |
+| `st.header` | `kt.header` | ✅ | - | - | 実装済み |
+| `st.subheader` | `kt.subheader` | ✅ | - | - | 実装済み |
+| `st.text` | `kt.text` | ✅ | - | - | 実装済み |
+| `st.markdown` | `kt.markdown` | ✅ | - | - | 実装済み |
+| `st.caption` | - | ❌ | P2 | Easy | キャプションテキスト |
+| `st.code` | `kt.code` | ✅ | - | - | 実装済み |
+| `st.latex` | - | ❌ | P2 | Medium | LaTeX数式表示 |
+| `st.divider` | `kt.divider` | ✅ | - | - | 実装済み |
+| `st.html` | `kt.html` | ✅ | - | - | 実装済み |
+| `st.echo` | - | ❌ | P3 | Medium | コード表示+実行 |
+
+---
+
+## 5. Media Elements (メディア)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.image` | `kt.image` | ✅ | - | - | 実装済み |
+| `st.audio` | - | ❌ | P1 | Medium | 音声プレーヤー |
+| `st.video` | - | ❌ | P1 | Medium | 動画プレーヤー |
+| `st.logo` | - | ❌ | P2 | Easy | ロゴ表示 |
+| `st.pdf` | - | ❌ | P2 | Medium | PDF表示 |
+
+---
+
+## 6. Layout & Containers (レイアウト)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.columns` | `kt.columns` | ✅ | - | - | 実装済み |
+| `st.container` | `kt.container` | ✅ | - | - | 実装済み |
+| `st.expander` | `kt.expander` | ✅ | - | - | 実装済み |
+| `st.tabs` | `kt.tabs` | ✅ | - | - | 実装済み |
+| `st.sidebar` | `kt.sidebar` | ✅ | - | - | 実装済み |
+| `st.popover` | - | ❌ | P2 | Medium | ポップオーバー |
+| `st.dialog` | - | ❌ | P1 | Hard | モーダルダイアログ |
+| `st.empty` | - | ❌ | P1 | Easy | プレースホルダー |
+| `st.fragment` | - | ❌ | P2 | Hard | 部分再実行 |
+
+---
+
+## 7. Chat Elements (チャット)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.chat_message` | `kt.chat_message` | ✅ | - | - | 実装済み |
+| `st.chat_input` | - | ❌ | P0 | Medium | 入力ウィジェット(ピン固定) |
+
+---
+
+## 8. Status Elements (ステータス)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.progress` | `kt.progress` | ✅ | - | - | 実装済み |
+| `st.spinner` | `kt.spinner` | ✅ | - | - | 実装済み |
+| `st.toast` | `kt.toast` | ✅ | - | - | 実装済み |
+| `st.success` | `kt.success` | ✅ | - | - | 実装済み |
+| `st.info` | `kt.info` | ✅ | - | - | 実装済み |
+| `st.warning` | `kt.warning` | ✅ | - | - | 実装済み |
+| `st.error` | `kt.error` | ✅ | - | - | 実装済み |
+| `st.status` | - | ❌ | P1 | Medium | 展開可能なステータスコンテナ |
+| `st.exception` | - | ❌ | P2 | Easy | 例外表示 |
+| `st.balloons` | - | ❌ | P3 | Easy | お祝いアニメーション |
+| `st.snow` | - | ❌ | P3 | Easy | 雪アニメーション |
+
+---
+
+## 9. Control Flow (制御フロー)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.form` | `kt.form` | ✅ | - | - | 実装済み |
+| `st.form_submit_button` | `kt.form_submit_button` | ✅ | - | - | 実装済み |
+| `st.rerun` | `kt.rerun` | ✅ | - | - | 実装済み |
+| `st.stop` | - | ❌ | P2 | Easy | スクリプト停止 |
+| `st.switch_page` | - | ❌ | P2 | Medium | ページ切替 |
+
+---
+
+## 10. Navigation (ナビゲーション)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.navigation` | - | ❌ | P1 | Hard | マルチページナビゲーション |
+| `st.Page` | - | ❌ | P1 | Hard | ページ定義 |
+| `st.switch_page` | - | ❌ | P2 | Medium | プログラム的ページ切替 |
+
+---
+
+## 11. Caching & State (キャッシング・状態)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.session_state` | Session API | ⚠️ | - | - | 部分実装（型付き版あり） |
+| `st.cache_data` | - | ❌ | P1 | Hard | データキャッシング |
+| `st.cache_resource` | - | ❌ | P1 | Hard | リソースキャッシング |
+| `st.query_params` | - | ❌ | P2 | Medium | クエリパラメータ管理 |
+
+---
+
+## 12. Configuration (設定)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.set_page_config` | `kt.set_page_config` | ✅ | - | - | 実装済み |
+| `st.context` | - | ❌ | P3 | Medium | 実行コンテキスト情報 |
+| `st.user` | - | ❌ | P2 | Medium | ユーザー情報（2025年GA） |
+
+---
+
+## 13. Utilities (ユーティリティ)
+
+| Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
+|---------------|-----------|------|--------|--------|------|
+| `st.write_stream` | - | ❌ | P1 | Medium | ストリーミング出力 |
+| `st.help` | - | ❌ | P3 | Easy | ヘルプ表示 |
+
+---
+
+## 優先度別 未実装API一覧
+
+### P0 (必須) - 4件
+| API | 難易度 | 説明 |
+|-----|--------|------|
+| `st.chat_input` | Medium | チャット入力、ピン固定対応 |
+| `st.dataframe` | Hard | インタラクティブデータフレーム |
+| `st.line_chart` | Hard | 折れ線グラフ |
+| `st.bar_chart` | Hard | 棒グラフ |
+
+### P1 (高) - 15件
+| API | 難易度 | 説明 |
+|-----|--------|------|
+| `st.datetime_input` | Medium | 日付+時刻入力 |
+| `st.color_picker` | Easy | カラーピッカー |
+| `st.data_editor` | Very Hard | データ編集ウィジェット |
+| `st.area_chart` | Hard | エリアチャート |
+| `st.scatter_chart` | Hard | 散布図 |
+| `st.audio` | Medium | 音声プレーヤー |
+| `st.video` | Medium | 動画プレーヤー |
+| `st.dialog` | Hard | モーダルダイアログ |
+| `st.empty` | Easy | プレースホルダー |
+| `st.status` | Medium | ステータスコンテナ |
+| `st.navigation` | Hard | マルチページナビ |
+| `st.Page` | Hard | ページ定義 |
+| `st.cache_data` | Hard | データキャッシング |
+| `st.cache_resource` | Hard | リソースキャッシング |
+| `st.write_stream` | Medium | ストリーム出力 |
+
+### P2 (中) - 19件
+| API | 難易度 | 説明 |
+|-----|--------|------|
+| `st.link_button` | Easy | リンクボタン |
+| `st.page_link` | Medium | ページリンク |
+| `st.select_slider` | Medium | 選択スライダー |
+| `st.camera_input` | Hard | カメラ入力 |
+| `st.audio_input` | Hard | 音声入力 |
+| `st.pills` | Medium | ピル選択 |
+| `st.segmented_control` | Medium | セグメントコントロール |
+| `st.feedback` | Medium | フィードバック入力 |
+| `st.column_config.*` | Hard | カラム設定 |
+| `st.map` | Very Hard | 地図表示 |
+| `st.altair_chart` | Very Hard | Altairチャート |
+| `st.plotly_chart` | Very Hard | Plotlyチャート |
+| `st.caption` | Easy | キャプション |
+| `st.latex` | Medium | LaTeX数式 |
+| `st.logo` | Easy | ロゴ |
+| `st.pdf` | Medium | PDF表示 |
+| `st.popover` | Medium | ポップオーバー |
+| `st.fragment` | Hard | 部分再実行 |
+| `st.exception` | Easy | 例外表示 |
+| `st.stop` | Easy | スクリプト停止 |
+| `st.switch_page` | Medium | ページ切替 |
+| `st.query_params` | Medium | クエリパラメータ |
+| `st.user` | Medium | ユーザー情報 |
+
+### P3 (低) - 7件
+| API | 難易度 | 説明 |
+|-----|--------|------|
+| `st.pyplot` | Very Hard | Matplotlib統合 |
+| `st.pydeck_chart` | Very Hard | PyDeck統合 |
+| `st.graphviz_chart` | Hard | GraphViz統合 |
+| `st.echo` | Medium | コード表示+実行 |
+| `st.balloons` | Easy | バルーンアニメーション |
+| `st.snow` | Easy | 雪アニメーション |
+| `st.help` | Easy | ヘルプ表示 |
+| `st.context` | Medium | 実行コンテキスト |
+
+---
+
+## 推奨実装順序
+
+### Phase 1: 基本機能強化 (P0 + Easy P1)
+1. **`st.chat_input`** - チャットアプリ構築に必須
+2. **`st.color_picker`** - 簡単に実装可能
+3. **`st.empty`** - プレースホルダー機能
+
+### Phase 2: チャート基盤
+4. **`st.line_chart`** - 基本チャート
+5. **`st.bar_chart`** - 基本チャート
+6. **`st.dataframe`** - データ表示の強化
+
+### Phase 3: メディア・UX改善
+7. **`st.video`** - 動画再生
+8. **`st.audio`** - 音声再生
+9. **`st.status`** - 長時間処理の表示
+10. **`st.write_stream`** - LLM出力対応
+
+### Phase 4: 高度な機能
+11. **`st.dialog`** - モーダル対応
+12. **`st.datetime_input`** - 日時入力統合
+13. **`st.cache_data`** / **`st.cache_resource`** - パフォーマンス最適化
+
+### Phase 5: マルチページ対応
+14. **`st.navigation`** / **`st.Page`** - マルチページアプリ
+
+---
+
+## 実装済みAPI サマリー
+
+kantan-uiで実装済みのStreamlit互換API: **35件**
+
+- Input Widgets: 14件
+- Data Display: 3件
+- Text Elements: 8件
+- Media: 1件
+- Layout: 5件
+- Chat: 1件
+- Status: 7件
+- Control Flow: 3件
+- Configuration: 1件
+
+---
+
+## 参考資料
+
+- [Streamlit API Reference](https://docs.streamlit.io/develop/api-reference)
+- [Streamlit Input Widgets](https://docs.streamlit.io/develop/api-reference/widgets)
+- [Streamlit Chart Elements](https://docs.streamlit.io/develop/api-reference/charts)
+- [Streamlit Layout](https://docs.streamlit.io/develop/api-reference/layout)
+- [Streamlit 2025 Release Notes](https://docs.streamlit.io/develop/quick-reference/release-notes/2025)
+- [Streamlit Caching](https://docs.streamlit.io/develop/api-reference/caching-and-state)
