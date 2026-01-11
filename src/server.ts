@@ -268,6 +268,73 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== File Upload Section =====
+	kt.header("File Upload");
+
+	kt.subheader("Single File");
+	const singleFileResult = kt.file_uploader("Upload a file", {
+		key: "single_file",
+		help: "Any file up to 200MB",
+	});
+	// multiple: false（デフォルト）なので単一ファイルまたはnull
+	const singleFile = !Array.isArray(singleFileResult) ? singleFileResult : null;
+
+	if (singleFile) {
+		kt.success(`Uploaded: ${singleFile.name}`);
+		kt.write(`Size: ${singleFile.size} bytes`);
+		kt.write(`Type: ${singleFile.type}`);
+
+		// テキストファイルの場合は内容をプレビュー
+		if (singleFile.type.startsWith("text/") || singleFile.name.endsWith(".txt")) {
+			const content = singleFile.text();
+			kt.write("Content preview:");
+			kt.html(
+				`<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; max-height: 200px; overflow: auto;">${escapeHtml(content.slice(0, 1000))}${content.length > 1000 ? "..." : ""}</pre>`,
+			);
+		}
+	}
+
+	kt.subheader("Image Upload");
+	const imageFileResult = kt.file_uploader("Upload an image", {
+		key: "image_file",
+		accept: "image/*",
+		maxSize: 5 * 1024 * 1024, // 5MB
+		help: "Images only (PNG, JPEG, GIF, WebP) - Max 5MB",
+	});
+	// multiple: false（デフォルト）なので単一ファイルまたはnull
+	const imageFile = !Array.isArray(imageFileResult) ? imageFileResult : null;
+
+	if (imageFile) {
+		kt.success(`Image uploaded: ${imageFile.name}`);
+		// アップロードした画像をBase64で表示
+		const buffer = imageFile.arrayBuffer();
+		const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+		kt.image(`data:${imageFile.type};base64,${base64}`, {
+			caption: imageFile.name,
+			width: 300,
+			key: "uploaded_image_preview",
+		});
+	}
+
+	kt.subheader("Multiple Files");
+	const multiFilesResult = kt.file_uploader("Upload multiple files", {
+		key: "multi_files",
+		multiple: true,
+		accept: [".txt", ".csv", ".json"],
+		help: "Text, CSV, or JSON files",
+	});
+	// multiple: trueなのでファイル配列またはnull
+	const multiFiles = Array.isArray(multiFilesResult) ? multiFilesResult : [];
+
+	if (multiFiles.length > 0) {
+		kt.write(`${multiFiles.length} file(s) uploaded:`);
+		for (const file of multiFiles) {
+			kt.write(`- ${file.name} (${file.size} bytes, ${file.type})`);
+		}
+	}
+
+	kt.divider();
+
 	// ===== Form Section =====
 	kt.header("Form");
 	kt.form("contact_form", () => {
@@ -302,6 +369,13 @@ ${escapeHtml(
 			darkMode,
 			autoSave,
 			tags,
+			singleFile: singleFile
+				? { name: singleFile.name, size: singleFile.size, type: singleFile.type }
+				: null,
+			imageFile: imageFile
+				? { name: imageFile.name, size: imageFile.size, type: imageFile.type }
+				: null,
+			multiFiles: multiFiles.map((f) => ({ name: f.name, size: f.size, type: f.type })),
 		},
 		null,
 		2,

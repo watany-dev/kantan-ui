@@ -106,4 +106,5 @@ export const kt = {
 	multiselect: widgets.multiselect,
 	date_input: widgets.date_input,
 	time_input: widgets.time_input,
+	file_uploader: widgets.file_uploader,
 };
