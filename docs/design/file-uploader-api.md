@@ -14,7 +14,7 @@
 > - セキュアダウンロード
 > - 型エクスポート・公開API
 >
-> 1585件のテストが通過しています。
+> **1600件のテストが通過、カバレッジ: 96.17% statements, 91.41% branches, 98.13% functions, 96.57% lines**
 
 ## 1. 概要
 
@@ -494,14 +494,14 @@ interface FileUploadMessage {
   chunkIndex?: number;
 }
 
-// ファイルチャンクメッセージ（1MB超のファイル用）
-interface FileChunkMessage {
-  type: "file_chunk";
-  widgetId: string;
-  uploadId: string;
-  chunkIndex: number;
-  data: string;
-}
+// ファイルチャンクメッセージ（1MB超のファイル用）- 将来実装予定
+// interface FileChunkMessage {
+//   type: "file_chunk";
+//   widgetId: string;
+//   uploadId: string;
+//   chunkIndex: number;
+//   data: string;
+// }
 ```
 
 ### 6.2 サーバー → クライアント
@@ -1103,8 +1103,9 @@ describe("secure file download", () => {
 
 ### 完了時
 
-- [x] `bun run ci` 全パス（1585テスト通過）
+- [x] `bun run ci` 全パス（1600テスト通過）
 - [x] 全セキュリティ対策が実装されている
+- [x] knip（dead-code検出）パス - 未使用エクスポートなし
 - [ ] E2Eテストがパス（Playwright環境設定が必要）
 
 ### 実装されたファイル
@@ -1127,7 +1128,7 @@ describe("secure file download", () => {
 - `src/kt/widgets.ts` - kt.file_uploader 宣言的API
 
 **クライアント**
-- `src/client/file-upload-handler.ts` - ファイル読み込み・エンコード
+- `src/client/file-upload-handler.ts` - Base64エンコード、チャンク分割、検証ユーティリティ
 - `src/client/script.ts` - WebSocket送信処理
 
 **サーバー**

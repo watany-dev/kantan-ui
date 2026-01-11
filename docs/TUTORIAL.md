@@ -352,6 +352,92 @@ const description = kt.text_area("説明", "", {
 });
 ```
 
+### ファイルアップローダー
+
+ファイルをアップロードするウィジェットです。セキュリティ対策（マジックバイト検証、Polyglot検出、ファイル名サニタイズ）が組み込まれています。
+
+```typescript
+// 単一ファイル
+const file = kt.file_uploader("ファイルをアップロード");
+if (file) {
+  kt.write(`ファイル名: ${file.name}`);
+  kt.write(`サイズ: ${file.size} bytes`);
+  kt.write(`タイプ: ${file.type}`);
+
+  // テキストとして読み込み
+  const content = file.text();
+  kt.write(`内容: ${content}`);
+}
+```
+
+パラメータ:
+- 第1引数: ラベル
+- オプション: `{ accept, multiple, maxSize, key, disabled, help, strictMode }`
+
+```typescript
+// 画像のみ、サイズ制限付き
+const image = kt.file_uploader("画像をアップロード", {
+  accept: "image/*",
+  maxSize: 5 * 1024 * 1024,  // 5MB
+});
+
+// 複数ファイル
+const files = kt.file_uploader("複数ファイルをアップロード", {
+  multiple: true,
+});
+for (const f of files) {
+  kt.write(`${f.name}: ${f.size} bytes`);
+}
+
+// 特定の拡張子のみ
+const doc = kt.file_uploader("ドキュメントをアップロード", {
+  accept: [".pdf", ".docx", ".txt"],
+});
+```
+
+**UploadedFileオブジェクト:**
+
+| メソッド/プロパティ | 説明 |
+|-------------------|------|
+| `name` | サニタイズ済みファイル名 |
+| `size` | ファイルサイズ（バイト） |
+| `type` | 検証済みMIMEタイプ |
+| `text()` | UTF-8テキストとして取得 |
+| `arrayBuffer()` | バイナリデータとして取得 |
+| `stream()` | ReadableStreamとして取得 |
+
+```typescript
+// CSVファイルの処理例
+const csv = kt.file_uploader("CSVファイル", { accept: ".csv" });
+if (csv) {
+  const text = csv.text();
+  const lines = text.split("\n");
+  kt.write(`行数: ${lines.length}`);
+}
+
+// バイナリファイルの処理例
+const binary = kt.file_uploader("バイナリファイル");
+if (binary) {
+  const buffer = binary.arrayBuffer();
+  const view = new DataView(buffer);
+  kt.write(`最初のバイト: ${view.getUint8(0)}`);
+}
+```
+
+**セキュリティ機能:**
+
+- マジックバイト検証: ファイルの実際の内容からMIMEタイプを検証
+- Polyglot検出: 複数形式として解釈可能な悪意あるファイルを検出
+- ファイル名サニタイズ: パストラバーサル攻撃を防止
+- 危険なファイルのブロック: 実行可能ファイル（.exe, .sh等）を拒否
+
+```typescript
+// 厳格モード（警告もエラーとして扱う）
+const secure = kt.file_uploader("セキュアアップロード", {
+  strictMode: true,
+});
+```
+
 ### マルチセレクト
 
 複数の選択肢から複数を選択できます。
@@ -1109,7 +1195,9 @@ export default await createApp(script, {
 - ✅ 基本ウィジェット（button, slider, text_input, selectbox, download_button）
 - ✅ フォームウィジェット（checkbox, toggle, radio, number_input, text_area, multiselect）
 - ✅ 日付・時刻入力（date_input, time_input）
+- ✅ ファイルアップロード（file_uploader）
 - ✅ データ表示（table）
+- ✅ メディア（image）
 - ✅ レイアウト（tabs, sidebar, columns, container, expander）
 - ✅ チャットUI（chat_message, chat_container）
 - ✅ ページ設定（set_page_config, rerun）
@@ -1124,10 +1212,10 @@ export default await createApp(script, {
 ### 今後の予定（Phase 3-B/C）
 
 - キャッシュ: `kt.cache_data()`, `kt.cache_resource()`
-- データウィジェット: `kt.dataframe()`, `kt.file_uploader()`
+- データウィジェット: `kt.dataframe()`
 - チャート: `kt.line_chart()`, `kt.bar_chart()`
 - 追加ウィジェット: `kt.color_picker()`, `kt.metric()`
-- メディア: `kt.image()`, `kt.audio()`, `kt.video()`
+- メディア: `kt.audio()`, `kt.video()`
 - プラグインシステム
 
 ### 関連ドキュメント
