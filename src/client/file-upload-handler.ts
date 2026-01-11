@@ -19,7 +19,10 @@ export function arrayBufferToBase64(buffer: ArrayBuffer): string {
 	const bytes = new Uint8Array(buffer);
 	let binary = "";
 	for (let i = 0; i < bytes.length; i++) {
-		binary += String.fromCharCode(bytes[i]);
+		const byte = bytes[i];
+		if (byte !== undefined) {
+			binary += String.fromCharCode(byte);
+		}
 	}
 	return btoa(binary);
 }
@@ -54,7 +57,7 @@ export function createFileChunks(
  * 要素から最大ファイルサイズを取得
  */
 export function getMaxFileSize(element: HTMLElement): number {
-	const maxSizeStr = element.dataset?.maxSize;
+	const maxSizeStr = element.dataset?.["maxSize"];
 	if (!maxSizeStr) {
 		return DEFAULT_MAX_SIZE;
 	}
@@ -186,13 +189,16 @@ export interface FileReadOptions {
  * HTMLInputElementからファイル読み込みオプションを抽出
  */
 export function getFileReadOptions(element: HTMLInputElement): FileReadOptions {
-	return {
+	const result: FileReadOptions = {
 		maxSize: getMaxFileSize(element),
-		accept: element.accept || undefined,
-		strictMode: element.dataset.strictMode === "true",
-		detectPolyglot: element.dataset.detectPolyglot !== "false",
-		verifyMagicBytes: element.dataset.verifyMagicBytes !== "false",
+		strictMode: element.dataset["strictMode"] === "true",
+		detectPolyglot: element.dataset["detectPolyglot"] !== "false",
+		verifyMagicBytes: element.dataset["verifyMagicBytes"] !== "false",
 	};
+	if (element.accept) {
+		result.accept = element.accept;
+	}
+	return result;
 }
 
 /**
@@ -249,13 +255,13 @@ export function readFileAsArrayBuffer(file: File): Promise<FileReadResult> {
 export function validateAndReadFile(file: File, options: FileReadOptions): Promise<FileReadResult> {
 	// サイズ検証
 	const sizeResult = validateFileSize(file.size, options.maxSize);
-	if (!sizeResult.valid) {
+	if (!sizeResult.valid && sizeResult.error) {
 		return Promise.resolve({ success: false, error: sizeResult.error });
 	}
 
 	// タイプ検証
 	const typeResult = validateFileType(file.name, file.type, options.accept);
-	if (!typeResult.valid) {
+	if (!typeResult.valid && typeResult.error) {
 		return Promise.resolve({ success: false, error: typeResult.error });
 	}
 
@@ -291,6 +297,7 @@ export function createFileUploadMessage(
 
 	// チャンク分割が必要な場合
 	const chunks = createFileChunks(data, chunkSize);
+	const firstChunk = chunks[0] ?? "";
 	return {
 		message: {
 			type: "file_upload",
@@ -298,7 +305,7 @@ export function createFileUploadMessage(
 			filename,
 			mimeType,
 			size,
-			data: chunks[0],
+			data: firstChunk,
 			isChunked: true,
 			totalChunks: chunks.length,
 			chunkIndex: 0,

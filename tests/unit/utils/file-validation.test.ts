@@ -57,12 +57,12 @@ describe("validateUploadedFile", () => {
 		});
 
 		it("rejects file exceeding size limit", () => {
-			const data = createDataOfSize(300 * 1024 * 1024); // 300MB
+			const data = createDataOfSize(2048); // 2KB
 			const result = validateUploadedFile(data, "large.bin", "application/octet-stream", {
-				maxSize: 200 * 1024 * 1024, // 200MB
+				maxSize: 1024, // 1KB limit
 			});
 			expect(result.valid).toBe(false);
-			expect(result.errors[0].code).toBe("SIZE_EXCEEDED");
+			expect(result.errors[0]?.code).toBe("SIZE_EXCEEDED");
 		});
 
 		it("accepts file exactly at size limit", () => {

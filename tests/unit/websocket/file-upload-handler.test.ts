@@ -177,9 +177,11 @@ describe("file-upload-handler", () => {
 
 			const result = handleFileUpload(message, sessionId, manager);
 			expect(result.success).toBe(true);
+			expect(result.uploadId).toBeDefined();
+			if (!result.uploadId) return;
 
 			// Retrieve the upload
-			const upload = manager.getUpload(sessionId, result.uploadId!);
+			const upload = manager.getUpload(sessionId, result.uploadId);
 			expect(upload).not.toBeNull();
 			expect(upload?.originalName).toBe("test.txt");
 			// Note: Magic bytes verification returns application/octet-stream for text files

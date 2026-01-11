@@ -232,7 +232,10 @@ function bytesToString(bytes: Uint8Array): string {
 	// Use Latin-1 (ISO-8859-1) to preserve all byte values
 	const result: string[] = [];
 	for (let i = 0; i < bytes.length; i++) {
-		result.push(String.fromCharCode(bytes[i]));
+		const byte = bytes[i];
+		if (byte !== undefined) {
+			result.push(String.fromCharCode(byte));
+		}
 	}
 	return result.join("");
 }

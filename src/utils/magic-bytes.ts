@@ -145,7 +145,9 @@ export function verifyMagicBytes(data: ArrayBuffer, claimedMime: string): MagicB
 	const dangerCheck = checkDangerousSignatures(bytes);
 	if (dangerCheck.isDangerous) {
 		result.isDangerous = true;
-		result.dangerousReason = dangerCheck.reason;
+		if (dangerCheck.reason) {
+			result.dangerousReason = dangerCheck.reason;
+		}
 		result.mismatch = true; // Dangerous files always mismatch safe types
 		return result;
 	}

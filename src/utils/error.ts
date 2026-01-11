@@ -10,7 +10,14 @@ export type ErrorCode =
 	| "SESSION_ID_REQUIRED"
 	| "INVALID_MESSAGE"
 	| "RATE_LIMITED"
-	| "UNKNOWN";
+	| "UNKNOWN"
+	// File upload error codes
+	| "SIZE_EXCEEDED"
+	| "TYPE_NOT_ALLOWED"
+	| "DANGEROUS_FILE"
+	| "DECODE_ERROR"
+	| "VALIDATION_ERROR"
+	| "SESSION_LIMIT";
 
 /**
  * WebSocket用エラーメッセージを生成する

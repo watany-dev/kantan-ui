@@ -73,7 +73,8 @@ export function getFileUploaderValue(
 	}
 
 	// 単一モード: 最初のファイルを返す
-	return uploadedFiles.length > 0 ? uploadedFiles[0] : null;
+	const firstFile = uploadedFiles[0];
+	return firstFile !== undefined ? firstFile : null;
 }
 
 /**

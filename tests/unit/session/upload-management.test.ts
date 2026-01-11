@@ -56,8 +56,9 @@ describe("SessionManager upload management", () => {
 			const data = new TextEncoder().encode("content").buffer;
 			const id = manager.registerUpload(sessionId, data, "test.txt", "text/plain");
 			expect(id).not.toBeNull();
+			if (id === null) return;
 
-			const upload = manager.getUpload(sessionId, id!);
+			const upload = manager.getUpload(sessionId, id);
 			expect(upload).not.toBeNull();
 			expect(upload?.originalName).toBe("test.txt");
 			expect(upload?.verifiedMime).toBe("text/plain");
@@ -73,8 +74,9 @@ describe("SessionManager upload management", () => {
 			const data = new ArrayBuffer(100);
 			const id = manager.registerUpload(sessionId, data, "test.txt", "text/plain");
 			expect(id).not.toBeNull();
+			if (id === null) return;
 
-			const upload = manager.getUpload("invalid-session", id!);
+			const upload = manager.getUpload("invalid-session", id);
 			expect(upload).toBeNull();
 		});
 
@@ -82,13 +84,14 @@ describe("SessionManager upload management", () => {
 			const data = new ArrayBuffer(100);
 			const id = manager.registerUpload(sessionId, data, "test.txt", "text/plain");
 			expect(id).not.toBeNull();
+			if (id === null) return;
 
 			// First retrieval
-			const upload1 = manager.getUpload(sessionId, id!);
+			const upload1 = manager.getUpload(sessionId, id);
 			expect(upload1).not.toBeNull();
 
 			// Second retrieval should still work
-			const upload2 = manager.getUpload(sessionId, id!);
+			const upload2 = manager.getUpload(sessionId, id);
 			expect(upload2).not.toBeNull();
 		});
 	});
@@ -144,11 +147,12 @@ describe("SessionManager upload management", () => {
 		it("removes specific upload", () => {
 			const id = manager.registerUpload(sessionId, new ArrayBuffer(100), "test.txt", "text/plain");
 			expect(id).not.toBeNull();
+			if (id === null) return;
 
-			const removed = manager.removeUpload(sessionId, id!);
+			const removed = manager.removeUpload(sessionId, id);
 			expect(removed).toBe(true);
 
-			const upload = manager.getUpload(sessionId, id!);
+			const upload = manager.getUpload(sessionId, id);
 			expect(upload).toBeNull();
 		});
 
@@ -199,12 +203,13 @@ describe("SessionManager upload management", () => {
 		it("deletes uploads when session is destroyed", () => {
 			const id = manager.registerUpload(sessionId, new ArrayBuffer(100), "test.txt", "text/plain");
 			expect(id).not.toBeNull();
+			if (id === null) return;
 
 			// Delete session
 			manager.deleteSession(sessionId);
 
 			// Upload should be gone
-			const upload = manager.getUpload(sessionId, id!);
+			const upload = manager.getUpload(sessionId, id);
 			expect(upload).toBeNull();
 		});
 	});
