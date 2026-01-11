@@ -341,6 +341,15 @@ function sendEventDebounced(widgetId, value, sendFn) {
 // File upload handling
 const FILE_UPLOAD_DEFAULT_MAX_SIZE = 200 * 1024 * 1024;
 const FILE_UPLOAD_CHUNK_SIZE = 1 * 1024 * 1024;
+const CHUNK_UPLOAD_THRESHOLD = 10 * 1024 * 1024; // 10MB
+
+function shouldUseChunkedUpload(fileSize) {
+  return fileSize > CHUNK_UPLOAD_THRESHOLD;
+}
+
+function generateUploadId() {
+  return 'upload-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+}
 
 function arrayBufferToBase64(buffer) {
   if (buffer.byteLength === 0) return "";
@@ -467,6 +476,128 @@ function hideUploadError(widgetId) {
 // Map to track pending uploads for completion handling
 const pendingUploads = new Map();
 
+// Map to track pending chunk uploads { uploadId -> { widgetId, filename, totalChunks, receivedChunks, resolve, reject } }
+const pendingChunkUploads = new Map();
+
+// Handle chunked upload for large files
+function handleChunkedUpload(widgetId, file, data) {
+  return new Promise(function(resolve, reject) {
+    const uploadId = generateUploadId();
+    const totalChunks = Math.ceil(data.byteLength / FILE_UPLOAD_CHUNK_SIZE);
+    const mimeType = file.type || "application/octet-stream";
+
+    // Store pending chunk upload info
+    pendingChunkUploads.set(uploadId, {
+      widgetId: widgetId,
+      filename: file.name,
+      totalChunks: totalChunks,
+      receivedChunks: 0,
+      resolve: resolve,
+      reject: reject
+    });
+
+    // Send start message
+    const startMessage = {
+      type: "chunk_upload_start",
+      widgetId: widgetId,
+      uploadId: uploadId,
+      filename: file.name,
+      mimeType: mimeType,
+      totalSize: file.size,
+      totalChunks: totalChunks,
+      chunkSize: FILE_UPLOAD_CHUNK_SIZE
+    };
+
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      pendingChunkUploads.delete(uploadId);
+      reject(new Error("WebSocket not connected"));
+      return;
+    }
+
+    ws.send(JSON.stringify(startMessage));
+
+    // Send chunks
+    const bytes = new Uint8Array(data);
+    let chunkIndex = 0;
+
+    function sendNextChunk() {
+      if (chunkIndex >= totalChunks) {
+        // Send end message
+        const endMessage = {
+          type: "chunk_upload_end",
+          uploadId: uploadId
+        };
+        ws.send(JSON.stringify(endMessage));
+        return;
+      }
+
+      const start = chunkIndex * FILE_UPLOAD_CHUNK_SIZE;
+      const end = Math.min(start + FILE_UPLOAD_CHUNK_SIZE, bytes.length);
+      const chunk = bytes.slice(start, end);
+      const base64Chunk = arrayBufferToBase64(chunk.buffer);
+
+      const chunkMessage = {
+        type: "chunk_upload_data",
+        uploadId: uploadId,
+        chunkIndex: chunkIndex,
+        data: base64Chunk
+      };
+
+      ws.send(JSON.stringify(chunkMessage));
+
+      // Update progress
+      const progress = 50 + (chunkIndex + 1) / totalChunks * 40; // 50-90%
+      const uploadedBytes = Math.min((chunkIndex + 1) * FILE_UPLOAD_CHUNK_SIZE, bytes.length);
+      updateUploadProgress(widgetId, progress, uploadedBytes, bytes.length);
+
+      chunkIndex++;
+
+      // Send next chunk after a small delay to avoid overwhelming the connection
+      setTimeout(sendNextChunk, 10);
+    }
+
+    // Start sending chunks
+    sendNextChunk();
+  });
+}
+
+// Handle chunk upload response from server
+function handleChunkUploadResponse(msg) {
+  const uploadId = msg.uploadId;
+  const pending = pendingChunkUploads.get(uploadId);
+
+  if (!pending) {
+    console.warn("Received chunk response for unknown upload:", uploadId);
+    return;
+  }
+
+  if (msg.status === "error") {
+    hideUploadProgress(pending.widgetId);
+    const container = getWidgetContainer(pending.widgetId);
+    if (container) {
+      const errorDiv = container.querySelector(".kt-file-uploader-error");
+      if (errorDiv) {
+        errorDiv.style.display = "block";
+        errorDiv.textContent = msg.error ? msg.error.message : "Upload failed";
+      }
+    }
+    pendingChunkUploads.delete(uploadId);
+    pending.reject(new Error(msg.error ? msg.error.message : "Upload failed"));
+    return;
+  }
+
+  if (msg.status === "chunk_received") {
+    pending.receivedChunks++;
+    // Progress is already updated when sending chunks
+  }
+
+  if (msg.status === "upload_complete") {
+    showUploadComplete(pending.widgetId, pending.filename, msg.registeredUploadId);
+    pendingChunkUploads.delete(uploadId);
+    pending.resolve(msg.registeredUploadId);
+  }
+}
+
 function handleFileUpload(inputElement) {
   const files = inputElement.files;
   if (!files || files.length === 0) return;
@@ -520,6 +651,18 @@ function handleFileUpload(inputElement) {
       if (!(data instanceof ArrayBuffer)) {
         console.error("Failed to read file as ArrayBuffer");
         hideUploadProgress(widgetId);
+        return;
+      }
+
+      // Check if we should use chunked upload for large files
+      if (shouldUseChunkedUpload(file.size)) {
+        // Use chunked upload for files > 10MB
+        updateUploadProgress(widgetId, 50, file.size / 2, file.size);
+        handleChunkedUpload(widgetId, file, data).catch(function(error) {
+          console.error("Chunked upload failed:", error);
+          hideUploadProgress(widgetId);
+          showUploadError(inputElement, error.message || "Upload failed");
+        });
         return;
       }
 
@@ -819,6 +962,10 @@ function connect() {
 
     if (msg.type === "upload_result") {
       handleUploadResult(msg);
+    }
+
+    if (msg.type === "chunk_upload_response") {
+      handleChunkUploadResponse(msg);
     }
   };
 
