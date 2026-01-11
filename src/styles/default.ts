@@ -834,5 +834,4 @@ export {
 	sidebarStyles,
 	imageStyles,
 	formStyles,
-	emptyStyles,
 };
