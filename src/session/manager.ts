@@ -1,5 +1,9 @@
 import type { WSContext } from "hono/ws";
-import { DEFAULT_SECURITY_CONFIG, DEFAULT_SESSION_CONFIG } from "../config";
+import {
+	DEFAULT_FILE_UPLOAD_RATE_LIMIT_CONFIG,
+	DEFAULT_SECURITY_CONFIG,
+	DEFAULT_SESSION_CONFIG,
+} from "../config";
 import type { ResolvedSessionConfig, SecurityConfig, SessionConfig } from "../config/types";
 import { MAX_PATCH_HISTORY } from "../constants";
 import { isUUID } from "../utils/type-guards";
@@ -29,6 +33,25 @@ interface RateLimitState {
 /** レート制限結果 */
 export interface RateLimitResult {
 	allowed: boolean;
+	retryAfter?: number; // ミリ秒
+}
+
+/** ファイルアップロードレート制限の状態 */
+interface FileUploadRateLimitState {
+	/** 現在のウィンドウでのアップロード数 */
+	uploadCount: number;
+	/** 現在のウィンドウでのアップロードバイト数 */
+	bytesUploaded: number;
+	/** ウィンドウ開始時刻（ミリ秒） */
+	windowStart: number;
+	/** 現在進行中のアップロード数 */
+	concurrentUploads: number;
+}
+
+/** ファイルアップロードレート制限結果 */
+export interface FileUploadRateLimitResult {
+	allowed: boolean;
+	reason?: "count_exceeded" | "bytes_exceeded" | "concurrent_exceeded" | "cooldown";
 	retryAfter?: number; // ミリ秒
 }
 
@@ -69,6 +92,10 @@ export class SessionManager {
 	// レート制限関連
 	private rateLimitStates = new Map<SessionId, RateLimitState>();
 
+	// ファイルアップロードレート制限関連
+	private fileUploadRateLimitStates = new Map<SessionId, FileUploadRateLimitState>();
+	private static readonly FILE_UPLOAD_WINDOW_MS = 60 * 1000; // 1分間
+
 	// ダウンロードデータ（Blobストリーミング用）
 	private downloadData = new Map<DownloadId, DownloadData>();
 	private static readonly DOWNLOAD_TTL = 60 * 1000; // 1分間有効
@@ -91,6 +118,10 @@ export class SessionManager {
 		this.securityConfig = {
 			...DEFAULT_SECURITY_CONFIG,
 			...securityConfig,
+			fileUploadRateLimit: {
+				...DEFAULT_FILE_UPLOAD_RATE_LIMIT_CONFIG,
+				...securityConfig.fileUploadRateLimit,
+			},
 		};
 
 		// 定期的なクリーンアップを開始
@@ -387,6 +418,7 @@ export class SessionManager {
 		this.eventQueues.delete(id);
 		this.processingFlags.delete(id);
 		this.rateLimitStates.delete(id);
+		this.fileUploadRateLimitStates.delete(id);
 		this.abortControllers.delete(id);
 		this.uploadData.delete(id); // アップロードデータも削除
 		return deleted;
@@ -561,6 +593,122 @@ export class SessionManager {
 	 */
 	resetRateLimit(sessionId: SessionId): void {
 		this.rateLimitStates.delete(sessionId);
+	}
+
+	/**
+	 * ファイルアップロードレート制限の状態を取得または作成
+	 */
+	private getOrCreateFileUploadRateLimitState(sessionId: SessionId): FileUploadRateLimitState {
+		let state = this.fileUploadRateLimitStates.get(sessionId);
+		const now = Date.now();
+
+		if (!state) {
+			state = {
+				uploadCount: 0,
+				bytesUploaded: 0,
+				windowStart: now,
+				concurrentUploads: 0,
+			};
+			this.fileUploadRateLimitStates.set(sessionId, state);
+		} else if (now - state.windowStart >= SessionManager.FILE_UPLOAD_WINDOW_MS) {
+			// ウィンドウがリセットされた場合
+			state.uploadCount = 0;
+			state.bytesUploaded = 0;
+			state.windowStart = now;
+		}
+
+		return state;
+	}
+
+	/**
+	 * ファイルアップロードのレート制限をチェック
+	 */
+	checkFileUploadRateLimit(sessionId: SessionId, fileSize: number): FileUploadRateLimitResult {
+		const config = this.securityConfig.fileUploadRateLimit;
+		const maxConcurrent =
+			config.maxConcurrentUploads ?? DEFAULT_FILE_UPLOAD_RATE_LIMIT_CONFIG.maxConcurrentUploads;
+		const maxUploads =
+			config.maxUploadsPerMinute ?? DEFAULT_FILE_UPLOAD_RATE_LIMIT_CONFIG.maxUploadsPerMinute;
+		const maxBytes =
+			config.maxBytesPerMinute ?? DEFAULT_FILE_UPLOAD_RATE_LIMIT_CONFIG.maxBytesPerMinute;
+		const cooldown =
+			config.uploadRateLimitCooldown ??
+			DEFAULT_FILE_UPLOAD_RATE_LIMIT_CONFIG.uploadRateLimitCooldown;
+
+		const state = this.getOrCreateFileUploadRateLimitState(sessionId);
+		const now = Date.now();
+		const windowRemaining = SessionManager.FILE_UPLOAD_WINDOW_MS - (now - state.windowStart);
+
+		// 同時アップロード数チェック
+		if (state.concurrentUploads >= maxConcurrent) {
+			return {
+				allowed: false,
+				reason: "concurrent_exceeded",
+				retryAfter: cooldown,
+			};
+		}
+
+		// アップロード数チェック
+		if (state.uploadCount >= maxUploads) {
+			return {
+				allowed: false,
+				reason: "count_exceeded",
+				retryAfter: Math.max(windowRemaining, 0),
+			};
+		}
+
+		// バイト数チェック（現在のアップロード済みバイト + 新しいファイルサイズ）
+		if (state.bytesUploaded + fileSize > maxBytes) {
+			return {
+				allowed: false,
+				reason: "bytes_exceeded",
+				retryAfter: Math.max(windowRemaining, 0),
+			};
+		}
+
+		return { allowed: true };
+	}
+
+	/**
+	 * 同時アップロード数をインクリメント
+	 */
+	incrementConcurrentUploads(sessionId: SessionId): void {
+		const state = this.getOrCreateFileUploadRateLimitState(sessionId);
+		state.concurrentUploads++;
+	}
+
+	/**
+	 * 同時アップロード数をデクリメント
+	 */
+	decrementConcurrentUploads(sessionId: SessionId): void {
+		const state = this.fileUploadRateLimitStates.get(sessionId);
+		if (state && state.concurrentUploads > 0) {
+			state.concurrentUploads--;
+		}
+	}
+
+	/**
+	 * 同時アップロード数を取得
+	 */
+	getConcurrentUploads(sessionId: SessionId): number {
+		const state = this.fileUploadRateLimitStates.get(sessionId);
+		return state?.concurrentUploads ?? 0;
+	}
+
+	/**
+	 * ファイルアップロード完了を記録
+	 */
+	recordFileUploadCompletion(sessionId: SessionId, fileSize: number): void {
+		const state = this.getOrCreateFileUploadRateLimitState(sessionId);
+		state.uploadCount++;
+		state.bytesUploaded += fileSize;
+	}
+
+	/**
+	 * ファイルアップロードレート制限をリセット
+	 */
+	resetFileUploadRateLimit(sessionId: SessionId): void {
+		this.fileUploadRateLimitStates.delete(sessionId);
 	}
 
 	/**
