@@ -18,11 +18,10 @@ test.describe("Empty Placeholder API", () => {
 		await gotoAndWait(page);
 
 		// Show Spinnerボタンをクリック
-		const showSpinnerBtn = page.locator('[data-kt-event="click"]', { hasText: "Show Spinner" });
-		await showSpinnerBtn.click();
+		await page.click('button:has-text("Show Spinner")');
 
 		// スピナーが表示される
-		const spinner = page.locator(".kt-spinner");
+		const spinner = page.locator("#kt-empty-status_placeholder .kt-spinner");
 		await expect(spinner).toBeVisible({ timeout: 5000 });
 		await expect(spinner).toContainText("Processing...");
 	});
@@ -31,8 +30,7 @@ test.describe("Empty Placeholder API", () => {
 		await gotoAndWait(page);
 
 		// Show Successボタンをクリック
-		const showSuccessBtn = page.locator('[data-kt-event="click"]', { hasText: "Show Success" });
-		await showSuccessBtn.click();
+		await page.click('button:has-text("Show Success")');
 
 		// 成功アラートが表示される
 		const alert = page.locator("#kt-empty-status_placeholder .kt-alert-success");
@@ -44,8 +42,7 @@ test.describe("Empty Placeholder API", () => {
 		await gotoAndWait(page);
 
 		// Show Errorボタンをクリック
-		const showErrorBtn = page.locator('[data-kt-event="click"]', { hasText: "Show Error" });
-		await showErrorBtn.click();
+		await page.click('button:has-text("Show Error")');
 
 		// エラーアラートが表示される
 		const alert = page.locator("#kt-empty-status_placeholder .kt-alert-error");
@@ -57,13 +54,13 @@ test.describe("Empty Placeholder API", () => {
 		await gotoAndWait(page);
 
 		// まずスピナーを表示
-		const showSpinnerBtn = page.locator('[data-kt-event="click"]', { hasText: "Show Spinner" });
-		await showSpinnerBtn.click();
-		await expect(page.locator(".kt-spinner")).toBeVisible({ timeout: 5000 });
+		await page.click('button:has-text("Show Spinner")');
+		await expect(page.locator("#kt-empty-status_placeholder .kt-spinner")).toBeVisible({
+			timeout: 5000,
+		});
 
 		// Clear Statusボタンをクリック
-		const clearBtn = page.locator('[data-kt-event="click"]', { hasText: "Clear Status" });
-		await clearBtn.click();
+		await page.click('button:has-text("Clear Status")');
 
 		// プレースホルダーが空になる
 		const placeholder = page.locator("#kt-empty-status_placeholder");
@@ -74,12 +71,13 @@ test.describe("Empty Placeholder API", () => {
 		await gotoAndWait(page);
 
 		// Show Progressボタンをクリック
-		const showProgressBtn = page.locator('[data-kt-event="click"]', { hasText: "Show Progress" });
-		await showProgressBtn.click();
+		await page.click('button:has-text("Show Progress")');
 
 		// プログレスバーが表示される
 		const progress = page.locator("#kt-empty-progress_placeholder .kt-progress");
 		await expect(progress).toBeVisible({ timeout: 5000 });
+
+		// value属性を確認（0.5 = 50% → value="50"）
 		await expect(progress).toHaveAttribute("value", "50");
 
 		// プログレステキストが表示される
@@ -91,15 +89,13 @@ test.describe("Empty Placeholder API", () => {
 		await gotoAndWait(page);
 
 		// 成功メッセージを表示
-		const showSuccessBtn = page.locator('[data-kt-event="click"]', { hasText: "Show Success" });
-		await showSuccessBtn.click();
+		await page.click('button:has-text("Show Success")');
 		await expect(page.locator("#kt-empty-status_placeholder .kt-alert-success")).toBeVisible({
 			timeout: 5000,
 		});
 
 		// カウンターをインクリメント（別のボタン操作でrerunをトリガー）
-		const incrementBtn = page.locator('[data-kt-event="click"]', { hasText: "+ Increment" });
-		await incrementBtn.click();
+		await page.click('button:has-text("+ Increment")');
 
 		// 成功メッセージがまだ表示されている（状態が保持されている）
 		await expect(page.locator("#kt-empty-status_placeholder .kt-alert-success")).toBeVisible({
@@ -110,34 +106,28 @@ test.describe("Empty Placeholder API", () => {
 	test("switching between different content types works", async ({ page }) => {
 		await gotoAndWait(page);
 
-		// スピナー → 成功 → エラー → クリア の順にテスト
-		const showSpinnerBtn = page.locator('[data-kt-event="click"]', { hasText: "Show Spinner" });
-		const showSuccessBtn = page.locator('[data-kt-event="click"]', { hasText: "Show Success" });
-		const showErrorBtn = page.locator('[data-kt-event="click"]', { hasText: "Show Error" });
-		const clearBtn = page.locator('[data-kt-event="click"]', { hasText: "Clear Status" });
-
 		// スピナー表示
-		await showSpinnerBtn.click();
+		await page.click('button:has-text("Show Spinner")');
 		await expect(page.locator("#kt-empty-status_placeholder .kt-spinner")).toBeVisible({
 			timeout: 5000,
 		});
 
 		// 成功に切り替え
-		await showSuccessBtn.click();
+		await page.click('button:has-text("Show Success")');
 		await expect(page.locator("#kt-empty-status_placeholder .kt-alert-success")).toBeVisible({
 			timeout: 5000,
 		});
 		await expect(page.locator("#kt-empty-status_placeholder .kt-spinner")).not.toBeVisible();
 
 		// エラーに切り替え
-		await showErrorBtn.click();
+		await page.click('button:has-text("Show Error")');
 		await expect(page.locator("#kt-empty-status_placeholder .kt-alert-error")).toBeVisible({
 			timeout: 5000,
 		});
 		await expect(page.locator("#kt-empty-status_placeholder .kt-alert-success")).not.toBeVisible();
 
 		// クリア
-		await clearBtn.click();
+		await page.click('button:has-text("Clear Status")');
 		await expect(page.locator("#kt-empty-status_placeholder")).toBeEmpty({ timeout: 5000 });
 	});
 });
