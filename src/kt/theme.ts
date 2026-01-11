@@ -54,17 +54,3 @@ export const messageColors: Record<MessageType, MessageColorScheme> = {
 	warning: { bg: "#fff3cd", border: "#ffeeba", icon: "⚠" },
 	info: { bg: "#d1ecf1", border: "#bee5eb", icon: "ℹ" },
 };
-
-// ============================================
-// Legacy Type Aliases (backward compatibility)
-// ============================================
-
-/**
- * @deprecated Use MessageType instead
- */
-export type AlertType = MessageType;
-
-/**
- * @deprecated Use MessageType instead
- */
-export type ToastType = MessageType;

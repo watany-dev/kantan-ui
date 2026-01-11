@@ -6,12 +6,7 @@
 // Alert & Toast (re-export from theme)
 // ============================================
 
-export type {
-	AlertType,
-	MessageColorScheme,
-	MessageType,
-	ToastType,
-} from "../kt/theme";
+export type { MessageColorScheme, MessageType } from "../kt/theme";
 
 // ============================================
 // Spinner
