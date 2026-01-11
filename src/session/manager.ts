@@ -7,6 +7,7 @@ import {
 import type { ResolvedSessionConfig, SecurityConfig, SessionConfig } from "../config/types";
 import { MAX_PATCH_HISTORY } from "../constants";
 import { isUUID } from "../utils/type-guards";
+import type { ChunkUploadStartMessage } from "../websocket/types";
 import type { InternalUploadData } from "../widgets/types";
 import { FILE_UPLOAD_LIMITS } from "../widgets/types";
 import type {
@@ -53,6 +54,37 @@ export interface FileUploadRateLimitResult {
 	allowed: boolean;
 	reason?: "count_exceeded" | "bytes_exceeded" | "concurrent_exceeded" | "cooldown";
 	retryAfter?: number; // ミリ秒
+}
+
+/** チャンクアップロードの状態 */
+interface ChunkUploadState {
+	uploadId: string;
+	sessionId: SessionId;
+	widgetId: string;
+	filename: string;
+	mimeType: string;
+	totalSize: number;
+	totalChunks: number;
+	chunkSize: number;
+	receivedChunks: Set<number>;
+	chunks: Map<number, ArrayBuffer>;
+	startedAt: number;
+	lastActivityAt: number;
+}
+
+/** チャンクアップロード進捗情報 */
+export interface ChunkUploadProgress {
+	totalChunks: number;
+	receivedChunks: number;
+	percentage: number;
+}
+
+/** チャンクアップロードメタデータ */
+export interface ChunkUploadMetadata {
+	widgetId: string;
+	filename: string;
+	mimeType: string;
+	totalSize: number;
 }
 
 // イベント処理コールバックの型
@@ -102,6 +134,10 @@ export class SessionManager {
 
 	// アップロードデータ（セッション毎に管理）
 	private uploadData = new Map<SessionId, Map<UploadId, InternalUploadData>>();
+
+	// チャンクアップロード関連
+	private chunkUploads = new Map<string, ChunkUploadState>();
+	private static readonly CHUNK_UPLOAD_TIMEOUT = 5 * 60 * 1000; // 5分間
 
 	// Web標準 TextEncoder（バイトサイズ計算用）
 	private static readonly textEncoder = new TextEncoder();
@@ -868,6 +904,178 @@ export class SessionManager {
 			// 空のセッションマップは削除
 			if (uploads.size === 0) {
 				this.uploadData.delete(sessionId);
+			}
+		}
+
+		return cleaned;
+	}
+
+	// ============================================================================
+	// Chunk Upload Management
+	// ============================================================================
+
+	/**
+	 * チャンクアップロードを開始
+	 * @returns uploadId。セッションが無効または重複uploadIdの場合はnull
+	 */
+	startChunkUpload(sessionId: SessionId, message: ChunkUploadStartMessage): string | null {
+		// セッション存在確認
+		const session = this.sessions.get(sessionId);
+		if (!session) {
+			return null;
+		}
+
+		// 重複uploadIdチェック
+		if (this.chunkUploads.has(message.uploadId)) {
+			return null;
+		}
+
+		const now = Date.now();
+		const state: ChunkUploadState = {
+			uploadId: message.uploadId,
+			sessionId,
+			widgetId: message.widgetId,
+			filename: message.filename,
+			mimeType: message.mimeType,
+			totalSize: message.totalSize,
+			totalChunks: message.totalChunks,
+			chunkSize: message.chunkSize,
+			receivedChunks: new Set(),
+			chunks: new Map(),
+			startedAt: now,
+			lastActivityAt: now,
+		};
+
+		this.chunkUploads.set(message.uploadId, state);
+		return message.uploadId;
+	}
+
+	/**
+	 * チャンクデータを受信
+	 * @returns 受信成功の場合true。uploadIdが存在しない、重複チャンク、または範囲外の場合false
+	 */
+	receiveChunk(uploadId: string, chunkIndex: number, base64Data: string): boolean {
+		const state = this.chunkUploads.get(uploadId);
+		if (!state) {
+			return false;
+		}
+
+		// チャンクインデックスの範囲チェック
+		if (chunkIndex < 0 || chunkIndex >= state.totalChunks) {
+			return false;
+		}
+
+		// 重複チャンクチェック（冪等性のため、成功ではなく失敗を返す）
+		if (state.receivedChunks.has(chunkIndex)) {
+			return false;
+		}
+
+		// Base64デコード
+		try {
+			const binaryString = atob(base64Data);
+			const bytes = new Uint8Array(binaryString.length);
+			for (let i = 0; i < binaryString.length; i++) {
+				bytes[i] = binaryString.charCodeAt(i);
+			}
+			state.chunks.set(chunkIndex, bytes.buffer);
+			state.receivedChunks.add(chunkIndex);
+			state.lastActivityAt = Date.now();
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * チャンクアップロードを完了し、結合されたデータを返す
+	 * @returns 結合されたArrayBuffer。全チャンクが揃っていない場合やuploadIdが存在しない場合はnull
+	 */
+	completeChunkUpload(uploadId: string): ArrayBuffer | null {
+		const state = this.chunkUploads.get(uploadId);
+		if (!state) {
+			return null;
+		}
+
+		// 全チャンクが揃っているか確認
+		if (state.receivedChunks.size !== state.totalChunks) {
+			return null;
+		}
+
+		// チャンクを順番に結合
+		const totalLength = Array.from(state.chunks.values()).reduce(
+			(sum, chunk) => sum + chunk.byteLength,
+			0,
+		);
+		const result = new Uint8Array(totalLength);
+		let offset = 0;
+
+		for (let i = 0; i < state.totalChunks; i++) {
+			const chunk = state.chunks.get(i);
+			if (!chunk) {
+				return null;
+			}
+			result.set(new Uint8Array(chunk), offset);
+			offset += chunk.byteLength;
+		}
+
+		// 状態をクリーンアップ
+		this.chunkUploads.delete(uploadId);
+
+		return result.buffer;
+	}
+
+	/**
+	 * チャンクアップロードの進捗を取得
+	 */
+	getChunkUploadProgress(uploadId: string): ChunkUploadProgress | null {
+		const state = this.chunkUploads.get(uploadId);
+		if (!state) {
+			return null;
+		}
+
+		return {
+			totalChunks: state.totalChunks,
+			receivedChunks: state.receivedChunks.size,
+			percentage: Math.floor((state.receivedChunks.size / state.totalChunks) * 100),
+		};
+	}
+
+	/**
+	 * チャンクアップロードのメタデータを取得
+	 */
+	getChunkUploadMetadata(uploadId: string): ChunkUploadMetadata | null {
+		const state = this.chunkUploads.get(uploadId);
+		if (!state) {
+			return null;
+		}
+
+		return {
+			widgetId: state.widgetId,
+			filename: state.filename,
+			mimeType: state.mimeType,
+			totalSize: state.totalSize,
+		};
+	}
+
+	/**
+	 * チャンクアップロードをキャンセル
+	 * @returns キャンセル成功の場合true
+	 */
+	cancelChunkUpload(uploadId: string): boolean {
+		return this.chunkUploads.delete(uploadId);
+	}
+
+	/**
+	 * 期限切れのチャンクアップロードをクリーンアップ
+	 */
+	cleanupExpiredChunkUploads(): number {
+		const now = Date.now();
+		let cleaned = 0;
+
+		for (const [uploadId, state] of this.chunkUploads) {
+			if (now - state.lastActivityAt > SessionManager.CHUNK_UPLOAD_TIMEOUT) {
+				this.chunkUploads.delete(uploadId);
+				cleaned++;
 			}
 		}
 
