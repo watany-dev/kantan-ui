@@ -6,9 +6,11 @@ import {
 	arrayBufferToBase64,
 	createFileChunks,
 	formatBytes,
+	getChunkCount,
 	getMaxFileSize,
 	hideUploadError,
 	hideUploadProgress,
+	shouldUseChunkedUpload,
 	showUploadComplete,
 	showUploadError,
 	updateUploadProgress,
@@ -297,6 +299,67 @@ describe("file-upload-handler", () => {
 				hideUploadError("uploader1");
 				expect(error.style.display).toBe("none");
 			});
+		});
+	});
+
+	describe("shouldUseChunkedUpload", () => {
+		it("returns false for small files (< 10MB)", () => {
+			const smallSize = 5 * 1024 * 1024; // 5MB
+			expect(shouldUseChunkedUpload(smallSize)).toBe(false);
+		});
+
+		it("returns false for files exactly at threshold", () => {
+			const thresholdSize = 10 * 1024 * 1024; // 10MB exactly
+			expect(shouldUseChunkedUpload(thresholdSize)).toBe(false);
+		});
+
+		it("returns true for files larger than threshold", () => {
+			const largeSize = 10 * 1024 * 1024 + 1; // 10MB + 1 byte
+			expect(shouldUseChunkedUpload(largeSize)).toBe(true);
+		});
+
+		it("returns true for large files (100MB)", () => {
+			const veryLargeSize = 100 * 1024 * 1024; // 100MB
+			expect(shouldUseChunkedUpload(veryLargeSize)).toBe(true);
+		});
+
+		it("returns false for zero size", () => {
+			expect(shouldUseChunkedUpload(0)).toBe(false);
+		});
+
+		it("allows custom threshold", () => {
+			const customThreshold = 5 * 1024 * 1024; // 5MB
+			const fileSize = 6 * 1024 * 1024; // 6MB
+			expect(shouldUseChunkedUpload(fileSize, customThreshold)).toBe(true);
+		});
+	});
+
+	describe("getChunkCount", () => {
+		it("returns 1 for small files", () => {
+			const size = 500 * 1024; // 500KB
+			expect(getChunkCount(size)).toBe(1);
+		});
+
+		it("returns correct count for exact multiple", () => {
+			const chunkSize = 1024 * 1024; // 1MB default
+			const size = 5 * chunkSize; // 5MB
+			expect(getChunkCount(size)).toBe(5);
+		});
+
+		it("rounds up for partial chunks", () => {
+			const chunkSize = 1024 * 1024; // 1MB default
+			const size = 2 * chunkSize + 1; // 2MB + 1 byte
+			expect(getChunkCount(size)).toBe(3);
+		});
+
+		it("returns 0 for zero size", () => {
+			expect(getChunkCount(0)).toBe(0);
+		});
+
+		it("allows custom chunk size", () => {
+			const customChunkSize = 512 * 1024; // 512KB
+			const size = 2 * 1024 * 1024; // 2MB
+			expect(getChunkCount(size, customChunkSize)).toBe(4);
 		});
 	});
 });

@@ -9,6 +9,9 @@ const DEFAULT_MAX_SIZE = 200 * 1024 * 1024;
 /** デフォルトのチャンクサイズ (1MB) */
 const DEFAULT_CHUNK_SIZE = 1 * 1024 * 1024;
 
+/** チャンクアップロードを使用するファイルサイズ閾値 (10MB) */
+const CHUNK_UPLOAD_THRESHOLD = 10 * 1024 * 1024;
+
 /**
  * ArrayBufferをBase64文字列に変換
  */
@@ -279,4 +282,28 @@ export function hideUploadError(widgetId: string): void {
 	if (errorDiv) {
 		errorDiv.style.display = "none";
 	}
+}
+
+/**
+ * ファイルサイズに基づいてチャンクアップロードを使用すべきか判断
+ * @param fileSize ファイルサイズ（バイト）
+ * @param threshold チャンクアップロードを使用する閾値（デフォルト: 10MB）
+ * @returns チャンクアップロードを使用すべき場合true
+ */
+export function shouldUseChunkedUpload(
+	fileSize: number,
+	threshold: number = CHUNK_UPLOAD_THRESHOLD,
+): boolean {
+	return fileSize > threshold;
+}
+
+/**
+ * ファイルサイズからチャンク数を計算
+ * @param fileSize ファイルサイズ（バイト）
+ * @param chunkSize チャンクサイズ（デフォルト: 1MB）
+ * @returns チャンク数
+ */
+export function getChunkCount(fileSize: number, chunkSize: number = DEFAULT_CHUNK_SIZE): number {
+	if (fileSize === 0) return 0;
+	return Math.ceil(fileSize / chunkSize);
 }
