@@ -800,6 +800,135 @@ const emptyStyles = `
   }
 `;
 
+/** ファイルアップローダースタイル */
+const fileUploaderStyles = `
+  /* File Uploader Container */
+  .kt-file-uploader-container {
+    margin: 0.5rem 0;
+    position: relative;
+  }
+
+  .kt-file-uploader-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+  }
+
+  .kt-file-uploader {
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .kt-file-uploader:hover {
+    border-color: #adb5bd;
+  }
+
+  .kt-file-uploader:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .kt-file-uploader-help {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+  }
+
+  /* Progress Indicator */
+  .kt-file-uploader-progress {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+  }
+
+  .kt-file-uploader-progress .kt-progress-bar {
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .kt-file-uploader-progress .kt-progress-fill {
+    height: 100%;
+    background: #0d6efd;
+    transition: width 0.2s ease;
+  }
+
+  .kt-file-uploader-progress .kt-progress-fill.indeterminate {
+    width: 30% !important;
+    animation: kt-progress-shimmer 1.5s infinite ease-in-out;
+  }
+
+  @keyframes kt-progress-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+  }
+
+  .kt-file-uploader-progress .kt-progress-text {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: #6c757d;
+  }
+
+  /* Complete Display */
+  .kt-file-uploader-complete {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+    color: #155724;
+  }
+
+  .kt-file-uploader-complete .kt-file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .kt-file-uploader-complete .kt-file-remove {
+    padding: 0.125rem 0.375rem;
+    background: transparent;
+    border: 1px solid #c3e6cb;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: #155724;
+    line-height: 1;
+  }
+
+  .kt-file-uploader-complete .kt-file-remove:hover {
+    background: #c3e6cb;
+  }
+
+  /* Error Display */
+  .kt-file-uploader-error {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    color: #721c24;
+    font-size: 0.875rem;
+  }
+
+  /* Upload Complete State */
+  .kt-upload-complete .kt-file-uploader {
+    border-color: #c3e6cb;
+    background: #f8fff9;
+  }
+`;
+
 /**
  * 全デフォルトスタイルを結合
  */
@@ -818,6 +947,7 @@ export const defaultStyles = [
 	metricStyles,
 	formStyles,
 	emptyStyles,
+	fileUploaderStyles,
 ].join("\n");
 
 /**
@@ -834,4 +964,5 @@ export {
 	sidebarStyles,
 	imageStyles,
 	formStyles,
+	fileUploaderStyles,
 };
