@@ -597,6 +597,87 @@ const imageStyles = `
   }
 `;
 
+/** メトリクススタイル */
+const metricStyles = `
+  /* Metric */
+  .kt-metric {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: #f8f9fa;
+    margin: 0.5rem 0;
+  }
+
+  /* Label */
+  .kt-metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Value */
+  .kt-metric-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #212529;
+    line-height: 1.2;
+  }
+
+  /* Delta container */
+  .kt-metric-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+  }
+
+  /* Delta colors */
+  .kt-metric-delta-positive {
+    color: #28a745;
+  }
+
+  .kt-metric-delta-negative {
+    color: #dc3545;
+  }
+
+  .kt-metric-delta-neutral {
+    color: #6c757d;
+  }
+
+  /* Delta icon */
+  .kt-metric-delta-icon {
+    font-size: 0.75rem;
+  }
+
+  /* Help tooltip */
+  .kt-metric-help {
+    display: inline-block;
+    margin-left: 0.25rem;
+    cursor: help;
+    color: #6c757d;
+    font-size: 0.75rem;
+    width: 1rem;
+    height: 1rem;
+    line-height: 1rem;
+    text-align: center;
+    border-radius: 50%;
+    background: #e9ecef;
+  }
+
+  /* Screen reader only */
+  .kt-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+`;
+
 /** フォームスタイル */
 const formStyles = `
   /* Form */
@@ -658,6 +739,7 @@ export const defaultStyles = [
 	chatStyles,
 	sidebarStyles,
 	imageStyles,
+	metricStyles,
 	formStyles,
 ].join("\n");
 

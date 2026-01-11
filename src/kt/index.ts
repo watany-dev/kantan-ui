@@ -37,6 +37,7 @@ import { sidebar } from "./sidebar";
 export type { SidebarAPI } from "./sidebar";
 
 import * as media from "./media";
+import * as metricModule from "./metric";
 import * as widgets from "./widgets";
 
 export const kt = {
@@ -75,6 +76,7 @@ export const kt = {
 
 	// Data APIs
 	table: data.table,
+	metric: metricModule.metric,
 
 	// Layout APIs
 	container: layout.container,
