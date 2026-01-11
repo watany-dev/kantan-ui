@@ -126,6 +126,25 @@ kt.table({
   columns: ["Name", "Age"],
   data: [["Alice", 30], ["Bob", 25]],
 });
+
+// メトリクス - KPI/ダッシュボード向け
+kt.metric("Revenue", "$1,234");
+
+// 変化量（delta）付き
+kt.metric("Revenue", "$1,234", { delta: "+12%" });
+
+// 変化量の色を反転（増加=悪い場合）
+kt.metric("Response Time", "120ms", { delta: "+15ms", delta_color: "inverse" });
+
+// 変化量の色を無効化
+kt.metric("Users", 1234, { delta: "+100", delta_color: "off" });
+
+// ヘルプツールチップ付き
+kt.metric("CPU Usage", "78%", {
+  delta: "+5%",
+  delta_color: "inverse",
+  help: "High CPU usage may affect performance",
+});
 ```
 
 #### ページ設定API
@@ -341,6 +360,7 @@ src/
 │   ├── chat.ts       # チャットAPI（chat_message, chat_container）
 │   ├── data.ts       # データ表示（table）
 │   ├── layout.ts     # レイアウト（tabs）
+│   ├── metric.ts     # メトリクス表示（metric）
 │   ├── output.ts     # 出力API（title, write, headerなど）
 │   ├── widgets.ts    # ウィジェットAPI（button, sliderなど）
 │   └── index.ts
