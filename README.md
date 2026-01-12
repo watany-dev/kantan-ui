@@ -1,82 +1,81 @@
 # kantan-ui
 
-Webスタンダードと [Hono](https://hono.dev/) のみに依存する、Streamlit風のUIフレームワークです。
+A Streamlit-style UI framework that depends only on Web standards and [Hono](https://hono.dev/).
 
-## 特徴
+## Features
 
-- **シンプル** - Streamlitライクな宣言的API（`kt.button()`, `kt.slider()`など）
-- **リアルタイム** - WebSocketによる即時UI更新、マルチタブ同期対応
-- **軽量** - Honoのみに依存、マルチランタイム対応（Bun, Node.js, Deno）
-- **セッション管理** - 複数ユーザーの状態を自動管理
-- **接続安定性** - Ping/Pong、自動再接続、シーケンス番号による欠落パッチ復元
-- **ストリーミング** - 大量UIの段階的レンダリング対応
-- **セキュリティ** - ファイルアップロード時のマジックバイト検証、Polyglot検出、XSS対策
-- **商用対応** - 拡張性、性能、セキュリティを考慮した設計
+- **Simple** - Declarative API like Streamlit (`kt.button()`, `kt.slider()`, etc.)
+- **Real-time** - Instant UI updates via WebSocket with multi-tab sync support
+- **Lightweight** - Depends only on Hono, supports multiple runtimes (Bun, Node.js, Deno)
+- **Session Management** - Automatic state management for multiple users
+- **Connection Stability** - Ping/Pong, auto-reconnect, sequence-based patch recovery
+- **Streaming** - Progressive rendering for large UIs
+- **Security** - Magic byte validation, polyglot detection, and XSS protection for file uploads
 
-## クイックスタート
+## Quick Start
 
-### 必要環境
+### Requirements
 
-- [Bun](https://bun.sh/) v1.0以上（推奨）
-- または Node.js v18以上、Deno
+- [Bun](https://bun.sh/) v1.0+ (recommended)
+- Or Node.js v18+, Deno
 
-### インストール
+### Installation
 
 ```bash
 bun install
 ```
 
-### 開発サーバーの起動
+### Start Development Server
 
 ```bash
 bun run dev
 ```
 
-ブラウザで `http://localhost:3000` を開くとデモアプリが表示されます。
+Open `http://localhost:3000` in your browser to see the demo app.
 
-## 使い方
+## Usage
 
-### 基本的なアプリ作成（宣言的API）
+### Basic App (Declarative API)
 
 ```typescript
 import { createApp, kt, createTypedSessionState } from "kantan-ui";
 
-// 型安全なセッション状態を定義
+// Define type-safe session state
 type AppState = {
   count: number;
 };
 
 const state = createTypedSessionState<AppState>({
-  count: 0,  // デフォルト値
+  count: 0,  // Default value
 });
 
 const script = () => {
   kt.title("Counter App");
 
-  // ボタンが押されたらtrueを返す
+  // Button returns true when clicked
   if (kt.button("+ Increment")) {
-    state.count++;  // 型安全！型アサーション不要
+    state.count++;  // Type-safe! No type assertion needed
   }
 
   kt.write(`Count: ${state.count}`);
 
-  // 宣言的APIを使用する場合はundefinedを返す
+  // Return undefined when using declarative API
   return undefined;
 };
 
-// 全ランタイム共通: await createApp でアプリを作成
+// All runtimes: create app with await createApp
 export default await createApp(script, { port: 3000 });
 ```
 
-### サーバー起動方法
+### Starting the Server
 
-**Bun（推奨）**
+**Bun (Recommended)**
 
 ```bash
 bun run src/index.ts
 ```
 
-Bunは`export default`で`fetch`/`websocket`/`port`を持つオブジェクトを自動的にサーバーとして起動します。
+Bun automatically starts a server when `export default` returns an object with `fetch`/`websocket`/`port`.
 
 **Node.js**
 
@@ -88,169 +87,155 @@ const app = await createApp(script);
 serve(app, { port: 3000 });
 ```
 
-### kt API（宣言的API）
+### kt API (Declarative API)
 
-`kt` オブジェクトを使うと、Streamlitのように直感的にUIを構築できます。各関数はHTMLを自動的に出力し、適切な値を返します。
+The `kt` object lets you build UI intuitively like Streamlit. Each function automatically outputs HTML and returns appropriate values.
 
-#### 出力API
+#### Output API
 
 ```typescript
 import { kt } from "kantan-ui";
 
-kt.title("タイトル");       // <h1>
-kt.header("ヘッダー");      // <h2>
-kt.subheader("サブヘッダー"); // <h3>
-kt.write("テキスト");       // テキスト出力
-kt.text("テキスト");        // writeのエイリアス
-kt.divider();              // 区切り線 <hr>
-kt.html("<div>生HTML</div>"); // 生のHTML出力（注意: XSS対策必要）
+kt.title("Title");           // <h1>
+kt.header("Header");         // <h2>
+kt.subheader("Subheader");   // <h3>
+kt.write("Text");            // Text output
+kt.text("Text");             // Alias for write
+kt.divider();                // Horizontal rule <hr>
+kt.html("<div>Raw HTML</div>"); // Raw HTML output (caution: XSS risk)
+kt.markdown("**Bold** text");   // Markdown rendering
+kt.code("const x = 1;", "typescript"); // Code block with syntax highlighting
+kt.json({ key: "value" });   // Collapsible JSON viewer
 ```
 
-#### データ表示API
+#### Alert API
 
 ```typescript
-// テーブル - 様々なデータ形式に対応
+kt.success("Operation completed!");
+kt.error("Something went wrong");
+kt.warning("Please check your input");
+kt.info("Here's some information");
+```
+
+#### Feedback API
+
+```typescript
+// Progress bar (0-1 or 0-100 auto-detected)
+kt.progress(0.75);
+kt.progress(75, { label: "Downloading..." });
+
+// Loading spinner
+kt.spinner("Processing...");
+
+// Toast notification
+kt.toast("Saved successfully!");
+kt.toast("Error occurred", { type: "error" });
+```
+
+#### Data Display API
+
+```typescript
+// Table - supports various data formats
 kt.table([
   { name: "Alice", age: 30 },
   { name: "Bob", age: 25 },
 ]);
 
-// 2D配列形式
+// 2D array format
 kt.table([
   ["Name", "Age"],
   ["Alice", 30],
   ["Bob", 25],
 ]);
 
-// 明示的ヘッダー指定
+// Explicit header specification
 kt.table({
   columns: ["Name", "Age"],
   data: [["Alice", 30], ["Bob", 25]],
 });
 ```
 
-#### ページ設定API
+#### Page Config API
 
 ```typescript
-// ページの設定（タイトル、レイアウトなど）
+// Page settings (title, layout, etc.)
 kt.set_page_config({
   title: "My App",
   layout: "wide",  // "centered" | "wide"
   icon: "🚀",
 });
 
-// 明示的な再実行
-kt.rerun();  // スクリプトを強制的に再実行
+// Force script re-execution
+kt.rerun();
 ```
 
-#### ウィジェットAPI
+#### Widget API
 
 ```typescript
-// ボタン - 押されたらtrueを返す
+// Button - returns true when clicked
 if (kt.button("Click me", { key: "my_button" })) {
-  // ボタンが押された時の処理
+  // Handle button click
 }
 
-// スライダー - 現在の値を返す
+// Slider - returns current value
 const volume = kt.slider("Volume", 0, 100, 50, { key: "volume" });
 
-// テキスト入力 - 現在の入力値を返す
+// Text input - returns current input value
 const name = kt.text_input("Your name", "Default", { key: "name" });
 
-// セレクトボックス - 選択された値を返す
+// Selectbox - returns selected value
 const color = kt.selectbox("Color", ["Red", "Green", "Blue"], "Blue", { key: "color" });
 
-// ダウンロードボタン - ファイルダウンロード
+// Download button - triggers file download
 kt.download_button("Download CSV", "name,age\nAlice,30", "data.csv", {
   mime: "text/csv",
 });
 
-// チェックボックス - boolean値を返す
+// Checkbox - returns boolean
 const agreed = kt.checkbox("I agree", false, { key: "agree" });
 
-// トグル - boolean値を返す（スイッチスタイル）
+// Toggle - returns boolean (switch style)
 const darkMode = kt.toggle("Dark mode", false, { key: "dark_mode" });
 
-// ラジオボタン - 選択された値を返す
+// Radio buttons - returns selected value
 const size = kt.radio("Size", ["S", "M", "L"], "M", { key: "size" });
 
-// 数値入力 - number値を返す
+// Number input - returns number
 const age = kt.number_input("Age", 0, 120, 25, { key: "age", step: 1 });
 
-// テキストエリア - 複数行テキストを返す
+// Text area - returns multiline text
 const bio = kt.text_area("Bio", "Tell us about yourself...", { key: "bio" });
 
-// マルチセレクト - 選択された値の配列を返す
+// Multiselect - returns array of selected values
 const tags = kt.multiselect("Tags", ["Tech", "Design", "Business"], [], { key: "tags" });
 
-// 日付入力 - "YYYY-MM-DD"形式の文字列を返す
+// Date input - returns "YYYY-MM-DD" string
 const birthday = kt.date_input("Birthday", "2000-01-15", {
   min: "1900-01-01",
   max: "2024-12-31",
 });
 
-// 時刻入力 - "HH:MM"形式の文字列を返す
+// Time input - returns "HH:MM" string
 const alarm = kt.time_input("Alarm", "08:30", { step: 60 });
 
-// ファイルアップロード - UploadedFileオブジェクトを返す
+// File uploader - returns UploadedFile object
 const file = kt.file_uploader("Upload file", { accept: "image/*", maxSize: 5 * 1024 * 1024 });
 if (file) {
   kt.write(`Uploaded: ${file.name} (${file.size} bytes)`);
-  const content = file.text();  // または file.arrayBuffer()
+  const content = file.text();  // or file.arrayBuffer()
 }
 
-// 複数ファイル
+// Multiple files
 const files = kt.file_uploader("Upload files", { multiple: true });
 for (const f of files) {
   kt.write(`${f.name}: ${f.type}`);
 }
 ```
 
-#### Chat API
+#### Layout API
 
 ```typescript
-import { kt, createTypedSessionState } from "kantan-ui";
-
-// メッセージ履歴の型定義
-type ChatState = {
-  messages: Array<{ role: "user" | "assistant"; content: string }>;
-};
-
-const state = createTypedSessionState<ChatState>({
-  messages: [],
-});
-
-// チャットコンテナ（自動スクロール付き）
-kt.chat_container(() => {
-  for (const msg of state.messages) {
-    kt.chat_message(msg.role, msg.content);
-  }
-}, { height: "400px" });
-
-// 個別のチャットメッセージ
-kt.chat_message("user", "Hello!");
-kt.chat_message("assistant", "Hi! How can I help you?");
-
-// カスタムアバターと名前
-kt.chat_message("user", "What is **TypeScript**?", {
-  name: "Alice",
-  avatar: "🧑‍💻",
-});
-
-// システムメッセージ
-kt.chat_message("system", "Session started at 10:00 AM");
-```
-
-**機能:**
-- ロールベースのスタイリング（user / assistant / system）
-- Markdownコンテンツ対応
-- カスタマイズ可能なアバターと表示名
-- 自動スクロール（ユーザーが上にスクロールした場合は一時停止）
-
-#### レイアウトAPI
-
-```typescript
-// タブ - 複数のタブで内容を整理
+// Tabs - organize content in multiple tabs
 const [tab1, tab2, tab3] = kt.tabs(["Overview", "Data", "Settings"]);
 
 tab1(() => {
@@ -267,17 +252,149 @@ tab3(() => {
   kt.header("Settings");
   kt.write("Configure your preferences here.");
 });
+
+// Columns - create multi-column layout
+kt.columns([
+  () => kt.write("Left"),
+  () => kt.write("Right"),
+]);
+
+// With ratios (1:2:1 = 25%:50%:25%)
+kt.columns(
+  [
+    () => kt.write("Sidebar"),
+    () => kt.write("Main content"),
+    () => kt.write("Sidebar"),
+  ],
+  { ratios: [1, 2, 1] }
+);
+
+// Container - group content
+kt.container(() => {
+  kt.write("Grouped content");
+  kt.button("Action");
+}, { border: true });
+
+// Expander - collapsible section
+kt.expander("See details", () => {
+  kt.write("Hidden content");
+});
+
+// Expanded by default
+kt.expander("Important notice", () => {
+  kt.write("Please read this!");
+}, { expanded: true });
 ```
+
+#### Sidebar API
+
+```typescript
+// Callback notation
+kt.sidebar(() => {
+  kt.title("Settings");
+  kt.button("Reset");
+});
+
+// Object notation
+kt.sidebar.title("Settings");
+kt.sidebar.button("Reset");
+
+// Custom width
+kt.sidebar(() => {
+  kt.title("Wide Sidebar");
+}, { width: "350px" });
+```
+
+#### Form API
+
+```typescript
+// Form with submit button
+kt.form("login_form", () => {
+  const username = kt.text_input("Username");
+  const password = kt.text_input("Password", "", { type: "password" });
+  if (kt.form_submit_button("Login")) {
+    // Handle form submission
+  }
+});
+
+// Validation errors
+kt.form("contact", () => {
+  const email = kt.text_input("Email");
+  if (kt.form_submit_button("Send")) {
+    if (!email.includes("@")) {
+      kt.validation_error("Please enter a valid email address");
+      return;
+    }
+    // Process valid form data
+  }
+});
+
+// Multiple validation errors
+kt.form("signup", () => {
+  const name = kt.text_input("Name");
+  const email = kt.text_input("Email");
+  if (kt.form_submit_button("Sign Up")) {
+    const errors = [];
+    if (!name) errors.push("Name is required");
+    if (!email) errors.push("Email is required");
+    if (errors.length > 0) {
+      kt.validation_errors(errors);
+      return;
+    }
+  }
+});
+```
+
+#### Chat API
+
+```typescript
+import { kt, createTypedSessionState } from "kantan-ui";
+
+// Message history type definition
+type ChatState = {
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
+};
+
+const state = createTypedSessionState<ChatState>({
+  messages: [],
+});
+
+// Chat container (with auto-scroll)
+kt.chat_container(() => {
+  for (const msg of state.messages) {
+    kt.chat_message(msg.role, msg.content);
+  }
+}, { height: "400px" });
+
+// Individual chat messages
+kt.chat_message("user", "Hello!");
+kt.chat_message("assistant", "Hi! How can I help you?");
+
+// Custom avatar and name
+kt.chat_message("user", "What is **TypeScript**?", {
+  name: "Alice",
+  avatar: "🧑‍💻",
+});
+
+// System message
+kt.chat_message("system", "Session started at 10:00 AM");
+```
+
+**Features:**
+- Role-based styling (user / assistant / system)
+- Markdown content support
+- Customizable avatar and display name
+- Auto-scroll (pauses when user scrolls up)
 
 #### Empty Placeholder API
 
-動的に更新可能なプレースホルダーを作成します。Streamlitの`st.empty()`と同様に使用できます。
+Create dynamically updatable placeholders. Similar to Streamlit's `st.empty()`.
 
 ```typescript
-// プレースホルダーを作成
+// Create placeholder
 const status = kt.empty({ key: "status" });
 
-// ボタンクリックで動的にコンテンツを変更
+// Dynamically change content on button click
 if (kt.button("Start Process")) {
   status.spinner("Processing...");
 }
@@ -291,43 +408,43 @@ if (kt.button("Show Error")) {
 }
 
 if (kt.button("Clear")) {
-  status.empty();  // コンテンツをクリア
+  status.empty();  // Clear content
 }
 
-// プログレスバーを表示
+// Show progress bar
 const progress = kt.empty({ key: "progress" });
 if (kt.button("Show Progress")) {
   progress.progress(0.75, { text: "75% complete" });
 }
 ```
 
-**Placeholderオブジェクトのメソッド:**
-- `write(content)` - テキスト/数値/真偽値を表示
-- `text(content)` - プレーンテキストを表示
-- `markdown(content)` - Markdownを表示
-- `html(content)` - 生HTMLを表示
-- `json(data)` - JSONをフォーマット表示
-- `code(content, language?)` - コードブロックを表示
-- `success(message)` - 成功アラート
-- `error(message)` - エラーアラート
-- `warning(message)` - 警告アラート
-- `info(message)` - 情報アラート
-- `progress(value, config?)` - プログレスバー（0.0〜1.0）
-- `spinner(text?)` - ローディングスピナー
-- `empty()` - コンテンツをクリア
+**Placeholder Object Methods:**
+- `write(content)` - Display text/number/boolean
+- `text(content)` - Display plain text
+- `markdown(content)` - Display Markdown
+- `html(content)` - Display raw HTML
+- `json(data)` - Display formatted JSON
+- `code(content, language?)` - Display code block
+- `success(message)` - Success alert
+- `error(message)` - Error alert
+- `warning(message)` - Warning alert
+- `info(message)` - Info alert
+- `progress(value, config?)` - Progress bar (0.0-1.0)
+- `spinner(text?)` - Loading spinner
+- `empty()` - Clear content
 
-### セッション状態管理
+### Session State Management
 
-ユーザーごとのセッション状態を管理します。Streamlitの`st.session_state`と同様に使用できます。
+Manage per-user session state. Similar to Streamlit's `st.session_state`.
 
-#### createTypedSessionState（推奨）
+#### createTypedSessionState (Recommended)
 
-型安全なセッション状態を作成します。型アサーションなしで安全にアクセスでき、IDEの補完も効きます。
+Create type-safe session state. Access safely without type assertions, with IDE completion support.
 
 ```typescript
 import { createTypedSessionState } from "kantan-ui";
 
-// 型を定義してデフォルト値を指定
+// Define type and specify defaults
 type AppState = {
   counter: number;
   name: string;
@@ -340,93 +457,96 @@ const state = createTypedSessionState<AppState>({
   items: [],
 });
 
-// 型安全にアクセス可能
-state.counter++;           // OK - number型
-state.name = "Hello";      // OK - string型
-state.items.push("item");  // OK - string[]型
-// state.unknown = 1;      // コンパイルエラー！
+// Type-safe access
+state.counter++;           // OK - number type
+state.name = "Hello";      // OK - string type
+state.items.push("item");  // OK - string[] type
+// state.unknown = 1;      // Compile error!
 ```
 
-#### session_state（後方互換用）
+#### session_state (Legacy)
 
-動的なキーが必要な場合は、従来の`session_state`も利用できます。
+For dynamic keys, the traditional `session_state` is also available.
 
 ```typescript
 import { session_state } from "kantan-ui";
 
-// 初期化
+// Initialize
 if (session_state.myValue === undefined) {
   session_state.myValue = "initial";
 }
 
-// 読み取り（型アサーションが必要）
+// Read (type assertion required)
 const value = session_state.myValue as string;
 
-// 書き込み
+// Write
 session_state.myValue = "new value";
 ```
 
-### 命令的API（低レベルAPI）
+### Imperative API (Low-level API)
 
-より細かい制御が必要な場合は、命令的APIも利用できます。
+For finer control, imperative APIs are also available.
 
 ```typescript
 import { button, renderButton, slider, renderSlider } from "kantan-ui";
 
-// 関数型API（押されたらtrueを返す）
+// Functional API (returns true when pressed)
 const pressed = button("Click me", { key: "my_button" });
 
-// レンダリング用（HTMLを返す）
+// For rendering (returns HTML)
 const html = renderButton("Click me", { key: "my_button" });
 ```
 
-## プロジェクト構造
+## Project Structure
 
 ```
 src/
-├── index.ts          # エントリーポイント（エクスポート）
-├── app.ts            # createApp関数
-├── server.ts         # デモサーバー
-├── client/           # クライアントスクリプト生成
-│   ├── script.ts     # WebSocket/イベント処理スクリプト
-│   ├── types.ts      # クライアント設定の型定義
+├── index.ts          # Entry point (exports)
+├── app.ts            # createApp function
+├── server.ts         # Demo server
+├── client/           # Client script generation
+│   ├── script.ts     # WebSocket/event handling script
+│   ├── types.ts      # Client config types
 │   └── index.ts
-├── config/           # 設定管理
-│   ├── defaults.ts   # デフォルト設定
-│   ├── types.ts      # 設定の型定義
+├── config/           # Configuration management
+│   ├── defaults.ts   # Default settings
+│   ├── types.ts      # Config types
 │   └── index.ts
-├── kt/               # 宣言的API（Streamlit風）
-│   ├── context.ts    # レンダリングコンテキスト
-│   ├── config.ts     # ページ設定（set_page_config）
-│   ├── control.ts    # 制御API（rerun）
-│   ├── chat.ts       # チャットAPI（chat_message, chat_container）
-│   ├── data.ts       # データ表示（table）
-│   ├── empty.ts      # Emptyプレースホルダー（empty）
-│   ├── layout.ts     # レイアウト（tabs）
-│   ├── output.ts     # 出力API（title, write, headerなど）
-│   ├── widgets.ts    # ウィジェットAPI（button, sliderなど）
+├── kt/               # Declarative API (Streamlit-style)
+│   ├── context.ts    # Render context
+│   ├── config.ts     # Page config (set_page_config)
+│   ├── control.ts    # Control API (rerun)
+│   ├── chat.ts       # Chat API (chat_message, chat_container)
+│   ├── data.ts       # Data display (table)
+│   ├── empty.ts      # Empty placeholder
+│   ├── feedback.ts   # Feedback API (progress, spinner, toast)
+│   ├── form.ts       # Form API
+│   ├── layout.ts     # Layout (tabs, columns, container, expander)
+│   ├── sidebar.ts    # Sidebar API
+│   ├── output.ts     # Output API (title, write, header, etc.)
+│   ├── widgets.ts    # Widget API (button, slider, etc.)
 │   └── index.ts
-├── runtime/          # 実行時コンテキスト管理
+├── runtime/          # Runtime context management
 │   ├── context.ts    # getContext/setContext
-│   ├── rerun.ts      # スクリプト再実行ロジック
+│   ├── rerun.ts      # Script re-execution logic
 │   └── index.ts
-├── session/          # セッション管理
-│   ├── manager.ts    # SessionManager（マルチタブ対応）
-│   ├── state.ts      # session_state（Proxy実装）
-│   ├── types.ts      # 型定義
+├── session/          # Session management
+│   ├── manager.ts    # SessionManager (multi-tab support)
+│   ├── state.ts      # session_state (Proxy implementation)
+│   ├── types.ts      # Type definitions
 │   └── index.ts
-├── utils/            # ユーティリティ
-│   ├── html.ts       # HTMLエスケープなど
-│   ├── sanitize.ts   # ファイル名サニタイズ
-│   ├── magic-bytes.ts # マジックバイト検証
-│   ├── polyglot-detection.ts # Polyglot検出
-│   ├── file-validation.ts # ファイル検証統合
+├── utils/            # Utilities
+│   ├── html.ts       # HTML escaping, etc.
+│   ├── sanitize.ts   # Filename sanitization
+│   ├── magic-bytes.ts # Magic byte validation
+│   ├── polyglot-detection.ts # Polyglot detection
+│   ├── file-validation.ts # File validation integration
 │   └── type-guards.ts
-├── websocket/        # WebSocket処理
-│   ├── handler.ts    # WebSocketハンドラ
-│   ├── types.ts      # メッセージ型定義
+├── websocket/        # WebSocket handling
+│   ├── handler.ts    # WebSocket handler
+│   ├── types.ts      # Message type definitions
 │   └── index.ts
-└── widgets/          # UIウィジェット（命令的API）
+└── widgets/          # UI widgets (imperative API)
     ├── button.ts
     ├── slider.ts
     ├── text-input.ts
@@ -438,48 +558,48 @@ src/
     ├── radio.ts
     ├── number-input.ts
     ├── multiselect.ts
-    ├── date-input.ts  # 日付入力
-    ├── time-input.ts  # 時刻入力
-    ├── file-uploader.ts # ファイルアップロード
-    ├── uploaded-file.ts # UploadedFileファクトリ
-    ├── image.ts      # 画像表示
-    ├── placeholder.ts # プレースホルダー
-    ├── core.ts       # 共通処理
-    ├── registry.ts   # ウィジェットID管理
-    ├── types.ts      # ウィジェット型定義
+    ├── date-input.ts
+    ├── time-input.ts
+    ├── file-uploader.ts
+    ├── uploaded-file.ts
+    ├── image.ts
+    ├── placeholder.ts
+    ├── core.ts
+    ├── registry.ts
+    ├── types.ts
     └── index.ts
 ```
 
-## NPMスクリプト
+## NPM Scripts
 
-| コマンド | 説明 |
-|---------|------|
-| `bun run dev` | 開発サーバー起動（ホットリロード） |
-| `bun run build` | プロダクションビルド |
-| `bun run test` | ユニットテスト実行（Vitest） |
-| `bun run test:watch` | ユニットテスト（監視モード） |
-| `bun run test:coverage` | カバレッジ付きテスト |
-| `bun run test:e2e` | E2Eテスト（Playwright） |
-| `bun run lint` | Biomeでリントチェック |
-| `bun run lint:fix` | リント自動修正 |
-| `bun run ci` | CI用（lint + build + test:coverage） |
+| Command | Description |
+|---------|-------------|
+| `bun run dev` | Start development server (hot reload) |
+| `bun run build` | Production build |
+| `bun run test` | Run unit tests (Vitest) |
+| `bun run test:watch` | Unit tests (watch mode) |
+| `bun run test:coverage` | Tests with coverage |
+| `bun run test:e2e` | E2E tests (Playwright) |
+| `bun run lint` | Lint check with Biome |
+| `bun run lint:fix` | Auto-fix lint issues |
+| `bun run ci` | CI pipeline (lint + build + test:coverage) |
 
-## 動作の仕組み
+## How It Works
 
-1. クライアントがページを読み込むと、WebSocket接続を確立
-2. サーバーはセッションを作成し、初期HTMLを送信
-3. ユーザーがウィジェットを操作すると、`sendEvent`でサーバーに通知（デバウンス付き）
-4. サーバーは`session_state`を更新し、スクリプトを再実行（rerun）
-5. 新しいHTMLをWebSocket経由でクライアントに送信（ストリーミング対応）
-6. クライアントはDOMを更新（フォーカス状態を維持）
+1. Client loads the page and establishes WebSocket connection
+2. Server creates a session and sends initial HTML
+3. When user interacts with widgets, `sendEvent` notifies the server (with debounce)
+4. Server updates `session_state` and re-executes the script (rerun)
+5. New HTML is sent to client via WebSocket (streaming supported)
+6. Client updates DOM (preserving focus state)
 
-### 接続管理
+### Connection Management
 
-- **Ping/Pong**: サーバーは定期的にpingを送信し、接続状態を監視
-- **自動再接続**: 切断時はエクスポネンシャルバックオフで再接続を試行
-- **シーケンス番号**: 再接続時に欠落したパッチを復元
-- **マルチタブ**: 同一セッションの複数タブに状態変更をブロードキャスト
+- **Ping/Pong**: Server periodically sends ping to monitor connection state
+- **Auto-reconnect**: Exponential backoff retry on disconnect
+- **Sequence Numbers**: Recover missed patches on reconnect
+- **Multi-tab**: Broadcast state changes to all tabs of the same session
 
-## ライセンス
+## License
 
 MIT
