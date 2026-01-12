@@ -558,5 +558,84 @@ describe("chunk-upload-handler", () => {
 
 			expect(manager.getConcurrentUploads(sessionId)).toBe(0);
 		});
+
+		it("returns SESSION_LIMIT error when max uploads per session exceeded", () => {
+			// Fill up to the session limit (100 files) using direct registration
+			for (let i = 0; i < 100; i++) {
+				manager.registerUpload(sessionId, new ArrayBuffer(10), `test${i}.txt`, "text/plain");
+			}
+
+			// Start chunk upload
+			const startMessage: ChunkUploadStartMessage = {
+				type: "chunk_upload_start",
+				widgetId: "uploader1",
+				uploadId: "upload-overflow",
+				filename: "overflow.txt",
+				mimeType: "text/plain",
+				totalSize: 5,
+				totalChunks: 1,
+				chunkSize: 5,
+			};
+			handleChunkUploadStart(startMessage, sessionId, manager);
+
+			// Send chunk data
+			handleChunkUploadData(
+				{ type: "chunk_upload_data", uploadId: "upload-overflow", chunkIndex: 0, data: "SGVsbG8=" },
+				manager,
+			);
+
+			// Complete should fail with SESSION_LIMIT
+			const completeMessage: ChunkUploadEndMessage = {
+				type: "chunk_upload_end",
+				uploadId: "upload-overflow",
+			};
+
+			const result = handleChunkUploadComplete(completeMessage, sessionId, manager);
+			expect(result.status).toBe("error");
+			expect(result.error?.code).toBe("SESSION_LIMIT");
+		});
+
+		it("maps unknown validation error codes to VALIDATION_ERROR", () => {
+			// Mock validateUploadedFile to return an unknown error code
+			const validateSpy = vi.spyOn(fileValidation, "validateUploadedFile").mockReturnValue({
+				valid: false,
+				errors: [
+					{
+						code: "UNKNOWN_CODE" as fileValidation.FileValidationErrorCode,
+						message: "Unknown error",
+					},
+				],
+				warnings: [],
+				sanitizedFilename: "test.txt",
+			});
+
+			const startMessage: ChunkUploadStartMessage = {
+				type: "chunk_upload_start",
+				widgetId: "uploader1",
+				uploadId: "upload-123",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				totalSize: 5,
+				totalChunks: 1,
+				chunkSize: 5,
+			};
+			handleChunkUploadStart(startMessage, sessionId, manager);
+
+			handleChunkUploadData(
+				{ type: "chunk_upload_data", uploadId: "upload-123", chunkIndex: 0, data: "SGVsbG8=" },
+				manager,
+			);
+
+			const completeMessage: ChunkUploadEndMessage = {
+				type: "chunk_upload_end",
+				uploadId: "upload-123",
+			};
+
+			const result = handleChunkUploadComplete(completeMessage, sessionId, manager);
+			expect(result.status).toBe("error");
+			expect(result.error?.code).toBe("VALIDATION_ERROR");
+
+			validateSpy.mockRestore();
+		});
 	});
 });

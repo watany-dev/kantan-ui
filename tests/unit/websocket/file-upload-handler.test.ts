@@ -503,5 +503,66 @@ describe("file-upload-handler", () => {
 			handleFileUpload(message, sessionId, manager);
 			expect(manager.getConcurrentUploads(sessionId)).toBe(0);
 		});
+
+		it("returns SESSION_LIMIT error when max uploads per session exceeded", () => {
+			// Fill up to the session limit (100 files) directly to avoid rate limiting
+			for (let i = 0; i < 100; i++) {
+				manager.registerUpload(sessionId, new ArrayBuffer(10), `test${i}.txt`, "text/plain");
+			}
+
+			const content = "test";
+			const data = new TextEncoder().encode(content);
+			const base64 = btoa(String.fromCharCode(...data));
+
+			// 101st upload should fail with SESSION_LIMIT
+			const message: FileUploadMessage = {
+				type: "file_upload",
+				widgetId: "uploader1",
+				filename: "overflow.txt",
+				mimeType: "text/plain",
+				size: data.length,
+				data: base64,
+				isChunked: false,
+			};
+
+			const result = handleFileUpload(message, sessionId, manager);
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("SESSION_LIMIT");
+		});
+
+		it("maps unknown validation error codes to VALIDATION_ERROR", () => {
+			// Mock validateUploadedFile to return an unknown error code
+			const validateSpy = vi.spyOn(fileValidation, "validateUploadedFile").mockReturnValue({
+				valid: false,
+				errors: [
+					{
+						code: "UNKNOWN_CODE" as fileValidation.FileValidationErrorCode,
+						message: "Unknown error",
+					},
+				],
+				warnings: [],
+				sanitizedFilename: "test.txt",
+			});
+
+			const content = "test";
+			const data = new TextEncoder().encode(content);
+			const base64 = btoa(String.fromCharCode(...data));
+
+			const message: FileUploadMessage = {
+				type: "file_upload",
+				widgetId: "uploader1",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				size: data.length,
+				data: base64,
+				isChunked: false,
+			};
+
+			const result = handleFileUpload(message, sessionId, manager);
+			expect(result.success).toBe(false);
+			expect(result.error?.code).toBe("VALIDATION_ERROR");
+
+			validateSpy.mockRestore();
+		});
 	});
 });

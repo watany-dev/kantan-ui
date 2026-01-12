@@ -2,6 +2,19 @@ import { describe, expect, it } from "vitest";
 import { sanitizeCssColor, sanitizeCssLength, sanitizeCssValue } from "../../../src/utils/css";
 
 describe("sanitizeCssValue", () => {
+	it("returns empty string for empty input", () => {
+		expect(sanitizeCssValue("")).toBe("");
+	});
+
+	it("returns empty string for non-string input", () => {
+		// @ts-expect-error - testing invalid input
+		expect(sanitizeCssValue(null)).toBe("");
+		// @ts-expect-error - testing invalid input
+		expect(sanitizeCssValue(undefined)).toBe("");
+		// @ts-expect-error - testing invalid input
+		expect(sanitizeCssValue(123)).toBe("");
+	});
+
 	it("removes semicolons", () => {
 		expect(sanitizeCssValue("100px; background: red")).toBe("100px");
 	});
@@ -74,6 +87,12 @@ describe("sanitizeCssLength", () => {
 		expect(sanitizeCssLength("javascript:alert(1)")).toBe("");
 		expect(sanitizeCssLength("<script>")).toBe("");
 	});
+
+	it("returns empty string for values not matching length patterns", () => {
+		expect(sanitizeCssLength("invalid")).toBe("");
+		expect(sanitizeCssLength("abc123")).toBe("");
+		expect(sanitizeCssLength("not-a-length")).toBe("");
+	});
 });
 
 describe("sanitizeCssColor", () => {
@@ -115,5 +134,11 @@ describe("sanitizeCssColor", () => {
 	it("accepts inherit and currentColor", () => {
 		expect(sanitizeCssColor("inherit")).toBe("inherit");
 		expect(sanitizeCssColor("currentColor")).toBe("currentColor");
+	});
+
+	it("returns empty string for values not matching color patterns", () => {
+		expect(sanitizeCssColor("invalid-color")).toBe("");
+		expect(sanitizeCssColor("123abc")).toBe("");
+		expect(sanitizeCssColor("notacolor")).toBe("");
 	});
 });

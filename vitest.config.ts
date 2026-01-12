@@ -30,10 +30,10 @@ export default defineConfig({
 				"src/**/types.ts",
 			],
 			thresholds: {
-				lines: 95,
-				functions: 95,
-				branches: 91, // Adjusted: some edge cases (session limits, crypto fallbacks) are hard to unit test
-				statements: 95,
+				lines: 98,
+				functions: 98,
+				branches: 93,
+				statements: 97,
 			},
 		},
 	},

@@ -154,6 +154,25 @@ describe("SessionManager - Chunk Upload", () => {
 			expect(manager.receiveChunk("upload-123", -1, "data")).toBe(false);
 			expect(manager.receiveChunk("upload-123", 2, "data")).toBe(false);
 		});
+
+		it("returns false for invalid base64 data", () => {
+			const message: ChunkUploadStartMessage = {
+				type: "chunk_upload_start",
+				widgetId: "uploader1",
+				uploadId: "upload-123",
+				filename: "test.txt",
+				mimeType: "text/plain",
+				totalSize: 2048,
+				totalChunks: 2,
+				chunkSize: 1024,
+			};
+			manager.startChunkUpload(sessionId, message);
+
+			// Invalid base64 - atob will throw
+			const result = manager.receiveChunk("upload-123", 0, "!!!invalid-base64!!!");
+
+			expect(result).toBe(false);
+		});
 	});
 
 	describe("completeChunkUpload", () => {
