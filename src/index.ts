@@ -22,6 +22,13 @@ export { buildNodeMap, diff, parseHtml, toWebSocketPatches } from "./diff";
 export type { DiffPatch, DiffResult, VNode } from "./diff/types";
 // kt - Declarative UI API
 export { kt } from "./kt";
+export type { CacheDataOptions, CacheResourceOptions } from "./kt/cache";
+// Cache APIs (also available via kt.cache_data, kt.cache_resource)
+export {
+	cache_data,
+	cache_resource,
+	clear_all_caches,
+} from "./kt/cache";
 export type {
 	ChatContainerConfig,
 	ChatMessageConfig,
