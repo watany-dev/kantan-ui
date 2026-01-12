@@ -36,9 +36,12 @@ import * as media from "./media";
 import * as metricModule from "./metric";
 import * as output from "./output";
 import { sidebar } from "./sidebar";
+import { write_stream } from "./stream";
 import * as widgets from "./widgets";
 
 export type { SidebarAPI } from "./sidebar";
+export type { WriteStreamOptions } from "./stream-registry";
+export type { StreamSource } from "./stream-utils";
 
 export const kt = {
 	// Config APIs
@@ -53,6 +56,7 @@ export const kt = {
 
 	// Output APIs
 	write: output.write,
+	write_stream,
 	title: output.title,
 	header: output.header,
 	subheader: output.subheader,
