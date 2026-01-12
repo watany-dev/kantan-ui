@@ -11,12 +11,19 @@ import { escapeHtml } from "./utils/html";
  * - デフォルト値の自動初期化
  * - IDEの補完が効く
  */
+type Message = {
+	role: "user" | "assistant";
+	content: string;
+};
+
 type AppState = {
 	counter: number;
+	chatMessages: Message[];
 };
 
 const state = createTypedSessionState<AppState>({
 	counter: 0,
+	chatMessages: [],
 });
 
 /**
@@ -230,6 +237,41 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Chat Section =====
+	kt.header("Chat");
+
+	kt.subheader("Chat Input Demo");
+	kt.chat_container(
+		() => {
+			for (const msg of state.chatMessages) {
+				kt.chat_message(msg.role, msg.content);
+			}
+		},
+		{ height: "200px" },
+	);
+
+	const userInput = kt.chat_input("メッセージを入力...", { key: "demo_chat_input" });
+	if (userInput) {
+		state.chatMessages = [
+			...state.chatMessages,
+			{ role: "user", content: userInput },
+			{ role: "assistant", content: `You said: ${userInput}` },
+		];
+	}
+
+	kt.subheader("Chat Input Options");
+
+	// Disabled chat input
+	kt.chat_input("Disabled input", { key: "disabled_chat_input", disabled: true });
+
+	// Chat input with maxLength
+	kt.chat_input("Max 50 chars", { key: "maxlen_chat_input", maxLength: 50 });
+
+	// Chat input without pin
+	kt.chat_input("Inline (no pin)", { key: "inline_chat_input", pinToBottom: false });
+
+	kt.divider();
+
 	// ===== Layout Section =====
 	kt.header("Layout");
 
@@ -398,6 +440,7 @@ ${escapeHtml(
 			darkMode,
 			autoSave,
 			tags,
+			chatMessages: state.chatMessages,
 			singleFile: singleFile
 				? { name: singleFile.name, size: singleFile.size, type: singleFile.type }
 				: null,
