@@ -5,11 +5,8 @@ import {
 	setSessionManager,
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
+import { color_picker, renderColorPicker } from "../../../src/widgets/color-picker";
 import { resetWidgetCounter } from "../../../src/widgets/registry";
-import {
-	color_picker,
-	renderColorPicker,
-} from "../../../src/widgets/color-picker";
 
 describe("color_picker", () => {
 	let manager: SessionManager;
@@ -127,10 +124,7 @@ describe("color_picker", () => {
 			});
 
 			it("should escape potential XSS in value", () => {
-				const html = renderColorPicker(
-					"Color",
-					'"><script>alert(1)</script>',
-				);
+				const html = renderColorPicker("Color", '"><script>alert(1)</script>');
 
 				expect(html).not.toContain("<script>");
 				expect(html).toContain("&quot;");
