@@ -191,34 +191,15 @@ function generateFallbackFilename(): string {
 /**
  * Generate a secure file identifier (UUID v4 format)
  *
+ * Uses Web Crypto API's randomUUID which is available in all modern runtimes:
+ * - Node.js 19+ (also available in 16.7+)
+ * - Bun (all versions)
+ * - Deno (all versions)
+ * - Cloudflare Workers
+ * - Modern browsers (Chrome 92+, Firefox 95+, Safari 15.4+)
+ *
  * @returns A unique identifier safe for use in file paths and URLs
  */
 export function generateSecureFileId(): string {
-	// Use crypto.randomUUID if available (modern runtimes)
-	if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-		return crypto.randomUUID();
-	}
-
-	// Fallback: generate UUID v4 format manually
-	const bytes = new Uint8Array(16);
-	if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-		crypto.getRandomValues(bytes);
-	} else {
-		// Last resort: Math.random (not cryptographically secure)
-		for (let i = 0; i < 16; i++) {
-			bytes[i] = Math.floor(Math.random() * 256);
-		}
-	}
-
-	// Set version (4) and variant bits
-	const byte6 = bytes[6] ?? 0;
-	const byte8 = bytes[8] ?? 0;
-	bytes[6] = (byte6 & 0x0f) | 0x40;
-	bytes[8] = (byte8 & 0x3f) | 0x80;
-
-	const hex = Array.from(bytes)
-		.map((b) => b.toString(16).padStart(2, "0"))
-		.join("");
-
-	return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+	return crypto.randomUUID();
 }
