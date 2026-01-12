@@ -241,15 +241,8 @@ const script = () => {
 	kt.header("Chat");
 
 	kt.subheader("Chat Input Demo");
-	kt.chat_container(
-		() => {
-			for (const msg of state.chatMessages) {
-				kt.chat_message(msg.role, msg.content);
-			}
-		},
-		{ height: "200px" },
-	);
 
+	// Process chat input FIRST to update state before rendering container
 	const userInput = kt.chat_input("メッセージを入力...", { key: "demo_chat_input" });
 	if (userInput) {
 		state.chatMessages = [
@@ -258,6 +251,16 @@ const script = () => {
 			{ role: "assistant", content: `You said: ${userInput}` },
 		];
 	}
+
+	// Then render the container with updated messages
+	kt.chat_container(
+		() => {
+			for (const msg of state.chatMessages) {
+				kt.chat_message(msg.role, msg.content);
+			}
+		},
+		{ height: "200px" },
+	);
 
 	kt.subheader("Chat Input Options");
 
