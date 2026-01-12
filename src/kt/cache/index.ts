@@ -11,10 +11,6 @@ import { cache_resource, resetCacheResourceStores } from "./cache-resource.js";
 export { cache_data, resetCacheDataStores };
 export { cache_resource, resetCacheResourceStores };
 
-export { generateCacheKey, generateCacheKeySafe } from "./cache-key.js";
-
-// Internal utilities (re-export for testing)
-export { CacheStore } from "./cache-store.js";
 // Re-export types
 export type {
 	CacheDataOptions,

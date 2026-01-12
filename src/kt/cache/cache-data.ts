@@ -125,13 +125,6 @@ cache_data.clear = (): void => {
 };
 
 /**
- * cache_data のストア数を取得（テスト用）
- */
-export function getCacheDataStoreCount(): number {
-	return cacheDataStores.size;
-}
-
-/**
  * 全ての cache_data ストアをリセット（テスト用）
  */
 export function resetCacheDataStores(): void {

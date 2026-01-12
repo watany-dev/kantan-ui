@@ -95,13 +95,6 @@ cache_resource.clear = (): void => {
 };
 
 /**
- * cache_resource のストア数を取得（テスト用）
- */
-export function getCacheResourceStoreCount(): number {
-	return cacheResourceStores.size;
-}
-
-/**
  * 全ての cache_resource ストアをリセット（テスト用）
  */
 export function resetCacheResourceStores(): void {
