@@ -6,7 +6,8 @@
 		"src/server.ts",
 		"src/server-streaming.ts",
 		"src/server-patch-test.ts",
-		"src/server-error-test.ts"
+		"src/server-error-test.ts",
+		"src/server-write-stream-test.ts"
 	],
 	"ignoreExportsUsedInFile": {
 		"interface": true,

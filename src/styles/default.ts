@@ -800,6 +800,93 @@ const emptyStyles = `
   }
 `;
 
+/** ストリーミングスタイル（write_stream用） */
+const streamStyles = `
+  /* Stream Container */
+  .kt-stream {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+  }
+
+  /* Stream Content */
+  .kt-stream-content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  /* Blinking Cursor */
+  .kt-stream-cursor {
+    display: inline-block;
+    width: 0.5em;
+    height: 1.1em;
+    vertical-align: text-bottom;
+    background: var(--kt-color-text, #212529);
+    margin-left: 2px;
+    animation: kt-cursor-blink 1s step-end infinite;
+  }
+
+  @keyframes kt-cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* Completed Stream (cursor removed) */
+  .kt-stream-complete .kt-stream-content {
+    /* Completed content styling if needed */
+  }
+
+  /* Markdown rendering in stream */
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content {
+    /* After markdown rendering */
+  }
+
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content h1,
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content h2,
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content h3 {
+    margin-top: 0.5rem;
+  }
+
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content h1:first-child,
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content h2:first-child,
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content h3:first-child {
+    margin-top: 0;
+  }
+
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content p {
+    margin: 0.5rem 0;
+  }
+
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content p:first-child {
+    margin-top: 0;
+  }
+
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content code {
+    background: #f1f3f5;
+    padding: 0.125rem 0.25rem;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.875em;
+  }
+
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content pre {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 0.75rem;
+    overflow-x: auto;
+    margin: 0.5rem 0;
+  }
+
+  .kt-stream[data-markdown="true"].kt-stream-complete .kt-stream-content pre code {
+    background: none;
+    padding: 0;
+  }
+`;
+
 /** ファイルアップローダースタイル */
 const fileUploaderStyles = `
   /* File Uploader Container */
@@ -947,6 +1034,7 @@ export const defaultStyles = [
 	metricStyles,
 	formStyles,
 	emptyStyles,
+	streamStyles,
 	fileUploaderStyles,
 ].join("\n");
 

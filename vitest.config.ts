@@ -20,6 +20,7 @@ export default defineConfig({
 				"src/server-streaming.ts",
 				"src/server-patch-test.ts",
 				"src/server-error-test.ts",
+				"src/server-write-stream-test.ts",
 				"src/serve.ts",
 				"src/app.ts",
 				"src/websocket/handler.ts",

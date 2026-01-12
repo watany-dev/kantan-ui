@@ -45,6 +45,7 @@ export default defineConfig({
 				"**/patch-operations.spec.ts",
 				"**/error-handling.spec.ts",
 				"**/production-build.spec.ts",
+				"**/write-stream.spec.ts",
 			],
 		},
 		{
@@ -122,6 +123,21 @@ export default defineConfig({
 			},
 			testMatch: "**/production-build.spec.ts",
 		},
+		{
+			name: "chromium-write-stream",
+			use: {
+				...devices["Desktop Chrome"],
+				baseURL: "http://localhost:3006",
+				launchOptions: process.env.CI
+					? {
+							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+						}
+					: {
+							executablePath: chromiumPath,
+						},
+			},
+			testMatch: "**/write-stream.spec.ts",
+		},
 	],
 	webServer: [
 		{
@@ -169,6 +185,14 @@ export default defineConfig({
 			url: "http://localhost:3005",
 			reuseExistingServer: !process.env.CI,
 			timeout: 60000,
+			stdout: "pipe",
+			stderr: "pipe",
+		},
+		{
+			command: "bun run src/server-write-stream-test.ts",
+			url: "http://localhost:3006",
+			reuseExistingServer: !process.env.CI,
+			timeout: 30000,
 			stdout: "pipe",
 			stderr: "pipe",
 		},

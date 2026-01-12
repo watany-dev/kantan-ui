@@ -17,7 +17,7 @@ import { generateClientScript } from "./client";
 import { type KantanConfig, resolveConfig } from "./config";
 import { diff, toWebSocketPatches } from "./diff";
 import { getPageConfig } from "./kt/config";
-import { rerun, type Script, type StreamingOptions } from "./runtime";
+import { processStreams, rerun, type Script, type StreamingOptions } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { defaultStyles } from "./styles";
 import { createErrorMessageJson } from "./utils/error";
@@ -424,6 +424,18 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 							};
 							sessionManager.broadcast(session.id, JSON.stringify(message));
 						}
+
+						// Process pending streams from write_stream() calls
+						if (newResult.hasPendingStreams) {
+							processStreams(newResult.streamSessionKey, (patch) => {
+								const streamMessage: ServerMessage = {
+									type: "patch",
+									patches: [patch],
+									partial: true,
+								};
+								sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
+							});
+						}
 					} else if (data.type === "file_upload" && isFileUploadMessage(parsed)) {
 						// ファイルアップロード処理
 						const uploadSessionId = cookieSessionId ?? data.sessionId;
@@ -535,6 +547,18 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 								seq,
 							};
 							sessionManager.broadcast(session.id, JSON.stringify(message));
+						}
+
+						// Process pending streams from write_stream() calls
+						if (newResult.hasPendingStreams) {
+							processStreams(newResult.streamSessionKey, (patch) => {
+								const streamMessage: ServerMessage = {
+									type: "patch",
+									patches: [patch],
+									partial: true,
+								};
+								sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
+							});
 						}
 					} else if (data.type === "chunk_upload_start" && isChunkUploadStartMessage(parsed)) {
 						// チャンクアップロード開始処理
@@ -684,6 +708,18 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 								seq,
 							};
 							sessionManager.broadcast(session.id, JSON.stringify(patchMessage));
+						}
+
+						// Process pending streams from write_stream() calls
+						if (newResult.hasPendingStreams) {
+							processStreams(newResult.streamSessionKey, (patch) => {
+								const streamMessage: ServerMessage = {
+									type: "patch",
+									patches: [patch],
+									partial: true,
+								};
+								sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
+							});
 						}
 					}
 				},

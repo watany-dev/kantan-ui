@@ -4,6 +4,8 @@ import {
 	type SidebarConfig,
 	setRenderContext,
 } from "../kt/context";
+import { setStreamSessionKey } from "../kt/stream";
+import { streamRegistry } from "../kt/stream-registry";
 import { setCurrentSessionId } from "../session/state";
 import { resetWidgetCounter } from "../widgets/registry";
 import { AbortError } from "./abort";
@@ -29,6 +31,10 @@ export interface RerunResult {
 	hasSidebar: boolean;
 	/** サイドバー設定（幅など） */
 	sidebarConfig: SidebarConfig | null;
+	/** write_stream() による処理待ちストリームがあるか */
+	hasPendingStreams: boolean;
+	/** ストリーム処理用のセッションキー */
+	streamSessionKey: object;
 }
 
 /**
@@ -82,6 +88,11 @@ export function rerun(
 		renderContext.setFlushCallback(streaming.onFlush, streaming.flushThreshold);
 	}
 
+	// ストリーム登録用のセッションキーを作成
+	// このオブジェクトは rerun 呼び出しごとにユニークで、
+	// write_stream() によるストリーム登録に使用される
+	const streamSessionKey = {};
+
 	try {
 		// Widget カウンターをリセット
 		resetWidgetCounter();
@@ -95,8 +106,14 @@ export function rerun(
 		// レンダリングコンテキストを設定
 		setRenderContext(renderContext);
 
+		// ストリームセッションキーを設定
+		setStreamSessionKey(streamSessionKey);
+
 		// スクリプトを実行してHTMLを生成
 		const result = script();
+
+		// 処理待ちストリームの有無を確認
+		const hasPendingStreams = streamRegistry.hasPending(streamSessionKey);
 
 		// スクリプトが文字列を返した場合はそれを使用（後方互換性）
 		// void を返した場合はバッファからHTMLを取得
@@ -106,6 +123,8 @@ export function rerun(
 				sidebarHtml: "",
 				hasSidebar: false,
 				sidebarConfig: null,
+				hasPendingStreams,
+				streamSessionKey,
 			};
 		}
 
@@ -114,11 +133,14 @@ export function rerun(
 			sidebarHtml: renderContext.getSidebarHtml(),
 			hasSidebar: renderContext.hasSidebar(),
 			sidebarConfig: renderContext.getSidebarConfig(),
+			hasPendingStreams,
+			streamSessionKey,
 		};
 	} finally {
 		// コンテキストをクリア
 		clearContext();
 		setCurrentSessionId(null);
 		setRenderContext(null);
+		setStreamSessionKey(null);
 	}
 }
