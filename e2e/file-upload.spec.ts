@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { gotoAndWait } from "./helpers";
+import { gotoAndWait, waitForSessionEstablished } from "./helpers";
 
 // 各テストで空のストレージ状態を使用
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -128,8 +128,8 @@ test.describe("File Uploader", () => {
 		test("uploading a text file shows completion", async ({ page }) => {
 			await gotoAndWait(page);
 
-			// Wait a bit for session to be fully established
-			await page.waitForTimeout(500);
+			// Wait for session to be fully established (sessionId received from server)
+			await waitForSessionEstablished(page);
 
 			// Create a small text file
 			const fileContent = "Hello, this is a test file content.";
@@ -160,8 +160,8 @@ test.describe("File Uploader", () => {
 		test("uploading shows progress bar briefly", async ({ page }) => {
 			await gotoAndWait(page);
 
-			// Wait a bit for session to be fully established
-			await page.waitForTimeout(500);
+			// Wait for session to be fully established (sessionId received from server)
+			await waitForSessionEstablished(page);
 
 			const container = page.locator(".kt-file-uploader-container").first();
 			const progressDiv = container.locator(".kt-file-uploader-progress");

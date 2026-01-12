@@ -505,7 +505,8 @@ function handleChunkedUpload(widgetId, file, data) {
       mimeType: mimeType,
       totalSize: file.size,
       totalChunks: totalChunks,
-      chunkSize: FILE_UPLOAD_CHUNK_SIZE
+      chunkSize: FILE_UPLOAD_CHUNK_SIZE,
+      sessionId: sessionId
     };
 
     if (!ws || ws.readyState !== WebSocket.OPEN) {
@@ -681,7 +682,8 @@ function handleFileUpload(inputElement) {
         mimeType: file.type || "application/octet-stream",
         size: file.size,
         data: base64Data,
-        isChunked: false
+        isChunked: false,
+        sessionId: sessionId
       };
 
       if (ws && ws.readyState === WebSocket.OPEN) {
@@ -893,7 +895,7 @@ const isBrowserScope = ${isBrowserScope};
 let ws = null;
 let reconnectAttempts = 0;
 let lastReceivedSeq = 0;
-${isBrowserScope ? "" : "let sessionId = localStorage.getItem(__KT_CONFIG__.sessionKey);"}
+${isBrowserScope ? "let sessionId = null;" : "let sessionId = localStorage.getItem(__KT_CONFIG__.sessionKey);"}
 
 function connect() {
   updateConnectionStatus("connecting", reconnectAttempts, __KT_CONFIG__.maxReconnectAttempts);
