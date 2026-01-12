@@ -208,6 +208,11 @@ kt.table({
   columns: ["Name", "Age"],
   data: [["Alice", 30], ["Bob", 25]],
 });
+
+// Metric - KPI display with optional delta
+kt.metric("Revenue", "$1,234");
+kt.metric("Revenue", "$1,234", { delta: "+12%" });
+kt.metric("Response Time", "120ms", { delta: "+15ms", delta_color: "inverse" });
 ```
 
 #### Page Config API
@@ -536,6 +541,62 @@ const value = session_state.myValue as string;
 
 // Write
 session_state.myValue = "new value";
+```
+
+### Cache API
+
+Cache expensive function results to improve performance. Similar to Streamlit's `@st.cache_data` and `@st.cache_resource`.
+
+#### cache_data
+
+For serializable data (API results, computed values):
+
+```typescript
+import { kt } from "kantan-ui";
+
+// Basic usage
+const fetchUsers = kt.cache_data(async (limit: number) => {
+  const res = await fetch(`/api/users?limit=${limit}`);
+  return res.json();
+});
+
+const users = await fetchUsers(10);  // Cached on subsequent calls
+
+// With TTL (expires in 1 hour)
+const fetchWeather = kt.cache_data(async (city: string) => {
+  return await weatherApi.get(city);
+}, { ttl: 3600 });
+
+// With max entries (LRU eviction)
+const searchProducts = kt.cache_data(async (query: string) => {
+  return await productApi.search(query);
+}, { max_entries: 50 });
+
+// Clear cache
+fetchUsers.clear();
+```
+
+#### cache_resource
+
+For non-serializable resources (database connections, ML models):
+
+```typescript
+// Returns the same instance on every call
+const getDb = kt.cache_resource(() => {
+  return new DatabaseConnection(process.env.DB_URL);
+});
+
+const db1 = getDb();
+const db2 = getDb();
+console.log(db1 === db2); // true
+```
+
+#### Global cache clear
+
+```typescript
+kt.cache_data.clear();      // Clear all cache_data caches
+kt.cache_resource.clear();  // Clear all cache_resource caches
+kt.clear_all_caches();      // Clear all caches
 ```
 
 ### Imperative API (Low-level API)

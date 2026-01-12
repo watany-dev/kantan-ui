@@ -131,7 +131,7 @@
 | `st.sidebar` | `kt.sidebar` | ✅ | - | - | 実装済み |
 | `st.popover` | - | ❌ | P2 | Medium | ポップオーバー |
 | `st.dialog` | - | ❌ | P1 | Hard | モーダルダイアログ |
-| `st.empty` | - | ❌ | P1 | Easy | プレースホルダー |
+| `st.empty` | `kt.empty` | ✅ | - | - | 実装済み |
 | `st.fragment` | - | ❌ | P2 | Hard | 部分再実行 |
 
 ---
@@ -190,8 +190,8 @@
 | Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
 |---------------|-----------|------|--------|--------|------|
 | `st.session_state` | Session API | ⚠️ | - | - | 部分実装（型付き版あり） |
-| `st.cache_data` | - | ❌ | P1 | Hard | データキャッシング |
-| `st.cache_resource` | - | ❌ | P1 | Hard | リソースキャッシング |
+| `st.cache_data` | `kt.cache_data` | ✅ | - | - | 実装済み |
+| `st.cache_resource` | `kt.cache_resource` | ✅ | - | - | 実装済み |
 | `st.query_params` | - | ❌ | P2 | Medium | クエリパラメータ管理 |
 
 ---
@@ -210,7 +210,7 @@
 
 | Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
 |---------------|-----------|------|--------|--------|------|
-| `st.write_stream` | - | ❌ | P1 | Medium | ストリーミング出力 |
+| `st.write_stream` | `kt.write_stream` | ✅ | - | - | 実装済み |
 | `st.help` | - | ❌ | P3 | Easy | ヘルプ表示 |
 
 ---
@@ -225,7 +225,7 @@
 | `st.line_chart` | Hard | 折れ線グラフ |
 | `st.bar_chart` | Hard | 棒グラフ |
 
-### P1 (高) - 15件
+### P1 (高) - 11件
 | API | 難易度 | 説明 |
 |-----|--------|------|
 | `st.datetime_input` | Medium | 日付+時刻入力 |
@@ -236,13 +236,9 @@
 | `st.audio` | Medium | 音声プレーヤー |
 | `st.video` | Medium | 動画プレーヤー |
 | `st.dialog` | Hard | モーダルダイアログ |
-| `st.empty` | Easy | プレースホルダー |
 | `st.status` | Medium | ステータスコンテナ |
 | `st.navigation` | Hard | マルチページナビ |
 | `st.Page` | Hard | ページ定義 |
-| `st.cache_data` | Hard | データキャッシング |
-| `st.cache_resource` | Hard | リソースキャッシング |
-| `st.write_stream` | Medium | ストリーム出力 |
 
 ### P2 (中) - 19件
 | API | 難易度 | 説明 |
@@ -290,42 +286,41 @@
 ### Phase 1: 基本機能強化 (P0 + Easy P1)
 1. **`st.chat_input`** - チャットアプリ構築に必須
 2. **`st.color_picker`** - 簡単に実装可能
-3. **`st.empty`** - プレースホルダー機能
 
 ### Phase 2: チャート基盤
-4. **`st.line_chart`** - 基本チャート
-5. **`st.bar_chart`** - 基本チャート
-6. **`st.dataframe`** - データ表示の強化
+3. **`st.line_chart`** - 基本チャート
+4. **`st.bar_chart`** - 基本チャート
+5. **`st.dataframe`** - データ表示の強化
 
 ### Phase 3: メディア・UX改善
-7. **`st.video`** - 動画再生
-8. **`st.audio`** - 音声再生
-9. **`st.status`** - 長時間処理の表示
-10. **`st.write_stream`** - LLM出力対応
+6. **`st.video`** - 動画再生
+7. **`st.audio`** - 音声再生
+8. **`st.status`** - 長時間処理の表示
 
 ### Phase 4: 高度な機能
-11. **`st.dialog`** - モーダル対応
-12. **`st.datetime_input`** - 日時入力統合
-13. **`st.cache_data`** / **`st.cache_resource`** - パフォーマンス最適化
+9. **`st.dialog`** - モーダル対応
+10. **`st.datetime_input`** - 日時入力統合
 
 ### Phase 5: マルチページ対応
-14. **`st.navigation`** / **`st.Page`** - マルチページアプリ
+11. **`st.navigation`** / **`st.Page`** - マルチページアプリ
 
 ---
 
 ## 実装済みAPI サマリー
 
-kantan-uiで実装済みのStreamlit互換API: **35件**
+kantan-uiで実装済みのStreamlit互換API: **39件**
 
 - Input Widgets: 14件
 - Data Display: 3件
 - Text Elements: 8件
 - Media: 1件
-- Layout: 5件
+- Layout: 6件 (empty追加)
 - Chat: 1件
 - Status: 7件
 - Control Flow: 3件
 - Configuration: 1件
+- Caching & State: 2件 (cache_data, cache_resource)
+- Utilities: 1件 (write_stream)
 
 ---
 

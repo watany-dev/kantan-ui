@@ -12,12 +12,13 @@
 6. [レイアウト](#レイアウト)
 7. [チャットUI](#チャットui)
 8. [セッションステート](#セッションステート)
-9. [ページ設定](#ページ設定)
-10. [実践: カウンターアプリ](#実践-カウンターアプリ)
-11. [実践: TODOアプリ](#実践-todoアプリ)
-12. [実践: チャットアプリ](#実践-チャットアプリ)
-13. [設定オプション](#設定オプション)
-14. [次のステップ](#次のステップ)
+9. [キャッシュ](#キャッシュ)
+10. [ページ設定](#ページ設定)
+11. [実践: カウンターアプリ](#実践-カウンターアプリ)
+12. [実践: TODOアプリ](#実践-todoアプリ)
+13. [実践: チャットアプリ](#実践-チャットアプリ)
+14. [設定オプション](#設定オプション)
+15. [次のステップ](#次のステップ)
 
 ---
 
@@ -593,6 +594,43 @@ kt.table(data, {
 
 **注意**: テーブル内のデータはXSS対策として自動的にエスケープされます。
 
+### メトリクス
+
+ダッシュボードやKPI表示で使用するメトリクスコンポーネントです。
+
+```typescript
+// 基本使用
+kt.metric("Revenue", "$1,234");
+
+// 変化量付き
+kt.metric("Revenue", "$1,234", { delta: "+12%" });
+
+// 変化量の色を反転（増加=悪い場合、例: レスポンスタイム）
+kt.metric("Response Time", "120ms", { delta: "+15ms", delta_color: "inverse" });
+
+// 変化量の色を無効化
+kt.metric("Users", "1,234", { delta: "+100", delta_color: "off" });
+
+// 数値のdeltaは自動で符号が付く
+kt.metric("Active Users", 1234, { delta: 156 }); // +156 と表示
+
+// ヘルプテキスト付き
+kt.metric("CPU Usage", "78%", {
+  delta: "+5%",
+  delta_color: "inverse",
+  help: "高いCPU使用率はパフォーマンスに影響します"
+});
+```
+
+**オプション:**
+
+| オプション | 説明 |
+|-----------|------|
+| `delta` | 変化量（文字列または数値） |
+| `delta_color` | `"normal"`（デフォルト）、`"inverse"`、`"off"` |
+| `help` | ツールチップで表示されるヘルプテキスト |
+| `label_visibility` | `"visible"`（デフォルト）、`"hidden"`、`"collapsed"` |
+
 ---
 
 ## レイアウト
@@ -871,6 +909,82 @@ const script = () => {
   return undefined;
 };
 ```
+
+---
+
+## キャッシュ
+
+高コストな計算やデータ取得の結果をキャッシュして、パフォーマンスを向上させます。Streamlitの`@st.cache_data`/`@st.cache_resource`に相当します。
+
+### cache_data
+
+シリアライズ可能なデータ（API結果、計算結果など）のキャッシュに使用します。
+
+```typescript
+import { kt } from "kantan-ui";
+
+// 基本使用
+const fetchUsers = kt.cache_data(async (limit: number) => {
+  const res = await fetch(`/api/users?limit=${limit}`);
+  return res.json();
+});
+
+const users = await fetchUsers(10);  // 2回目以降はキャッシュから返す
+```
+
+**オプション:**
+
+```typescript
+// TTL（有効期限）付き - 1時間で期限切れ
+const fetchWeather = kt.cache_data(async (city: string) => {
+  return await weatherApi.get(city);
+}, { ttl: 3600 });
+
+// 最大エントリ数制限 - LRUで古いエントリを削除
+const searchProducts = kt.cache_data(async (query: string) => {
+  return await productApi.search(query);
+}, { max_entries: 50 });
+```
+
+### cache_resource
+
+シリアライズ不可なリソース（DBコネクション、MLモデルなど）のキャッシュに使用します。
+
+```typescript
+// 何度呼んでも同じインスタンスを返す
+const getDb = kt.cache_resource(() => {
+  console.log("Creating new DB connection...");
+  return new Database(process.env.DATABASE_URL);
+});
+
+const db1 = getDb();
+const db2 = getDb();
+console.log(db1 === db2); // true - 同一インスタンス
+```
+
+### キャッシュのクリア
+
+```typescript
+// 特定のキャッシュ関数をクリア
+fetchUsers.clear();
+
+// 全cache_dataをクリア
+kt.cache_data.clear();
+
+// 全cache_resourceをクリア
+kt.cache_resource.clear();
+
+// 全キャッシュをクリア
+kt.clear_all_caches();
+```
+
+### cache_data vs cache_resource
+
+| 特性 | cache_data | cache_resource |
+|------|------------|----------------|
+| 主な用途 | API結果、計算結果 | DBコネクション、MLモデル |
+| 戻り値 | 値をコピーして返す | 同一インスタンスを返す |
+| デフォルトmax_entries | 100 | 10 |
 
 ---
 
@@ -1293,12 +1407,14 @@ export default await createApp(script, {
 - ✅ フォームウィジェット（checkbox, toggle, radio, number_input, text_area, multiselect）
 - ✅ 日付・時刻入力（date_input, time_input）
 - ✅ ファイルアップロード（file_uploader）
-- ✅ データ表示（table）
+- ✅ データ表示（table, metric）
 - ✅ メディア（image）
-- ✅ レイアウト（tabs, sidebar, columns, container, expander）
+- ✅ レイアウト（tabs, sidebar, columns, container, expander, empty）
 - ✅ チャットUI（chat_message, chat_container）
+- ✅ ストリーミング出力（write_stream）
 - ✅ ページ設定（set_page_config, rerun）
 - ✅ セッションステート管理
+- ✅ キャッシュ（cache_data, cache_resource）
 - ✅ WebSocketリアルタイム通信
 - ✅ DOM差分更新
 - ✅ マルチタブ対応
@@ -1308,10 +1424,9 @@ export default await createApp(script, {
 
 ### 今後の予定（Phase 3-B/C）
 
-- キャッシュ: `kt.cache_data()`, `kt.cache_resource()`
 - データウィジェット: `kt.dataframe()`
 - チャート: `kt.line_chart()`, `kt.bar_chart()`
-- 追加ウィジェット: `kt.color_picker()`, `kt.metric()`
+- 追加ウィジェット: `kt.color_picker()`, `kt.chat_input()`
 - メディア: `kt.audio()`, `kt.video()`
 - プラグインシステム
 
