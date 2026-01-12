@@ -39,13 +39,21 @@ export function toReadableStream(source: StreamSource): ReadableStream<string> {
 	}
 
 	// AsyncIterable / Iterable -> ReadableStream
-	// Web standard: ReadableStream.from() (Chrome 119+, Node 20+, Deno, Bun)
+	// Polyfill for cross-runtime compatibility (ReadableStream.from() not available in all environments)
 	if (typeof source === "object" && (Symbol.asyncIterator in source || Symbol.iterator in source)) {
-		// Type assertion needed: ReadableStream.from() is available but not in TypeScript's lib types
-		const RS = ReadableStream as unknown as {
-			from: (iterable: AsyncIterable<string> | Iterable<string>) => ReadableStream<string>;
-		};
-		return RS.from(source as AsyncIterable<string>);
+		const iterable = source as AsyncIterable<string> | Iterable<string>;
+		return new ReadableStream<string>({
+			async start(controller) {
+				try {
+					for await (const chunk of iterable) {
+						controller.enqueue(chunk);
+					}
+					controller.close();
+				} catch (error) {
+					controller.error(error);
+				}
+			},
+		});
 	}
 
 	throw new TypeError(
