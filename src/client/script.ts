@@ -303,6 +303,66 @@ function autoScrollChat() {
 }`;
 
 /**
+ * チャット入力スクリプト（自動リサイズ + 送信ハンドラ）
+ */
+const chatInputScript = `
+function initChatInputResize() {
+  const inputs = document.querySelectorAll(".kt-chat-input-field:not([data-kt-resize-init])");
+  inputs.forEach((textarea) => {
+    textarea.dataset.ktResizeInit = "true";
+
+    function resize() {
+      textarea.style.height = "auto";
+      const maxHeight = 200;
+      textarea.style.height = Math.min(textarea.scrollHeight, maxHeight) + "px";
+    }
+
+    textarea.addEventListener("input", resize);
+    resize();
+  });
+}
+
+function setupChatSubmitHandler(sendEvent) {
+  const app = document.getElementById("app");
+
+  // Enterキーで送信（Shift+Enterは改行）
+  app.addEventListener("keydown", (e) => {
+    if (isComposing) return;
+
+    const target = e.target;
+    if (!target.dataset || target.dataset.ktEvent !== "chat-submit") return;
+
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      submitChatInput(target, sendEvent);
+    }
+  });
+
+  // 送信ボタンクリック
+  app.addEventListener("click", (e) => {
+    const btn = e.target.closest(".kt-chat-input-submit[data-kt-trigger]");
+    if (!btn) return;
+
+    const targetId = btn.dataset.ktTrigger;
+    const textarea = document.getElementById(targetId);
+    if (textarea) {
+      submitChatInput(textarea, sendEvent);
+    }
+  });
+}
+
+function submitChatInput(textarea, sendEvent) {
+  const value = textarea.value.trim();
+  if (!value || !textarea.id) return;
+
+  sendEvent(textarea.id, value);
+
+  textarea.value = "";
+  textarea.style.height = "auto";
+  textarea.focus();
+}`;
+
+/**
  * サイドバートグルスクリプト
  */
 const sidebarToggleScript = `
@@ -989,6 +1049,8 @@ function connect() {
       // Auto-scroll chat containers
       initChatAutoScroll();
       autoScrollChat();
+      // Initialize chat input resize
+      initChatInputResize();
     }
 
     if (msg.type === "upload_result") {
@@ -1036,6 +1098,7 @@ window.sendEvent = (widgetId, value) => {
 // 初期化
 connect();
 setupEventDelegation(window.sendEvent);
+setupChatSubmitHandler(window.sendEvent);
 initSidebarToggle();
 `;
 
@@ -1046,6 +1109,7 @@ initSidebarToggle();
 		xssDetectionScript,
 		patchApplyScript,
 		chatAutoScrollScript,
+		chatInputScript,
 		sidebarToggleScript,
 		toastScript,
 		eventHandlingScript,
