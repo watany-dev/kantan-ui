@@ -279,5 +279,36 @@ describe("validateUploadedFile", () => {
 			expect(result.valid).toBe(true);
 			expect(new TextEncoder().encode(result.sanitizedFilename).length).toBeLessThanOrEqual(255);
 		});
+
+		it("handles file without extension", () => {
+			const data = createDataOfSize(100);
+			const result = validateUploadedFile(data, "README", "text/plain", {});
+			expect(result.valid).toBe(true);
+			expect(result.sanitizedFilename).toBe("README");
+		});
+
+		it("handles file with trailing dot", () => {
+			const data = createDataOfSize(100);
+			const result = validateUploadedFile(data, "file.", "application/octet-stream", {});
+			expect(result.valid).toBe(true);
+		});
+
+		it("rejects wildcard mime when type does not match base", () => {
+			const data = createDataOfSize(100);
+			// image/* should not accept text/plain
+			const result = validateUploadedFile(data, "file.txt", "text/plain", {
+				accept: "image/*",
+			});
+			expect(result.valid).toBe(false);
+			expect(result.errors.some((e) => e.code === "TYPE_NOT_ALLOWED")).toBe(true);
+		});
+
+		it("accepts wildcard mime when type matches base", () => {
+			const png = createValidPng();
+			const result = validateUploadedFile(png, "image.png", "image/png", {
+				accept: "image/*",
+			});
+			expect(result.valid).toBe(true);
+		});
 	});
 });
