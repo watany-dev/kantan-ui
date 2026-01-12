@@ -55,7 +55,6 @@ export function renderChatInput(placeholder: string, config?: Partial<ChatInputC
     <button
       type="button"
       class="kt-chat-input-submit"
-      data-kt-event="click"
       data-kt-trigger="${id}"
       aria-label="送信"${disabled}${buttonStyle}>${submitLabel}</button>
   </div>
