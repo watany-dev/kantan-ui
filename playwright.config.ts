@@ -123,23 +123,21 @@ export default defineConfig({
 			},
 			testMatch: "**/production-build.spec.ts",
 		},
-		// write-stream E2E tests are disabled in CI due to WebSocket timing issues
-		// Unit tests provide coverage for stream-processor functionality
-		// {
-		// 	name: "chromium-write-stream",
-		// 	use: {
-		// 		...devices["Desktop Chrome"],
-		// 		baseURL: "http://localhost:3006",
-		// 		launchOptions: process.env.CI
-		// 			? {
-		// 					args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
-		// 				}
-		// 			: {
-		// 					executablePath: chromiumPath,
-		// 				},
-		// 	},
-		// 	testMatch: "**/write-stream.spec.ts",
-		// },
+		{
+			name: "chromium-write-stream",
+			use: {
+				...devices["Desktop Chrome"],
+				baseURL: "http://localhost:3006",
+				launchOptions: process.env.CI
+					? {
+							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+						}
+					: {
+							executablePath: chromiumPath,
+						},
+			},
+			testMatch: "**/write-stream.spec.ts",
+		},
 	],
 	webServer: [
 		{
@@ -190,14 +188,13 @@ export default defineConfig({
 			stdout: "pipe",
 			stderr: "pipe",
 		},
-		// Disabled: write-stream E2E tests
-		// {
-		// 	command: "bun run src/server-write-stream-test.ts",
-		// 	url: "http://localhost:3006",
-		// 	reuseExistingServer: !process.env.CI,
-		// 	timeout: 30000,
-		// 	stdout: "pipe",
-		// 	stderr: "pipe",
-		// },
+		{
+			command: "bun run src/server-write-stream-test.ts",
+			url: "http://localhost:3006",
+			reuseExistingServer: !process.env.CI,
+			timeout: 30000,
+			stdout: "pipe",
+			stderr: "pipe",
+		},
 	],
 });

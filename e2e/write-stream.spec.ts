@@ -32,50 +32,53 @@ test.describe("write_stream", () => {
 		await expect(page.locator(".kt-write").first()).toContainText(
 			"Testing kt.write_stream() functionality",
 		);
+
+		// All buttons should be present
+		await expect(page.locator("#start_stream")).toBeVisible();
+		await expect(page.locator("#start_delayed")).toBeVisible();
+		await expect(page.locator("#start_markdown")).toBeVisible();
+		await expect(page.locator("#array_stream")).toBeVisible();
 	});
 
 	test("should display stream container on button click", async ({ page }) => {
 		await gotoAndWait(page);
 
-		// Click to start stream
-		const button = page.getByRole("button", { name: "Start Stream" });
-		await button.click();
+		// Click to start stream using ID selector with force option
+		await page.locator("#start_stream").click({ force: true });
 
 		// Stream container should appear
 		const streamEl = page.locator(".kt-stream.test-stream");
 		await expect(streamEl).toBeVisible();
 
-		// Should have content and cursor elements
+		// Should have content element
 		await expect(streamEl.locator(".kt-stream-content")).toBeVisible();
 	});
 
 	test("should complete stream with final content", async ({ page }) => {
 		await gotoAndWait(page);
 
-		const button = page.getByRole("button", { name: "Start Stream" });
-		await button.click();
+		await page.locator("#start_stream").click({ force: true });
 
 		// Wait for stream to complete (has kt-stream-complete class)
 		const streamEl = page.locator(".kt-stream.test-stream");
-		await expect(streamEl).toHaveClass(/kt-stream-complete/);
+		await expect(streamEl).toHaveClass(/kt-stream-complete/, { timeout: 10000 });
 
 		// Content should be "Hello, World!"
 		const content = streamEl.locator(".kt-stream-content");
 		await expect(content).toHaveText("Hello, World!");
 
-		// Cursor should be removed
+		// Cursor should be removed after completion
 		await expect(streamEl.locator(".kt-stream-cursor")).toHaveCount(0);
 	});
 
 	test("should display array stream content", async ({ page }) => {
 		await gotoAndWait(page);
 
-		const button = page.getByRole("button", { name: "Array Stream" });
-		await button.click();
+		await page.locator("#array_stream").click({ force: true });
 
 		// Wait for stream to complete
 		const streamEl = page.locator(".kt-stream.array-stream");
-		await expect(streamEl).toHaveClass(/kt-stream-complete/);
+		await expect(streamEl).toHaveClass(/kt-stream-complete/, { timeout: 10000 });
 
 		// Content should be concatenated
 		const content = streamEl.locator(".kt-stream-content");
@@ -85,12 +88,11 @@ test.describe("write_stream", () => {
 	test("should render markdown on completion", async ({ page }) => {
 		await gotoAndWait(page);
 
-		const button = page.getByRole("button", { name: "Start Markdown Stream" });
-		await button.click();
+		await page.locator("#start_markdown").click({ force: true });
 
 		// Wait for stream to complete
 		const streamEl = page.locator(".kt-stream.markdown-stream");
-		await expect(streamEl).toHaveClass(/kt-stream-complete/);
+		await expect(streamEl).toHaveClass(/kt-stream-complete/, { timeout: 10000 });
 
 		// Content should contain rendered markdown (h1 and bold)
 		const content = streamEl.locator(".kt-stream-content");
@@ -101,8 +103,7 @@ test.describe("write_stream", () => {
 	test("should have blinking cursor during stream", async ({ page }) => {
 		await gotoAndWait(page);
 
-		const button = page.getByRole("button", { name: "Start Delayed Stream" });
-		await button.click();
+		await page.locator("#start_delayed").click({ force: true });
 
 		// Stream container should appear
 		const streamEl = page.locator(".kt-stream.delayed-stream");
@@ -117,15 +118,20 @@ test.describe("write_stream", () => {
 		await gotoAndWait(page);
 
 		// Start first stream
-		const button1 = page.getByRole("button", { name: "Start Stream" });
-		await button1.click();
+		await page.locator("#start_stream").click({ force: true });
+
+		// Wait for first stream container to appear
+		await expect(page.locator(".kt-stream.test-stream")).toBeVisible();
 
 		// Start second stream
-		const button2 = page.getByRole("button", { name: "Array Stream" });
-		await button2.click();
+		await page.locator("#array_stream").click({ force: true });
 
-		// Both streams should be visible and complete
-		await expect(page.locator(".kt-stream.test-stream")).toHaveClass(/kt-stream-complete/);
-		await expect(page.locator(".kt-stream.array-stream")).toHaveClass(/kt-stream-complete/);
+		// Both streams should complete
+		await expect(page.locator(".kt-stream.test-stream")).toHaveClass(/kt-stream-complete/, {
+			timeout: 10000,
+		});
+		await expect(page.locator(".kt-stream.array-stream")).toHaveClass(/kt-stream-complete/, {
+			timeout: 10000,
+		});
 	});
 });
