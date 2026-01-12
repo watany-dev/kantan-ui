@@ -66,6 +66,26 @@ describe("chat_input", () => {
 
 			expect(value).toBeNull();
 		});
+
+		it("should clear value after retrieval (one-time event pattern)", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			// Simulate submitted value in state
+			manager.setState(session.id, "my_chat", "一度だけ取得");
+
+			// First call should return the value
+			const firstValue = chat_input("入力", { key: "my_chat" });
+			expect(firstValue).toBe("一度だけ取得");
+
+			// Second call should return null (value was cleared)
+			const secondValue = chat_input("入力", { key: "my_chat" });
+			expect(secondValue).toBeNull();
+
+			// State should be cleared
+			const state = manager.getState(session.id);
+			expect(state?.["my_chat"]).toBeUndefined();
+		});
 	});
 
 	describe("renderChatInput", () => {
