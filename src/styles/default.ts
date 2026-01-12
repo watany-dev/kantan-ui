@@ -1123,6 +1123,62 @@ const fileUploaderStyles = `
   }
 `;
 
+/** カラーピッカースタイル */
+const colorPickerStyles = `
+  /* Color Picker Container */
+  .kt-color-picker-container {
+    margin: 10px 0;
+  }
+
+  /* Color Picker Label */
+  .kt-color-picker-label {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  /* Color Picker Input */
+  .kt-color-picker {
+    width: 60px;
+    height: 32px;
+    padding: 2px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+  }
+
+  .kt-color-picker:hover {
+    border-color: #adb5bd;
+  }
+
+  .kt-color-picker:focus {
+    outline: none;
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+  }
+
+  .kt-color-picker:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* Webkit browsers customization */
+  .kt-color-picker::-webkit-color-swatch-wrapper {
+    padding: 2px;
+  }
+
+  .kt-color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 2px;
+  }
+
+  /* Firefox customization */
+  .kt-color-picker::-moz-color-swatch {
+    border: none;
+    border-radius: 2px;
+  }
+`;
+
 /**
  * 全デフォルトスタイルを結合
  */
@@ -1143,6 +1199,7 @@ export const defaultStyles = [
 	emptyStyles,
 	streamStyles,
 	fileUploaderStyles,
+	colorPickerStyles,
 ].join("\n");
 
 /**
