@@ -313,6 +313,17 @@ export interface ChatInputConfig {
 }
 
 /**
+ * カラーピッカーの設定
+ */
+export interface ColorPickerConfig {
+	/** ウィジェットの一意キー（状態保持用） */
+	key?: string;
+
+	/** 無効化フラグ */
+	disabled?: boolean;
+}
+
+/**
  * Placeholder content type
  */
 export type PlaceholderContentType =
