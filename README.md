@@ -108,6 +108,61 @@ kt.code("const x = 1;", "typescript"); // Code block with syntax highlighting
 kt.json({ key: "value" });   // Collapsible JSON viewer
 ```
 
+#### Streaming API
+
+Display text progressively from streaming sources (ideal for LLM responses).
+
+```typescript
+// AsyncGenerator (LLM-style streaming)
+async function* generateResponse() {
+  yield "Hello, ";
+  await new Promise(r => setTimeout(r, 100));
+  yield "World!";
+}
+const fullText = await kt.write_stream(generateResponse());
+
+// Array (instant display)
+await kt.write_stream(["Item 1, ", "Item 2, ", "Item 3"]);
+
+// With Markdown rendering on completion
+await kt.write_stream(["# Title\n", "\nThis is **bold** text."], {
+  markdown: true,
+});
+
+// Custom CSS class
+await kt.write_stream(chunks, { className: "my-stream" });
+
+// ReadableStream (Web standard)
+const stream = new ReadableStream<string>({
+  start(controller) {
+    controller.enqueue("Streaming...");
+    controller.close();
+  }
+});
+await kt.write_stream(stream);
+
+// Response from fetch
+const response = await fetch("/api/stream");
+await kt.write_stream(response);
+```
+
+**Supported Sources:**
+- `AsyncIterable<string>` - async generators, LLM streams
+- `Iterable<string>` - arrays, iterators
+- `ReadableStream<string>` - Web standard streams
+- `Response` - fetch API responses
+- Factory functions returning any of the above
+
+**Options:**
+- `markdown: boolean` - Render as Markdown when stream completes
+- `className: string` - Custom CSS class for styling
+
+**Features:**
+- Blinking cursor during streaming
+- Automatic cursor removal on completion
+- XSS-safe text rendering
+- Multiple concurrent streams supported
+
 #### Alert API
 
 ```typescript
@@ -524,11 +579,15 @@ src/
 │   ├── layout.ts     # Layout (tabs, columns, container, expander)
 │   ├── sidebar.ts    # Sidebar API
 │   ├── output.ts     # Output API (title, write, header, etc.)
+│   ├── stream.ts     # Streaming API (write_stream)
+│   ├── stream-utils.ts   # Stream normalization utilities
+│   ├── stream-registry.ts # Pending stream management
 │   ├── widgets.ts    # Widget API (button, slider, etc.)
 │   └── index.ts
 ├── runtime/          # Runtime context management
 │   ├── context.ts    # getContext/setContext
 │   ├── rerun.ts      # Script re-execution logic
+│   ├── stream-processor.ts # Stream processing engine
 │   └── index.ts
 ├── session/          # Session management
 │   ├── manager.ts    # SessionManager (multi-tab support)
