@@ -1,6 +1,13 @@
 // クライアント → サーバ
 export interface ClientMessage {
-	type: "event" | "init" | "pong" | "file_upload";
+	type:
+		| "event"
+		| "init"
+		| "pong"
+		| "file_upload"
+		| "chunk_upload_start"
+		| "chunk_upload_data"
+		| "chunk_upload_end";
 	widgetId?: string;
 	value?: unknown;
 	sessionId?: string; // 既存セッションIDを送信
@@ -39,18 +46,86 @@ export function isFileUploadMessage(data: unknown): data is FileUploadMessage {
 export function isClientMessage(data: unknown): data is ClientMessage {
 	if (typeof data !== "object" || data === null) return false;
 	const msg = data as Record<string, unknown>;
-	if (
-		msg["type"] !== "event" &&
-		msg["type"] !== "init" &&
-		msg["type"] !== "pong" &&
-		msg["type"] !== "file_upload"
-	) {
+	const validTypes = [
+		"event",
+		"init",
+		"pong",
+		"file_upload",
+		"chunk_upload_start",
+		"chunk_upload_data",
+		"chunk_upload_end",
+	];
+	if (!validTypes.includes(msg["type"] as string)) {
 		return false;
 	}
 	// null も許可（localStorage.getItem が null を返す場合）
 	if (msg["widgetId"] != null && typeof msg["widgetId"] !== "string") return false;
 	if (msg["sessionId"] != null && typeof msg["sessionId"] !== "string") return false;
 	if (msg["lastSeq"] != null && typeof msg["lastSeq"] !== "number") return false;
+	return true;
+}
+
+/** チャンクアップロード開始メッセージ */
+export interface ChunkUploadStartMessage {
+	type: "chunk_upload_start";
+	widgetId: string;
+	uploadId: string;
+	filename: string;
+	mimeType: string;
+	totalSize: number;
+	totalChunks: number;
+	chunkSize: number;
+}
+
+/** チャンクアップロードデータメッセージ */
+export interface ChunkUploadDataMessage {
+	type: "chunk_upload_data";
+	uploadId: string;
+	chunkIndex: number;
+	data: string; // Base64エンコードされたチャンクデータ
+}
+
+/** チャンクアップロード終了メッセージ */
+export interface ChunkUploadEndMessage {
+	type: "chunk_upload_end";
+	uploadId: string;
+	checksum?: string; // オプショナルなチェックサム（SHA-256等）
+}
+
+/** ChunkUploadStartMessageの型ガード */
+export function isChunkUploadStartMessage(data: unknown): data is ChunkUploadStartMessage {
+	if (typeof data !== "object" || data === null) return false;
+	const msg = data as Record<string, unknown>;
+	if (msg["type"] !== "chunk_upload_start") return false;
+	if (typeof msg["widgetId"] !== "string") return false;
+	if (typeof msg["uploadId"] !== "string") return false;
+	if (typeof msg["filename"] !== "string") return false;
+	if (typeof msg["mimeType"] !== "string") return false;
+	if (typeof msg["totalSize"] !== "number") return false;
+	if (typeof msg["totalChunks"] !== "number") return false;
+	if (typeof msg["chunkSize"] !== "number") return false;
+	return true;
+}
+
+/** ChunkUploadDataMessageの型ガード */
+export function isChunkUploadDataMessage(data: unknown): data is ChunkUploadDataMessage {
+	if (typeof data !== "object" || data === null) return false;
+	const msg = data as Record<string, unknown>;
+	if (msg["type"] !== "chunk_upload_data") return false;
+	if (typeof msg["uploadId"] !== "string") return false;
+	if (typeof msg["chunkIndex"] !== "number") return false;
+	if (typeof msg["data"] !== "string") return false;
+	return true;
+}
+
+/** ChunkUploadEndMessageの型ガード */
+export function isChunkUploadEndMessage(data: unknown): data is ChunkUploadEndMessage {
+	if (typeof data !== "object" || data === null) return false;
+	const msg = data as Record<string, unknown>;
+	if (msg["type"] !== "chunk_upload_end") return false;
+	if (typeof msg["uploadId"] !== "string") return false;
+	// checksum is optional
+	if (msg["checksum"] != null && typeof msg["checksum"] !== "string") return false;
 	return true;
 }
 
@@ -76,7 +151,8 @@ export interface ServerMessage {
 			| "DANGEROUS_FILE"
 			| "DECODE_ERROR"
 			| "VALIDATION_ERROR"
-			| "SESSION_LIMIT";
+			| "SESSION_LIMIT"
+			| "UPLOAD_RATE_LIMITED";
 		message: string;
 		/** レート制限時: 再試行までのミリ秒 */
 		retryAfter?: number;

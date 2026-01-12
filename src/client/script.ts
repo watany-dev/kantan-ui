@@ -341,6 +341,15 @@ function sendEventDebounced(widgetId, value, sendFn) {
 // File upload handling
 const FILE_UPLOAD_DEFAULT_MAX_SIZE = 200 * 1024 * 1024;
 const FILE_UPLOAD_CHUNK_SIZE = 1 * 1024 * 1024;
+const CHUNK_UPLOAD_THRESHOLD = 10 * 1024 * 1024; // 10MB
+
+function shouldUseChunkedUpload(fileSize) {
+  return fileSize > CHUNK_UPLOAD_THRESHOLD;
+}
+
+function generateUploadId() {
+  return 'upload-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+}
 
 function arrayBufferToBase64(buffer) {
   if (buffer.byteLength === 0) return "";
@@ -386,6 +395,210 @@ function validateFileType(filename, mimeType, accept) {
   return { valid: false, error: 'File type "' + mimeType + '" is not allowed. Accepted types: ' + accept };
 }
 
+// Progress UI functions
+function formatBytes(bytes) {
+  if (bytes === 0) return "0 B";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + " GB";
+}
+
+function getWidgetContainer(widgetId) {
+  return document.getElementById(widgetId + "-container");
+}
+
+function updateUploadProgress(widgetId, percent, uploadedBytes, totalBytes) {
+  const container = getWidgetContainer(widgetId);
+  if (!container) return;
+
+  const progressDiv = container.querySelector(".kt-file-uploader-progress");
+  const fill = container.querySelector(".kt-progress-fill");
+  const percentText = container.querySelector(".kt-progress-percent");
+  const sizeText = container.querySelector(".kt-progress-size");
+
+  if (progressDiv) progressDiv.style.display = "block";
+  if (fill) {
+    fill.style.width = percent + "%";
+    fill.classList.remove("indeterminate");
+  }
+  if (percentText) percentText.textContent = Math.round(percent) + "%";
+  if (sizeText) sizeText.textContent = formatBytes(uploadedBytes) + " / " + formatBytes(totalBytes);
+}
+
+function showUploadIndeterminate(widgetId) {
+  const container = getWidgetContainer(widgetId);
+  if (!container) return;
+
+  const progressDiv = container.querySelector(".kt-file-uploader-progress");
+  const fill = container.querySelector(".kt-progress-fill");
+  const percentText = container.querySelector(".kt-progress-percent");
+
+  if (progressDiv) progressDiv.style.display = "block";
+  if (fill) fill.classList.add("indeterminate");
+  if (percentText) percentText.textContent = "Processing...";
+}
+
+function hideUploadProgress(widgetId) {
+  const container = getWidgetContainer(widgetId);
+  if (!container) return;
+
+  const progressDiv = container.querySelector(".kt-file-uploader-progress");
+  if (progressDiv) progressDiv.style.display = "none";
+}
+
+function showUploadComplete(widgetId, filename, uploadId) {
+  const container = getWidgetContainer(widgetId);
+  if (!container) return;
+
+  hideUploadProgress(widgetId);
+
+  const completeDiv = container.querySelector(".kt-file-uploader-complete");
+  if (completeDiv) {
+    completeDiv.style.display = "flex";
+    const filenameSpan = completeDiv.querySelector(".kt-file-name");
+    if (filenameSpan) filenameSpan.textContent = filename;
+    const removeBtn = completeDiv.querySelector(".kt-file-remove");
+    if (removeBtn) removeBtn.dataset.uploadId = uploadId;
+  }
+
+  container.classList.add("kt-upload-complete");
+}
+
+function hideUploadError(widgetId) {
+  const container = getWidgetContainer(widgetId);
+  if (!container) return;
+
+  const errorDiv = container.querySelector(".kt-file-uploader-error");
+  if (errorDiv) errorDiv.style.display = "none";
+}
+
+// Map to track pending uploads for completion handling
+const pendingUploads = new Map();
+
+// Map to track pending chunk uploads { uploadId -> { widgetId, filename, totalChunks, receivedChunks, resolve, reject } }
+const pendingChunkUploads = new Map();
+
+// Handle chunked upload for large files
+function handleChunkedUpload(widgetId, file, data) {
+  return new Promise(function(resolve, reject) {
+    const uploadId = generateUploadId();
+    const totalChunks = Math.ceil(data.byteLength / FILE_UPLOAD_CHUNK_SIZE);
+    const mimeType = file.type || "application/octet-stream";
+
+    // Store pending chunk upload info
+    pendingChunkUploads.set(uploadId, {
+      widgetId: widgetId,
+      filename: file.name,
+      totalChunks: totalChunks,
+      receivedChunks: 0,
+      resolve: resolve,
+      reject: reject
+    });
+
+    // Send start message
+    const startMessage = {
+      type: "chunk_upload_start",
+      widgetId: widgetId,
+      uploadId: uploadId,
+      filename: file.name,
+      mimeType: mimeType,
+      totalSize: file.size,
+      totalChunks: totalChunks,
+      chunkSize: FILE_UPLOAD_CHUNK_SIZE,
+      sessionId: sessionId
+    };
+
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      pendingChunkUploads.delete(uploadId);
+      reject(new Error("WebSocket not connected"));
+      return;
+    }
+
+    ws.send(JSON.stringify(startMessage));
+
+    // Send chunks
+    const bytes = new Uint8Array(data);
+    let chunkIndex = 0;
+
+    function sendNextChunk() {
+      if (chunkIndex >= totalChunks) {
+        // Send end message
+        const endMessage = {
+          type: "chunk_upload_end",
+          uploadId: uploadId
+        };
+        ws.send(JSON.stringify(endMessage));
+        return;
+      }
+
+      const start = chunkIndex * FILE_UPLOAD_CHUNK_SIZE;
+      const end = Math.min(start + FILE_UPLOAD_CHUNK_SIZE, bytes.length);
+      const chunk = bytes.slice(start, end);
+      const base64Chunk = arrayBufferToBase64(chunk.buffer);
+
+      const chunkMessage = {
+        type: "chunk_upload_data",
+        uploadId: uploadId,
+        chunkIndex: chunkIndex,
+        data: base64Chunk
+      };
+
+      ws.send(JSON.stringify(chunkMessage));
+
+      // Update progress
+      const progress = 50 + (chunkIndex + 1) / totalChunks * 40; // 50-90%
+      const uploadedBytes = Math.min((chunkIndex + 1) * FILE_UPLOAD_CHUNK_SIZE, bytes.length);
+      updateUploadProgress(widgetId, progress, uploadedBytes, bytes.length);
+
+      chunkIndex++;
+
+      // Send next chunk after a small delay to avoid overwhelming the connection
+      setTimeout(sendNextChunk, 10);
+    }
+
+    // Start sending chunks
+    sendNextChunk();
+  });
+}
+
+// Handle chunk upload response from server
+function handleChunkUploadResponse(msg) {
+  const uploadId = msg.uploadId;
+  const pending = pendingChunkUploads.get(uploadId);
+
+  if (!pending) {
+    console.warn("Received chunk response for unknown upload:", uploadId);
+    return;
+  }
+
+  if (msg.status === "error") {
+    hideUploadProgress(pending.widgetId);
+    const container = getWidgetContainer(pending.widgetId);
+    if (container) {
+      const errorDiv = container.querySelector(".kt-file-uploader-error");
+      if (errorDiv) {
+        errorDiv.style.display = "block";
+        errorDiv.textContent = msg.error ? msg.error.message : "Upload failed";
+      }
+    }
+    pendingChunkUploads.delete(uploadId);
+    pending.reject(new Error(msg.error ? msg.error.message : "Upload failed"));
+    return;
+  }
+
+  if (msg.status === "chunk_received") {
+    pending.receivedChunks++;
+    // Progress is already updated when sending chunks
+  }
+
+  if (msg.status === "upload_complete") {
+    showUploadComplete(pending.widgetId, pending.filename, msg.registeredUploadId);
+    pendingChunkUploads.delete(uploadId);
+    pending.resolve(msg.registeredUploadId);
+  }
+}
+
 function handleFileUpload(inputElement) {
   const files = inputElement.files;
   if (!files || files.length === 0) return;
@@ -394,6 +607,9 @@ function handleFileUpload(inputElement) {
   const maxSize = getMaxFileSize(inputElement);
   const accept = inputElement.accept || undefined;
   const multiple = inputElement.multiple;
+
+  // Clear previous error
+  hideUploadError(widgetId);
 
   // Process files
   const filesToProcess = multiple ? Array.from(files) : [files[0]];
@@ -417,16 +633,48 @@ function handleFileUpload(inputElement) {
       continue;
     }
 
+    // Show initial progress
+    updateUploadProgress(widgetId, 0, 0, file.size);
+
     // Read and send file
     const reader = new FileReader();
+
+    // Track reading progress
+    reader.onprogress = function(event) {
+      if (event.lengthComputable) {
+        const percent = (event.loaded / event.total) * 50; // Reading is 0-50%
+        updateUploadProgress(widgetId, percent, event.loaded, event.total);
+      }
+    };
+
     reader.onload = function() {
       const data = reader.result;
       if (!(data instanceof ArrayBuffer)) {
         console.error("Failed to read file as ArrayBuffer");
+        hideUploadProgress(widgetId);
         return;
       }
 
+      // Check if we should use chunked upload for large files
+      if (shouldUseChunkedUpload(file.size)) {
+        // Use chunked upload for files > 10MB
+        updateUploadProgress(widgetId, 50, file.size / 2, file.size);
+        handleChunkedUpload(widgetId, file, data).catch(function(error) {
+          console.error("Chunked upload failed:", error);
+          hideUploadProgress(widgetId);
+          showUploadError(inputElement, error.message || "Upload failed");
+        });
+        return;
+      }
+
+      // Show encoding progress (50-75%)
+      updateUploadProgress(widgetId, 50, file.size / 2, file.size);
+
       const base64Data = arrayBufferToBase64(data);
+
+      // Show sending progress (75-90%)
+      updateUploadProgress(widgetId, 75, file.size * 0.75, file.size);
+
       const message = {
         type: "file_upload",
         widgetId: widgetId,
@@ -434,19 +682,53 @@ function handleFileUpload(inputElement) {
         mimeType: file.type || "application/octet-stream",
         size: file.size,
         data: base64Data,
-        isChunked: false
+        isChunked: false,
+        sessionId: sessionId
       };
 
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify(message));
+        // Show server processing (90%)
+        updateUploadProgress(widgetId, 90, file.size * 0.9, file.size);
+        // Store pending upload for completion handling
+        pendingUploads.set(widgetId, { filename: file.name, size: file.size });
       } else {
         console.error("WebSocket not connected");
+        hideUploadProgress(widgetId);
+        showUploadError(inputElement, "Connection lost. Please try again.");
       }
     };
+
     reader.onerror = function() {
       console.error("Failed to read file:", reader.error);
+      hideUploadProgress(widgetId);
+      showUploadError(inputElement, "Failed to read file");
     };
+
     reader.readAsArrayBuffer(file);
+  }
+}
+
+// Handle upload result from server
+function handleUploadResult(msg) {
+  const widgetId = msg.widgetId;
+  const pending = pendingUploads.get(widgetId);
+
+  if (msg.success && msg.uploadId) {
+    const filename = pending ? pending.filename : "File";
+    showUploadComplete(widgetId, filename, msg.uploadId);
+    pendingUploads.delete(widgetId);
+  } else if (msg.error) {
+    hideUploadProgress(widgetId);
+    const container = getWidgetContainer(widgetId);
+    if (container) {
+      const errorDiv = container.querySelector(".kt-file-uploader-error");
+      if (errorDiv) {
+        errorDiv.style.display = "block";
+        errorDiv.textContent = msg.error.message || "Upload failed";
+      }
+    }
+    pendingUploads.delete(widgetId);
   }
 }
 
@@ -613,7 +895,7 @@ const isBrowserScope = ${isBrowserScope};
 let ws = null;
 let reconnectAttempts = 0;
 let lastReceivedSeq = 0;
-${isBrowserScope ? "" : "let sessionId = localStorage.getItem(__KT_CONFIG__.sessionKey);"}
+${isBrowserScope ? "let sessionId = null;" : "let sessionId = localStorage.getItem(__KT_CONFIG__.sessionKey);"}
 
 function connect() {
   updateConnectionStatus("connecting", reconnectAttempts, __KT_CONFIG__.maxReconnectAttempts);
@@ -678,6 +960,14 @@ function connect() {
       // Auto-scroll chat containers
       initChatAutoScroll();
       autoScrollChat();
+    }
+
+    if (msg.type === "upload_result") {
+      handleUploadResult(msg);
+    }
+
+    if (msg.type === "chunk_upload_response") {
+      handleChunkUploadResponse(msg);
     }
   };
 

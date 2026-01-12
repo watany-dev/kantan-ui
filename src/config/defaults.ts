@@ -1,6 +1,7 @@
 import type {
 	ClientConfig,
 	CookieConfig,
+	FileUploadRateLimitConfig,
 	KantanConfig,
 	ResolvedKantanConfig,
 	ResolvedSessionConfig,
@@ -49,12 +50,25 @@ export const DEFAULT_STREAMING_CONFIG: Required<StreamingConfig> = {
 };
 
 /**
+ * ファイルアップロードレート制限のデフォルト値
+ */
+export const DEFAULT_FILE_UPLOAD_RATE_LIMIT_CONFIG: Required<FileUploadRateLimitConfig> = {
+	maxUploadsPerMinute: 30,
+	maxBytesPerMinute: 100 * 1024 * 1024, // 100MB
+	maxConcurrentUploads: 3,
+	uploadRateLimitCooldown: 5000, // 5秒
+};
+
+/**
  * セキュリティ設定のデフォルト値
  */
 export const DEFAULT_SECURITY_CONFIG: Required<SecurityConfig> = {
 	maxPatchSize: 1024 * 1024, // 1MB
 	maxEventsPerSecond: 100,
 	rateLimitCooldown: 1000, // 1秒
+	validateWebSocketOrigin: true,
+	allowedOrigins: [],
+	fileUploadRateLimit: DEFAULT_FILE_UPLOAD_RATE_LIMIT_CONFIG,
 };
 
 /**
@@ -92,6 +106,11 @@ export function resolveConfig(config?: KantanConfig): ResolvedKantanConfig {
 		security: {
 			...DEFAULT_SECURITY_CONFIG,
 			...config?.security,
+			// fileUploadRateLimitはネストしてマージ
+			fileUploadRateLimit: {
+				...DEFAULT_FILE_UPLOAD_RATE_LIMIT_CONFIG,
+				...config?.security?.fileUploadRateLimit,
+			},
 		},
 	};
 }

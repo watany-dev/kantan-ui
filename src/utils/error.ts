@@ -17,7 +17,8 @@ export type ErrorCode =
 	| "DANGEROUS_FILE"
 	| "DECODE_ERROR"
 	| "VALIDATION_ERROR"
-	| "SESSION_LIMIT";
+	| "SESSION_LIMIT"
+	| "UPLOAD_RATE_LIMITED";
 
 /**
  * WebSocket用エラーメッセージを生成する

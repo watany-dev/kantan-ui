@@ -22,10 +22,19 @@ import { SessionManager, setSessionManager } from "./session";
 import { defaultStyles } from "./styles";
 import { createErrorMessageJson } from "./utils/error";
 import { createWebSocketAdapterAsync } from "./websocket";
+import {
+	handleChunkUploadComplete,
+	handleChunkUploadData,
+	handleChunkUploadStart,
+} from "./websocket/chunk-upload-handler";
 import { handleFileUpload } from "./websocket/file-upload-handler";
+import { validateOrigin } from "./websocket/origin-validation";
 import type { Patch } from "./websocket/types";
 import {
 	type ClientMessage,
+	isChunkUploadDataMessage,
+	isChunkUploadEndMessage,
+	isChunkUploadStartMessage,
 	isClientMessage,
 	isFileUploadMessage,
 	type ServerMessage,
@@ -218,8 +227,20 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 			const cookieSessionId =
 				config.session.scope === "browser" ? getCookie(c, config.session.sessionKey) : undefined;
 
+			// Origin検証のための情報を事前に取得
+			const origin = c.req.header("Origin");
+			const host = c.req.header("Host");
+			const shouldValidateOrigin = config.security.validateWebSocketOrigin;
+			const allowedOrigins = config.security.allowedOrigins;
+
 			return {
 				onOpen: (_evt, ws) => {
+					// Origin検証（設定で有効な場合のみ）
+					if (shouldValidateOrigin && !validateOrigin(origin, host, allowedOrigins)) {
+						ws.close(4003, "Origin not allowed");
+						return;
+					}
+
 					sessionManager.initializePong(ws);
 				},
 				onMessage: (event, ws) => {
@@ -435,13 +456,29 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						if (!uploadResult.success) {
 							// エラーをクライアントに送信
 							ws.send(
-								createErrorMessageJson(
-									uploadResult.error?.code ?? "UNKNOWN",
-									uploadResult.error?.message ?? "File upload failed",
-								),
+								JSON.stringify({
+									type: "upload_result",
+									widgetId: parsed.widgetId,
+									success: false,
+									error: {
+										code: uploadResult.error?.code ?? "UNKNOWN",
+										message: uploadResult.error?.message ?? "File upload failed",
+									},
+									retryAfter: uploadResult.retryAfter,
+								}),
 							);
 							return;
 						}
+
+						// アップロード成功通知をクライアントに送信
+						ws.send(
+							JSON.stringify({
+								type: "upload_result",
+								widgetId: parsed.widgetId,
+								success: true,
+								uploadId: uploadResult.uploadId,
+							}),
+						);
 
 						// アップロード成功 - rerunを実行してUIを更新
 						const streamingOptions: StreamingOptions | undefined = config.streaming.enabled
@@ -498,6 +535,155 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 								seq,
 							};
 							sessionManager.broadcast(session.id, JSON.stringify(message));
+						}
+					} else if (data.type === "chunk_upload_start" && isChunkUploadStartMessage(parsed)) {
+						// チャンクアップロード開始処理
+						const uploadSessionId = cookieSessionId ?? data.sessionId;
+						if (!uploadSessionId) {
+							ws.send(
+								JSON.stringify({
+									type: "chunk_upload_response",
+									uploadId: parsed.uploadId,
+									status: "error",
+									error: { code: "SESSION_ID_REQUIRED", message: "sessionId is required" },
+								}),
+							);
+							return;
+						}
+
+						const result = handleChunkUploadStart(parsed, uploadSessionId, sessionManager);
+						ws.send(
+							JSON.stringify({
+								type: "chunk_upload_response",
+								uploadId: result.uploadId,
+								status: result.status,
+								error: result.error,
+								retryAfter: result.retryAfter,
+							}),
+						);
+					} else if (data.type === "chunk_upload_data" && isChunkUploadDataMessage(parsed)) {
+						// チャンクデータ受信処理
+						const result = handleChunkUploadData(parsed, sessionManager);
+						ws.send(
+							JSON.stringify({
+								type: "chunk_upload_response",
+								uploadId: result.uploadId,
+								status: result.status,
+								chunkIndex: result.chunkIndex,
+								progress: result.progress,
+								error: result.error,
+							}),
+						);
+					} else if (data.type === "chunk_upload_end" && isChunkUploadEndMessage(parsed)) {
+						// チャンクアップロード完了処理
+						const uploadSessionId = cookieSessionId ?? data.sessionId;
+						if (!uploadSessionId) {
+							ws.send(
+								JSON.stringify({
+									type: "chunk_upload_response",
+									uploadId: parsed.uploadId,
+									status: "error",
+									error: { code: "SESSION_ID_REQUIRED", message: "sessionId is required" },
+								}),
+							);
+							return;
+						}
+
+						const session = sessionManager.getSession(uploadSessionId);
+						if (!session) {
+							ws.send(
+								JSON.stringify({
+									type: "chunk_upload_response",
+									uploadId: parsed.uploadId,
+									status: "error",
+									error: { code: "SESSION_NOT_FOUND", message: "Session not found" },
+								}),
+							);
+							return;
+						}
+
+						// メタデータを先に取得（completeChunkUpload後は削除されるため）
+						const metadata = sessionManager.getChunkUploadMetadata(parsed.uploadId);
+						const widgetId = metadata?.widgetId ?? "";
+
+						const result = handleChunkUploadComplete(parsed, uploadSessionId, sessionManager);
+
+						if (result.status === "error") {
+							ws.send(
+								JSON.stringify({
+									type: "chunk_upload_response",
+									uploadId: result.uploadId,
+									status: "error",
+									error: result.error,
+								}),
+							);
+							return;
+						}
+
+						// アップロード成功通知を送信
+						ws.send(
+							JSON.stringify({
+								type: "chunk_upload_response",
+								uploadId: result.uploadId,
+								status: "upload_complete",
+								registeredUploadId: result.registeredUploadId,
+							}),
+						);
+
+						const streamingOptions: StreamingOptions | undefined = config.streaming.enabled
+							? {
+									onFlush: (htmlContent, _itemCount) => {
+										const streamMessage: ServerMessage = {
+											type: "patch",
+											patches: [{ type: "streamAppend", html: htmlContent }],
+											partial: true,
+										};
+										sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
+									},
+									flushThreshold: config.streaming.flushThreshold,
+								}
+							: undefined;
+
+						const newResult = rerun(
+							script,
+							{ widgetId, value: result.registeredUploadId },
+							session.id,
+							undefined,
+							streamingOptions,
+						);
+						session.lastAccessedAt = new Date();
+
+						// 差分計算（メインコンテンツ）
+						let chunkPatches: Patch[];
+						if (session.lastHtml) {
+							const diffResult = diff(session.lastHtml, newResult.mainHtml);
+							chunkPatches = toWebSocketPatches(diffResult, newResult.mainHtml);
+						} else {
+							chunkPatches = [{ type: "replaceRoot", html: newResult.mainHtml }];
+						}
+
+						// サイドバーの差分計算
+						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
+							const sidebarDiffResult = diff(session.lastSidebarHtml ?? "", newResult.sidebarHtml);
+							const sidebarPatches = toWebSocketPatches(
+								sidebarDiffResult,
+								newResult.sidebarHtml,
+								"kt-sidebar-content",
+							);
+							chunkPatches.push(...sidebarPatches);
+						}
+
+						session.lastHtml = newResult.mainHtml;
+						session.lastSidebarHtml = newResult.sidebarHtml;
+
+						if (chunkPatches.length > 0) {
+							const seq = sessionManager.addPatchToHistory(session.id, chunkPatches);
+							const patchMessage: ServerMessage = {
+								type: "patch",
+								patches: chunkPatches,
+								seq,
+							};
+							sessionManager.broadcast(session.id, JSON.stringify(patchMessage));
 						}
 					}
 				},
