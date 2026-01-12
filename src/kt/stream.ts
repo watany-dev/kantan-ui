@@ -88,10 +88,3 @@ export function write_stream(
 export function setStreamSessionKey(key: object | null): void {
 	(globalThis as unknown as { __ktStreamSession?: object | null }).__ktStreamSession = key;
 }
-
-/**
- * Get the current session key for stream registration
- */
-export function getStreamSessionKey(): object | null {
-	return (globalThis as unknown as { __ktStreamSession?: object | null }).__ktStreamSession ?? null;
-}

@@ -1052,5 +1052,4 @@ export {
 	sidebarStyles,
 	imageStyles,
 	formStyles,
-	streamStyles,
 };
