@@ -113,7 +113,7 @@ export async function waitForFocus(locator: Locator, timeout = 2000): Promise<bo
  * WebSocketで sessionId を受信するまで待機する
  */
 export async function waitForSessionEstablished(page: Page, timeout = 5000): Promise<void> {
-	const sessionKey = "__kt_session_id__";
+	const sessionKey = "kt-session-id";
 	await page.waitForFunction(
 		(key) => {
 			const value = localStorage.getItem(key);
