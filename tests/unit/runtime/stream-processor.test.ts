@@ -52,6 +52,24 @@ function createErrorStream(error: Error): PendingStream {
 	};
 }
 
+function createNonErrorThrowingStream(errorValue: unknown): PendingStream {
+	const id = `stream-non-error-${Math.random().toString(36).slice(2)}`;
+
+	const stream = new ReadableStream<string>({
+		start(controller) {
+			controller.error(errorValue);
+		},
+	});
+
+	return {
+		id,
+		stream,
+		options: {},
+		resolve: vi.fn(),
+		reject: vi.fn(),
+	};
+}
+
 describe("processStreams", () => {
 	let registry: StreamRegistry;
 	let sessionKey: object;
@@ -220,6 +238,52 @@ describe("processStreams", () => {
 			expect(errorStream.reject).toHaveBeenCalledWith(testError);
 		});
 
+		it("wraps non-Error values in Error", async () => {
+			const stringError = "string error message";
+			const errorStream = createNonErrorThrowingStream(stringError);
+			registry.register(sessionKey, errorStream);
+
+			await processStreams(sessionKey, () => {}, registry);
+
+			expect(errorStream.reject).toHaveBeenCalled();
+			const rejectedValue = (errorStream.reject as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			expect(rejectedValue).toBeInstanceOf(Error);
+			expect(rejectedValue.message).toBe("string error message");
+		});
+
+		it("wraps number error values in Error", async () => {
+			const errorStream = createNonErrorThrowingStream(42);
+			registry.register(sessionKey, errorStream);
+
+			await processStreams(sessionKey, () => {}, registry);
+
+			const rejectedValue = (errorStream.reject as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			expect(rejectedValue).toBeInstanceOf(Error);
+			expect(rejectedValue.message).toBe("42");
+		});
+
+		it("wraps null error values in Error", async () => {
+			const errorStream = createNonErrorThrowingStream(null);
+			registry.register(sessionKey, errorStream);
+
+			await processStreams(sessionKey, () => {}, registry);
+
+			const rejectedValue = (errorStream.reject as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			expect(rejectedValue).toBeInstanceOf(Error);
+			expect(rejectedValue.message).toBe("null");
+		});
+
+		it("wraps undefined error values in Error", async () => {
+			const errorStream = createNonErrorThrowingStream(undefined);
+			registry.register(sessionKey, errorStream);
+
+			await processStreams(sessionKey, () => {}, registry);
+
+			const rejectedValue = (errorStream.reject as ReturnType<typeof vi.fn>).mock.calls[0][0];
+			expect(rejectedValue).toBeInstanceOf(Error);
+			expect(rejectedValue.message).toBe("undefined");
+		});
+
 		it("does not emit streamEnd on error", async () => {
 			const patches: Patch[] = [];
 			const emit = (patch: Patch) => patches.push(patch);
@@ -242,6 +306,19 @@ describe("processStreams", () => {
 
 			await processStreams(sessionKey, emit, registry);
 
+			expect(patches).toHaveLength(0);
+		});
+
+		it("uses default registry when not provided", async () => {
+			// This test verifies the default parameter works
+			// Using a unique session key that won't have any streams registered
+			const uniqueSessionKey = { unique: true };
+			const patches: Patch[] = [];
+
+			// Call without explicit registry parameter to use default
+			await processStreams(uniqueSessionKey, (patch) => patches.push(patch));
+
+			// Should complete without error (no streams registered)
 			expect(patches).toHaveLength(0);
 		});
 
