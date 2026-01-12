@@ -1,5 +1,5 @@
 import { escapeHtml } from "../utils/html";
-import { generateWidgetId, getWidgetValue } from "./registry";
+import { clearWidgetValue, generateWidgetId, getWidgetValue } from "./registry";
 import type { ChatInputConfig } from "./types";
 
 /**
@@ -8,9 +8,14 @@ import type { ChatInputConfig } from "./types";
  */
 export function chat_input(_placeholder: string, config?: Partial<ChatInputConfig>): string | null {
 	const id = generateWidgetId(config?.key);
-	// 送信されたテキストを取得（送信後はクリアされる）
+	// 送信されたテキストを取得
 	const value = getWidgetValue<string | null>(id, null);
-	return value && typeof value === "string" ? value : null;
+	// 値がある場合はクリア（一度きりのイベント）
+	if (value && typeof value === "string") {
+		clearWidgetValue(id);
+		return value;
+	}
+	return null;
 }
 
 /**
