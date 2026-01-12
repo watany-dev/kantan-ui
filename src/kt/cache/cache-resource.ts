@@ -32,10 +32,11 @@ export function cache_resource<TArgs extends unknown[], TReturn>(
 	fn: (...args: TArgs) => TReturn,
 	options: CacheResourceOptions = {},
 ): CachedFunction<TArgs, TReturn> {
-	const store = new CacheStore<TReturn>({
-		ttl: options.ttl,
+	const storeOptions = {
 		max_entries: options.max_entries ?? DEFAULT_MAX_ENTRIES,
-	});
+		...(options.ttl !== undefined && { ttl: options.ttl }),
+	};
+	const store = new CacheStore<TReturn>(storeOptions);
 
 	// グローバルレジストリに登録
 	cacheResourceStores.add(store as CacheStore<unknown>);

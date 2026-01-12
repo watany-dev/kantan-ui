@@ -13,7 +13,7 @@ import type { CacheEntry, CacheStoreOptions } from "./types.js";
  */
 export class CacheStore<T> {
 	private entries: Map<string, CacheEntry<T>> = new Map();
-	private readonly defaultTtl?: number;
+	private readonly defaultTtl: number | undefined;
 	private readonly maxEntries: number;
 
 	constructor(options: CacheStoreOptions = {}) {

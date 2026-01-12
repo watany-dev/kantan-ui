@@ -15,7 +15,7 @@ export interface CacheEntry<T> {
 	/** 最終アクセス時刻 (LRU用) */
 	lastAccessedAt: number;
 	/** 有効期限 (TTL設定時) */
-	expiresAt?: number;
+	expiresAt?: number | undefined;
 }
 
 /**

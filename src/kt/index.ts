@@ -24,6 +24,7 @@
  */
 
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
+import { cache_data, cache_resource, clear_all_caches } from "./cache";
 import * as chat from "./chat";
 import * as config from "./config";
 import * as control from "./control";
@@ -39,6 +40,7 @@ import { sidebar } from "./sidebar";
 import { write_stream } from "./stream";
 import * as widgets from "./widgets";
 
+export type { CacheDataOptions, CacheResourceOptions } from "./cache";
 export type { SidebarAPI } from "./sidebar";
 export type { WriteStreamOptions } from "./stream-registry";
 export type { StreamSource } from "./stream-utils";
@@ -49,6 +51,11 @@ export const kt = {
 
 	// Control APIs
 	rerun: control.requestRerun,
+
+	// Cache APIs
+	cache_data,
+	cache_resource,
+	clear_all_caches,
 
 	// Chat APIs
 	chat_message: chat.chat_message,
