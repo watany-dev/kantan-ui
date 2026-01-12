@@ -219,6 +219,35 @@ function applyPatch(patch) {
       }
       break;
     }
+    case "streamChunk": {
+      // write_stream() からのテキストチャンク
+      const streamEl = document.getElementById(patch.streamId);
+      if (!streamEl) break;
+      const content = streamEl.querySelector(".kt-stream-content");
+      if (content) {
+        // テキストノードとして追加（XSS防止）
+        content.appendChild(document.createTextNode(patch.content));
+      }
+      break;
+    }
+    case "streamEnd": {
+      // write_stream() のストリーム完了
+      const streamEl = document.getElementById(patch.streamId);
+      if (!streamEl) break;
+      // カーソル削除
+      const cursor = streamEl.querySelector(".kt-stream-cursor");
+      if (cursor) cursor.remove();
+      // Markdown最終レンダリング（finalHtml がある場合）
+      if (patch.finalHtml) {
+        const content = streamEl.querySelector(".kt-stream-content");
+        if (content) {
+          content.innerHTML = patch.finalHtml;
+        }
+      }
+      // 完了状態クラス追加
+      streamEl.classList.add("kt-stream-complete");
+      break;
+    }
   }
 }`;
 
