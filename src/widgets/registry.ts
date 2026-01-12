@@ -71,3 +71,11 @@ export function hasWidgetValue(widgetId: string): boolean {
 	const state = getSessionManager().getState(sessionId);
 	return state ? widgetId in state : false;
 }
+
+// Widget の値をクリア（一度きりのイベント用）
+export function clearWidgetValue(widgetId: string): void {
+	const sessionId = getCurrentSessionId();
+	if (!sessionId) return;
+
+	getSessionManager().clearState(sessionId, widgetId);
+}

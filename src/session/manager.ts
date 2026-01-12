@@ -359,6 +359,15 @@ export class SessionManager {
 		}
 	}
 
+	// セッションの state からキーを削除（一度きりのイベント用）
+	clearState(sessionId: SessionId, key: string): void {
+		const session = this.sessions.get(sessionId);
+		if (session && key in session.state) {
+			delete session.state[key];
+			session.lastAccessedAt = new Date();
+		}
+	}
+
 	/**
 	 * パッチのバイトサイズを計算（Web標準 TextEncoder使用）
 	 */

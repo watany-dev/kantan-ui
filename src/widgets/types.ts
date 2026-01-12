@@ -290,6 +290,29 @@ export interface EmptyConfig {
 }
 
 /**
+ * チャット入力の設定
+ */
+export interface ChatInputConfig {
+	/** ウィジェットの一意キー */
+	key?: string;
+
+	/** 無効化 */
+	disabled?: boolean;
+
+	/** 最大文字数 */
+	maxLength?: number;
+
+	/** 画面下部に固定表示（デフォルト: true） */
+	pinToBottom?: boolean;
+
+	/** 送信ボタンのラベル（デフォルト: "送信"） */
+	submitLabel?: string;
+
+	/** 送信ボタンを非表示にする */
+	hideSubmitButton?: boolean;
+}
+
+/**
  * Placeholder content type
  */
 export type PlaceholderContentType =

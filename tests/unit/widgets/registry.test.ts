@@ -6,6 +6,7 @@ import {
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
 import {
+	clearWidgetValue,
 	generateWidgetId,
 	getWidgetValue,
 	hasWidgetValue,
@@ -185,6 +186,44 @@ describe("widgets/registry", () => {
 
 			// getState returns undefined, so `state ? widgetId in state : false` returns false
 			expect(hasWidgetValue("widget_0")).toBe(false);
+		});
+	});
+
+	describe("clearWidgetValue", () => {
+		it("should do nothing when no session", () => {
+			// Should not throw when no session
+			expect(() => clearWidgetValue("widget_0")).not.toThrow();
+		});
+
+		it("should clear value from session state", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			// Set a value first
+			manager.setState(session.id, "widget_0", "test-value");
+			expect(manager.getState(session.id)?.widget_0).toBe("test-value");
+
+			// Clear the value
+			clearWidgetValue("widget_0");
+
+			// Value should be removed
+			expect(manager.getState(session.id)?.widget_0).toBeUndefined();
+		});
+
+		it("should not affect other widget values", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			// Set multiple values
+			manager.setState(session.id, "widget_0", "value_0");
+			manager.setState(session.id, "widget_1", "value_1");
+
+			// Clear only widget_0
+			clearWidgetValue("widget_0");
+
+			// widget_0 should be cleared, widget_1 should remain
+			expect(manager.getState(session.id)?.widget_0).toBeUndefined();
+			expect(manager.getState(session.id)?.widget_1).toBe("value_1");
 		});
 	});
 });
