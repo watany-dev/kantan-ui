@@ -16,4 +16,5 @@ export {
 	layoutStyles,
 	markdownStyles,
 	sidebarStyles,
+	streamStyles,
 } from "./default";
