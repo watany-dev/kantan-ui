@@ -1,5 +1,21 @@
 import { expect, test } from "@playwright/test";
 
+// 各テストで空のストレージ状態を使用
+test.use({ storageState: { cookies: [], origins: [] } });
+
+/**
+ * ページに遷移し、初期レンダリング完了まで待機するヘルパー
+ */
+async function gotoAndWait(page: import("@playwright/test").Page): Promise<void> {
+	await page.goto("/");
+	// タイトルが表示されるまで待機
+	await expect(page.locator("h1.kt-title")).toBeVisible();
+	// WebSocket接続完了を待機
+	await expect(page.locator("#kt-connection-status")).toContainText("Connected", {
+		timeout: 10000,
+	});
+}
+
 /**
  * write_stream E2Eテスト
  *
@@ -7,7 +23,7 @@ import { expect, test } from "@playwright/test";
  */
 test.describe("write_stream", () => {
 	test("should load initial page correctly", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// Title should be visible
 		await expect(page.locator(".kt-title")).toHaveText("write_stream Test");
@@ -19,13 +35,10 @@ test.describe("write_stream", () => {
 	});
 
 	test("should display stream container on button click", async ({ page }) => {
-		await page.goto("/");
-
-		// Wait for WebSocket connection
-		const button = page.getByRole("button", { name: "Start Stream" });
-		await expect(button).toBeEnabled();
+		await gotoAndWait(page);
 
 		// Click to start stream
+		const button = page.getByRole("button", { name: "Start Stream" });
 		await button.click();
 
 		// Stream container should appear
@@ -37,11 +50,9 @@ test.describe("write_stream", () => {
 	});
 
 	test("should complete stream with final content", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		const button = page.getByRole("button", { name: "Start Stream" });
-		await expect(button).toBeEnabled();
-
 		await button.click();
 
 		// Wait for stream to complete (has kt-stream-complete class)
@@ -57,11 +68,9 @@ test.describe("write_stream", () => {
 	});
 
 	test("should display array stream content", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		const button = page.getByRole("button", { name: "Array Stream" });
-		await expect(button).toBeEnabled();
-
 		await button.click();
 
 		// Wait for stream to complete
@@ -74,11 +83,9 @@ test.describe("write_stream", () => {
 	});
 
 	test("should render markdown on completion", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		const button = page.getByRole("button", { name: "Start Markdown Stream" });
-		await expect(button).toBeEnabled();
-
 		await button.click();
 
 		// Wait for stream to complete
@@ -92,11 +99,9 @@ test.describe("write_stream", () => {
 	});
 
 	test("should have blinking cursor during stream", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		const button = page.getByRole("button", { name: "Start Delayed Stream" });
-		await expect(button).toBeEnabled();
-
 		await button.click();
 
 		// Stream container should appear
@@ -109,11 +114,10 @@ test.describe("write_stream", () => {
 	});
 
 	test("should handle multiple streams", async ({ page }) => {
-		await page.goto("/");
+		await gotoAndWait(page);
 
 		// Start first stream
 		const button1 = page.getByRole("button", { name: "Start Stream" });
-		await expect(button1).toBeEnabled();
 		await button1.click();
 
 		// Start second stream

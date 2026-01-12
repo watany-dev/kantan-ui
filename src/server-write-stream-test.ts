@@ -20,7 +20,7 @@ function* simpleStream() {
 	yield "World!";
 }
 
-const script = () => {
+const script = (): string | undefined => {
 	kt.title("write_stream Test");
 
 	kt.write("Testing kt.write_stream() functionality");
@@ -51,19 +51,18 @@ const script = () => {
 			className: "array-stream",
 		});
 	}
+
+	return undefined;
 };
 
-const app = await createApp(script, {
-	port: 3006,
-	hostname: "localhost",
+const kantanApp = await createApp(script, {
+	session: { scope: "tab" },
 });
 
-if (typeof Bun !== "undefined") {
-	Bun.serve({
-		port: app.port,
-		hostname: app.hostname,
-		fetch: app.fetch,
-		websocket: app.websocket as Parameters<typeof Bun.serve>[0]["websocket"],
-	});
-	console.log(`[write_stream test] Server running at http://localhost:${app.port}`);
-}
+console.log("Started development server: http://localhost:3006");
+
+export default {
+	port: 3006,
+	fetch: kantanApp.fetch,
+	websocket: kantanApp.websocket as NonNullable<Parameters<typeof Bun.serve>[0]["websocket"]>,
+};
