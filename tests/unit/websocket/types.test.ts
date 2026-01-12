@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { Patch, StreamChunkPatch, StreamEndPatch } from "../../../src/websocket/types";
 import {
 	isChunkUploadDataMessage,
 	isChunkUploadEndMessage,
@@ -140,5 +141,59 @@ describe("isChunkUploadEndMessage", () => {
 				type: "chunk_upload_end",
 			}),
 		).toBe(false);
+	});
+});
+
+describe("StreamChunkPatch", () => {
+	it("has correct structure", () => {
+		const patch: StreamChunkPatch = {
+			type: "streamChunk",
+			streamId: "kt-stream-123",
+			content: "Hello ",
+		};
+		expect(patch.type).toBe("streamChunk");
+		expect(patch.streamId).toBe("kt-stream-123");
+		expect(patch.content).toBe("Hello ");
+	});
+
+	it("is assignable to Patch union", () => {
+		const chunk: StreamChunkPatch = {
+			type: "streamChunk",
+			streamId: "stream-1",
+			content: "test",
+		};
+		const patch: Patch = chunk;
+		expect(patch.type).toBe("streamChunk");
+	});
+});
+
+describe("StreamEndPatch", () => {
+	it("has correct structure without finalHtml", () => {
+		const patch: StreamEndPatch = {
+			type: "streamEnd",
+			streamId: "kt-stream-123",
+		};
+		expect(patch.type).toBe("streamEnd");
+		expect(patch.streamId).toBe("kt-stream-123");
+		expect(patch.finalHtml).toBeUndefined();
+	});
+
+	it("has correct structure with finalHtml", () => {
+		const patch: StreamEndPatch = {
+			type: "streamEnd",
+			streamId: "kt-stream-123",
+			finalHtml: "<h1>Title</h1>",
+		};
+		expect(patch.type).toBe("streamEnd");
+		expect(patch.finalHtml).toBe("<h1>Title</h1>");
+	});
+
+	it("is assignable to Patch union", () => {
+		const end: StreamEndPatch = {
+			type: "streamEnd",
+			streamId: "stream-1",
+		};
+		const patch: Patch = end;
+		expect(patch.type).toBe("streamEnd");
 	});
 });

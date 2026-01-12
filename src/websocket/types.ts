@@ -164,7 +164,9 @@ export type Patch =
 	| ReplaceNodePatch
 	| RemoveNodePatch
 	| InsertNodePatch
-	| StreamAppendPatch;
+	| StreamAppendPatch
+	| StreamChunkPatch
+	| StreamEndPatch;
 
 export interface ReplaceRootPatch {
 	type: "replaceRoot";
@@ -198,4 +200,28 @@ export interface InsertNodePatch {
 interface StreamAppendPatch {
 	type: "streamAppend";
 	html: string;
+}
+
+/**
+ * write_stream用: テキストチャンクを追加
+ * 対象のストリーム要素にテキストを追加する
+ */
+export interface StreamChunkPatch {
+	type: "streamChunk";
+	/** ストリーム要素のID */
+	streamId: string;
+	/** 追加するテキストコンテンツ */
+	content: string;
+}
+
+/**
+ * write_stream用: ストリーム完了
+ * カーソルを削除し、オプションで最終HTMLを設定
+ */
+export interface StreamEndPatch {
+	type: "streamEnd";
+	/** ストリーム要素のID */
+	streamId: string;
+	/** Markdownレンダリング後の最終HTML（markdown: true の場合） */
+	finalHtml?: string;
 }
