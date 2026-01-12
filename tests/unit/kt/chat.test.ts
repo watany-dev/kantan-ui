@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { chat_container, chat_message } from "../../../src/kt/chat";
+import { chat_container, chat_input, chat_message } from "../../../src/kt/chat";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
+import {
+	resetSessionManager,
+	SessionManager,
+	setSessionManager,
+} from "../../../src/session/manager";
+import { setCurrentSessionId } from "../../../src/session/state";
+import { resetWidgetCounter } from "../../../src/widgets/registry";
 
 describe("Chat APIs", () => {
 	let ctx: RenderContext;
@@ -185,6 +192,81 @@ describe("Chat APIs", () => {
 				expect(html).not.toContain("javascript");
 				expect(html).toContain("height: 400px");
 			});
+		});
+	});
+
+	describe("chat_input", () => {
+		let manager: SessionManager;
+
+		beforeEach(() => {
+			resetWidgetCounter();
+			manager = new SessionManager();
+			setSessionManager(manager);
+		});
+
+		afterEach(() => {
+			setCurrentSessionId(null);
+			resetSessionManager();
+		});
+
+		it("should render chat input with correct structure", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			chat_input("メッセージを入力");
+			const html = ctx.getHtml();
+
+			expect(html).toContain("kt-chat-input-wrapper");
+			expect(html).toContain('placeholder="メッセージを入力"');
+			expect(html).toContain('data-kt-event="chat-submit"');
+		});
+
+		it("should return null when no submission", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			const value = chat_input("入力");
+
+			expect(value).toBeNull();
+		});
+
+		it("should return submitted value and render HTML", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			// Simulate submitted value
+			manager.setState(session.id, "widget_0", "テストメッセージ");
+
+			const value = chat_input("入力");
+
+			expect(value).toBe("テストメッセージ");
+			expect(ctx.getHtml()).toContain("kt-chat-input-wrapper");
+		});
+
+		it("should use custom key when provided", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			manager.setState(session.id, "my_chat", "カスタムキー");
+
+			const value = chat_input("入力", { key: "my_chat" });
+
+			expect(value).toBe("カスタムキー");
+			expect(ctx.getHtml()).toContain('id="my_chat"');
+		});
+
+		it("should use default placeholder when empty", () => {
+			const session = manager.createSession();
+			setCurrentSessionId(session.id);
+
+			chat_input();
+
+			expect(ctx.getHtml()).toContain('placeholder="メッセージを入力..."');
+		});
+
+		it("should throw error when no render context", () => {
+			setRenderContext(null);
+			expect(() => chat_input("test")).toThrow("RenderContext is not available");
 		});
 	});
 });

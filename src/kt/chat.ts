@@ -1,8 +1,13 @@
 import { sanitizeCssLength } from "../utils/css";
 import { escapeHtml } from "../utils/html";
+import { chat_input as imperativeChatInput, renderChatInput } from "../widgets/chat-input";
+import { generateWidgetId } from "../widgets/registry";
+import type { ChatInputConfig } from "../widgets/types";
 import { requireRenderContext } from "./context";
 import { parseMarkdown } from "./markdown/parser";
 import { sanitizeMarkdownHtml } from "./markdown/sanitizer";
+
+export type { ChatInputConfig };
 
 /**
  * チャットメッセージの役割
@@ -91,4 +96,38 @@ export function chat_container(content: () => void, config: ChatContainerConfig 
 	);
 	content();
 	ctx.append("</div>");
+}
+
+/**
+ * チャット入力ウィジェット
+ *
+ * 送信時のみ入力テキストを返し、通常時はnullを返す。
+ * 画面下部に固定表示され、Enterキーで送信可能。
+ *
+ * @param placeholder - プレースホルダーテキスト
+ * @param config - オプション設定
+ * @returns 送信されたテキスト、または null
+ *
+ * @example
+ * ```typescript
+ * const userInput = kt.chat_input("メッセージを入力...");
+ *
+ * if (userInput) {
+ *   // ユーザーが送信した時のみ実行
+ *   state.messages.push({ role: "user", content: userInput });
+ * }
+ * ```
+ */
+export function chat_input(placeholder?: string, config?: Partial<ChatInputConfig>): string | null {
+	const ctx = requireRenderContext();
+	const id = generateWidgetId(config?.key);
+	const configWithId = { ...config, key: id };
+
+	// 値を取得
+	const value = imperativeChatInput(placeholder ?? "", configWithId);
+
+	// HTMLをレンダリング
+	ctx.append(renderChatInput(placeholder ?? "", configWithId));
+
+	return value;
 }

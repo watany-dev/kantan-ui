@@ -408,6 +408,113 @@ const chatStyles = `
     background: none;
     padding: 0;
   }
+
+  /* Chat Input */
+  .kt-chat-input-wrapper {
+    width: 100%;
+    background: #ffffff;
+    padding: 0.75rem;
+    border-top: 1px solid #e9ecef;
+    box-sizing: border-box;
+  }
+
+  .kt-chat-input-pinned {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .kt-chat-input-container {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .kt-chat-input-field {
+    flex: 1;
+    min-height: 44px;
+    max-height: 200px;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 22px;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    resize: none;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .kt-chat-input-field:focus {
+    outline: none;
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+  }
+
+  .kt-chat-input-field:disabled {
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: not-allowed;
+  }
+
+  .kt-chat-input-field::placeholder {
+    color: #adb5bd;
+  }
+
+  .kt-chat-input-submit {
+    flex-shrink: 0;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 1.25rem;
+    background: #4a90d9;
+    color: white;
+    border: none;
+    border-radius: 22px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .kt-chat-input-submit:hover:not(:disabled) {
+    background: #357abd;
+  }
+
+  .kt-chat-input-submit:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.4);
+  }
+
+  .kt-chat-input-submit:disabled {
+    background: #adb5bd;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 640px) {
+    .kt-chat-input-wrapper {
+      padding: 0.5rem;
+    }
+
+    .kt-chat-input-container {
+      gap: 0.375rem;
+    }
+
+    .kt-chat-input-field {
+      padding: 0.5rem 0.625rem;
+      font-size: 16px;
+    }
+
+    .kt-chat-input-submit {
+      padding: 0 0.75rem;
+      font-size: 0.8125rem;
+    }
+  }
 `;
 
 /** サイドバースタイル */
