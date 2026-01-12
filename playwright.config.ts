@@ -3,6 +3,9 @@ import { defineConfig, devices } from "@playwright/test";
 // ローカル開発環境でキャッシュ済みのChromiumを使用
 const chromiumPath = "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome";
 
+// 共通のChromium起動オプション（サンドボックスと共有メモリ問題を回避）
+const commonChromiumArgs = ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"];
+
 export default defineConfig({
 	testDir: "./e2e",
 	fullyParallel: true, // 全テストを並列実行（各テストは独立したブラウザコンテキスト）
@@ -32,11 +35,12 @@ export default defineConfig({
 				launchOptions: process.env.CI
 					? {
 							// CI環境でのブラウザ安定化オプション
-							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+							args: commonChromiumArgs,
 						}
 					: {
-							// ローカル環境ではキャッシュ済みのChromiumを使用
+							// ローカル環境でもChromium安定化オプションを使用
 							executablePath: chromiumPath,
+							args: commonChromiumArgs,
 						},
 			},
 			testIgnore: [
@@ -55,10 +59,11 @@ export default defineConfig({
 				baseURL: "http://localhost:3001",
 				launchOptions: process.env.CI
 					? {
-							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+							args: commonChromiumArgs,
 						}
 					: {
 							executablePath: chromiumPath,
+							args: commonChromiumArgs,
 						},
 			},
 			testMatch: "**/session-scope-browser.spec.ts",
@@ -70,10 +75,11 @@ export default defineConfig({
 				baseURL: "http://localhost:3002",
 				launchOptions: process.env.CI
 					? {
-							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+							args: commonChromiumArgs,
 						}
 					: {
 							executablePath: chromiumPath,
+							args: commonChromiumArgs,
 						},
 			},
 			testMatch: "**/streaming.spec.ts",
@@ -85,10 +91,11 @@ export default defineConfig({
 				baseURL: "http://localhost:3003",
 				launchOptions: process.env.CI
 					? {
-							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+							args: commonChromiumArgs,
 						}
 					: {
 							executablePath: chromiumPath,
+							args: commonChromiumArgs,
 						},
 			},
 			testMatch: "**/patch-operations.spec.ts",
@@ -100,10 +107,11 @@ export default defineConfig({
 				baseURL: "http://localhost:3004",
 				launchOptions: process.env.CI
 					? {
-							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+							args: commonChromiumArgs,
 						}
 					: {
 							executablePath: chromiumPath,
+							args: commonChromiumArgs,
 						},
 			},
 			testMatch: "**/error-handling.spec.ts",
@@ -115,10 +123,11 @@ export default defineConfig({
 				baseURL: "http://localhost:3005",
 				launchOptions: process.env.CI
 					? {
-							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+							args: commonChromiumArgs,
 						}
 					: {
 							executablePath: chromiumPath,
+							args: commonChromiumArgs,
 						},
 			},
 			testMatch: "**/production-build.spec.ts",
@@ -130,10 +139,11 @@ export default defineConfig({
 				baseURL: "http://localhost:3006",
 				launchOptions: process.env.CI
 					? {
-							args: ["--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage"],
+							args: commonChromiumArgs,
 						}
 					: {
 							executablePath: chromiumPath,
+							args: commonChromiumArgs,
 						},
 			},
 			testMatch: "**/write-stream.spec.ts",
