@@ -375,7 +375,134 @@ src/kt/
 
 ---
 
-## 5. エッジケースと注意点
+## 5. 技術選定: Web標準API・Hono
+
+### 5.1 採用するAPI
+
+| API | 用途 | 理由 |
+|-----|------|------|
+| **structuredClone** | cache_dataの値コピー | Web標準、既存コードで使用実績あり（`src/session/state.ts`）、深いコピーを安全に実行 |
+| **WeakRef** | cache_resourceのリソース参照 | GC連携でメモリリーク自動防止、明示的なクリアが不要 |
+| **FinalizationRegistry** | リソース解放時のクリーンアップ | WeakRefと組み合わせ、リソースがGCされた際にキャッシュエントリを自動削除 |
+| **Map** | キャッシュストレージ | 順序保持、O(1)アクセス、任意キー対応 |
+| **AbortSignal** | 非同期キャッシュ生成のキャンセル | 既存パターン踏襲（`src/runtime/rerun.ts`）、長時間処理の中断に対応 |
+
+#### structuredClone（値コピー）
+
+```typescript
+// cache_data は値をコピーして返す
+function copyValue<T>(value: T): T {
+  if (value === null || typeof value !== "object") {
+    return value;
+  }
+  return structuredClone(value);
+}
+```
+
+#### WeakRef + FinalizationRegistry（リソース管理）
+
+```typescript
+class ResourceCacheStore<T extends object> {
+  private weakEntries = new Map<string, WeakRef<T>>();
+  private registry = new FinalizationRegistry<string>((key) => {
+    this.weakEntries.delete(key);
+  });
+
+  set(key: string, value: T): void {
+    this.weakEntries.set(key, new WeakRef(value));
+    this.registry.register(value, key);
+  }
+
+  get(key: string): T | undefined {
+    return this.weakEntries.get(key)?.deref();
+  }
+}
+```
+
+### 5.2 不採用としたAPI
+
+| API | 用途候補 | 不採用理由 |
+|-----|----------|------------|
+| **crypto.subtle** | キャッシュキーのハッシュ生成 | 非同期APIのため同期的なキャッシュキー生成に不向き。stableStringifyで十分 |
+| **Cache API (Web)** | HTTPレスポンスキャッシュ | Request/Response専用。関数結果のキャッシュには不適合 |
+| **IndexedDB** | 永続キャッシュ | 非同期API、オーバースペック。メモリ内キャッシュで十分 |
+| **localStorage** | 永続キャッシュ | 同期APIだが文字列のみ、5MB制限、Node.js非対応 |
+
+#### crypto.subtle を不採用とした詳細
+
+```typescript
+// crypto.subtle は非同期
+async function hashArgs(args: unknown[]): Promise<string> {
+  const data = new TextEncoder().encode(JSON.stringify(args));
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// 問題: キャッシュ取得が非同期になってしまう
+const cachedFn = kt.cache_data((x: number) => x * 2);
+const result = cachedFn(5); // ← 同期で返したいがasyncが必要になる
+
+// 代替: stableStringify で十分高速
+function generateCacheKey(args: unknown[]): string {
+  return stableStringify(args); // 同期、シンプル
+}
+```
+
+### 5.3 Honoのキャッシュ機能
+
+| 機能 | 対応状況 | 採用可否 |
+|------|----------|----------|
+| **Cache Middleware** | Cloudflare Workers / Deno のみ | ❌ 不採用 |
+| **hono-server-cache** | サードパーティ | ❌ 不採用 |
+
+#### Hono Cache Middleware を不採用とした理由
+
+```typescript
+// Honoのcache middlewareはWeb標準Cache APIを使用
+import { cache } from "hono/cache";
+
+app.use("/api/*", cache({
+  cacheName: "my-cache",
+  cacheControl: "max-age=3600",
+}));
+```
+
+**不採用理由**:
+
+1. **マルチランタイム非対応**: Node.js / Bun では動作しない（Cloudflare Workers / Deno 専用）
+2. **用途の違い**: HTTPレスポンスキャッシュ向け。関数結果のキャッシュ（cache_data/cache_resource）とは用途が異なる
+3. **外部依存回避**: プロジェクト方針として Hono 本体以外の依存を避ける
+
+#### 将来の統合可能性
+
+Cloudflare Workers デプロイ時に、Hono Cache Middleware と連携するオプションは将来検討可能:
+
+```typescript
+// 将来構想: 環境に応じたストレージ切り替え
+const fetchData = kt.cache_data(fn, {
+  storage: "auto", // "memory" | "cf-cache" | "auto"
+});
+```
+
+### 5.4 ランタイム互換性まとめ
+
+| API | Node.js | Deno | Bun | CF Workers |
+|-----|---------|------|-----|------------|
+| structuredClone | ✅ v17+ | ✅ | ✅ | ✅ |
+| WeakRef | ✅ v14.6+ | ✅ | ✅ | ✅ |
+| FinalizationRegistry | ✅ v14.6+ | ✅ | ✅ | ✅ |
+| Map | ✅ | ✅ | ✅ | ✅ |
+| AbortSignal | ✅ v15+ | ✅ | ✅ | ✅ |
+| Cache API | ❌ | ✅ | ❌ | ✅ |
+| crypto.subtle | ✅ v15+ | ✅ | ✅ | ✅ |
+
+→ 採用APIは全ランタイムで動作保証
+
+---
+
+## 6. エッジケースと注意点
 
 ### 5.1 非同期関数のキャッシュ
 
@@ -430,7 +557,7 @@ const sessionCache = kt.cache_data(fn, { scope: "session" });
 
 ---
 
-## 6. 実装計画
+## 7. 実装計画
 
 ### Phase 1: 基本実装（MVP）
 
@@ -477,9 +604,9 @@ const sessionCache = kt.cache_data(fn, { scope: "session" });
 
 ---
 
-## 7. テスト戦略
+## 8. テスト戦略
 
-### 7.1 ユニットテスト
+### 8.1 ユニットテスト
 
 ```typescript
 // tests/unit/kt/cache/cache-data.test.ts
@@ -544,7 +671,7 @@ describe("kt.cache_data", () => {
 });
 ```
 
-### 7.2 cache_resource テスト
+### 8.2 cache_resource テスト
 
 ```typescript
 describe("kt.cache_resource", () => {
@@ -574,20 +701,20 @@ describe("kt.cache_resource", () => {
 
 ---
 
-## 8. セキュリティ考慮
+## 9. セキュリティ考慮
 
-### 8.1 キャッシュポイズニング対策
+### 9.1 キャッシュポイズニング対策
 
 - キャッシュキーはユーザー入力を直接使用しない
 - 引数のサニタイズ/バリデーションは呼び出し側の責任
 
-### 8.2 メモリ管理
+### 9.2 メモリ管理
 
 - max_entries でメモリ上限を設定
 - TTL で古いエントリを自動削除
 - WeakRef の活用を検討（将来）
 
-### 8.3 機密データ
+### 9.3 機密データ
 
 ```typescript
 // 機密データはキャッシュしない、または短いTTLを設定
@@ -598,7 +725,7 @@ const getUserToken = kt.cache_data(async (userId: string) => {
 
 ---
 
-## 9. 参考リソース
+## 10. 参考リソース
 
 - [Streamlit cache_data](https://docs.streamlit.io/develop/api-reference/caching-and-state/st.cache_data)
 - [Streamlit cache_resource](https://docs.streamlit.io/develop/api-reference/caching-and-state/st.cache_resource)
