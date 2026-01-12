@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SessionManager } from "../../../src/session/manager";
 
 describe("SessionManager upload management", () => {
@@ -232,6 +232,88 @@ describe("SessionManager upload management", () => {
 		it("returns empty array for invalid session", () => {
 			const uploads = manager.getSessionUploads("invalid-session");
 			expect(uploads).toEqual([]);
+		});
+	});
+
+	describe("cleanupExpiredUploads", () => {
+		// UPLOAD_TTL_MS is 10 minutes (10 * 60 * 1000 = 600000ms)
+
+		it("removes expired uploads", () => {
+			vi.useFakeTimers();
+
+			const id = manager.registerUpload(sessionId, new ArrayBuffer(100), "test.txt", "text/plain");
+			expect(id).not.toBeNull();
+			if (id === null) return;
+
+			// Advance time past upload TTL (10 minutes)
+			vi.advanceTimersByTime(11 * 60 * 1000);
+
+			const cleaned = manager.cleanupExpiredUploads();
+
+			expect(cleaned).toBe(1);
+			expect(manager.getUpload(sessionId, id)).toBeNull();
+
+			vi.useRealTimers();
+		});
+
+		it("does not remove active uploads", () => {
+			vi.useFakeTimers();
+
+			const id = manager.registerUpload(sessionId, new ArrayBuffer(100), "test.txt", "text/plain");
+			expect(id).not.toBeNull();
+			if (id === null) return;
+
+			// Advance time but not past TTL (5 minutes < 10 minutes)
+			vi.advanceTimersByTime(5 * 60 * 1000);
+
+			const cleaned = manager.cleanupExpiredUploads();
+
+			expect(cleaned).toBe(0);
+			expect(manager.getUpload(sessionId, id)).not.toBeNull();
+
+			vi.useRealTimers();
+		});
+
+		it("removes empty session upload maps after cleanup", () => {
+			vi.useFakeTimers();
+
+			// Create session with upload
+			const id = manager.registerUpload(sessionId, new ArrayBuffer(100), "test.txt", "text/plain");
+			expect(id).not.toBeNull();
+
+			// Advance time past TTL
+			vi.advanceTimersByTime(11 * 60 * 1000);
+
+			// Cleanup should remove the upload and the empty session map
+			const cleaned = manager.cleanupExpiredUploads();
+
+			expect(cleaned).toBe(1);
+			// Session uploads should be empty now
+			expect(manager.getSessionUploads(sessionId)).toEqual([]);
+
+			vi.useRealTimers();
+		});
+
+		it("cleans up multiple expired uploads across sessions", () => {
+			vi.useFakeTimers();
+
+			// Create multiple uploads in different sessions
+			const session2 = manager.createSession();
+
+			manager.registerUpload(sessionId, new ArrayBuffer(100), "file1.txt", "text/plain");
+			manager.registerUpload(sessionId, new ArrayBuffer(100), "file2.txt", "text/plain");
+			manager.registerUpload(session2.id, new ArrayBuffer(100), "file3.txt", "text/plain");
+
+			// Advance time past TTL
+			vi.advanceTimersByTime(11 * 60 * 1000);
+
+			const cleaned = manager.cleanupExpiredUploads();
+
+			expect(cleaned).toBe(3);
+			expect(manager.getSessionUploads(sessionId)).toEqual([]);
+			expect(manager.getSessionUploads(session2.id)).toEqual([]);
+
+			vi.useRealTimers();
 		});
 	});
 });
