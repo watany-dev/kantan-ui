@@ -36,11 +36,6 @@ describe("Output APIs", () => {
 			expect(ctx.getHtml()).toContain('class="kt-write');
 		});
 
-		it("should escape HTML in content", () => {
-			write("<script>alert('xss')</script>");
-			expect(ctx.getHtml()).not.toContain("<script>");
-		});
-
 		it("should convert numbers to string", () => {
 			write(42);
 			expect(ctx.getHtml()).toContain("42");
@@ -91,6 +86,58 @@ describe("Output APIs", () => {
 			expect(ctx.getHtml()).toContain("None");
 			expect(ctx.getHtml()).toContain("kt-none");
 		});
+
+		it("should render bold text in markdown", () => {
+			write("Hello **world**!");
+			expect(ctx.getHtml()).toContain("<strong>world</strong>");
+		});
+
+		it("should render heading in markdown", () => {
+			write("# Title");
+			expect(ctx.getHtml()).toContain("<h1>");
+			expect(ctx.getHtml()).toContain("Title");
+		});
+
+		it("should render italic text in markdown", () => {
+			write("This is *italic*");
+			expect(ctx.getHtml()).toContain("<em>italic</em>");
+		});
+
+		it("should render inline code in markdown", () => {
+			write("Use `code` here");
+			expect(ctx.getHtml()).toContain("<code>code</code>");
+		});
+
+		it("should render links in markdown", () => {
+			write("[Link](https://example.com)");
+			expect(ctx.getHtml()).toContain('href="https://example.com"');
+		});
+
+		it("should have kt-markdown class for string", () => {
+			write("**bold**");
+			expect(ctx.getHtml()).toContain('class="kt-write kt-markdown"');
+		});
+
+		it("should sanitize script tags in markdown", () => {
+			write("<script>alert('xss')</script>");
+			expect(ctx.getHtml()).not.toContain("<script>");
+		});
+
+		it("should sanitize onclick handlers", () => {
+			write('<a onclick="alert(1)">click</a>');
+			expect(ctx.getHtml()).not.toContain("onclick");
+		});
+
+		it("should sanitize javascript: URLs", () => {
+			write("[link](javascript:alert(1))");
+			expect(ctx.getHtml()).not.toContain("javascript:");
+		});
+
+		it("should allow safe HTML elements", () => {
+			write("**bold** and *italic*");
+			expect(ctx.getHtml()).toContain("<strong>");
+			expect(ctx.getHtml()).toContain("<em>");
+		});
 	});
 
 	describe("title", () => {
@@ -117,7 +164,8 @@ describe("Output APIs", () => {
 	describe("text", () => {
 		it("should be an alias for write", () => {
 			text("Some text");
-			expect(ctx.getHtml()).toBe('<div class="kt-write">Some text</div>');
+			expect(ctx.getHtml()).toContain("Some text");
+			expect(ctx.getHtml()).toContain('class="kt-write');
 		});
 	});
 
@@ -139,9 +187,10 @@ describe("Output APIs", () => {
 		it("should combine outputs with newlines", () => {
 			title("Title");
 			write("Content");
-			expect(ctx.getHtml()).toBe(
-				'<h1 class="kt-title">Title</h1>\n<div class="kt-write">Content</div>',
-			);
+			const output = ctx.getHtml();
+			expect(output).toContain('<h1 class="kt-title">Title</h1>');
+			expect(output).toContain("Content");
+			expect(output).toContain("\n");
 		});
 	});
 

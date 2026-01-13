@@ -33,9 +33,11 @@ function renderArg(arg: unknown): string {
 		return `<span class="kt-write">${escapeHtml(String(arg))}</span>`;
 	}
 
-	// string → 文字列として表示
+	// string → Markdown としてパース・レンダリング（XSSサニタイズ付き）
 	if (typeof arg === "string") {
-		return `<div class="kt-write">${escapeHtml(arg)}</div>`;
+		const parsed = parseMarkdown(arg);
+		const sanitized = sanitizeMarkdownHtml(parsed);
+		return `<div class="kt-write kt-markdown">${sanitized}</div>`;
 	}
 
 	// その他 → 文字列化
