@@ -259,7 +259,7 @@ const script = () => {
 				kt.chat_message(msg.role, msg.content);
 			}
 		},
-		{ height: "200px" },
+		{ height: "200px", key: "demo_chat_container" },
 	);
 
 	kt.subheader("Chat Input Options");

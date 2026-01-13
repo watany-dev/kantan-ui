@@ -20,6 +20,8 @@ export type ChatRole = "user" | "assistant" | "system";
 export interface ChatContainerConfig {
 	/** コンテナの高さ (例: "400px", "60vh") */
 	height?: string;
+	/** コンテナの一意識別子（diff最適化用） */
+	key?: string;
 }
 
 /**
@@ -90,9 +92,10 @@ export function chat_container(content: () => void, config: ChatContainerConfig 
 	const ctx = requireRenderContext();
 	const rawHeight = config.height ?? "400px";
 	const height = sanitizeCssLength(rawHeight) || "400px";
+	const idAttr = config.key ? ` id="${escapeHtml(config.key)}"` : "";
 
 	ctx.append(
-		`<div class="kt-chat-container" data-kt-chat-container style="height: ${height}; overflow-y: auto;">`,
+		`<div${idAttr} class="kt-chat-container" data-kt-chat-container style="height: ${height}; overflow-y: auto;">`,
 	);
 	content();
 	ctx.append("</div>");
