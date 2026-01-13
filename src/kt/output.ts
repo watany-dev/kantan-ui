@@ -23,6 +23,11 @@ export function write(...args: unknown[]): void {
  * 引数を適切なHTML文字列に変換
  */
 function renderArg(arg: unknown): string {
+	// null / undefined → "None" として表示
+	if (arg === null || arg === undefined) {
+		return '<span class="kt-write kt-none">None</span>';
+	}
+
 	// number / boolean → 文字列化
 	if (typeof arg === "number" || typeof arg === "boolean") {
 		return `<span class="kt-write">${escapeHtml(String(arg))}</span>`;

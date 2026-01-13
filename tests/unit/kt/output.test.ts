@@ -79,6 +79,18 @@ describe("Output APIs", () => {
 			write(false);
 			expect(ctx.getHtml()).toContain("false");
 		});
+
+		it("should render null as None", () => {
+			write(null);
+			expect(ctx.getHtml()).toContain("None");
+			expect(ctx.getHtml()).toContain('class="kt-write kt-none"');
+		});
+
+		it("should render undefined as None", () => {
+			write(undefined);
+			expect(ctx.getHtml()).toContain("None");
+			expect(ctx.getHtml()).toContain("kt-none");
+		});
 	});
 
 	describe("title", () => {
