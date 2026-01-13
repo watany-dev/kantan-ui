@@ -62,6 +62,23 @@ describe("Output APIs", () => {
 			expect(html).toContain("Age:");
 			expect(html).toContain("30");
 		});
+
+		it("should render number", () => {
+			write(42);
+			const html = ctx.getHtml();
+			expect(html).toContain("42");
+			expect(html).toContain('class="kt-write"');
+		});
+
+		it("should render boolean true", () => {
+			write(true);
+			expect(ctx.getHtml()).toContain("true");
+		});
+
+		it("should render boolean false", () => {
+			write(false);
+			expect(ctx.getHtml()).toContain("false");
+		});
 	});
 
 	describe("title", () => {

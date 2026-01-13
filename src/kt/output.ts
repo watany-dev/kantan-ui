@@ -23,9 +23,18 @@ export function write(...args: unknown[]): void {
  * 引数を適切なHTML文字列に変換
  */
 function renderArg(arg: unknown): string {
-	// string / number / boolean → 文字列化
-	const text = String(arg);
-	return `<div class="kt-write">${escapeHtml(text)}</div>`;
+	// number / boolean → 文字列化
+	if (typeof arg === "number" || typeof arg === "boolean") {
+		return `<span class="kt-write">${escapeHtml(String(arg))}</span>`;
+	}
+
+	// string → 文字列として表示
+	if (typeof arg === "string") {
+		return `<div class="kt-write">${escapeHtml(arg)}</div>`;
+	}
+
+	// その他 → 文字列化
+	return `<div class="kt-write">${escapeHtml(String(arg))}</div>`;
 }
 
 /**
