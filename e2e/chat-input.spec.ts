@@ -60,9 +60,14 @@ test.describe("chat_input E2E", () => {
 			// Input should be cleared
 			await expect(chatInput).toHaveValue("");
 
-			// Wait for DOM update via WebSocket, then verify message appears
-			await waitForRerun(page, ".kt-chat-message-user", "Hello World");
-			await waitForRerun(page, ".kt-chat-message-assistant", "You said: Hello World");
+			// Wait for server state to reflect the message first (via debug-state)
+			await waitForRerun(page, "#debug-state", "Hello World");
+
+			// Then verify message appears in chat container
+			await expect(page.locator(".kt-chat-message-user")).toContainText("Hello World");
+			await expect(page.locator(".kt-chat-message-assistant")).toContainText(
+				"You said: Hello World",
+			);
 		});
 
 		test("Shift+Enter does not submit and allows newline", async ({ page }) => {
@@ -97,8 +102,11 @@ test.describe("chat_input E2E", () => {
 			// Input should be cleared
 			await expect(chatInput).toHaveValue("");
 
-			// Wait for DOM update via WebSocket, then verify message appears
-			await waitForRerun(page, ".kt-chat-message-user", "Button Submit Test");
+			// Wait for server state to reflect the message first (via debug-state)
+			await waitForRerun(page, "#debug-state", "Button Submit Test");
+
+			// Then verify message appears in chat container
+			await expect(page.locator(".kt-chat-message-user")).toContainText("Button Submit Test");
 		});
 
 		test("empty input does not submit", async ({ page }) => {
@@ -152,20 +160,21 @@ test.describe("chat_input E2E", () => {
 
 			const chatInput = page.locator("#demo_chat_input");
 
-			// Send multiple messages
+			// Send first message
 			await chatInput.fill("Message 1");
 			await chatInput.press("Enter");
 
-			// Wait for first message to appear via WebSocket
-			await waitForRerun(page, ".kt-chat-message-user", "Message 1");
+			// Wait for server state to reflect the first message
+			await waitForRerun(page, "#debug-state", "Message 1");
 
+			// Send second message
 			await chatInput.fill("Message 2");
 			await chatInput.press("Enter");
 
-			// Wait for second message to appear via WebSocket
+			// Wait for server state to reflect the second message
 			await waitForRerun(page, "#debug-state", "Message 2");
 
-			// Both messages should be visible
+			// Verify both messages are visible in chat container
 			await expect(page.locator(".kt-chat-message-user")).toHaveCount(2);
 			await expect(page.locator(".kt-chat-message-assistant")).toHaveCount(2);
 
