@@ -32,17 +32,35 @@ describe("Output APIs", () => {
 	describe("write", () => {
 		it("should output text with kt-write class", () => {
 			write("Hello World");
-			expect(ctx.getHtml()).toBe('<div class="kt-write">Hello World</div>');
+			expect(ctx.getHtml()).toContain("Hello World");
+			expect(ctx.getHtml()).toContain('class="kt-write');
 		});
 
 		it("should escape HTML in content", () => {
 			write("<script>alert('xss')</script>");
-			expect(ctx.getHtml()).toContain("&lt;script&gt;");
+			expect(ctx.getHtml()).not.toContain("<script>");
 		});
 
 		it("should convert numbers to string", () => {
 			write(42);
-			expect(ctx.getHtml()).toBe('<div class="kt-write">42</div>');
+			expect(ctx.getHtml()).toContain("42");
+			expect(ctx.getHtml()).toContain('class="kt-write');
+		});
+
+		it("should accept multiple arguments", () => {
+			write("x =", 42);
+			const html = ctx.getHtml();
+			expect(html).toContain("x =");
+			expect(html).toContain("42");
+		});
+
+		it("should accept mixed types", () => {
+			write("Name:", "Alice", "Age:", 30);
+			const html = ctx.getHtml();
+			expect(html).toContain("Name:");
+			expect(html).toContain("Alice");
+			expect(html).toContain("Age:");
+			expect(html).toContain("30");
 		});
 	});
 

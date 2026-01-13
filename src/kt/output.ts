@@ -6,12 +6,26 @@ import { sanitizeMarkdownHtml } from "./markdown/sanitizer";
 import { type MessageType, messageIcons } from "./theme";
 
 /**
- * テキストまたはHTMLを出力
+ * 様々なデータ型を自動判定して表示（Streamlit st.write 互換）
+ *
+ * @param args - 表示するデータ（複数可）
  */
-export function write(content: string | number | boolean): void {
+export function write(...args: unknown[]): void {
 	const ctx = requireRenderContext();
-	const text = String(content);
-	ctx.append(`<div class="kt-write">${escapeHtml(text)}</div>`);
+
+	for (const arg of args) {
+		const html = renderArg(arg);
+		ctx.append(html);
+	}
+}
+
+/**
+ * 引数を適切なHTML文字列に変換
+ */
+function renderArg(arg: unknown): string {
+	// string / number / boolean → 文字列化
+	const text = String(arg);
+	return `<div class="kt-write">${escapeHtml(text)}</div>`;
 }
 
 /**
