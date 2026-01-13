@@ -20,7 +20,7 @@ const script = () => {
 
 	// === 画像のみ、サイズ制限付き ===
 	kt.header("画像アップロード (制限付き)");
-	const image = kt.file_uploader("画像をアップロード", {
+	const _image = kt.file_uploader("画像をアップロード", {
 		accept: "image/*",
 		maxSize: 5 * 1024 * 1024, // 5MB
 	});
@@ -42,7 +42,7 @@ const script = () => {
 
 	// === 特定の拡張子のみ ===
 	kt.header("特定の拡張子");
-	const doc = kt.file_uploader("ドキュメントをアップロード", {
+	const _doc = kt.file_uploader("ドキュメントをアップロード", {
 		accept: [".pdf", ".docx", ".txt"],
 	});
 
@@ -61,7 +61,7 @@ const script = () => {
 
 	// === 厳格モード ===
 	kt.header("厳格モード");
-	const secure = kt.file_uploader("セキュアアップロード", {
+	const _secure = kt.file_uploader("セキュアアップロード", {
 		strictMode: true,
 	});
 

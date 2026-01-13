@@ -11,7 +11,7 @@ const script = () => {
 	kt.header("cache_data");
 
 	// 基本使用
-	const fetchUsers = kt.cache_data(async (limit: number) => {
+	const _fetchUsers = kt.cache_data((limit: number) => {
 		console.log(`Fetching users with limit ${limit}...`);
 		return [
 			{ id: 1, name: "Alice" },
@@ -20,8 +20,8 @@ const script = () => {
 	});
 
 	// TTL付き
-	const fetchWeather = kt.cache_data(
-		async (city: string) => {
+	const _fetchWeather = kt.cache_data(
+		(city: string) => {
 			console.log(`Fetching weather for ${city}...`);
 			return { city, temp: 25 };
 		},
@@ -29,8 +29,8 @@ const script = () => {
 	);
 
 	// max_entries付き
-	const searchProducts = kt.cache_data(
-		async (query: string) => {
+	const _searchProducts = kt.cache_data(
+		(query: string) => {
 			console.log(`Searching products: ${query}...`);
 			return [{ name: query }];
 		},
@@ -46,7 +46,7 @@ const script = () => {
 	const getDb = kt.cache_resource(() => {
 		connectionCount++;
 		console.log(`Creating new DB connection #${connectionCount}...`);
-		return { id: connectionCount, query: (sql: string) => [] };
+		return { id: connectionCount, query: (_sql: string) => [] };
 	});
 
 	const db1 = getDb();
