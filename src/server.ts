@@ -264,11 +264,15 @@ const script = () => {
 
 	kt.subheader("Chat Input Options");
 
-	// Disabled chat input
-	kt.chat_input("Disabled input", { key: "disabled_chat_input", disabled: true });
+	// Disabled chat input (not pinned to avoid overlap with demo_chat_input)
+	kt.chat_input("Disabled input", {
+		key: "disabled_chat_input",
+		disabled: true,
+		pinToBottom: false,
+	});
 
-	// Chat input with maxLength
-	kt.chat_input("Max 50 chars", { key: "maxlen_chat_input", maxLength: 50 });
+	// Chat input with maxLength (not pinned to avoid overlap)
+	kt.chat_input("Max 50 chars", { key: "maxlen_chat_input", maxLength: 50, pinToBottom: false });
 
 	// Chat input without pin
 	kt.chat_input("Inline (no pin)", { key: "inline_chat_input", pinToBottom: false });
