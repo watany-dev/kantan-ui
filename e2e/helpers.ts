@@ -11,6 +11,11 @@ export async function waitForInitialRender(page: Page): Promise<void> {
 	await expect(page.locator("#kt-connection-status")).toContainText("Connected", {
 		timeout: 10000,
 	});
+	// WebSocket init パッチが適用されるまで待つ
+	// initChatInputResize() が実行されると data-kt-resize-init="true" が付与される
+	await expect(page.locator(".kt-chat-input-field[data-kt-resize-init]")).toBeVisible({
+		timeout: 5000,
+	});
 }
 
 /**
