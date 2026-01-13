@@ -138,6 +138,49 @@ describe("Output APIs", () => {
 			expect(ctx.getHtml()).toContain("<strong>");
 			expect(ctx.getHtml()).toContain("<em>");
 		});
+
+		it("should render object as JSON tree", () => {
+			write({ name: "Alice", age: 30 });
+			expect(ctx.getHtml()).toContain('class="kt-write kt-json"');
+			expect(ctx.getHtml()).toContain('"name"');
+			expect(ctx.getHtml()).toContain('"Alice"');
+		});
+
+		it("should render nested object", () => {
+			write({ user: { name: "Bob" } });
+			expect(ctx.getHtml()).toContain("user");
+			expect(ctx.getHtml()).toContain("Bob");
+		});
+
+		it("should escape HTML in object values", () => {
+			write({ html: "<script>alert(1)</script>" });
+			expect(ctx.getHtml()).not.toContain("<script>alert");
+		});
+
+		it("should render array as JSON tree", () => {
+			write([1, 2, 3]);
+			expect(ctx.getHtml()).toContain('class="kt-write kt-json"');
+			expect(ctx.getHtml()).toContain("1");
+			expect(ctx.getHtml()).toContain("2");
+		});
+
+		it("should render array of objects", () => {
+			write([{ id: 1 }, { id: 2 }]);
+			expect(ctx.getHtml()).toContain("id");
+		});
+
+		it("should render nested arrays", () => {
+			write([
+				[1, 2],
+				[3, 4],
+			]);
+			expect(ctx.getHtml()).toContain("kt-json");
+		});
+
+		it("should escape HTML in array values", () => {
+			write(["<script>alert(1)</script>"]);
+			expect(ctx.getHtml()).not.toContain("<script>alert");
+		});
 	});
 
 	describe("title", () => {

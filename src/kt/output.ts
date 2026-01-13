@@ -40,6 +40,18 @@ function renderArg(arg: unknown): string {
 		return `<div class="kt-write kt-markdown">${sanitized}</div>`;
 	}
 
+	// array → JSON折りたたみ表示
+	if (Array.isArray(arg)) {
+		const jsonHtml = renderJsonTree(arg, 0, 1);
+		return `<div class="kt-write kt-json">${jsonHtml}</div>`;
+	}
+
+	// object (non-null) → JSON折りたたみ表示
+	if (typeof arg === "object" && arg !== null) {
+		const jsonHtml = renderJsonTree(arg, 0, 1);
+		return `<div class="kt-write kt-json">${jsonHtml}</div>`;
+	}
+
 	// その他 → 文字列化
 	return `<div class="kt-write">${escapeHtml(String(arg))}</div>`;
 }
