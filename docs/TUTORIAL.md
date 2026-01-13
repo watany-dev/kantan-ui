@@ -890,25 +890,27 @@ const script = () => {
 };
 ```
 
-### 動的セッションステート
+### 動的セッションステート（Streamlit互換）
 
-動的なキーが必要な場合は`session_state`を使用:
+動的なキーが必要な場合は`kt.session_state`を使用します。Streamlitの`st.session_state`と同じパターンです:
 
 ```typescript
-import { session_state } from "kantan-ui";
+import { kt } from "kantan-ui";
 
 const script = () => {
   // 初期化
-  if (session_state.visits === undefined) {
-    session_state.visits = 0;
+  if (kt.session_state.visits === undefined) {
+    kt.session_state.visits = 0;
   }
 
-  session_state.visits++;
-  kt.write(`訪問回数: ${session_state.visits}`);
+  kt.session_state.visits++;
+  kt.write(`訪問回数: ${kt.session_state.visits}`);
 
   return undefined;
 };
 ```
+
+**注意**: `kt.session_state`は型がつきません。型安全が必要な場合は`createTypedSessionState`を使用してください。
 
 ---
 

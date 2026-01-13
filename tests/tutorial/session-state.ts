@@ -1,69 +1,79 @@
 /**
  * チュートリアル8章: セッションステートの検証
  *
- * [BUG] session_state は index.ts からエクスポートされていない
- * チュートリアルでは import { session_state } from "kantan-ui" と記載されているが、
- * 実際にはエクスポートされていない。createSessionState() 関数は存在する。
+ * A: kt.session_state (Streamlit互換、動的)
+ * C: createTypedSessionState (TypeScript推奨、型安全)
  */
-import { createApp, kt, createTypedSessionState } from "../../src/index";
+import { createApp, createTypedSessionState, kt } from "../../src/index";
 
-// === 型安全なセッションステート（推奨） ===
+// === C: 型安全なセッションステート（推奨） ===
 type AppState = {
-  counter: number;
-  name: string;
-  items: string[];
+	counter: number;
+	name: string;
+	items: string[];
 };
 
 const state = createTypedSessionState<AppState>({
-  counter: 0,
-  name: "",
-  items: [],
+	counter: 0,
+	name: "",
+	items: [],
 });
 
 const script = () => {
-  kt.title("セッションステートテスト");
-  kt.divider();
+	kt.title("セッションステートテスト");
+	kt.divider();
 
-  // === 型安全なセッションステート ===
-  kt.header("createTypedSessionState");
+	// === C: 型安全なセッションステート ===
+	kt.header("C: createTypedSessionState (型安全)");
 
-  kt.write(`カウント: ${state.counter}`);
+	kt.write(`カウント: ${state.counter}`);
 
-  if (kt.button("増加", { key: "typed_inc" })) {
-    state.counter++;
-  }
+	if (kt.button("増加", { key: "typed_inc" })) {
+		state.counter++;
+	}
 
-  const inputName = kt.text_input("名前", state.name, { key: "typed_name" });
-  state.name = inputName;
-  kt.write(`入力された名前: ${state.name}`);
+	const inputName = kt.text_input("名前", state.name, { key: "typed_name" });
+	state.name = inputName;
+	kt.write(`入力された名前: ${state.name}`);
 
-  kt.divider();
+	kt.divider();
 
-  // === 動的セッションステート ===
-  // [BUG] session_state がエクスポートされていないため、このテストはスキップ
-  kt.header("session_state (動的)");
-  kt.warning("[BUG] session_state は index.ts からエクスポートされていません");
-  kt.write("チュートリアルでは import { session_state } from 'kantan-ui' と記載");
-  kt.write("実装: createSessionState() 関数は存在するがエクスポートされていない");
+	// === A: 動的セッションステート (Streamlit互換) ===
+	kt.header("A: kt.session_state (Streamlit互換)");
 
-  kt.divider();
-  kt.write("セッションステートテスト完了");
+	// 初期化
+	if (kt.session_state.visits === undefined) {
+		kt.session_state.visits = 0;
+	}
 
-  return undefined;
+	kt.session_state.visits++;
+	kt.write(`訪問回数: ${kt.session_state.visits}`);
+
+	// 動的キーの追加
+	if (kt.button("動的キー追加", { key: "add_dynamic" })) {
+		const timestamp = Date.now();
+		kt.session_state[`dynamic_${timestamp}`] = "value";
+		kt.success(`動的キー dynamic_${timestamp} を追加しました`);
+	}
+
+	kt.divider();
+	kt.success("セッションステートテスト完了 (A + C 両方動作)");
+
+	return undefined;
 };
 
 const app = await createApp(script, { port: 3108 });
 console.log("Session state test: App created successfully");
 
 const server = Bun.serve({
-  port: 3108,
-  fetch: app.fetch,
-  websocket: app.websocket,
+	port: 3108,
+	fetch: app.fetch,
+	websocket: app.websocket,
 });
 console.log(`Server started at http://localhost:${server.port}`);
 
 setTimeout(() => {
-  server.stop();
-  console.log("Server stopped");
-  process.exit(0);
+	server.stop();
+	console.log("Server stopped");
+	process.exit(0);
 }, 1000);
