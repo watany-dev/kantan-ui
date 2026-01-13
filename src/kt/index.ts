@@ -114,6 +114,7 @@ export const kt = {
 	selectbox: widgets.selectbox,
 	download_button: widgets.download_button,
 	checkbox: widgets.checkbox,
+	color_picker: widgets.color_picker,
 	radio: widgets.radio,
 	number_input: widgets.number_input,
 	text_area: widgets.text_area,
