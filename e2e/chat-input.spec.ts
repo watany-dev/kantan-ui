@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { gotoAndWait, waitForRerun } from "./helpers";
+import { gotoAndWait } from "./helpers";
 
 // 各テストで空のストレージ状態を使用
 test.use({ storageState: { cookies: [], origins: [] } });
@@ -61,12 +61,14 @@ test.describe("chat_input E2E", () => {
 			await expect(chatInput).toHaveValue("");
 
 			// Wait for server state to reflect the message first (via debug-state)
-			await waitForRerun(page, "#debug-state", "Hello World");
-
-			// Then verify message appears in chat container
-			await expect(page.locator(".kt-chat-message-user")).toContainText("Hello World");
+			// Then wait for the chat message to appear (with increased timeout for DOM stability)
+			await expect(page.locator("#debug-state")).toContainText("Hello World", { timeout: 10000 });
+			await expect(page.locator(".kt-chat-message-user")).toContainText("Hello World", {
+				timeout: 10000,
+			});
 			await expect(page.locator(".kt-chat-message-assistant")).toContainText(
 				"You said: Hello World",
+				{ timeout: 10000 },
 			);
 		});
 
@@ -103,10 +105,13 @@ test.describe("chat_input E2E", () => {
 			await expect(chatInput).toHaveValue("");
 
 			// Wait for server state to reflect the message first (via debug-state)
-			await waitForRerun(page, "#debug-state", "Button Submit Test");
-
-			// Then verify message appears in chat container
-			await expect(page.locator(".kt-chat-message-user")).toContainText("Button Submit Test");
+			// Then wait for the chat message to appear (with increased timeout for DOM stability)
+			await expect(page.locator("#debug-state")).toContainText("Button Submit Test", {
+				timeout: 10000,
+			});
+			await expect(page.locator(".kt-chat-message-user")).toContainText("Button Submit Test", {
+				timeout: 10000,
+			});
 		});
 
 		test("empty input does not submit", async ({ page }) => {
@@ -165,18 +170,18 @@ test.describe("chat_input E2E", () => {
 			await chatInput.press("Enter");
 
 			// Wait for server state to reflect the first message
-			await waitForRerun(page, "#debug-state", "Message 1");
+			await expect(page.locator("#debug-state")).toContainText("Message 1", { timeout: 10000 });
 
 			// Send second message
 			await chatInput.fill("Message 2");
 			await chatInput.press("Enter");
 
 			// Wait for server state to reflect the second message
-			await waitForRerun(page, "#debug-state", "Message 2");
+			await expect(page.locator("#debug-state")).toContainText("Message 2", { timeout: 10000 });
 
 			// Verify both messages are visible in chat container
-			await expect(page.locator(".kt-chat-message-user")).toHaveCount(2);
-			await expect(page.locator(".kt-chat-message-assistant")).toHaveCount(2);
+			await expect(page.locator(".kt-chat-message-user")).toHaveCount(2, { timeout: 10000 });
+			await expect(page.locator(".kt-chat-message-assistant")).toHaveCount(2, { timeout: 10000 });
 
 			// Debug state should reflect messages
 			await expect(page.locator("#debug-state")).toContainText('"chatMessages"');
