@@ -81,10 +81,14 @@ export function subheader(text: string): void {
 }
 
 /**
- * テキストを出力（writeのエイリアス）
+ * プレーンテキストを固定幅フォントで表示（Markdownなし）
+ * Streamlit st.text 互換
+ *
+ * @param content - 表示するテキスト
  */
 export function text(content: string): void {
-	write(content);
+	const ctx = requireRenderContext();
+	ctx.append(`<pre class="kt-text">${escapeHtml(content)}</pre>`);
 }
 
 /**

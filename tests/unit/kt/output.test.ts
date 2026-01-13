@@ -205,10 +205,31 @@ describe("Output APIs", () => {
 	});
 
 	describe("text", () => {
-		it("should be an alias for write", () => {
-			text("Some text");
-			expect(ctx.getHtml()).toContain("Some text");
-			expect(ctx.getHtml()).toContain('class="kt-write');
+		it("should render plain text without markdown", () => {
+			text("**not bold**");
+			expect(ctx.getHtml()).toContain("**not bold**");
+			expect(ctx.getHtml()).not.toContain("<strong>");
+		});
+
+		it("should use monospace font class", () => {
+			text("code output");
+			expect(ctx.getHtml()).toContain('class="kt-text"');
+		});
+
+		it("should use pre element", () => {
+			text("line 1\nline 2");
+			expect(ctx.getHtml()).toContain("<pre");
+		});
+
+		it("should escape HTML", () => {
+			text("<script>alert(1)</script>");
+			expect(ctx.getHtml()).toContain("&lt;script&gt;");
+			expect(ctx.getHtml()).not.toContain("<script>alert");
+		});
+
+		it("should preserve whitespace", () => {
+			text("  indented");
+			expect(ctx.getHtml()).toContain("  indented");
 		});
 	});
 
