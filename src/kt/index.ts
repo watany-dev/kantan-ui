@@ -24,6 +24,7 @@
  */
 
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
+import { createSessionState } from "../session/state";
 import { cache_data, cache_resource, clear_all_caches } from "./cache";
 import * as chat from "./chat";
 import * as config from "./config";
@@ -46,6 +47,10 @@ export type { WriteStreamOptions } from "./stream-registry";
 export type { StreamSource } from "./stream-utils";
 
 export const kt = {
+	// Session State API (Streamlit互換)
+	// 動的なセッション状態管理。型安全が必要な場合は createTypedSessionState を使用
+	session_state: createSessionState(),
+
 	// Config APIs
 	set_page_config: config.set_page_config,
 
