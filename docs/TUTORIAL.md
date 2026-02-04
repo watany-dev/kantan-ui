@@ -1412,7 +1412,8 @@ export default await createApp(script, {
 - ✅ データ表示（table, metric）
 - ✅ メディア（image）
 - ✅ レイアウト（tabs, sidebar, columns, container, expander, empty）
-- ✅ チャットUI（chat_message, chat_container）
+- ✅ チャットUI（chat_message, chat_container, chat_input）
+- ✅ カラーピッカー（color_picker）
 - ✅ ストリーミング出力（write_stream）
 - ✅ ページ設定（set_page_config, rerun）
 - ✅ セッションステート管理
@@ -1424,11 +1425,10 @@ export default await createApp(script, {
 - ✅ フォーカス保持
 - ✅ ストリーミングレンダリング
 
-### 今後の予定（Phase 3-B/C）
+### 今後の予定
 
 - データウィジェット: `kt.dataframe()`
 - チャート: `kt.line_chart()`, `kt.bar_chart()`
-- 追加ウィジェット: `kt.color_picker()`, `kt.chat_input()`
 - メディア: `kt.audio()`, `kt.video()`
 - プラグインシステム
 
