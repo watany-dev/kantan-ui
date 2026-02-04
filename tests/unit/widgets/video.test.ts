@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { SubtitleTrack, VideoConfig, VideoSource } from "../../../src/widgets/types";
 import { renderVideo } from "../../../src/widgets/video";
 
@@ -220,6 +220,144 @@ describe("renderVideo", () => {
 			expect(() => renderVideo(largeData, { mimeType: "video/mp4" })).toThrow(
 				/exceeds maximum allowed size/,
 			);
+		});
+	});
+
+	describe("playback options", () => {
+		describe("loop", () => {
+			it("should not include loop attribute by default", () => {
+				const html = renderVideo("https://example.com/movie.mp4");
+				expect(html).not.toContain("loop");
+			});
+
+			it("should include loop attribute when loop is true", () => {
+				const html = renderVideo("https://example.com/movie.mp4", { loop: true });
+				expect(html).toContain("loop");
+			});
+		});
+
+		describe("autoplay", () => {
+			it("should not include autoplay attribute by default", () => {
+				const html = renderVideo("https://example.com/movie.mp4");
+				expect(html).not.toContain("autoplay");
+			});
+
+			it("should include autoplay attribute when autoplay is true", () => {
+				const html = renderVideo("https://example.com/movie.mp4", { autoplay: true });
+				expect(html).toContain("autoplay");
+			});
+		});
+
+		describe("muted", () => {
+			it("should not include muted attribute by default", () => {
+				const html = renderVideo("https://example.com/movie.mp4");
+				expect(html).not.toContain("muted");
+			});
+
+			it("should include muted attribute when muted is true", () => {
+				const html = renderVideo("https://example.com/movie.mp4", { muted: true });
+				expect(html).toContain("muted");
+			});
+		});
+
+		describe("autoplay + muted warning", () => {
+			it("should warn when autoplay is true and muted is not true", () => {
+				const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+				renderVideo("https://example.com/movie.mp4", { autoplay: true });
+				expect(warnSpy).toHaveBeenCalledWith(
+					"autoplay without muted may be blocked by browser policy",
+				);
+				warnSpy.mockRestore();
+			});
+
+			it("should not warn when autoplay and muted are both true", () => {
+				const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+				renderVideo("https://example.com/movie.mp4", { autoplay: true, muted: true });
+				expect(warnSpy).not.toHaveBeenCalled();
+				warnSpy.mockRestore();
+			});
+		});
+	});
+
+	describe("Media Fragment URI (startTime/endTime)", () => {
+		it("should append #t=startTime when only startTime is set", () => {
+			const html = renderVideo("https://example.com/movie.mp4", { startTime: 30 });
+			expect(html).toContain('src="https://example.com/movie.mp4#t=30"');
+		});
+
+		it("should append #t=,endTime when only endTime is set", () => {
+			const html = renderVideo("https://example.com/movie.mp4", { endTime: 120 });
+			expect(html).toContain('src="https://example.com/movie.mp4#t=,120"');
+		});
+
+		it("should append #t=startTime,endTime when both are set", () => {
+			const html = renderVideo("https://example.com/movie.mp4", {
+				startTime: 30,
+				endTime: 120,
+			});
+			expect(html).toContain('src="https://example.com/movie.mp4#t=30,120"');
+		});
+
+		it("should not append fragment when neither is set", () => {
+			const html = renderVideo("https://example.com/movie.mp4");
+			expect(html).toContain('src="https://example.com/movie.mp4"');
+			expect(html).not.toContain("#t=");
+		});
+
+		it("should throw error for negative startTime", () => {
+			expect(() => renderVideo("https://example.com/movie.mp4", { startTime: -1 })).toThrow(
+				"startTime must be a non-negative finite number",
+			);
+		});
+
+		it("should throw error for NaN startTime", () => {
+			expect(() => renderVideo("https://example.com/movie.mp4", { startTime: Number.NaN })).toThrow(
+				"startTime must be a non-negative finite number",
+			);
+		});
+
+		it("should throw error for Infinity startTime", () => {
+			expect(() =>
+				renderVideo("https://example.com/movie.mp4", { startTime: Number.POSITIVE_INFINITY }),
+			).toThrow("startTime must be a non-negative finite number");
+		});
+
+		it("should throw error for non-positive endTime", () => {
+			expect(() => renderVideo("https://example.com/movie.mp4", { endTime: 0 })).toThrow(
+				"endTime must be a positive finite number",
+			);
+		});
+
+		it("should throw error for NaN endTime", () => {
+			expect(() => renderVideo("https://example.com/movie.mp4", { endTime: Number.NaN })).toThrow(
+				"endTime must be a positive finite number",
+			);
+		});
+
+		it("should throw error when endTime <= startTime", () => {
+			expect(() =>
+				renderVideo("https://example.com/movie.mp4", { startTime: 60, endTime: 30 }),
+			).toThrow("endTime must be greater than startTime");
+		});
+
+		it("should throw error when endTime equals startTime", () => {
+			expect(() =>
+				renderVideo("https://example.com/movie.mp4", { startTime: 30, endTime: 30 }),
+			).toThrow("endTime must be greater than startTime");
+		});
+
+		it("should handle startTime of 0", () => {
+			const html = renderVideo("https://example.com/movie.mp4", { startTime: 0 });
+			// startTime 0 does not add fragment (same as default)
+			expect(html).not.toContain("#t=");
+		});
+
+		it("should handle decimal values", () => {
+			const html = renderVideo("https://example.com/movie.mp4", {
+				startTime: 1.5,
+				endTime: 3.7,
+			});
+			expect(html).toContain("#t=1.5,3.7");
 		});
 	});
 });

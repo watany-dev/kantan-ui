@@ -51,6 +51,49 @@ function resolveVideoSrc(source: VideoSource, config?: Partial<VideoConfig>): st
 }
 
 /**
+ * startTime/endTime のバリデーション
+ */
+function validateTimeRange(config?: Partial<VideoConfig>): void {
+	if (config?.startTime !== undefined) {
+		if (!Number.isFinite(config.startTime) || config.startTime < 0) {
+			throw new Error("startTime must be a non-negative finite number");
+		}
+	}
+	if (config?.endTime !== undefined) {
+		if (!Number.isFinite(config.endTime) || config.endTime <= 0) {
+			throw new Error("endTime must be a positive finite number");
+		}
+	}
+	if (
+		config?.startTime !== undefined &&
+		config?.endTime !== undefined &&
+		config.endTime <= config.startTime
+	) {
+		throw new Error("endTime must be greater than startTime");
+	}
+}
+
+/**
+ * Media Fragment URI を生成
+ */
+function buildMediaFragment(config?: Partial<VideoConfig>): string {
+	const hasStart = config?.startTime !== undefined && config.startTime > 0;
+	const hasEnd = config?.endTime !== undefined;
+
+	if (!hasStart && !hasEnd) {
+		return "";
+	}
+
+	if (hasStart && hasEnd) {
+		return `#t=${config.startTime},${config.endTime}`;
+	}
+	if (hasStart) {
+		return `#t=${config.startTime}`;
+	}
+	return `#t=,${config?.endTime}`;
+}
+
+/**
  * 動画のHTMLをレンダリング
  */
 export function renderVideo(source: VideoSource, config?: Partial<VideoConfig>): string {
@@ -59,6 +102,9 @@ export function renderVideo(source: VideoSource, config?: Partial<VideoConfig>):
 		return "";
 	}
 
+	// 時間バリデーション
+	validateTimeRange(config);
+
 	const src = resolveVideoSrc(source, config);
 
 	// poster の検証
@@ -66,9 +112,17 @@ export function renderVideo(source: VideoSource, config?: Partial<VideoConfig>):
 		validateUrl(config.poster);
 	}
 
+	// autoplay + !muted 警告
+	if (config?.autoplay && !config?.muted) {
+		console.warn("autoplay without muted may be blocked by browser policy");
+	}
+
+	// Media Fragment URI の付与
+	const fragment = buildMediaFragment(config);
+
 	// video 属性の構築
 	const videoAttrs: string[] = [
-		`src="${escapeHtml(src)}"`,
+		`src="${escapeHtml(src + fragment)}"`,
 		"controls",
 		'class="kt-video-player"',
 		'preload="metadata"',
@@ -81,6 +135,18 @@ export function renderVideo(source: VideoSource, config?: Partial<VideoConfig>):
 
 	if (config?.poster) {
 		videoAttrs.push(`poster="${escapeHtml(config.poster)}"`);
+	}
+
+	if (config?.loop) {
+		videoAttrs.push("loop");
+	}
+
+	if (config?.autoplay) {
+		videoAttrs.push("autoplay");
+	}
+
+	if (config?.muted) {
+		videoAttrs.push("muted");
 	}
 
 	// video 内部コンテンツ（フォールバック）
