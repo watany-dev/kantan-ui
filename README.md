@@ -290,6 +290,10 @@ const files = kt.file_uploader("Upload files", { multiple: true });
 for (const f of files) {
   kt.write(`${f.name}: ${f.type}`);
 }
+
+// Color picker - returns hex color string
+const color = kt.color_picker("Pick a color", "#ff0000", { key: "color_pick" });
+kt.write(`Selected: ${color}`);
 ```
 
 #### Layout API
@@ -438,6 +442,12 @@ kt.chat_message("user", "What is **TypeScript**?", {
 
 // System message
 kt.chat_message("system", "Session started at 10:00 AM");
+
+// Chat input - returns submitted text (null when no submission)
+const userInput = kt.chat_input("Type a message...", { key: "chat" });
+if (userInput) {
+  state.messages.push({ role: "user", content: userInput });
+}
 ```
 
 **Features:**
@@ -445,6 +455,7 @@ kt.chat_message("system", "Session started at 10:00 AM");
 - Markdown content support
 - Customizable avatar and display name
 - Auto-scroll (pauses when user scrolls up)
+- Chat input with pinned-to-bottom positioning
 
 #### Empty Placeholder API
 
