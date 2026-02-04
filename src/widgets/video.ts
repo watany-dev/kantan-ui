@@ -1,5 +1,8 @@
 import { escapeHtml } from "../utils/html";
+import { binaryToDataUri } from "./image";
 import type { VideoConfig, VideoSource } from "./types";
+
+const VIDEO_MAX_BINARY_SIZE = 50 * 1024 * 1024; // 50 MB
 
 /**
  * ソースURLのセキュリティ検証
@@ -13,7 +16,7 @@ function validateUrl(url: string): void {
 /**
  * 動画ソースをsrc属性用の文字列に解決
  */
-function resolveVideoSrc(source: VideoSource): string {
+function resolveVideoSrc(source: VideoSource, config?: Partial<VideoConfig>): string {
 	if (typeof source === "string") {
 		validateUrl(source);
 
@@ -23,6 +26,25 @@ function resolveVideoSrc(source: VideoSource): string {
 		}
 
 		return source;
+	}
+
+	if (source instanceof Uint8Array || source instanceof ArrayBuffer) {
+		const mimeType = config?.mimeType;
+		if (!mimeType) {
+			throw new Error("mimeType is required for binary video data");
+		}
+		if (!mimeType.startsWith("video/")) {
+			throw new Error("mimeType must start with 'video/'");
+		}
+
+		const byteLength = source instanceof ArrayBuffer ? source.byteLength : source.byteLength;
+		if (byteLength > VIDEO_MAX_BINARY_SIZE) {
+			throw new Error(
+				`Video binary data size (${byteLength} bytes) exceeds maximum allowed size (${VIDEO_MAX_BINARY_SIZE} bytes). Use a URL source instead.`,
+			);
+		}
+
+		return binaryToDataUri(source, mimeType);
 	}
 
 	throw new Error("Unsupported video source type");
@@ -37,7 +59,7 @@ export function renderVideo(source: VideoSource, config?: Partial<VideoConfig>):
 		return "";
 	}
 
-	const src = resolveVideoSrc(source);
+	const src = resolveVideoSrc(source, config);
 
 	// poster の検証
 	if (config?.poster) {

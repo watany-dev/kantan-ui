@@ -190,4 +190,36 @@ describe("renderVideo", () => {
 			expect(renderVideo("   ")).toBe("");
 		});
 	});
+
+	describe("binary data", () => {
+		const mp4Bytes = new Uint8Array([0x00, 0x00, 0x00, 0x1c, 0x66, 0x74, 0x79, 0x70]);
+
+		it("should render Uint8Array video with mimeType", () => {
+			const html = renderVideo(mp4Bytes, { mimeType: "video/mp4" });
+			expect(html).toContain('src="data:video/mp4;base64,');
+			expect(html).toContain('<figure class="kt-video"');
+		});
+
+		it("should render ArrayBuffer video with mimeType", () => {
+			const html = renderVideo(mp4Bytes.buffer, { mimeType: "video/mp4" });
+			expect(html).toContain('src="data:video/mp4;base64,');
+		});
+
+		it("should throw error when mimeType is not specified for binary data", () => {
+			expect(() => renderVideo(mp4Bytes)).toThrow("mimeType is required for binary video data");
+		});
+
+		it("should throw error when mimeType does not start with video/", () => {
+			expect(() => renderVideo(mp4Bytes, { mimeType: "audio/mp3" })).toThrow(
+				"mimeType must start with 'video/'",
+			);
+		});
+
+		it("should throw error when binary data exceeds 50MB", () => {
+			const largeData = new Uint8Array(51 * 1024 * 1024);
+			expect(() => renderVideo(largeData, { mimeType: "video/mp4" })).toThrow(
+				/exceeds maximum allowed size/,
+			);
+		});
+	});
 });
