@@ -32,6 +32,149 @@ const state = createTypedSessionState<AppState>({
  * kt.* APIを使うと、HTMLを手動で生成する必要がなく、
  * Streamlitのように直感的にUIを構築できます。
  */
+/** Counter セクション */
+function counterSection() {
+	kt.header("Counter");
+
+	if (kt.button("+ Increment", { key: "btn_inc" })) {
+		state.counter++;
+	}
+	if (kt.button("- Decrement", { key: "btn_dec" })) {
+		state.counter = Math.max(0, state.counter - 1);
+	}
+	if (kt.button("Reset", { key: "btn_reset" })) {
+		state.counter = 0;
+	}
+
+	kt.button("Disabled Button", { key: "btn_disabled", disabled: true });
+	kt.html(`<div id="counter-display" class="kt-write">Current count: ${state.counter}</div>`);
+
+	kt.sidebar(() => {
+		kt.header("Settings");
+		kt.write("This is sidebar content");
+		kt.divider();
+		kt.write(`Counter: ${state.counter}`);
+	});
+}
+
+/** Input Widgets セクション */
+function inputWidgetsSection() {
+	kt.header("Input Widgets");
+
+	kt.subheader("Text Input");
+	const name = kt.text_input("Your Name", "World", { key: "name_input" });
+	const shortName = kt.text_input("Short Name (max 5)", "", {
+		key: "short_input",
+		maxLength: 5,
+	});
+
+	kt.subheader("Slider");
+	const volume = kt.slider("Volume", 0, 100, 50, { key: "volume_slider" });
+	const stepVolume = kt.slider("Volume (step=10)", 0, 100, 50, {
+		key: "step_slider",
+		step: 10,
+	});
+
+	kt.subheader("Selectbox");
+	const color = kt.selectbox("Color Theme", ["blue", "green", "red", "purple"], "blue", {
+		key: "color_select",
+	});
+
+	return { name, shortName, volume, stepVolume, color };
+}
+
+/** File Upload セクション */
+function fileUploadSection() {
+	kt.header("File Upload");
+
+	kt.subheader("Single File");
+	const singleFileResult = kt.file_uploader("Upload a file", {
+		key: "single_file",
+		help: "Any file up to 200MB",
+	});
+	const singleFile = !Array.isArray(singleFileResult) ? singleFileResult : null;
+
+	if (singleFile) {
+		kt.success(`Uploaded: ${singleFile.name}`);
+		kt.write(`Size: ${singleFile.size} bytes`);
+		kt.write(`Type: ${singleFile.type}`);
+
+		if (singleFile.type.startsWith("text/") || singleFile.name.endsWith(".txt")) {
+			const content = singleFile.text();
+			kt.write("Content preview:");
+			kt.html(
+				`<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; max-height: 200px; overflow: auto;">${escapeHtml(content.slice(0, 1000))}${content.length > 1000 ? "..." : ""}</pre>`,
+			);
+		}
+	}
+
+	kt.subheader("Image Upload");
+	const imageFileResult = kt.file_uploader("Upload an image", {
+		key: "image_file",
+		accept: "image/*",
+		maxSize: 5 * 1024 * 1024,
+		help: "Images only (PNG, JPEG, GIF, WebP) - Max 5MB",
+	});
+	const imageFile = !Array.isArray(imageFileResult) ? imageFileResult : null;
+
+	if (imageFile) {
+		kt.success(`Image uploaded: ${imageFile.name}`);
+		const buffer = imageFile.arrayBuffer();
+		const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+		kt.image(`data:${imageFile.type};base64,${base64}`, {
+			caption: imageFile.name,
+			width: 300,
+			key: "uploaded_image_preview",
+		});
+	}
+
+	kt.subheader("Multiple Files");
+	const multiFilesResult = kt.file_uploader("Upload multiple files", {
+		key: "multi_files",
+		multiple: true,
+		accept: [".txt", ".csv", ".json"],
+		help: "Text, CSV, or JSON files",
+	});
+	const multiFiles = Array.isArray(multiFilesResult) ? multiFilesResult : [];
+
+	if (multiFiles.length > 0) {
+		kt.write(`${multiFiles.length} file(s) uploaded:`);
+		for (const file of multiFiles) {
+			kt.write(`- ${file.name} (${file.size} bytes, ${file.type})`);
+		}
+	}
+
+	return { singleFile, imageFile, multiFiles };
+}
+
+/** Empty Placeholder セクション */
+function emptyPlaceholderSection() {
+	kt.header("Empty Placeholder");
+
+	kt.subheader("Dynamic Status");
+	const statusPlaceholder = kt.empty({ key: "status_placeholder" });
+
+	if (kt.button("Show Spinner", { key: "btn_show_spinner" })) {
+		statusPlaceholder.spinner("Processing...");
+	}
+	if (kt.button("Show Success", { key: "btn_show_success" })) {
+		statusPlaceholder.success("Operation completed!");
+	}
+	if (kt.button("Show Error", { key: "btn_show_error" })) {
+		statusPlaceholder.error("Something went wrong!");
+	}
+	if (kt.button("Clear Status", { key: "btn_clear_status" })) {
+		statusPlaceholder.empty();
+	}
+
+	kt.subheader("Progress Demo");
+	const progressPlaceholder = kt.empty({ key: "progress_placeholder" });
+
+	if (kt.button("Show Progress", { key: "btn_show_progress" })) {
+		progressPlaceholder.progress(0.5, { text: "50% complete" });
+	}
+}
+
 const script = () => {
 	// タイトル
 	kt.title("kantan-ui Demo");
@@ -39,68 +182,11 @@ const script = () => {
 
 	kt.divider();
 
-	// ===== Counter Section =====
-	kt.header("Counter");
-
-	// インクリメントボタン（型アサーション不要！）
-	if (kt.button("+ Increment", { key: "btn_inc" })) {
-		state.counter++;
-	}
-
-	// デクリメントボタン
-	if (kt.button("- Decrement", { key: "btn_dec" })) {
-		state.counter = Math.max(0, state.counter - 1);
-	}
-
-	// リセットボタン
-	if (kt.button("Reset", { key: "btn_reset" })) {
-		state.counter = 0;
-	}
-
-	// disabled状態のボタン（テスト用）
-	kt.button("Disabled Button", { key: "btn_disabled", disabled: true });
-
-	// IDを付与してdiffアルゴリズムが変更を検出できるようにする
-	kt.html(`<div id="counter-display" class="kt-write">Current count: ${state.counter}</div>`);
-
-	// サイドバー（カウンター操作後に定義して最新の状態を反映）
-	kt.sidebar(() => {
-		kt.header("Settings");
-		kt.write("This is sidebar content");
-		kt.divider();
-		kt.write(`Counter: ${state.counter}`);
-	});
+	counterSection();
 
 	kt.divider();
 
-	// ===== Input Widgets Section =====
-	kt.header("Input Widgets");
-
-	// テキスト入力
-	kt.subheader("Text Input");
-	const name = kt.text_input("Your Name", "World", { key: "name_input" });
-
-	// maxLength付きテキスト入力（テスト用）
-	const shortName = kt.text_input("Short Name (max 5)", "", {
-		key: "short_input",
-		maxLength: 5,
-	});
-
-	// スライダー
-	kt.subheader("Slider");
-	const volume = kt.slider("Volume", 0, 100, 50, { key: "volume_slider" });
-
-	// ステップ付きスライダー
-	const stepVolume = kt.slider("Volume (step=10)", 0, 100, 50, {
-		key: "step_slider",
-		step: 10,
-	});
-
-	// セレクトボックス
-	kt.subheader("Selectbox");
-	const color = kt.selectbox("Color Theme", ["blue", "green", "red", "purple"], "blue", {
-		key: "color_select",
-	});
+	const { name, shortName, volume, stepVolume, color } = inputWidgetsSection();
 
 	kt.divider();
 
@@ -313,99 +399,11 @@ const script = () => {
 
 	kt.divider();
 
-	// ===== File Upload Section =====
-	kt.header("File Upload");
-
-	kt.subheader("Single File");
-	const singleFileResult = kt.file_uploader("Upload a file", {
-		key: "single_file",
-		help: "Any file up to 200MB",
-	});
-	// multiple: false（デフォルト）なので単一ファイルまたはnull
-	const singleFile = !Array.isArray(singleFileResult) ? singleFileResult : null;
-
-	if (singleFile) {
-		kt.success(`Uploaded: ${singleFile.name}`);
-		kt.write(`Size: ${singleFile.size} bytes`);
-		kt.write(`Type: ${singleFile.type}`);
-
-		// テキストファイルの場合は内容をプレビュー
-		if (singleFile.type.startsWith("text/") || singleFile.name.endsWith(".txt")) {
-			const content = singleFile.text();
-			kt.write("Content preview:");
-			kt.html(
-				`<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; max-height: 200px; overflow: auto;">${escapeHtml(content.slice(0, 1000))}${content.length > 1000 ? "..." : ""}</pre>`,
-			);
-		}
-	}
-
-	kt.subheader("Image Upload");
-	const imageFileResult = kt.file_uploader("Upload an image", {
-		key: "image_file",
-		accept: "image/*",
-		maxSize: 5 * 1024 * 1024, // 5MB
-		help: "Images only (PNG, JPEG, GIF, WebP) - Max 5MB",
-	});
-	// multiple: false（デフォルト）なので単一ファイルまたはnull
-	const imageFile = !Array.isArray(imageFileResult) ? imageFileResult : null;
-
-	if (imageFile) {
-		kt.success(`Image uploaded: ${imageFile.name}`);
-		// アップロードした画像をBase64で表示
-		const buffer = imageFile.arrayBuffer();
-		const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-		kt.image(`data:${imageFile.type};base64,${base64}`, {
-			caption: imageFile.name,
-			width: 300,
-			key: "uploaded_image_preview",
-		});
-	}
-
-	kt.subheader("Multiple Files");
-	const multiFilesResult = kt.file_uploader("Upload multiple files", {
-		key: "multi_files",
-		multiple: true,
-		accept: [".txt", ".csv", ".json"],
-		help: "Text, CSV, or JSON files",
-	});
-	// multiple: trueなのでファイル配列またはnull
-	const multiFiles = Array.isArray(multiFilesResult) ? multiFilesResult : [];
-
-	if (multiFiles.length > 0) {
-		kt.write(`${multiFiles.length} file(s) uploaded:`);
-		for (const file of multiFiles) {
-			kt.write(`- ${file.name} (${file.size} bytes, ${file.type})`);
-		}
-	}
+	const { singleFile, imageFile, multiFiles } = fileUploadSection();
 
 	kt.divider();
 
-	// ===== Empty Placeholder Section =====
-	kt.header("Empty Placeholder");
-
-	kt.subheader("Dynamic Status");
-	const statusPlaceholder = kt.empty({ key: "status_placeholder" });
-
-	// ボタンでプレースホルダーの状態を変更
-	if (kt.button("Show Spinner", { key: "btn_show_spinner" })) {
-		statusPlaceholder.spinner("Processing...");
-	}
-	if (kt.button("Show Success", { key: "btn_show_success" })) {
-		statusPlaceholder.success("Operation completed!");
-	}
-	if (kt.button("Show Error", { key: "btn_show_error" })) {
-		statusPlaceholder.error("Something went wrong!");
-	}
-	if (kt.button("Clear Status", { key: "btn_clear_status" })) {
-		statusPlaceholder.empty();
-	}
-
-	kt.subheader("Progress Demo");
-	const progressPlaceholder = kt.empty({ key: "progress_placeholder" });
-
-	if (kt.button("Show Progress", { key: "btn_show_progress" })) {
-		progressPlaceholder.progress(0.5, { text: "50% complete" });
-	}
+	emptyPlaceholderSection();
 
 	kt.divider();
 
