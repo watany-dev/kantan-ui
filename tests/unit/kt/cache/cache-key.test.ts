@@ -169,6 +169,26 @@ describe("cache-key", () => {
 			expect(stableStringify(null)).toBe("null");
 			expect(stableStringify(undefined)).toBe("undefined");
 		});
+
+		it("handles function values via getOrCreateObjectId", () => {
+			const fn = () => {};
+			const result = stableStringify(fn);
+			expect(result).toMatch(/^__obj_\d+__$/);
+			// Same function returns same ID
+			expect(stableStringify(fn)).toBe(result);
+		});
+
+		it("handles symbol values via getOrCreateObjectId", () => {
+			const sym = Symbol("cache");
+			const result = stableStringify(sym);
+			expect(result).toMatch(/^__obj_\d+__$/);
+			expect(stableStringify(sym)).toBe(result);
+		});
+
+		it("handles BigInt via String fallback", () => {
+			const result = stableStringify(BigInt(42));
+			expect(result).toBe("42");
+		});
 	});
 
 	describe("hasCircularReference", () => {
@@ -204,6 +224,15 @@ describe("cache-key", () => {
 			(obj.level1 as Record<string, unknown>).level2.level3 = obj;
 
 			expect(hasCircularReference(obj)).toBe(true);
+		});
+	});
+
+	describe("generateCacheKey error handling", () => {
+		it("re-throws non-TypeError errors from stableStringify", () => {
+			// A circular reference causes stack overflow (RangeError), not TypeError
+			const obj: Record<string, unknown> = { a: 1 };
+			obj.self = obj;
+			expect(() => generateCacheKey([obj])).toThrow();
 		});
 	});
 
