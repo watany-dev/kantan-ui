@@ -82,6 +82,7 @@ export type {
 export {
 	button,
 	checkbox,
+	color_picker,
 	date_input,
 	download_button,
 	generateWidgetId,
@@ -94,6 +95,7 @@ export {
 	radio,
 	renderButton,
 	renderCheckbox,
+	renderColorPicker,
 	renderDateInput,
 	renderDownloadButton,
 	renderFileUploader,
@@ -119,6 +121,7 @@ export { createPlaceholder } from "./widgets/placeholder";
 export type {
 	ButtonConfig,
 	CheckboxConfig,
+	ColorPickerConfig,
 	DateInputConfig,
 	DownloadButtonConfig,
 	EmptyConfig,

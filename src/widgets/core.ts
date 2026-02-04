@@ -174,3 +174,12 @@ export function initializeDateInputState(widgetId: string, defaultValue?: string
 export function initializeTimeInputState(widgetId: string, defaultValue?: string): string {
 	return initializeWidgetState(widgetId, defaultValue ?? "");
 }
+
+/**
+ * カラーピッカーのstate管理
+ * 初期値をstateに保存し、現在値を返す
+ * デフォルト値が指定されない場合は "#000000" を使用
+ */
+export function initializeColorPickerState(widgetId: string, defaultValue?: string): string {
+	return initializeWidgetState(widgetId, defaultValue ?? "#000000");
+}

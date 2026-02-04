@@ -1,5 +1,6 @@
 import { button as imperativeButton, renderButton } from "../widgets/button";
 import { checkbox as imperativeCheckbox, renderCheckbox } from "../widgets/checkbox";
+import { color_picker as imperativeColorPicker, renderColorPicker } from "../widgets/color-picker";
 import { date_input as imperativeDateInput, renderDateInput } from "../widgets/date-input";
 import { download_button as imperativeDownloadButton } from "../widgets/download-button";
 import { getFileUploaderValue, renderFileUploader } from "../widgets/file-uploader";
@@ -16,6 +17,7 @@ import { toggle as imperativeToggle, renderToggle } from "../widgets/toggle";
 import type {
 	ButtonConfig,
 	CheckboxConfig,
+	ColorPickerConfig,
 	DateInputConfig,
 	DownloadButtonConfig,
 	FileUploaderConfig,
@@ -123,6 +125,36 @@ export function checkbox(
 		config,
 		(cfg) => imperativeCheckbox(label, defaultValue, cfg),
 		(value, cfg) => renderCheckbox(label, value, cfg),
+	);
+}
+
+/**
+ * カラーピッカーウィジェット（宣言的API）
+ * HTMLを自動出力し、選択された色を返す
+ *
+ * @param label - ラベル
+ * @param defaultValue - デフォルト色（HEX形式、例: "#ff0000"）
+ * @param config - 設定
+ * @returns 選択された色（HEX形式 "#RRGGBB"）
+ *
+ * @example
+ * ```typescript
+ * const color = kt.color_picker("Pick a color");
+ * // → "#000000"
+ *
+ * const themeColor = kt.color_picker("Theme color", "#3498db");
+ * // → "#3498db"
+ * ```
+ */
+export function color_picker(
+	label: string,
+	defaultValue?: string,
+	config?: Partial<ColorPickerConfig>,
+): string {
+	return wrapWidget(
+		config,
+		(cfg) => imperativeColorPicker(label, defaultValue, cfg),
+		(value, cfg) => renderColorPicker(label, value, cfg),
 	);
 }
 
