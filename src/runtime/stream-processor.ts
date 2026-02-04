@@ -1,4 +1,5 @@
 import { parseMarkdown } from "../kt/markdown/parser.js";
+import { sanitizeMarkdownHtml } from "../kt/markdown/sanitizer.js";
 import {
 	streamRegistry as defaultRegistry,
 	type PendingStream,
@@ -47,9 +48,9 @@ async function processStream(pending: PendingStream, emit: EmitPatch): Promise<v
 			streamId: pending.id,
 		};
 
-		// Add finalHtml for markdown streams
+		// Add finalHtml for markdown streams (with XSS sanitization)
 		if (pending.options.markdown) {
-			endPatch.finalHtml = parseMarkdown(fullText);
+			endPatch.finalHtml = sanitizeMarkdownHtml(parseMarkdown(fullText));
 		}
 
 		emit(endPatch);
