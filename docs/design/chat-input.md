@@ -1,5 +1,14 @@
 # kt.chat_input() 設計書
 
+## 実装ステータス
+
+> **✅ 実装完了**
+>
+> `src/widgets/chat-input.ts` および `src/kt/chat.ts` に実装済み。
+> 基本入力、画面下部固定、IME対応、Shift+Enter複数行入力が動作。
+
+---
+
 ## 1. 概要
 
 ### 1.1 目的

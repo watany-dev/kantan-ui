@@ -1,20 +1,20 @@
 # Streamlit API拡張計画（Phase 3-B）
 
 作成日: 2025-01-06
-更新日: 2026-01-08
+更新日: 2026-02-04
 
 ## 実装状況サマリー
 
 | Iteration | API | 状態 |
 |-----------|-----|------|
 | 1 | markdown, code, json | ✅ 実装済み |
-| 2 | image, audio, video | ❌ 未実装 |
-| 3 | metric | ❌ 未実装 |
+| 2 | image, audio, video | ⚠️ 部分実装（image のみ） |
+| 3 | metric | ✅ 実装済み |
 | 4 | line_chart, bar_chart | ❌ 未実装 |
 | 5 | date_input, time_input | ✅ 実装済み |
-| 5b | color_picker | ❌ 未実装 |
+| 5b | color_picker | ✅ 実装済み |
 | 6 | dataframe | ❌ 未実装 |
-| 7 | file_uploader | ❌ 未実装 |
+| 7 | file_uploader | ✅ 実装済み |
 | 8 | sidebar | ✅ 実装済み |
 
 ---
@@ -28,7 +28,7 @@ Streamlitチュートリアル相当の機能を実現するため、不足し�
 ## 現状の実装済みAPI
 
 ### 出力系
-write, title, header, subheader, text, divider, html, **markdown**, **code**, **json**
+write, title, header, subheader, text, divider, html, **markdown**, **code**, **json**, **image**, **metric**, **write_stream**, **empty**
 
 ### アラート
 success, error, warning, info
@@ -46,10 +46,16 @@ container, columns, expander, tabs, **sidebar**
 form, form_submit_button
 
 ### 入力ウィジェット
-text_input, text_area, number_input, slider, **date_input**, **time_input**
+text_input, text_area, number_input, slider, **date_input**, **time_input**, **color_picker**, **chat_input**
 
 ### 選択ウィジェット
 button, checkbox, toggle, radio, selectbox, multiselect
+
+### ファイル
+**file_uploader**
+
+### キャッシュ
+**cache_data**, **cache_resource**
 
 ### その他
 download_button, rerun, set_page_config
@@ -80,54 +86,29 @@ download_button, rerun, set_page_config
 
 ---
 
-## Iteration 2: メディア表示 ❌ 未実装
+## Iteration 2: メディア表示 ⚠️ 部分実装
 
-### kt.image()
+### kt.image() ✅ 実装済み
 
-**工数**: 0.5日
+`src/widgets/image.ts` に実装済み。詳細は `docs/impl/image-design.md` を参照。
 
-```typescript
-interface ImageConfig {
-  caption?: string;
-  width?: number | string;
-  use_column_width?: boolean;
-}
-
-export function image(
-  src: string | ArrayBuffer,
-  config?: ImageConfig
-): void;
-```
-
-### kt.audio()
+### kt.audio() ❌ 未実装
 
 **工数**: 0.5日
 
-### kt.video()
+### kt.video() ❌ 未実装
 
 **工数**: 0.5日
 
 ---
 
-## Iteration 3: メトリクス表示 ❌ 未実装
+## Iteration 3: メトリクス表示 ✅ 実装済み
 
-### kt.metric()
+### kt.metric() ✅
 
-**工数**: 0.5日
+`src/kt/metric.ts` に実装済み。詳細は `docs/design/metric-api.md` を参照。
 
-```typescript
-interface MetricConfig {
-  delta_color?: "normal" | "inverse" | "off";
-  help?: string;
-}
-
-export function metric(
-  label: string,
-  value: string | number,
-  delta?: string | number,
-  config?: MetricConfig
-): void;
-```
+delta方向判定、色モード（normal/inverse/off）、ヘルプテキスト対応済み。
 
 ---
 
@@ -150,7 +131,7 @@ export function metric(
 
 ---
 
-## Iteration 5: 日付・時刻入力 ✅ 部分実装
+## Iteration 5: 日付・時刻入力・カラーピッカー ✅ 実装済み
 
 ### kt.date_input() ✅
 
@@ -191,9 +172,9 @@ const alarm = kt.time_input("アラーム", "08:30", { step: 60 });
 // 戻り値: "HH:MM" または "HH:MM:SS" 形式の文字列
 ```
 
-### kt.color_picker() ❌ 未実装
+### kt.color_picker() ✅ 実装済み
 
-**工数**: 0.5日
+`src/widgets/color-picker.ts` に実装済み。詳細は `docs/design/color-picker-api.md` および `docs/impl/color-picker-implementation-plan.md` を参照。
 
 ---
 
@@ -214,33 +195,13 @@ const alarm = kt.time_input("アラーム", "08:30", { step: 60 });
 
 ---
 
-## Iteration 7: ファイルアップロード ❌ 未実装
+## Iteration 7: ファイルアップロード ✅ 実装済み
 
-### kt.file_uploader()
+### kt.file_uploader() ✅
 
-**工数**: 2.5日
+`src/widgets/file-uploader.ts` に実装済み。詳細は `docs/design/file-uploader-api.md` を参照。
 
-```typescript
-interface FileUploaderConfig {
-  key?: string;
-  type?: string | string[];
-  accept_multiple_files?: boolean;
-  max_size?: number;
-}
-
-interface UploadedFile {
-  name: string;
-  type: string;
-  size: number;
-  getBytes(): ArrayBuffer;
-  getText(): string;
-}
-
-export function file_uploader(
-  label: string,
-  config?: FileUploaderConfig
-): UploadedFile | UploadedFile[] | null;
-```
+セキュリティユーティリティ（ファイル名サニタイズ、マジックバイト検証、Polyglot検出）、セッション管理、クライアント側処理が全て実装済み。
 
 ---
 
@@ -256,15 +217,18 @@ export function file_uploader(
 
 ## 今後の優先順位
 
-1. **高**: file_uploader - ファイルアップロードは需要が高い
-2. **中**: metric - ダッシュボード用途に有用
-3. **中**: color_picker - フォーム機能の充実
-4. **低**: image, audio, video - シンプルなHTMLタグ生成
-5. **低**: dataframe - table()で代替可能
-6. **低**: charts - 工数が大きい
+1. **中**: audio, video - シンプルなHTMLタグ生成
+2. **低**: dataframe - table()で代替可能
+3. **低**: charts - 工数が大きい
 
 ### 実装済み
+- ✅ markdown, code, json (Iteration 1)
+- ✅ image (Iteration 2)
+- ✅ metric (Iteration 3)
 - ✅ date_input, time_input (Iteration 5)
+- ✅ color_picker (Iteration 5b)
+- ✅ file_uploader (Iteration 7)
+- ✅ sidebar (Iteration 8)
 
 ---
 
