@@ -175,6 +175,47 @@ export interface ImageConfig {
 }
 
 // ============================================================================
+// Audio Types
+// ============================================================================
+
+/**
+ * オーディオソースの型
+ * - string: URL または data URI
+ * - Uint8Array: バイナリデータ（mimeType必須）
+ * - ArrayBuffer: バイナリデータ（mimeType必須）
+ */
+export type AudioSource = string | Uint8Array | ArrayBuffer;
+
+export interface AudioConfig {
+	/**
+	 * オーディオのMIMEタイプ
+	 * URL の場合はブラウザが自動検出するため省略可
+	 * バイナリデータの場合は必須
+	 * @default "audio/wav"
+	 * @example "audio/mp3", "audio/ogg", "audio/wav"
+	 */
+	mimeType?: string;
+
+	/**
+	 * ループ再生
+	 * @default false
+	 */
+	loop?: boolean;
+
+	/**
+	 * 自動再生
+	 * ※ 多くのブラウザではユーザー操作なしの自動再生がブロックされます
+	 * @default false
+	 */
+	autoplay?: boolean;
+
+	/**
+	 * ウィジェットの一意キー
+	 */
+	key?: string;
+}
+
+// ============================================================================
 // File Uploader Types
 // ============================================================================
 
