@@ -1142,6 +1142,19 @@ const fileUploaderStyles = `
   }
 `;
 
+/** オーディオスタイル */
+const audioStyles = `
+  /* Audio */
+  .kt-audio {
+    margin: 0.5rem 0;
+  }
+
+  .kt-audio audio {
+    width: 100%;
+    border-radius: 4px;
+  }
+`;
+
 /** カラーピッカースタイル */
 const colorPickerStyles = `
   /* Color Picker Container */
@@ -1219,6 +1232,7 @@ export const defaultStyles = [
 	emptyStyles,
 	streamStyles,
 	fileUploaderStyles,
+	audioStyles,
 	colorPickerStyles,
 ].join("\n");
 

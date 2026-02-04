@@ -117,8 +117,11 @@ export {
 	time_input,
 	toggle,
 } from "./widgets";
+export { renderAudio } from "./widgets/audio";
 export { createPlaceholder } from "./widgets/placeholder";
 export type {
+	AudioConfig,
+	AudioSource,
 	ButtonConfig,
 	CheckboxConfig,
 	ColorPickerConfig,
