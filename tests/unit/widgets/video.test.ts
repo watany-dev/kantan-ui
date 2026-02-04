@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SubtitleTrack, VideoConfig, VideoSource } from "../../../src/widgets/types";
+import { renderVideo } from "../../../src/widgets/video";
 
 describe("Video Types", () => {
 	describe("VideoSource", () => {
@@ -75,6 +76,118 @@ describe("Video Types", () => {
 				],
 			};
 			expect(Array.isArray(config.subtitles)).toBe(true);
+		});
+	});
+});
+
+describe("renderVideo", () => {
+	describe("basic URL rendering", () => {
+		it("should render video element with controls", () => {
+			const html = renderVideo("https://example.com/movie.mp4");
+			expect(html).toContain("<figure");
+			expect(html).toContain("<video");
+			expect(html).toContain("controls");
+			expect(html).toContain('src="https://example.com/movie.mp4"');
+			expect(html).toContain('preload="metadata"');
+			expect(html).toContain("</video>");
+			expect(html).toContain("</figure>");
+		});
+
+		it("should include figure with role and aria-label", () => {
+			const html = renderVideo("https://example.com/movie.mp4");
+			expect(html).toContain('class="kt-video"');
+			expect(html).toContain('role="group"');
+			expect(html).toContain('aria-label="動画プレイヤー"');
+		});
+
+		it("should include video-player class", () => {
+			const html = renderVideo("https://example.com/movie.mp4");
+			expect(html).toContain('class="kt-video-player"');
+		});
+
+		it("should include playsinline by default", () => {
+			const html = renderVideo("https://example.com/movie.mp4");
+			expect(html).toContain("playsinline");
+		});
+
+		it("should not include playsinline when set to false", () => {
+			const html = renderVideo("https://example.com/movie.mp4", {
+				playsinline: false,
+			});
+			expect(html).not.toContain("playsinline");
+		});
+
+		it("should include fallback content", () => {
+			const html = renderVideo("https://example.com/movie.mp4");
+			expect(html).toContain('class="kt-video-fallback"');
+			expect(html).toContain("お使いのブラウザは動画再生に対応していません。");
+		});
+	});
+
+	describe("poster", () => {
+		it("should include poster attribute when specified", () => {
+			const html = renderVideo("https://example.com/movie.mp4", {
+				poster: "https://example.com/thumbnail.jpg",
+			});
+			expect(html).toContain('poster="https://example.com/thumbnail.jpg"');
+		});
+
+		it("should not include poster attribute when not specified", () => {
+			const html = renderVideo("https://example.com/movie.mp4");
+			expect(html).not.toContain("poster");
+		});
+
+		it("should escape poster URL", () => {
+			const html = renderVideo("https://example.com/movie.mp4", {
+				poster: 'https://example.com/thumb.jpg?a=1&b="2"',
+			});
+			expect(html).toContain("&amp;");
+			expect(html).toContain("&quot;");
+		});
+	});
+
+	describe("security", () => {
+		it("should escape special characters in URL", () => {
+			const html = renderVideo("https://example.com/movie.mp4?name=<script>");
+			expect(html).toContain("&lt;script&gt;");
+			expect(html).not.toContain("<script>");
+		});
+
+		it("should reject javascript: URI in source", () => {
+			expect(() => renderVideo("javascript:alert(1)")).toThrow("javascript: URLs are not allowed");
+		});
+
+		it("should reject javascript: URI case-insensitively", () => {
+			expect(() => renderVideo("JavaScript:alert(1)")).toThrow("javascript: URLs are not allowed");
+		});
+
+		it("should reject javascript: URI in poster", () => {
+			expect(() =>
+				renderVideo("https://example.com/movie.mp4", {
+					poster: "javascript:alert(1)",
+				}),
+			).toThrow("javascript: URLs are not allowed");
+		});
+
+		it("should reject data URI with non-video MIME type", () => {
+			expect(() => renderVideo("data:text/html;base64,AAAA")).toThrow(
+				"data URI must have a video/* MIME type",
+			);
+		});
+
+		it("should accept data URI with video MIME type", () => {
+			const html = renderVideo("data:video/mp4;base64,AAAA");
+			expect(html).toContain('src="data:video/mp4;base64,AAAA"');
+		});
+	});
+
+	describe("empty source", () => {
+		it("should return empty string for empty source", () => {
+			expect(renderVideo("")).toBe("");
+		});
+
+		it("should return empty string for whitespace-only source", () => {
+			expect(renderVideo("   ")).toBe("");
 		});
 	});
 });
