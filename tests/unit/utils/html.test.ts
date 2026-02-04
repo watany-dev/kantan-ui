@@ -103,6 +103,27 @@ describe("buildStyleAttr", () => {
 			});
 			expect(result).toBe('style="z-index: 100; opacity: 0.5"');
 		});
+
+		it("should reject HTML tags in CSS values", () => {
+			const result = buildStyleAttr({
+				color: "<div>injected</div>",
+			});
+			expect(result).toBe("");
+		});
+
+		it("should reject javascript: protocol in CSS values", () => {
+			const result = buildStyleAttr({
+				background: "javascript:alert(1)",
+			});
+			expect(result).toBe("");
+		});
+
+		it("should reject vbscript: protocol in CSS values", () => {
+			const result = buildStyleAttr({
+				background: "vbscript:msgbox(1)",
+			});
+			expect(result).toBe("");
+		});
 	});
 });
 

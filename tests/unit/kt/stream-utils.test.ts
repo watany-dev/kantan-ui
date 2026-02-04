@@ -115,4 +115,16 @@ describe("toReadableStream", () => {
 		const reader = stream.getReader();
 		expect((await reader.read()).done).toBe(true);
 	});
+
+	it("propagates error from AsyncIterable to stream", async () => {
+		// biome-ignore lint/suspicious/useAwait: async generator requires async keyword for AsyncIterable
+		async function* failingGen() {
+			yield "ok";
+			throw new Error("generator failed");
+		}
+		const stream = toReadableStream(failingGen());
+		const reader = stream.getReader();
+		expect((await reader.read()).value).toBe("ok");
+		await expect(reader.read()).rejects.toThrow("generator failed");
+	});
 });

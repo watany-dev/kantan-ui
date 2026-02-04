@@ -491,6 +491,21 @@ describe("Output APIs", () => {
 		});
 	});
 
+	describe("write - exotic types", () => {
+		it("should stringify Symbol via fallback path", () => {
+			write(Symbol("test"));
+			expect(ctx.getHtml()).toContain("Symbol(test)");
+			expect(ctx.getHtml()).toContain("kt-write");
+		});
+	});
+
+	describe("json - renderJsonTree fallback", () => {
+		it("should render undefined value inside object", () => {
+			json({ key: undefined } as Record<string, unknown>);
+			expect(ctx.getHtml()).toContain("undefined");
+		});
+	});
+
 	describe("code", () => {
 		it("should render code block with kt-code class", () => {
 			code("const x = 1;");

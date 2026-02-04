@@ -311,4 +311,26 @@ describe("validateUploadedFile", () => {
 			expect(result.valid).toBe(true);
 		});
 	});
+
+	describe("formatSize display in error messages", () => {
+		it("shows MB in size error message", () => {
+			const data = createDataOfSize(2 * 1024 * 1024); // 2MB
+			const result = validateUploadedFile(data, "large.bin", "application/octet-stream", {
+				maxSize: 1024 * 1024, // 1MB limit
+			});
+			expect(result.valid).toBe(false);
+			expect(result.errors[0]?.message).toContain("MB");
+		});
+	});
+
+	describe("getExtension edge cases via accept filter", () => {
+		it("rejects extensionless file when accept requires an extension", () => {
+			const data = createDataOfSize(100);
+			const result = validateUploadedFile(data, "README", "text/plain", {
+				accept: ".txt",
+			});
+			expect(result.valid).toBe(false);
+			expect(result.errors.some((e) => e.code === "TYPE_NOT_ALLOWED")).toBe(true);
+		});
+	});
 });

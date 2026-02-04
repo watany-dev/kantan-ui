@@ -1397,3 +1397,116 @@ describe("Security features", () => {
 		});
 	});
 });
+
+describe("Download management", () => {
+	let manager: SessionManager;
+
+	beforeEach(() => {
+		manager = new SessionManager();
+	});
+
+	afterEach(() => {
+		manager.stopCleanupInterval();
+	});
+
+	it("should register and retrieve a download", () => {
+		const data = new ArrayBuffer(8);
+		const id = manager.registerDownload(data, "test.bin", "application/octet-stream");
+
+		expect(id).toBeTruthy();
+		const download = manager.getDownload(id);
+		expect(download).toBeDefined();
+		expect(download?.filename).toBe("test.bin");
+		expect(download?.mime).toBe("application/octet-stream");
+		expect(download?.data).toBe(data);
+	});
+
+	it("should delete download after retrieval (one-time download)", () => {
+		const data = new ArrayBuffer(8);
+		const id = manager.registerDownload(data, "test.bin", "application/octet-stream");
+
+		expect(manager.getDownload(id)).toBeDefined();
+		expect(manager.getDownload(id)).toBeUndefined();
+	});
+
+	it("should return undefined for unknown download id", () => {
+		expect(manager.getDownload("non-existent-id")).toBeUndefined();
+	});
+
+	it("should cleanup expired downloads", () => {
+		const data = new ArrayBuffer(8);
+		const id = manager.registerDownload(data, "old.bin", "application/octet-stream");
+
+		// Advance time past the 60s TTL
+		const originalNow = Date.now();
+		vi.spyOn(Date, "now").mockReturnValue(originalNow + 120_000);
+
+		// Register a new download to trigger cleanup
+		const id2 = manager.registerDownload(new ArrayBuffer(4), "new.bin", "text/plain");
+
+		expect(manager.getDownload(id)).toBeUndefined();
+		expect(manager.getDownload(id2)).toBeDefined();
+
+		vi.restoreAllMocks();
+	});
+});
+
+describe("Chunk upload completion", () => {
+	let manager: SessionManager;
+
+	beforeEach(() => {
+		manager = new SessionManager();
+	});
+
+	afterEach(() => {
+		manager.stopCleanupInterval();
+	});
+
+	it("should return null for incomplete chunk uploads", () => {
+		const session = manager.createSession();
+
+		manager.startChunkUpload(session.id, {
+			type: "chunk_upload_start",
+			uploadId: "chunk-test-1",
+			widgetId: "widget-1",
+			filename: "data.bin",
+			mimeType: "application/octet-stream",
+			totalSize: 200,
+			totalChunks: 2,
+			chunkSize: 100,
+		});
+
+		manager.receiveChunk("chunk-test-1", 0, btoa("A".repeat(100)));
+
+		expect(manager.completeChunkUpload("chunk-test-1")).toBeNull();
+	});
+
+	it("should return null for non-existent upload id", () => {
+		expect(manager.completeChunkUpload("non-existent")).toBeNull();
+	});
+
+	it("should assemble chunks into ArrayBuffer when all received", () => {
+		const session = manager.createSession();
+
+		const uid = manager.startChunkUpload(session.id, {
+			type: "chunk_upload_start",
+			uploadId: "chunk-test-2",
+			widgetId: "widget-1",
+			filename: "data.bin",
+			mimeType: "application/octet-stream",
+			totalSize: 6,
+			totalChunks: 2,
+			chunkSize: 3,
+		});
+		expect(uid).toBe("chunk-test-2");
+
+		const r1 = manager.receiveChunk("chunk-test-2", 0, btoa("abc"));
+		expect(r1).toBe(true);
+		const r2 = manager.receiveChunk("chunk-test-2", 1, btoa("def"));
+		expect(r2).toBe(true);
+
+		const result = manager.completeChunkUpload("chunk-test-2");
+		expect(result).not.toBeNull();
+		expect(result?.byteLength).toBe(6);
+	});
+});
