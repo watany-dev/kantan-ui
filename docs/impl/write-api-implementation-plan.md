@@ -1,5 +1,14 @@
 # kt.write API 拡張 実装計画
 
+## 実装ステータス
+
+> **✅ 実装完了** (2026-01-13)
+>
+> 全フェーズ（Phase 1〜5）が実装済み。
+> 複数引数、Markdown、オブジェクト/配列、null/undefined、kt.text分離が完了。
+
+---
+
 ## 概要
 
 設計書 (`docs/design/write-api-enhancement.md`) に基づき、TDDサイクルでイテレーティブに実装を進める。
@@ -513,11 +522,11 @@ test.describe("kt.text", () => {
 
 ## 完了時チェックリスト
 
-- [ ] 全ユニットテストがパス
-- [ ] E2Eテストがパス
-- [ ] knip（dead-code検出）パス
-- [ ] `docs/streamlit-api-comparison.md` 更新
-- [ ] 設計書のステータスを「実装完了」に更新
+- [x] 全ユニットテストがパス
+- [x] E2Eテストがパス
+- [x] knip（dead-code検出）パス
+- [x] `docs/streamlit-api-comparison.md` 更新
+- [x] 設計書のステータスを「実装完了」に更新
 
 ---
 

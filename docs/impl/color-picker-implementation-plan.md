@@ -2,6 +2,14 @@
 
 作成日: 2026-01-12
 
+## 実装ステータス
+
+> **✅ 実装完了** (2026-01-12)
+>
+> 全イテレーション（1〜7）が実装済み。`src/widgets/color-picker.ts` に実装。
+
+---
+
 ## 概要
 
 本計画は `docs/design/color-picker-api.md` の設計書に基づき、TDDサイクルと Tidy First? の原則に従って color_picker を実装する。
@@ -43,9 +51,9 @@ export interface ColorPickerConfig {
 ```
 
 ### 完了チェック
-- [ ] `bun run lint:fix`
-- [ ] `bun run test`
-- [ ] コミット: `feat(widgets): add ColorPickerConfig type`
+- [x] `bun run lint:fix`
+- [x] `bun run test`
+- [x] コミット: `feat(widgets): add ColorPickerConfig type`
 
 ---
 
@@ -199,9 +207,9 @@ describe("color_picker", () => {
 ```
 
 ### 完了チェック
-- [ ] テストファイル作成
-- [ ] テストが**失敗**することを確認（import エラー）
-- [ ] コミット: `test(widgets): add color_picker tests (Red phase)`
+- [x] テストファイル作成
+- [x] テストが**失敗**することを確認（import エラー）
+- [x] コミット: `test(widgets): add color_picker tests (Red phase)`
 
 ---
 
@@ -271,9 +279,9 @@ export function renderColorPicker(
 ```
 
 ### 完了チェック
-- [ ] `bun run lint:fix`
-- [ ] `bun run test` - 全テストが**パス**
-- [ ] コミット: `feat(widgets): implement color_picker (Green phase)`
+- [x] `bun run lint:fix`
+- [x] `bun run test` - 全テストが**パス**
+- [x] コミット: `feat(widgets): implement color_picker (Green phase)`
 
 ---
 
@@ -292,9 +300,9 @@ export { color_picker, renderColorPicker } from "./color-picker";
 ```
 
 ### 完了チェック
-- [ ] `bun run lint:fix`
-- [ ] `bun run test`
-- [ ] コミット: `feat(widgets): export color_picker`
+- [x] `bun run lint:fix`
+- [x] `bun run test`
+- [x] コミット: `feat(widgets): export color_picker`
 
 ---
 
@@ -346,9 +354,9 @@ export function color_picker(
 ```
 
 ### 完了チェック
-- [ ] `bun run lint:fix`
-- [ ] `bun run test`
-- [ ] コミット: `feat(kt): add color_picker declarative API`
+- [x] `bun run lint:fix`
+- [x] `bun run test`
+- [x] コミット: `feat(kt): add color_picker declarative API`
 
 ---
 
@@ -443,9 +451,9 @@ export const defaultStyles = [
 ```
 
 ### 完了チェック
-- [ ] `bun run lint:fix`
-- [ ] `bun run test`
-- [ ] コミット: `style(widgets): add color_picker CSS`
+- [x] `bun run lint:fix`
+- [x] `bun run test`
+- [x] コミット: `style(widgets): add color_picker CSS`
 
 ---
 
@@ -491,9 +499,9 @@ export const defaultStyles = [
    ```
 
 ### 完了チェック
-- [ ] `bun run ci` 全パス
-- [ ] 設計書更新
-- [ ] コミット: `docs: update color_picker status to implemented`
+- [x] `bun run ci` 全パス
+- [x] 設計書更新
+- [x] コミット: `docs: update color_picker status to implemented`
 
 ---
 

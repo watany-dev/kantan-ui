@@ -1,5 +1,17 @@
 # write_stream 実装計画
 
+## 実装ステータス
+
+> **✅ 実装完了** (2026-01-12)
+>
+> 全フェーズ（Phase 1〜7）が実装済み。
+> - `src/kt/stream.ts`: write_stream 本体
+> - `src/kt/stream-utils.ts`: ストリーム正規化ユーティリティ
+> - `src/kt/stream-registry.ts`: PendingStream 管理
+> - `src/runtime/stream-processor.ts`: ストリーム処理エンジン
+
+---
+
 ## 概要
 
 設計書 (`docs/design/write-stream-api.md`) に基づき、TDDサイクルでイテレーティブに実装を進める。
@@ -295,7 +307,7 @@
 
 ## 完了時チェックリスト
 
-- [ ] 全ユニットテストがパス
-- [ ] E2Eテストがパス
-- [ ] knip（dead-code検出）パス
-- [ ] APIドキュメント更新（必要に応じて）
+- [x] 全ユニットテストがパス
+- [x] E2Eテストがパス
+- [x] knip（dead-code検出）パス
+- [x] APIドキュメント更新（必要に応じて）

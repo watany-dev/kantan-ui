@@ -1,7 +1,7 @@
 # Phase 3 開発計画 - イテレーティブ実装
 
 作成日: 2026-01-05
-更新日: 2026-01-08
+更新日: 2026-02-04
 
 ## 実装状況サマリー
 
@@ -10,9 +10,9 @@
 | 3-A | set_page_config, rerun, table, download_button, tabs | ✅ **完了** |
 | 3-B | sidebar | ✅ **完了** |
 | 3-B | markdown, code, json | ✅ **完了** |
-| 3-B | cache_data, cache_resource | ❌ 未実装 |
+| 3-B | cache_data, cache_resource | ✅ **完了** |
 | 3-B | dataframe | ❌ 未実装 |
-| 3-B | file_uploader | ❌ 未実装 |
+| 3-B | file_uploader | ✅ **完了** |
 | 3-C | line_chart, bar_chart | ❌ 未実装 |
 | 3-C | Chart.jsプラグイン | ❌ 未実装 |
 
@@ -80,16 +80,17 @@
 
 ## Phase 3-B: 依存なし・大規模
 
-### 6. kt.cache_data / kt.cache_resource ❌ 未実装
+### 6. kt.cache_data / kt.cache_resource ✅ 実装済み
 
-**優先度**: 中
-**工数**: 中
+実装詳細は `docs/design/cache-api.md` および `docs/impl/cache-api-implementation-plan.md` を参照。
 
-#### 計画概要
-- CacheConfig型とデータキャッシュ基盤
-- TTLとmaxEntries
-- cache_resource実装
-- クリア機能
+`src/kt/cache/` ディレクトリに以下が実装済み:
+- `cache-data.ts`: シリアライズ可能データのキャッシュ
+- `cache-resource.ts`: リソースキャッシュ（参照返却）
+- `cache-store.ts`: Map ベースの CacheStore クラス（TTL / LRU）
+- `cache-key.ts`: キー生成ユーティリティ
+- `types.ts`: 型定義
+- `index.ts`: エクスポート
 
 ---
 
@@ -117,16 +118,16 @@
 
 ---
 
-### 9. kt.file_uploader() ❌ 未実装
+### 9. kt.file_uploader() ✅ 実装済み
 
-**優先度**: 中
-**工数**: 高
+実装詳細は `docs/design/file-uploader-api.md` を参照。
 
-#### 計画概要
-- UploadedFile型とConfig
-- クライアントサイドファイル読み込み
-- サーバーサイドデコードと状態保存
-- サイズ制限・型制限
+`src/widgets/file-uploader.ts` に実装済み:
+- UploadedFile インターフェース
+- セッション管理（アップロードデータ管理）
+- ファイル検証（サイズ制限・型制限）
+- クライアント側処理（Base64エンコード・WebSocket送信）
+- セキュリティユーティリティ（ファイル名サニタイズ、マジックバイト検証）
 
 ---
 

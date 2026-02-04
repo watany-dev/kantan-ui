@@ -2,9 +2,13 @@
 
 ## 実装ステータス
 
-> **📝 設計完了** (2026-01-12)
+> **✅ 実装完了** (2026-01-12)
 >
-> API設計・アーキテクチャ設計が完了。実装待ち。
+> API設計・アーキテクチャ設計が完了し、全フェーズ実装済み。
+> - `src/kt/stream.ts`: write_stream 本体
+> - `src/kt/stream-utils.ts`: ストリーム正規化ユーティリティ
+> - `src/kt/stream-registry.ts`: PendingStream 管理
+> - `src/runtime/stream-processor.ts`: ストリーム処理エンジン
 
 ## 1. 概要
 
@@ -885,22 +889,22 @@ test.describe("write_stream", () => {
 
 ### 実装前
 
-- [ ] 既存のストリーミング実装（streamAppend）を確認
-- [ ] RenderContextの仕組みを確認
-- [ ] rerun.tsの実行フローを確認
+- [x] 既存のストリーミング実装（streamAppend）を確認
+- [x] RenderContextの仕組みを確認
+- [x] rerun.tsの実行フローを確認
 
 ### 各イテレーション後
 
-- [ ] `bun run lint:fix` 実行
-- [ ] `bun run test` 実行（該当テストがパス）
-- [ ] コミット
+- [x] `bun run lint:fix` 実行
+- [x] `bun run test` 実行（該当テストがパス）
+- [x] コミット
 
 ### 完了時
 
-- [ ] `bun run ci` 全パス
-- [ ] 全ランタイム（Node.js, Deno, Bun）で動作確認
-- [ ] E2Eテストがパス
-- [ ] knip（dead-code検出）パス
+- [x] `bun run ci` 全パス
+- [x] 全ランタイム（Node.js, Deno, Bun）で動作確認
+- [x] E2Eテストがパス
+- [x] knip（dead-code検出）パス
 
 ---
 

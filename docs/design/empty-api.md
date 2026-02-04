@@ -765,22 +765,22 @@ inner.write("Inner content");
 
 ### 実装前
 
-- [ ] 既存の `wrapWidget` パターンを確認
-- [ ] `kt.tabs` の `TabFunction` 実装を参考にする
-- [ ] セッション状態管理の仕組みを確認
+- [x] 既存の `wrapWidget` パターンを確認
+- [x] `kt.tabs` の `TabFunction` 実装を参考にする
+- [x] セッション状態管理の仕組みを確認
 
 ### 各イテレーション後
 
-- [ ] `bun run lint:fix` 実行
-- [ ] `bun run test` 実行
-- [ ] コミット
+- [x] `bun run lint:fix` 実行
+- [x] `bun run test` 実行
+- [x] コミット
 
 ### 完了時
 
-- [ ] `bun run ci` 全パス
-- [ ] 全メソッドのテストがある
-- [ ] E2Eテストがパス
-- [ ] ドキュメント更新
+- [x] `bun run ci` 全パス
+- [x] 全メソッドのテストがある
+- [x] E2Eテストがパス
+- [x] ドキュメント更新
 
 ---
 

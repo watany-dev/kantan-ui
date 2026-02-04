@@ -1,5 +1,14 @@
 # Metric API 設計書
 
+## 実装ステータス
+
+> **✅ 実装完了**
+>
+> `src/kt/metric.ts` に実装済み。
+> 基本metric表示、delta色モード（normal/inverse/off）、ヘルプテキスト対応。
+
+---
+
 ## 1. 概要
 
 ### 1.1 目的
@@ -486,18 +495,18 @@ describe("metric label_visibility", () => {
 ## 8. チェックリスト
 
 ### 実装前
-- [ ] 既存output.tsのパターン確認
-- [ ] CSS変数の確認
+- [x] 既存output.tsのパターン確認
+- [x] CSS変数の確認
 
 ### 各イテレーション後
-- [ ] `bun run lint:fix`
-- [ ] `bun run test`
-- [ ] コミット
+- [x] `bun run lint:fix`
+- [x] `bun run test`
+- [x] コミット
 
 ### 完了時
-- [ ] `bun run ci` 全パス
-- [ ] 全入力がエスケープされている
-- [ ] Streamlit互換APIになっている
+- [x] `bun run ci` 全パス
+- [x] 全入力がエスケープされている
+- [x] Streamlit互換APIになっている
 
 ---
 
