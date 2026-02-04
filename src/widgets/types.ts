@@ -216,6 +216,112 @@ export interface AudioConfig {
 }
 
 // ============================================================================
+// Video Types
+// ============================================================================
+
+/**
+ * 動画ソースの型
+ * - string: URL または data URI
+ * - Uint8Array: バイナリデータ（mimeType必須）
+ * - ArrayBuffer: バイナリデータ（mimeType必須）
+ */
+export type VideoSource = string | Uint8Array | ArrayBuffer;
+
+/**
+ * 字幕トラックの定義
+ *
+ * W3C HTML5 <track> 要素に対応する型。
+ * srclang を明示的に管理することで、スクリーンリーダーや
+ * ブラウザの字幕選択UIが正しく動作する。
+ */
+export interface SubtitleTrack {
+	/** VTT ファイルの URL */
+	src: string;
+
+	/**
+	 * BCP 47 言語タグ
+	 * @example "ja", "en", "zh-Hans"
+	 * @see https://www.w3.org/International/articles/language-tags/
+	 */
+	srclang: string;
+
+	/**
+	 * ユーザーに表示されるラベル
+	 * @example "日本語", "English"
+	 */
+	label: string;
+}
+
+export interface VideoConfig {
+	/**
+	 * バイナリデータのMIMEタイプ
+	 * Uint8Array / ArrayBuffer 使用時は必須。
+	 * "video/" プレフィックスで始まる値のみ受け付ける。
+	 * @example "video/mp4", "video/webm", "video/ogg"
+	 */
+	mimeType?: string;
+
+	/**
+	 * 再生開始位置（秒）
+	 * 0以上の有限数であること。負値・NaN・Infinityはエラー。
+	 * @default 0
+	 */
+	startTime?: number;
+
+	/**
+	 * 再生終了位置（秒）
+	 * startTime より大きい有限数であること。
+	 * 未指定の場合は動画の最後まで再生。
+	 */
+	endTime?: number;
+
+	/**
+	 * 字幕（WebVTT）
+	 * - SubtitleTrack: 単一言語の字幕
+	 * - SubtitleTrack[]: 複数言語の字幕（最初のトラックがデフォルト）
+	 */
+	subtitles?: SubtitleTrack | SubtitleTrack[];
+
+	/**
+	 * ループ再生
+	 * @default false
+	 */
+	loop?: boolean;
+
+	/**
+	 * 自動再生
+	 * ブラウザポリシーにより、muted: true との併用が推奨される。
+	 * @default false
+	 */
+	autoplay?: boolean;
+
+	/**
+	 * ミュート（消音）
+	 * @default false
+	 */
+	muted?: boolean;
+
+	/**
+	 * ポスター画像の URL
+	 * 動画の読み込み前・再生前に表示されるサムネイル。
+	 * @example "https://example.com/thumbnail.jpg"
+	 */
+	poster?: string;
+
+	/**
+	 * インライン再生（モバイル対応）
+	 * iOS Safari でフルスクリーンに遷移せずインライン再生を行う。
+	 * @default true
+	 */
+	playsinline?: boolean;
+
+	/**
+	 * ウィジェットの一意キー
+	 */
+	key?: string;
+}
+
+// ============================================================================
 // File Uploader Types
 // ============================================================================
 
