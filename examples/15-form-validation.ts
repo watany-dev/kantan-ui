@@ -24,6 +24,44 @@ function validateEmail(email: string): boolean {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function validateSignupForm(fields: {
+	name: string;
+	email: string;
+	password: string;
+	confirmPassword: string;
+	agreeTerms: boolean;
+}): string[] {
+	const errors: string[] = [];
+
+	if (!fields.name) {
+		errors.push("名前を入力してください");
+	} else if (fields.name.length < 2) {
+		errors.push("名前は2文字以上で入力してください");
+	}
+
+	if (!fields.email) {
+		errors.push("メールアドレスを入力してください");
+	} else if (!validateEmail(fields.email)) {
+		errors.push("有効なメールアドレスを入力してください");
+	}
+
+	if (!fields.password) {
+		errors.push("パスワードを入力してください");
+	} else {
+		errors.push(...validatePassword(fields.password));
+	}
+
+	if (fields.password !== fields.confirmPassword) {
+		errors.push("パスワードが一致しません");
+	}
+
+	if (!fields.agreeTerms) {
+		errors.push("利用規約への同意が必要です");
+	}
+
+	return errors;
+}
+
 function validatePassword(password: string): string[] {
 	const errors: string[] = [];
 	if (password.length < 8) {
@@ -127,47 +165,13 @@ if (errors.length > 0) {
 			});
 
 			if (kt.form_submit_button("登録", { key: "signup_submit" })) {
-				const errors: string[] = [];
+				const errors = validateSignupForm({ name, email, password, confirmPassword, agreeTerms });
 
-				// 名前のバリデーション
-				if (!name) {
-					errors.push("名前を入力してください");
-				} else if (name.length < 2) {
-					errors.push("名前は2文字以上で入力してください");
-				}
-
-				// メールのバリデーション
-				if (!email) {
-					errors.push("メールアドレスを入力してください");
-				} else if (!validateEmail(email)) {
-					errors.push("有効なメールアドレスを入力してください");
-				}
-
-				// パスワードのバリデーション
-				if (!password) {
-					errors.push("パスワードを入力してください");
-				} else {
-					const passwordErrors = validatePassword(password);
-					errors.push(...passwordErrors);
-				}
-
-				// パスワード確認
-				if (password !== confirmPassword) {
-					errors.push("パスワードが一致しません");
-				}
-
-				// 利用規約
-				if (!agreeTerms) {
-					errors.push("利用規約への同意が必要です");
-				}
-
-				// エラーがあれば表示
 				if (errors.length > 0) {
 					kt.validation_errors(errors);
 					return;
 				}
 
-				// 成功
 				state.registeredUsers.push({ name, email });
 				kt.success(`${name}さんの登録が完了しました!`);
 			}
