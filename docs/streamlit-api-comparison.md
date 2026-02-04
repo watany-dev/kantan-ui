@@ -93,11 +93,11 @@
 
 | Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
 |---------------|-----------|------|--------|--------|------|
-| `st.write` | `kt.write` | ✅ | - | - | 実装済み |
+| `st.write` | `kt.write` | ✅ | - | - | 完全対応（Markdown、複数引数、オブジェクト/配列） |
 | `st.title` | `kt.title` | ✅ | - | - | 実装済み |
 | `st.header` | `kt.header` | ✅ | - | - | 実装済み |
 | `st.subheader` | `kt.subheader` | ✅ | - | - | 実装済み |
-| `st.text` | `kt.text` | ✅ | - | - | 実装済み |
+| `st.text` | `kt.text` | ✅ | - | - | 固定幅フォント、Markdown非対応 |
 | `st.markdown` | `kt.markdown` | ✅ | - | - | 実装済み |
 | `st.caption` | - | ❌ | P2 | Easy | キャプションテキスト |
 | `st.code` | `kt.code` | ✅ | - | - | 実装済み |

@@ -123,6 +123,25 @@ const codeStyles = `
   .kt-hl-property { color: #005cc5; }
 `;
 
+/** Write/Text API スタイル */
+const writeStyles = `
+  /* null/undefined 表示 */
+  .kt-write.kt-none {
+    color: var(--kt-color-muted, #6c757d);
+    font-style: italic;
+  }
+
+  /* kt.text 用（固定幅フォント） */
+  .kt-text {
+    font-family: var(--kt-font-mono, 'SF Mono', Monaco, Consolas, monospace);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+  }
+`;
+
 /** Markdownスタイル */
 const markdownStyles = `
   /* Markdown */
@@ -1131,6 +1150,7 @@ export const defaultStyles = [
 	alertStyles,
 	jsonStyles,
 	codeStyles,
+	writeStyles,
 	markdownStyles,
 	feedbackStyles,
 	layoutStyles,
