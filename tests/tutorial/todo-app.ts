@@ -21,11 +21,8 @@ const state = createTypedSessionState<TodoState>({
 	newTodoText: "",
 });
 
-const script = () => {
-	kt.title("TODOリスト");
-	kt.divider();
-
-	// 新しいTODOを追加
+/** 新しいTODOを追加するセクション */
+function addTodoSection() {
 	kt.subheader("新しいタスクを追加");
 
 	const inputText = kt.text_input("タスク", state.newTodoText, {
@@ -44,48 +41,58 @@ const script = () => {
 			state.newTodoText = "";
 		}
 	}
+}
 
-	kt.divider();
-
-	// TODOリストを表示
+/** TODOリストを表示するセクション */
+function todoListSection() {
 	kt.subheader(`タスク一覧 (${state.todos.length}件)`);
 
 	if (state.todos.length === 0) {
 		kt.write("タスクがありません。");
-	} else {
-		for (const todo of state.todos) {
-			// 完了状態をアイコンで表示
-			const status = todo.done ? "[完了]" : "[未完了]";
-			kt.write(`${status} ${todo.text}`);
-
-			// 完了/未完了の切り替え
-			if (
-				kt.button(todo.done ? "未完了に戻す" : "完了", {
-					key: `toggle_${todo.id}`,
-				})
-			) {
-				todo.done = !todo.done;
-			}
-
-			// 削除ボタン
-			if (kt.button("削除", { key: `delete_${todo.id}` })) {
-				state.todos = state.todos.filter((t) => t.id !== todo.id);
-			}
-		}
+		return;
 	}
 
-	kt.divider();
+	for (const todo of state.todos) {
+		const status = todo.done ? "[完了]" : "[未完了]";
+		kt.write(`${status} ${todo.text}`);
 
-	// 統計情報
+		if (
+			kt.button(todo.done ? "未完了に戻す" : "完了", {
+				key: `toggle_${todo.id}`,
+			})
+		) {
+			todo.done = !todo.done;
+		}
+
+		if (kt.button("削除", { key: `delete_${todo.id}` })) {
+			state.todos = state.todos.filter((t) => t.id !== todo.id);
+		}
+	}
+}
+
+/** 統計情報セクション */
+function statsSection() {
 	const completed = state.todos.filter((t) => t.done).length;
 	kt.write(`完了: ${completed} / ${state.todos.length}`);
 
-	// 全削除ボタン
 	if (state.todos.length > 0) {
 		if (kt.button("すべて削除", { key: "clear_all" })) {
 			state.todos = [];
 		}
 	}
+}
+
+const script = () => {
+	kt.title("TODOリスト");
+	kt.divider();
+
+	addTodoSection();
+	kt.divider();
+
+	todoListSection();
+	kt.divider();
+
+	statsSection();
 
 	return undefined;
 };
