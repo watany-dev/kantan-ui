@@ -1,6 +1,6 @@
 import { escapeHtml } from "../utils/html";
 import { binaryToDataUri } from "./image";
-import type { VideoConfig, VideoSource } from "./types";
+import type { SubtitleTrack, VideoConfig, VideoSource } from "./types";
 
 const VIDEO_MAX_BINARY_SIZE = 50 * 1024 * 1024; // 50 MB
 
@@ -149,9 +149,39 @@ export function renderVideo(source: VideoSource, config?: Partial<VideoConfig>):
 		videoAttrs.push("muted");
 	}
 
-	// video 内部コンテンツ（フォールバック）
-	const innerContent =
+	// 字幕トラック
+	const trackHtml = buildSubtitleTracks(config?.subtitles);
+
+	// フォールバック
+	const fallback =
 		'<p class="kt-video-fallback">お使いのブラウザは動画再生に対応していません。</p>';
 
-	return `<figure class="kt-video" role="group" aria-label="動画プレイヤー"><video ${videoAttrs.join(" ")}>${innerContent}</video></figure>`;
+	return `<figure class="kt-video" role="group" aria-label="動画プレイヤー"><video ${videoAttrs.join(" ")}>${trackHtml}${fallback}</video></figure>`;
+}
+
+/**
+ * 字幕トラックのHTML生成
+ */
+function buildSubtitleTracks(subtitles?: SubtitleTrack | SubtitleTrack[]): string {
+	if (!subtitles) {
+		return "";
+	}
+
+	const tracks = Array.isArray(subtitles) ? subtitles : [subtitles];
+
+	return tracks
+		.map((track, index) => {
+			validateUrl(track.src);
+			const attrs = [
+				'kind="subtitles"',
+				`src="${escapeHtml(track.src)}"`,
+				`srclang="${escapeHtml(track.srclang)}"`,
+				`label="${escapeHtml(track.label)}"`,
+			];
+			if (index === 0) {
+				attrs.push("default");
+			}
+			return `<track ${attrs.join(" ")} />`;
+		})
+		.join("");
 }

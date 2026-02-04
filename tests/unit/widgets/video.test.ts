@@ -360,4 +360,75 @@ describe("renderVideo", () => {
 			expect(html).toContain("#t=1.5,3.7");
 		});
 	});
+
+	describe("subtitles", () => {
+		it("should render single subtitle track with default attribute", () => {
+			const html = renderVideo("https://example.com/movie.mp4", {
+				subtitles: { src: "/subs/ja.vtt", srclang: "ja", label: "日本語" },
+			});
+			expect(html).toContain("<track");
+			expect(html).toContain('kind="subtitles"');
+			expect(html).toContain('src="/subs/ja.vtt"');
+			expect(html).toContain('srclang="ja"');
+			expect(html).toContain('label="日本語"');
+			expect(html).toContain("default");
+		});
+
+		it("should render multiple subtitle tracks with default on first", () => {
+			const html = renderVideo("https://example.com/movie.mp4", {
+				subtitles: [
+					{ src: "/subs/ja.vtt", srclang: "ja", label: "日本語" },
+					{ src: "/subs/en.vtt", srclang: "en", label: "English" },
+				],
+			});
+			// First track has default
+			expect(html).toContain(
+				'<track kind="subtitles" src="/subs/ja.vtt" srclang="ja" label="日本語" default />',
+			);
+			// Second track does not have default
+			expect(html).toContain(
+				'<track kind="subtitles" src="/subs/en.vtt" srclang="en" label="English" />',
+			);
+		});
+
+		it("should escape subtitle src", () => {
+			const html = renderVideo("https://example.com/movie.mp4", {
+				subtitles: {
+					src: '/subs/ja.vtt?a="1"',
+					srclang: "ja",
+					label: "日本語",
+				},
+			});
+			expect(html).toContain("&quot;");
+		});
+
+		it("should escape subtitle label", () => {
+			const html = renderVideo("https://example.com/movie.mp4", {
+				subtitles: {
+					src: "/subs/test.vtt",
+					srclang: "ja",
+					label: '<script>alert("xss")</script>',
+				},
+			});
+			expect(html).toContain("&lt;script&gt;");
+			expect(html).not.toContain("<script>");
+		});
+
+		it("should reject javascript: URI in subtitle src", () => {
+			expect(() =>
+				renderVideo("https://example.com/movie.mp4", {
+					subtitles: {
+						src: "javascript:alert(1)",
+						srclang: "ja",
+						label: "日本語",
+					},
+				}),
+			).toThrow("javascript: URLs are not allowed");
+		});
+
+		it("should not render tracks when subtitles not specified", () => {
+			const html = renderVideo("https://example.com/movie.mp4");
+			expect(html).not.toContain("<track");
+		});
+	});
 });
