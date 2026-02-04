@@ -1155,6 +1155,34 @@ const audioStyles = `
   }
 `;
 
+/** 動画スタイル */
+const videoStyles = `
+  /* Video */
+  .kt-video {
+    margin: 0;
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .kt-video-player {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  .kt-video-player:not([poster]) {
+    background-color: var(--kt-bg-secondary, #f3f4f6);
+  }
+
+  .kt-video-fallback {
+    padding: 1rem;
+    text-align: center;
+    color: var(--kt-text-secondary, #6b7280);
+  }
+`;
+
 /** カラーピッカースタイル */
 const colorPickerStyles = `
   /* Color Picker Container */
@@ -1233,6 +1261,7 @@ export const defaultStyles = [
 	streamStyles,
 	fileUploaderStyles,
 	audioStyles,
+	videoStyles,
 	colorPickerStyles,
 ].join("\n");
 
