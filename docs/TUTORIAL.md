@@ -9,16 +9,17 @@
 3. [Hello World](#hello-world)
 4. [ウィジェットの使い方](#ウィジェットの使い方)
 5. [データ表示](#データ表示)
-6. [レイアウト](#レイアウト)
-7. [チャットUI](#チャットui)
-8. [セッションステート](#セッションステート)
-9. [キャッシュ](#キャッシュ)
-10. [ページ設定](#ページ設定)
-11. [実践: カウンターアプリ](#実践-カウンターアプリ)
-12. [実践: TODOアプリ](#実践-todoアプリ)
-13. [実践: チャットアプリ](#実践-チャットアプリ)
-14. [設定オプション](#設定オプション)
-15. [次のステップ](#次のステップ)
+6. [メディア](#メディア)
+7. [レイアウト](#レイアウト)
+8. [チャットUI](#チャットui)
+9. [セッションステート](#セッションステート)
+10. [キャッシュ](#キャッシュ)
+11. [ページ設定](#ページ設定)
+12. [実践: カウンターアプリ](#実践-カウンターアプリ)
+13. [実践: TODOアプリ](#実践-todoアプリ)
+14. [実践: チャットアプリ](#実践-チャットアプリ)
+15. [設定オプション](#設定オプション)
+16. [次のステップ](#次のステップ)
 
 ---
 
@@ -630,6 +631,145 @@ kt.metric("CPU Usage", "78%", {
 | `delta_color` | `"normal"`（デフォルト）、`"inverse"`、`"off"` |
 | `help` | ツールチップで表示されるヘルプテキスト |
 | `label_visibility` | `"visible"`（デフォルト）、`"hidden"`、`"collapsed"` |
+
+---
+
+## メディア
+
+画像、音声、動画を表示するためのAPIです。
+
+### 画像
+
+画像を表示します。URLまたはバイナリデータを指定できます。
+
+```typescript
+// URLから画像を表示
+kt.image("https://example.com/photo.jpg");
+
+// キャプション付き
+kt.image("https://example.com/photo.jpg", {
+  caption: "美しい風景",
+});
+
+// 幅を指定
+kt.image("https://example.com/photo.jpg", {
+  width: 300,
+});
+
+// バイナリデータから表示
+const imageData = await fetch("/api/image").then(res => res.arrayBuffer());
+kt.image(new Uint8Array(imageData), {
+  mimeType: "image/png",
+});
+```
+
+### 音声
+
+音声を再生するプレイヤーを表示します。
+
+```typescript
+// URLから音声を再生
+kt.audio("https://example.com/music.mp3");
+
+// 自動再生（ミュート必須）
+kt.audio("https://example.com/music.mp3", {
+  autoplay: true,
+  muted: true,
+});
+
+// ループ再生
+kt.audio("https://example.com/music.mp3", {
+  loop: true,
+});
+
+// 再生範囲を指定（秒単位）
+kt.audio("https://example.com/music.mp3", {
+  startTime: 30,   // 30秒から開始
+  endTime: 60,     // 60秒で終了
+});
+```
+
+### 動画
+
+動画を再生するプレイヤーを表示します。
+
+```typescript
+// URLから動画を再生
+kt.video("https://example.com/movie.mp4");
+
+// ポスター画像付き（サムネイル）
+kt.video("https://example.com/movie.mp4", {
+  poster: "https://example.com/thumbnail.jpg",
+});
+
+// 字幕付き
+kt.video("https://example.com/movie.mp4", {
+  subtitles: {
+    src: "/subs/ja.vtt",
+    srclang: "ja",
+    label: "日本語",
+  },
+});
+
+// 複数の字幕トラック
+kt.video("https://example.com/movie.mp4", {
+  subtitles: [
+    { src: "/subs/ja.vtt", srclang: "ja", label: "日本語" },
+    { src: "/subs/en.vtt", srclang: "en", label: "English" },
+  ],
+});
+```
+
+**再生オプション:**
+
+```typescript
+// 自動再生（ミュート必須）
+kt.video("https://example.com/movie.mp4", {
+  autoplay: true,
+  muted: true,
+});
+
+// ループ再生
+kt.video("https://example.com/movie.mp4", {
+  loop: true,
+});
+
+// 再生範囲を指定（秒単位）
+kt.video("https://example.com/movie.mp4", {
+  startTime: 30,   // 30秒から開始
+  endTime: 120,    // 2分で終了
+});
+```
+
+**バイナリデータからの再生:**
+
+```typescript
+// Uint8Arrayから動画を表示
+const videoData = await fetch("/api/video").then(res => res.arrayBuffer());
+kt.video(new Uint8Array(videoData), {
+  mimeType: "video/mp4",
+});
+```
+
+**動画オプション一覧:**
+
+| オプション | 型 | 説明 |
+|-----------|-----|------|
+| `poster` | `string` | サムネイル画像のURL |
+| `subtitles` | `SubtitleTrack \| SubtitleTrack[]` | 字幕トラック |
+| `autoplay` | `boolean` | 自動再生（muted必須） |
+| `muted` | `boolean` | ミュート状態 |
+| `loop` | `boolean` | ループ再生 |
+| `startTime` | `number` | 再生開始位置（秒） |
+| `endTime` | `number` | 再生終了位置（秒） |
+| `mimeType` | `string` | MIMEタイプ（バイナリ用） |
+| `playsinline` | `boolean` | インライン再生（デフォルト: true） |
+
+**注意事項:**
+
+- `autoplay`を使用する場合は`muted: true`が必須です（ブラウザのポリシー）
+- バイナリデータは50MB以下に制限されています
+- 字幕ファイルはWebVTT形式（.vtt）を使用してください
 
 ---
 
@@ -1410,7 +1550,7 @@ export default await createApp(script, {
 - ✅ 日付・時刻入力（date_input, time_input）
 - ✅ ファイルアップロード（file_uploader）
 - ✅ データ表示（table, metric）
-- ✅ メディア（image）
+- ✅ メディア（image, audio, video）
 - ✅ レイアウト（tabs, sidebar, columns, container, expander, empty）
 - ✅ チャットUI（chat_message, chat_container, chat_input）
 - ✅ カラーピッカー（color_picker）
@@ -1429,7 +1569,6 @@ export default await createApp(script, {
 
 - データウィジェット: `kt.dataframe()`
 - チャート: `kt.line_chart()`, `kt.bar_chart()`
-- メディア: `kt.audio()`, `kt.video()`
 - プラグインシステム
 
 ### 関連ドキュメント
