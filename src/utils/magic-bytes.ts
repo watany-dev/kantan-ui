@@ -197,6 +197,27 @@ function checkDangerousSignatures(bytes: Uint8Array): { isDangerous: boolean; re
 }
 
 /**
+ * Check if bytes match any of the given safe signatures
+ */
+function matchesAnySafeSignature(
+	bytes: Uint8Array,
+	signatures: Array<number[] | { bytes: number[]; offset?: number }>,
+): boolean {
+	for (const sig of signatures) {
+		if (Array.isArray(sig)) {
+			if (matchesSignature(bytes, sig)) {
+				return true;
+			}
+		} else {
+			if (matchesSignature(bytes, sig.bytes, sig.offset)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/**
  * Detect MIME type from file contents
  */
 function detectMimeType(bytes: Uint8Array): string {
@@ -212,17 +233,8 @@ function detectMimeType(bytes: Uint8Array): string {
 
 	// Check other signatures
 	for (const entry of SAFE_SIGNATURES) {
-		for (const sig of entry.signatures) {
-			if (Array.isArray(sig)) {
-				if (matchesSignature(bytes, sig)) {
-					return entry.mime;
-				}
-			} else {
-				// Object with offset
-				if (matchesSignature(bytes, sig.bytes, sig.offset)) {
-					return entry.mime;
-				}
-			}
+		if (matchesAnySafeSignature(bytes, entry.signatures)) {
+			return entry.mime;
 		}
 	}
 

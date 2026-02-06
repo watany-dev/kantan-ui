@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { type Context, Hono } from "hono";
 
 /**
  * Node.js HTTP/HTTPS Server型（@hono/node-serverからの依存を避けるためローカル定義）
@@ -99,23 +99,14 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 	const wsAdapter = await createWebSocketAdapterAsync(app);
 	const { upgradeWebSocket } = wsAdapter;
 
-	// ルートページ
-	app.get("/", (c) => {
-		let sessionId: string;
-		let isTemporarySession = false;
-
-		// scope='browser'の場合、Cookieでセッション管理
+	// セッション解決
+	const resolveSession = (c: Context) => {
 		if (config.session.scope === "browser") {
 			const cookieSessionId = getCookie(c, config.session.sessionKey);
+			const sessionId = cookieSessionId
+				? (sessionManager.getSession(cookieSessionId)?.id ?? sessionManager.createSession().id)
+				: sessionManager.createSession().id;
 
-			if (cookieSessionId) {
-				const existing = sessionManager.getSession(cookieSessionId);
-				sessionId = existing ? existing.id : sessionManager.createSession().id;
-			} else {
-				sessionId = sessionManager.createSession().id;
-			}
-
-			// Cookie設定
 			const isSecure =
 				config.session.cookie.secure === "auto"
 					? c.req.url.startsWith("https")
@@ -128,17 +119,21 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 				secure: isSecure,
 				sameSite: config.session.cookie.sameSite,
 			});
-		} else {
-			// scope='tab'の場合、初期レンダリング用に一時セッションを作成
-			// WebSocket接続時に実際のセッションが作成される
-			sessionId = sessionManager.createSession().id;
-			isTemporarySession = true;
+
+			return { sessionId, isTemporary: false };
 		}
+		// scope='tab'の場合、初期レンダリング用に一時セッションを作成
+		return { sessionId: sessionManager.createSession().id, isTemporary: true };
+	};
+
+	// ルートページ
+	app.get("/", (c) => {
+		const { sessionId, isTemporary } = resolveSession(c);
 
 		const initialResult = rerun(script, undefined, sessionId);
 
 		// 一時セッションは初期レンダリング後に削除
-		if (isTemporarySession) {
+		if (isTemporary) {
 			sessionManager.deleteSession(sessionId);
 		}
 
