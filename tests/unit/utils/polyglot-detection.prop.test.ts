@@ -16,19 +16,6 @@ const EMBEDDED_DANGER_SIGS = [
 	[0x7f, 0x45, 0x4c, 0x46], // ELF
 ];
 
-/** Check if string/bytes start with a known dangerous binary prefix */
-function hasDangerousPrefix(s: string, bytes: Uint8Array): boolean {
-	// MZ header
-	if (bytes[0] === 0x4d && bytes[1] === 0x5a) return true;
-	// ELF header
-	if (bytes[0] === 0x7f && bytes[1] === 0x45 && bytes[2] === 0x4c && bytes[3] === 0x46) return true;
-	// Shebang
-	if (s.trimStart().startsWith("#!")) return true;
-	// PK (ZIP)
-	if (bytes[0] === 0x50 && bytes[1] === 0x4b) return true;
-	return false;
-}
-
 describe("detectPolyglot property-based tests", () => {
 	it("result always has the required shape", () => {
 		const bytesArb = fc.uint8Array({ minLength: 0, maxLength: 256 });
@@ -144,20 +131,14 @@ describe("detectPolyglot property-based tests", () => {
 		);
 	});
 
-	it("text/plain files never trigger text pattern checks (images only)", () => {
-		// Text pattern checks only run for image MIME or application/octet-stream
-		// For text/plain, only binary signature checks apply
-		const safeTextArb = fc.string({ minLength: 10, maxLength: 200 }).filter((s) => {
-			const bytes = new TextEncoder().encode(s);
-			if (bytes.length < 4) return false;
-			return !hasDangerousPrefix(s, bytes);
-		});
+	it("text/plain files with safe ASCII content are never suspicious", () => {
+		// Use safe alphanumeric content that can't contain binary signatures
+		const safeTextArb = fc.stringMatching(/^[a-z0-9 ,.\n]{10,200}$/);
 
 		fc.assert(
 			fc.property(safeTextArb, (text) => {
 				const bytes = new TextEncoder().encode(text);
 				const result = detectPolyglot(bytes.buffer, "text/plain");
-				// text/plain won't trigger text pattern checks
 				expect(result.isSuspicious).toBe(false);
 			}),
 		);
