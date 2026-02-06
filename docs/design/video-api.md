@@ -4,7 +4,7 @@
 
 ## 実装ステータス
 
-> **📋 設計中**
+> **✅ 実装完了** (2026-02-06)
 
 ---
 
@@ -646,21 +646,21 @@ HTML5 `<video controls>` はブラウザネイティブで以下のキーボー�
 
 ### 実装前
 
-- [ ] 既存メディア実装パターンを確認（`image.ts`）
-- [ ] `binaryToDataUri()` の再利用可能性を確認
+- [x] 既存メディア実装パターンを確認（`image.ts`）
+- [x] `binaryToDataUri()` の再利用可能性を確認
 
 ### 各イテレーション後
 
-- [ ] `bun run lint:fix` 実行
-- [ ] `bun run test` 実行
-- [ ] コミット
+- [x] `bun run lint:fix` 実行
+- [x] `bun run test` 実行
+- [x] コミット
 
 ### 完了時
 
-- [ ] `bun run ci` 全パス
-- [ ] 単体テスト作成済み（バリデーション含む）
-- [ ] アクセシビリティテスト（`role`, `aria-label`, `srclang` の検証）
-- [ ] ドキュメント更新（README, streamlit-api-comparison.md）
+- [x] `bun run ci` 全パス
+- [x] 単体テスト作成済み（バリデーション含む）
+- [x] アクセシビリティテスト（`role`, `aria-label`, `srclang` の検証）
+- [x] ドキュメント更新（README, TUTORIAL.md）
 
 ---
 

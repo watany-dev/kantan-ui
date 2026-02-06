@@ -296,6 +296,51 @@ const color = kt.color_picker("Pick a color", "#ff0000", { key: "color_pick" });
 kt.write(`Selected: ${color}`);
 ```
 
+#### Media API
+
+```typescript
+// Image display
+kt.image("https://example.com/photo.jpg");
+kt.image("https://example.com/photo.jpg", { caption: "Photo caption" });
+
+// Audio player
+kt.audio("https://example.com/sound.mp3");
+kt.audio(audioBytes, { mimeType: "audio/wav", loop: true });
+
+// Video player
+kt.video("https://example.com/movie.mp4");
+
+// With poster and subtitles
+kt.video("https://example.com/movie.mp4", {
+  poster: "https://example.com/thumbnail.jpg",
+  subtitles: { src: "/subs/ja.vtt", srclang: "ja", label: "日本語" },
+});
+
+// Multiple subtitle tracks
+kt.video("https://example.com/movie.mp4", {
+  subtitles: [
+    { src: "/subs/ja.vtt", srclang: "ja", label: "日本語" },
+    { src: "/subs/en.vtt", srclang: "en", label: "English" },
+  ],
+});
+
+// Playback options
+kt.video("https://example.com/demo.mp4", {
+  autoplay: true,
+  muted: true,
+  loop: true,
+});
+
+// Time range (Media Fragment URI)
+kt.video("https://example.com/long-video.mp4", {
+  startTime: 30,
+  endTime: 120,
+});
+
+// Binary data
+kt.video(videoBytes, { mimeType: "video/mp4" });
+```
+
 #### Layout API
 
 ```typescript
@@ -649,6 +694,7 @@ src/
 │   ├── feedback.ts   # Feedback API (progress, spinner, toast)
 │   ├── form.ts       # Form API
 │   ├── layout.ts     # Layout (tabs, columns, container, expander)
+│   ├── media.ts      # Media API (image, audio, video)
 │   ├── sidebar.ts    # Sidebar API
 │   ├── output.ts     # Output API (title, write, header, etc.)
 │   ├── stream.ts     # Streaming API (write_stream)
@@ -694,6 +740,8 @@ src/
     ├── file-uploader.ts
     ├── uploaded-file.ts
     ├── image.ts
+    ├── audio.ts
+    ├── video.ts
     ├── placeholder.ts
     ├── core.ts
     ├── registry.ts

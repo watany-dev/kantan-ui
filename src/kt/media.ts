@@ -1,6 +1,14 @@
 import { renderAudio } from "../widgets/audio";
 import { renderImage } from "../widgets/image";
-import type { AudioConfig, AudioSource, ImageConfig, ImageSource } from "../widgets/types";
+import type {
+	AudioConfig,
+	AudioSource,
+	ImageConfig,
+	ImageSource,
+	VideoConfig,
+	VideoSource,
+} from "../widgets/types";
+import { renderVideo } from "../widgets/video";
 import { requireRenderContext } from "./context";
 
 /**
@@ -48,5 +56,30 @@ export function image(source: ImageSource | ImageSource[], config?: Partial<Imag
 export function audio(source: AudioSource, config?: Partial<AudioConfig>): void {
 	const ctx = requireRenderContext();
 	const html = renderAudio(source, config);
+	ctx.append(html);
+}
+
+/**
+ * 動画プレーヤーを表示
+ *
+ * @param source - 動画ソース（URL, data URI, バイナリデータ）
+ * @param config - オプション設定
+ *
+ * @example
+ * // URL から動画を再生
+ * kt.video("https://example.com/movie.mp4");
+ *
+ * // ポスター画像・字幕付き
+ * kt.video("https://example.com/movie.mp4", {
+ *   poster: "https://example.com/thumbnail.jpg",
+ *   subtitles: { src: "/subs/ja.vtt", srclang: "ja", label: "日本語" },
+ * });
+ *
+ * // バイナリデータから再生
+ * kt.video(videoBytes, { mimeType: "video/mp4" });
+ */
+export function video(source: VideoSource, config?: Partial<VideoConfig>): void {
+	const ctx = requireRenderContext();
+	const html = renderVideo(source, config);
 	ctx.append(html);
 }

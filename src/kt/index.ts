@@ -112,6 +112,7 @@ export const kt = {
 	// Media APIs
 	image: media.image,
 	audio: media.audio,
+	video: media.video,
 
 	// Widget APIs
 	button: widgets.button,
