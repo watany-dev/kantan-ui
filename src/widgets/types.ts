@@ -541,6 +541,70 @@ export interface PlaceholderState {
 	widgetValue?: unknown;
 }
 
+// ============================================================================
+// Line Chart Types
+// ============================================================================
+
+/**
+ * 折れ線グラフのデータ形式
+ *
+ * - number[]: 単純な数値配列（x軸はインデックス）
+ * - Record<string, unknown>[]: オブジェクト配列（カラム名で x/y を指定）
+ * - number[][]: 2D配列（各行が1データポイント、各列が1シリーズ）
+ * - { columns, data }: 明示的な形式
+ */
+export type LineChartData =
+	| number[]
+	| Record<string, unknown>[]
+	| number[][]
+	| { columns: string[]; data: number[][] };
+
+/**
+ * 折れ線グラフの設定
+ */
+export interface LineChartConfig {
+	/** x軸のカラム名（省略時: インデックスまたは最初の非数値カラム） */
+	x?: string;
+
+	/** y軸のカラム名（複数可、省略時: すべての数値カラム） */
+	y?: string | string[];
+
+	/** x軸ラベル */
+	x_label?: string;
+
+	/** y軸ラベル */
+	y_label?: string;
+
+	/** 線の色（HEX文字列、複数シリーズの場合は配列） */
+	color?: string | string[];
+
+	/** グラフの高さ（ピクセル、デフォルト: 400） */
+	height?: number;
+
+	/** コンテナ幅に合わせる（デフォルト: true） */
+	use_container_width?: boolean;
+}
+
+/**
+ * 正規化されたチャートシリーズ
+ */
+export interface NormalizedSeries {
+	/** シリーズ名 */
+	name: string;
+	/** データポイント [x, y] の配列 */
+	points: [number, number][];
+}
+
+/**
+ * 正規化されたチャートデータ
+ */
+export interface NormalizedChartData {
+	/** シリーズ一覧 */
+	series: NormalizedSeries[];
+	/** x軸ラベル一覧（文字列表示用） */
+	xLabels: string[];
+}
+
 /**
  * Progress bar configuration
  */
