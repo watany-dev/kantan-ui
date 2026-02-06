@@ -24,4 +24,3 @@ export { renderTextArea, text_area } from "./text-area";
 export { renderTextInput, text_input } from "./text-input";
 export { renderTimeInput, time_input } from "./time-input";
 export { renderToggle, toggle } from "./toggle";
-export { renderVideo } from "./video";
