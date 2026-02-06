@@ -595,6 +595,53 @@ kt.table(data, {
 
 **注意**: テーブル内のデータはXSS対策として自動的にエスケープされます。
 
+### データフレーム
+
+`kt.dataframe()`は`kt.table()`のインタラクティブ拡張版です。ソート、検索、行選択の機能を備えています。
+
+```typescript
+// 基本的な使い方（kt.tableと同じデータ形式をサポート）
+kt.dataframe([
+  { name: "Alice", age: 30, city: "Tokyo" },
+  { name: "Bob", age: 25, city: "Osaka" },
+  { name: "Carol", age: 35, city: "Kyoto" },
+]);
+```
+
+ヘッダーをクリックするとソート、ツールバーの検索ボックスでフィルタリングができます。
+
+**行選択を有効にする場合:**
+
+```typescript
+const selection = kt.dataframe(
+  [
+    { name: "Alice", age: 30 },
+    { name: "Bob", age: 25 },
+    { name: "Carol", age: 35 },
+  ],
+  {
+    onSelect: "rerun",           // 行選択を有効化（選択時にスクリプト再実行）
+    selectionMode: "multi-row",  // "single-row" | "multi-row"
+    key: "user_df",
+  },
+);
+
+if (selection) {
+  kt.write(`選択された行: ${selection.rows.join(", ")}`);
+}
+```
+
+**オプション:**
+
+| オプション | 型 | 説明 |
+|-----------|-----|------|
+| `height` | `number` | コンテナの高さ（px、デフォルト: 400） |
+| `hideIndex` | `boolean` | 行番号を非表示にする |
+| `columnOrder` | `string[]` | カラムの表示順を指定 |
+| `onSelect` | `"ignore" \| "rerun"` | 行選択時の動作 |
+| `selectionMode` | `"single-row" \| "multi-row"` | 選択モード |
+| `key` | `string` | ウィジェットキー |
+
 ### メトリクス
 
 ダッシュボードやKPI表示で使用するメトリクスコンポーネントです。
@@ -1549,7 +1596,7 @@ export default await createApp(script, {
 - ✅ フォームウィジェット（checkbox, toggle, radio, number_input, text_area, multiselect）
 - ✅ 日付・時刻入力（date_input, time_input）
 - ✅ ファイルアップロード（file_uploader）
-- ✅ データ表示（table, metric）
+- ✅ データ表示（table, dataframe, metric）
 - ✅ メディア（image, audio, video）
 - ✅ レイアウト（tabs, sidebar, columns, container, expander, empty）
 - ✅ チャットUI（chat_message, chat_container, chat_input）
@@ -1567,7 +1614,6 @@ export default await createApp(script, {
 
 ### 今後の予定
 
-- データウィジェット: `kt.dataframe()`
 - チャート: `kt.line_chart()`, `kt.bar_chart()`
 - プラグインシステム
 

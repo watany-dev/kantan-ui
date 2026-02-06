@@ -425,6 +425,43 @@ export interface InternalUploadData {
 }
 
 // ============================================================================
+// Dataframe Types
+// ============================================================================
+
+/**
+ * 行選択モード
+ * - "single-row": 1行のみ選択可能
+ * - "multi-row": 複数行選択可能
+ */
+export type DataframeSelectionMode = "single-row" | "multi-row";
+
+/**
+ * 選択結果
+ */
+export interface DataframeSelection {
+	/** 選択された行のインデックス配列 */
+	rows: number[];
+}
+
+/**
+ * dataframe設定
+ */
+export interface DataframeConfig {
+	/** コンテナの高さ（px）。デフォルト: 400 */
+	height?: number;
+	/** インデックス列を非表示。デフォルト: false */
+	hideIndex?: boolean;
+	/** カラム表示順序 */
+	columnOrder?: string[];
+	/** ウィジェットキー */
+	key?: string;
+	/** 選択動作: "ignore"=選択無効, "rerun"=選択時に再実行 */
+	onSelect?: "ignore" | "rerun";
+	/** 選択モード */
+	selectionMode?: DataframeSelectionMode;
+}
+
+// ============================================================================
 // Empty (Placeholder) Types
 // ============================================================================
 

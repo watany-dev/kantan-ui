@@ -209,6 +209,26 @@ kt.table({
   data: [["Alice", 30], ["Bob", 25]],
 });
 
+// Dataframe - interactive data table with sort, search, and row selection
+kt.dataframe([
+  { name: "Alice", age: 30, city: "Tokyo" },
+  { name: "Bob", age: 25, city: "Osaka" },
+]);
+
+// With options
+const selection = kt.dataframe(data, {
+  height: 400,              // Container height in px
+  hideIndex: true,           // Hide row index column
+  columnOrder: ["city", "name"], // Reorder columns
+  onSelect: "rerun",         // Enable row selection ("ignore" | "rerun")
+  selectionMode: "multi-row", // "single-row" | "multi-row"
+  key: "my_dataframe",
+});
+
+if (selection) {
+  kt.write(`Selected rows: ${selection.rows.join(", ")}`);
+}
+
 // Metric - KPI display with optional delta
 kt.metric("Revenue", "$1,234");
 kt.metric("Revenue", "$1,234", { delta: "+12%" });
@@ -678,6 +698,7 @@ src/
 ├── server.ts         # Demo server
 ├── client/           # Client script generation
 │   ├── script.ts     # WebSocket/event handling script
+│   ├── dataframe-script.ts # Dataframe client-side interactions
 │   ├── types.ts      # Client config types
 │   └── index.ts
 ├── config/           # Configuration management
@@ -689,7 +710,7 @@ src/
 │   ├── config.ts     # Page config (set_page_config)
 │   ├── control.ts    # Control API (rerun)
 │   ├── chat.ts       # Chat API (chat_message, chat_container)
-│   ├── data.ts       # Data display (table)
+│   ├── data.ts       # Data display (table, dataframe)
 │   ├── empty.ts      # Empty placeholder
 │   ├── feedback.ts   # Feedback API (progress, spinner, toast)
 │   ├── form.ts       # Form API
@@ -724,6 +745,7 @@ src/
 │   ├── types.ts      # Message type definitions
 │   └── index.ts
 └── widgets/          # UI widgets (imperative API)
+    ├── dataframe.ts
     ├── button.ts
     ├── slider.ts
     ├── text-input.ts

@@ -64,7 +64,7 @@
 
 | Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
 |---------------|-----------|------|--------|--------|------|
-| `st.dataframe` | - | ❌ | P0 | Hard | インタラクティブなデータフレーム |
+| `st.dataframe` | `kt.dataframe` | ✅ | - | - | 実装済み（ソート・検索・行選択） |
 | `st.table` | `kt.table` | ✅ | - | - | 実装済み |
 | `st.metric` | `kt.metric` | ✅ | - | - | 実装済み |
 | `st.json` | `kt.json` | ✅ | - | - | 実装済み |
@@ -217,10 +217,9 @@
 
 ## 優先度別 未実装API一覧
 
-### P0 (必須) - 3件
+### P0 (必須) - 2件
 | API | 難易度 | 説明 |
 |-----|--------|------|
-| `st.dataframe` | Hard | インタラクティブデータフレーム |
 | `st.line_chart` | Hard | 折れ線グラフ |
 | `st.bar_chart` | Hard | 棒グラフ |
 
@@ -302,10 +301,10 @@
 
 ## 実装済みAPI サマリー
 
-kantan-uiで実装済みのStreamlit互換API: **41件**
+kantan-uiで実装済みのStreamlit互換API: **42件**
 
 - Input Widgets: 15件 (color_picker追加)
-- Data Display: 3件
+- Data Display: 4件 (dataframe追加)
 - Text Elements: 8件
 - Media: 1件
 - Layout: 6件 (empty追加)

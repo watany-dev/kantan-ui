@@ -5,6 +5,9 @@
  */
 
 import { escapeHtml } from "../utils/html";
+import { initializeDataframeSelection, renderDataframe } from "../widgets/dataframe";
+import { generateWidgetId } from "../widgets/registry";
+import type { DataframeConfig, DataframeSelection } from "../widgets/types";
 import { requireRenderContext } from "./context";
 
 /**
@@ -120,4 +123,58 @@ export function table(data: TableData, config: TableConfig = {}): void {
 	parts.push("</tbody></table>");
 
 	ctx.append(parts.join(""));
+}
+
+/**
+ * インタラクティブなデータフレームを表示
+ *
+ * kt.table() の拡張版。ソート・検索・行選択機能を備える。
+ * ソートと検索はクライアントサイドで処理され、サーバーラウンドトリップ不要。
+ * 行選択はサーバーに送信され、選択結果を戻り値として取得できる。
+ *
+ * @param data テーブルデータ
+ * @param config データフレーム設定
+ * @returns onSelect="rerun" の場合は DataframeSelection、それ以外は void
+ *
+ * @example
+ * ```typescript
+ * // 基本表示
+ * kt.dataframe([
+ *   { name: "Alice", age: 30 },
+ *   { name: "Bob", age: 25 },
+ * ]);
+ *
+ * // 行選択
+ * const selection = kt.dataframe(data, {
+ *   key: "my_df",
+ *   onSelect: "rerun",
+ *   selectionMode: "multi-row",
+ * });
+ * ```
+ */
+export function dataframe(
+	data: TableData,
+	config?: Partial<DataframeConfig>,
+): DataframeSelection | undefined {
+	const ctx = requireRenderContext();
+	const id = generateWidgetId(config?.key);
+	const configWithId = { ...config, key: id };
+	const normalized = normalizeTableData(data);
+	const isSelectable = config?.onSelect === "rerun";
+
+	let selection: DataframeSelection | undefined;
+	if (isSelectable) {
+		selection = initializeDataframeSelection(id);
+	}
+
+	const html = renderDataframe(
+		{ headers: normalized.headers, rows: normalized.rows },
+		configWithId,
+	);
+	ctx.append(html);
+
+	if (isSelectable) {
+		return selection as DataframeSelection;
+	}
+	return undefined;
 }
