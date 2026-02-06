@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import "../pbt-setup";
 import { verifyMagicBytes } from "../../../src/utils/magic-bytes";
 
 /** Known safe file signatures for generating valid file data */

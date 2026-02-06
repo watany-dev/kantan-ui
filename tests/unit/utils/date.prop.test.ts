@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import "../pbt-setup";
 import { toDateString, toTimeString } from "../../../src/utils/date";
 
 // Practical date range (4-digit years, valid Date objects, no NaN)

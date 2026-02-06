@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import "../pbt-setup";
 import { diff, toWebSocketPatches } from "../../../src/diff/differ";
 
 /** Generate a valid HTML id */

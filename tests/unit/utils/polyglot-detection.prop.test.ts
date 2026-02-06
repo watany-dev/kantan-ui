@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import "../pbt-setup";
 import { detectPolyglot } from "../../../src/utils/polyglot-detection";
 
 /** Image headers for constructing test files */

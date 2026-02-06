@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import "../pbt-setup";
 import { isValidId, PARSER_LIMITS, parseHtml } from "../../../src/diff/parser";
 
 /** Generate a valid HTML id */
