@@ -93,6 +93,7 @@ export const kt = {
 
 	// Data APIs
 	table: data.table,
+	dataframe: data.dataframe,
 	metric: metricModule.metric,
 
 	// Layout APIs

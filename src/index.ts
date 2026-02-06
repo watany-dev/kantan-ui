@@ -118,6 +118,7 @@ export {
 	toggle,
 } from "./widgets";
 export { renderAudio } from "./widgets/audio";
+export { renderDataframe } from "./widgets/dataframe";
 export { createPlaceholder } from "./widgets/placeholder";
 export type {
 	AudioConfig,
@@ -125,6 +126,9 @@ export type {
 	ButtonConfig,
 	CheckboxConfig,
 	ColorPickerConfig,
+	DataframeConfig,
+	DataframeSelection,
+	DataframeSelectionMode,
 	DateInputConfig,
 	DownloadButtonConfig,
 	EmptyConfig,

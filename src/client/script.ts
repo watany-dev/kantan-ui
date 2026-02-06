@@ -1,3 +1,4 @@
+import { dataframeScript } from "./dataframe-script";
 import type { ClientRuntimeConfig } from "./types";
 
 /**
@@ -1100,6 +1101,7 @@ connect();
 setupEventDelegation(window.sendEvent);
 setupChatSubmitHandler(window.sendEvent);
 initSidebarToggle();
+setupDataframeEvents(window.sendEvent);
 `;
 
 	return [
@@ -1113,6 +1115,7 @@ initSidebarToggle();
 		sidebarToggleScript,
 		toastScript,
 		eventHandlingScript,
+		dataframeScript,
 		websocketScript,
 	].join("\n");
 }

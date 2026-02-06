@@ -1183,6 +1183,154 @@ const videoStyles = `
   }
 `;
 
+/** データフレームスタイル */
+const dataframeStyles = `
+  /* Dataframe Container */
+  .kt-dataframe-container {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    margin: 0.5rem 0;
+  }
+
+  /* Toolbar */
+  .kt-dataframe-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #fafafa;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .kt-dataframe-search {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+  }
+
+  .kt-dataframe-search:focus {
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+  }
+
+  .kt-dataframe-row-count {
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+  }
+
+  /* Table Wrapper (scrollable) */
+  .kt-dataframe-table-wrapper {
+    overflow: auto;
+    flex: 1;
+  }
+
+  /* Table */
+  .kt-dataframe-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  /* Sticky Header */
+  .kt-dataframe-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .kt-dataframe-table thead tr {
+    background: #f5f5f5;
+  }
+
+  .kt-dataframe-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+    white-space: nowrap;
+    user-select: none;
+    background: inherit;
+  }
+
+  /* Sortable Headers */
+  .kt-dataframe-sortable {
+    cursor: pointer;
+  }
+
+  .kt-dataframe-sortable:hover {
+    background: #eee;
+  }
+
+  .kt-dataframe-sort-icon::after {
+    content: "\\2195";
+    opacity: 0.3;
+    margin-left: 4px;
+    font-size: 12px;
+  }
+
+  th[data-sort-dir="asc"] .kt-dataframe-sort-icon::after {
+    content: "\\2191";
+    opacity: 1;
+  }
+
+  th[data-sort-dir="desc"] .kt-dataframe-sort-icon::after {
+    content: "\\2193";
+    opacity: 1;
+  }
+
+  /* Table Body */
+  .kt-dataframe-table td {
+    padding: 6px 12px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .kt-dataframe-table tbody tr:hover {
+    background: #f8f8f8;
+  }
+
+  /* Selected Rows */
+  .kt-dataframe-table tbody tr.kt-dataframe-selected {
+    background: #e3f2fd;
+  }
+
+  .kt-dataframe-table tbody tr.kt-dataframe-selected:hover {
+    background: #bbdefb;
+  }
+
+  /* Index Column */
+  .kt-dataframe-index-col {
+    color: #999;
+    font-size: 12px;
+    min-width: 40px;
+  }
+
+  /* Select Column */
+  .kt-dataframe-select-col {
+    width: 32px;
+    text-align: center;
+    padding: 6px 8px;
+  }
+
+  .kt-dataframe-select-col input[type="checkbox"],
+  .kt-dataframe-select-col input[type="radio"] {
+    cursor: pointer;
+  }
+
+  /* Hidden Row (search filter) */
+  .kt-dataframe-table tbody tr.kt-dataframe-hidden {
+    display: none;
+  }
+`;
+
 /** カラーピッカースタイル */
 const colorPickerStyles = `
   /* Color Picker Container */
@@ -1252,6 +1400,7 @@ export const defaultStyles = [
 	feedbackStyles,
 	layoutStyles,
 	tableStyles,
+	dataframeStyles,
 	chatStyles,
 	sidebarStyles,
 	imageStyles,
