@@ -1,7 +1,7 @@
 # Phase 3 開発計画 - イテレーティブ実装
 
 作成日: 2026-01-05
-更新日: 2026-02-04
+更新日: 2026-02-06
 
 ## 実装状況サマリー
 
@@ -11,7 +11,7 @@
 | 3-B | sidebar | ✅ **完了** |
 | 3-B | markdown, code, json | ✅ **完了** |
 | 3-B | cache_data, cache_resource | ✅ **完了** |
-| 3-B | dataframe | ❌ 未実装 |
+| 3-B | dataframe | ✅ **完了** |
 | 3-B | file_uploader | ✅ **完了** |
 | 3-C | line_chart, bar_chart | ❌ 未実装 |
 | 3-C | Chart.jsプラグイン | ❌ 未実装 |
@@ -106,15 +106,17 @@
 
 ---
 
-### 8. kt.dataframe() ❌ 未実装
+### 8. kt.dataframe() ✅ 実装済み
 
-**優先度**: 低
-**工数**: 中
+実装詳細は `docs/design/dataframe-api.md` を参照。
 
-#### 計画概要
-- kt.table()の拡張版
-- スクロール可能なテーブル
-- ソート機能
+`src/widgets/dataframe.ts` および `src/kt/data.ts` に実装済み:
+- スクロール可能なインタラクティブテーブル
+- クライアントサイドのカラムソート（ヘッダークリック）
+- テキスト検索フィルタ
+- 行選択（single-row / multi-row）
+- columnOrder によるカラム並べ替え
+- hideIndex によるインデックス列非表示
 
 ---
 
@@ -200,10 +202,8 @@
 
 ## 今後の優先順位
 
-1. **高**: file_uploader - ファイルアップロード機能は需要が高い
-2. **中**: cache_data/cache_resource - パフォーマンス最適化に有用
-3. **低**: dataframe - table()で代替可能
-4. **低**: charts - SVG実装は工数が大きい、プラグイン優先を検討
+1. **中**: charts (line_chart, bar_chart) - SVG実装は工数が大きい、プラグイン優先を検討
+2. **低**: Chart.jsプラグイン連携 - オプショナル依存
 
 ---
 
