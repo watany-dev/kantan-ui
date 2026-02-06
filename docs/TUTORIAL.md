@@ -11,14 +11,15 @@
 5. [データ表示](#データ表示)
 6. [レイアウト](#レイアウト)
 7. [チャットUI](#チャットui)
-8. [セッションステート](#セッションステート)
-9. [キャッシュ](#キャッシュ)
-10. [ページ設定](#ページ設定)
-11. [実践: カウンターアプリ](#実践-カウンターアプリ)
-12. [実践: TODOアプリ](#実践-todoアプリ)
-13. [実践: チャットアプリ](#実践-チャットアプリ)
-14. [設定オプション](#設定オプション)
-15. [次のステップ](#次のステップ)
+8. [Agent Skills](#agent-skills)
+9. [セッションステート](#セッションステート)
+10. [キャッシュ](#キャッシュ)
+11. [ページ設定](#ページ設定)
+12. [実践: カウンターアプリ](#実践-カウンターアプリ)
+13. [実践: TODOアプリ](#実践-todoアプリ)
+14. [実践: チャットアプリ](#実践-チャットアプリ)
+15. [設定オプション](#設定オプション)
+16. [次のステップ](#次のステップ)
 
 ---
 
@@ -851,6 +852,141 @@ kt.chat_container(() => {
 
 ---
 
+## Agent Skills
+
+AIエージェントのスキル（ツール）を定義・表示・実行するためのAPIです。エージェントの思考プロセスやツール使用をUI上で可視化できます。
+
+### スキルの定義
+
+`create_agent_skills`でスキルレジストリを作成します。各スキルには名前、説明、ハンドラ関数を指定します。
+
+```typescript
+import { create_agent_skills } from "kantan-ui";
+
+const skills = create_agent_skills([
+  {
+    name: "search",
+    description: "Web検索を実行",
+    icon: "🔍",
+    handler: async (query) => {
+      // 実際のAPIコールなど
+      return `「${query}」の検索結果: ...`;
+    },
+  },
+  {
+    name: "calculate",
+    description: "数値計算を実行",
+    icon: "🔢",
+    handler: (expr) => `計算結果: ${Number(expr) * 2}`,
+  },
+]);
+```
+
+スキル名は英数字・ハイフン・アンダースコアのみ使用可能です。重複する名前はエラーになります。
+
+### スキル一覧の表示
+
+`kt.agent_skills()`で利用可能なスキルをUI上に表示します。
+
+```typescript
+// バッジ形式（デフォルト）- コンパクトな表示
+kt.agent_skills(skills);
+
+// カード形式 - 説明付きの詳細な表示
+kt.agent_skills(skills, { layout: "cards" });
+```
+
+### エージェントステップの表示
+
+`kt.agent_step()`でエージェントの実行ステップを表示します。4つのステップタイプがあります。
+
+```typescript
+// 思考中（紫色のボーダー）
+kt.agent_step("thinking", "ユーザーの質問を分析中...");
+
+// ツール呼出（青色のボーダー）
+kt.agent_step("tool_call", "search('TypeScript 入門')", { skill: "search" });
+
+// ツール結果（緑色のボーダー）
+kt.agent_step("tool_result", "5件の結果が見つかりました", { skill: "search" });
+
+// エラー（赤色のボーダー）
+kt.agent_step("error", "API接続タイムアウト");
+```
+
+長い結果は折りたたみ表示にできます:
+
+```typescript
+kt.agent_step("tool_result", "非常に長い検索結果...", {
+  skill: "search",
+  collapsed: true,  // 折りたたみ状態で表示
+});
+```
+
+### スキルの実行
+
+`registry.execute()`でスキルを名前指定で実行できます。
+
+```typescript
+const result = await skills.execute("search", "TypeScript 入門");
+// result: 「TypeScript 入門」の検索結果: ...
+```
+
+存在しないスキル名を指定するとエラーがスローされます。ハンドラ内のエラーも適切にラップされます。
+
+### 実践例: エージェントチャット
+
+チャットAPIと組み合わせた、エージェントチャットの例です:
+
+```typescript
+import { createApp, kt, createTypedSessionState, create_agent_skills } from "kantan-ui";
+
+const skills = create_agent_skills([
+  {
+    name: "search",
+    description: "Web検索",
+    icon: "🔍",
+    handler: async (query) => `「${query}」に関する情報が見つかりました。`,
+  },
+]);
+
+type State = {
+  messages: Array<{ role: "user" | "assistant"; content: string }>;
+};
+const state = createTypedSessionState<State>({ messages: [] });
+
+const script = () => {
+  kt.title("AI Agent Chat");
+
+  // 利用可能なスキルを表示
+  kt.agent_skills(skills, { layout: "cards" });
+
+  // メッセージ履歴
+  kt.chat_container(() => {
+    for (const msg of state.messages) {
+      kt.chat_message(msg.role, msg.content);
+    }
+  }, { height: "400px" });
+
+  const input = kt.chat_input("質問を入力...");
+  if (input) {
+    state.messages.push({ role: "user", content: input });
+
+    // エージェントの思考プロセスを表示
+    kt.agent_step("thinking", "質問を分析中...");
+    kt.agent_step("tool_call", `search('${input}')`, { skill: "search" });
+
+    state.messages.push({ role: "assistant", content: "回答を生成中..." });
+  }
+
+  return undefined;
+};
+
+export default await createApp(script, { port: 3000 });
+```
+
+---
+
 ## セッションステート
 
 セッションステートを使うと、ユーザーの操作間で状態を保持できます。
@@ -1413,6 +1549,7 @@ export default await createApp(script, {
 - ✅ メディア（image）
 - ✅ レイアウト（tabs, sidebar, columns, container, expander, empty）
 - ✅ チャットUI（chat_message, chat_container, chat_input）
+- ✅ Agent Skills（create_agent_skills, agent_skills, agent_step）
 - ✅ カラーピッカー（color_picker）
 - ✅ ストリーミング出力（write_stream）
 - ✅ ページ設定（set_page_config, rerun）

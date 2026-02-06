@@ -1211,6 +1211,145 @@ const colorPickerStyles = `
   }
 `;
 
+const agentStyles = `
+  .kt-agent-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+  }
+
+  .kt-agent-skill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 16px;
+    background: #f8f9fa;
+    font-size: 0.85rem;
+  }
+
+  .kt-agent-skill-icon {
+    font-size: 1rem;
+  }
+
+  .kt-agent-skill-name {
+    color: #333;
+    font-weight: 500;
+  }
+
+  .kt-agent-skill-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    min-width: 180px;
+  }
+
+  .kt-agent-skill-card-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .kt-agent-skill-card-body {
+    flex: 1;
+  }
+
+  .kt-agent-skill-card-name {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+  }
+
+  .kt-agent-skill-card-desc {
+    font-size: 0.8rem;
+    color: #666;
+  }
+
+  .kt-agent-step {
+    margin: 8px 0;
+    padding: 8px 12px;
+    border-left: 3px solid #ccc;
+    border-radius: 0 6px 6px 0;
+    background: #fafafa;
+  }
+
+  .kt-agent-step-thinking {
+    border-left-color: #9c27b0;
+    background: #f3e5f5;
+  }
+
+  .kt-agent-step-tool_call {
+    border-left-color: #1976d2;
+    background: #e3f2fd;
+  }
+
+  .kt-agent-step-tool_result {
+    border-left-color: #388e3c;
+    background: #e8f5e9;
+  }
+
+  .kt-agent-step-error {
+    border-left-color: #d32f2f;
+    background: #ffebee;
+  }
+
+  .kt-agent-step-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .kt-agent-step-icon {
+    font-size: 0.9rem;
+  }
+
+  .kt-agent-step-label {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #555;
+  }
+
+  .kt-agent-step-skill {
+    font-size: 0.75rem;
+    padding: 1px 8px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.08);
+    color: #555;
+  }
+
+  .kt-agent-step-content {
+    font-size: 0.9rem;
+    color: #333;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .kt-agent-step details summary {
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .kt-agent-step details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .kt-agent-step details[open] .kt-agent-step-content {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+`;
+
 /**
  * 全デフォルトスタイルを結合
  */
@@ -1234,6 +1373,7 @@ export const defaultStyles = [
 	fileUploaderStyles,
 	audioStyles,
 	colorPickerStyles,
+	agentStyles,
 ].join("\n");
 
 /**

@@ -11,6 +11,7 @@ A Streamlit-style UI framework that depends only on Web standards and [Hono](htt
 - **Connection Stability** - Ping/Pong, auto-reconnect, sequence-based patch recovery
 - **Streaming** - Progressive rendering for large UIs
 - **Security** - Magic byte validation, polyglot detection, and XSS protection for file uploads
+- **Agent Skills** - Define, display, and execute AI agent tools with step-by-step visualization
 
 ## Quick Start
 
@@ -457,6 +458,64 @@ if (userInput) {
 - Auto-scroll (pauses when user scrolls up)
 - Chat input with pinned-to-bottom positioning
 
+#### Agent Skills API
+
+Define, display, and execute AI agent skills (tools). Build agent UIs that show thinking processes and tool usage.
+
+```typescript
+import { kt, create_agent_skills, createTypedSessionState } from "kantan-ui";
+
+// Define skills
+const skills = create_agent_skills([
+  {
+    name: "search",
+    description: "Search the web",
+    icon: "🔍",
+    handler: async (query) => {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+      return await res.text();
+    },
+  },
+  {
+    name: "calculate",
+    description: "Perform calculations",
+    icon: "🔢",
+    handler: (expr) => String(Number(expr) * 2),
+  },
+]);
+
+// Display available skills as badges
+kt.agent_skills(skills);
+
+// Or as cards with descriptions
+kt.agent_skills(skills, { layout: "cards" });
+
+// Show agent execution steps
+kt.agent_step("thinking", "Analyzing the question...");
+kt.agent_step("tool_call", "search('TypeScript best practices')", { skill: "search" });
+kt.agent_step("tool_result", "Found 5 results", { skill: "search", collapsed: true });
+kt.agent_step("error", "Connection timeout");
+
+// Execute a skill programmatically
+const result = await skills.execute("search", "TypeScript");
+```
+
+**Step Types:**
+| Type | Icon | Description |
+|------|------|-------------|
+| `thinking` | 💭 | Agent reasoning / analysis |
+| `tool_call` | 🔧 | Tool invocation |
+| `tool_result` | ✅ | Tool execution result |
+| `error` | ❌ | Error during execution |
+
+**Features:**
+- Skill registry with name validation and duplicate detection
+- Two display layouts: `badges` (compact) and `cards` (detailed)
+- Color-coded step types (purple/blue/green/red)
+- Collapsible steps with `collapsed: true`
+- XSS-safe rendering of all content
+- Async skill execution with error wrapping
+
 #### Empty Placeholder API
 
 Create dynamically updatable placeholders. Similar to Streamlit's `st.empty()`.
@@ -640,6 +699,7 @@ src/
 │   ├── types.ts      # Config types
 │   └── index.ts
 ├── kt/               # Declarative API (Streamlit-style)
+│   ├── agent.ts      # Agent Skills API (agent_skills, agent_step)
 │   ├── context.ts    # Render context
 │   ├── config.ts     # Page config (set_page_config)
 │   ├── control.ts    # Control API (rerun)

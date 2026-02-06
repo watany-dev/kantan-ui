@@ -25,6 +25,7 @@
 
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
 import { createSessionState } from "../session/state";
+import * as agent from "./agent";
 import { cache_data, cache_resource, clear_all_caches } from "./cache";
 import * as chat from "./chat";
 import * as config from "./config";
@@ -41,6 +42,14 @@ import { sidebar } from "./sidebar";
 import { write_stream } from "./stream";
 import * as widgets from "./widgets";
 
+export type {
+	AgentSkill,
+	AgentSkillParameter,
+	AgentSkillRegistry,
+	AgentSkillsConfig,
+	AgentStepConfig,
+	AgentStepType,
+} from "./agent";
 export type { CacheDataOptions, CacheResourceOptions } from "./cache";
 export type { SidebarAPI } from "./sidebar";
 export type { WriteStreamOptions } from "./stream-registry";
@@ -112,6 +121,10 @@ export const kt = {
 	// Media APIs
 	image: media.image,
 	audio: media.audio,
+
+	// Agent Skills APIs
+	agent_skills: agent.agent_skills,
+	agent_step: agent.agent_step,
 
 	// Widget APIs
 	button: widgets.button,
