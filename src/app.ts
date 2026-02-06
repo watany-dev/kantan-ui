@@ -20,6 +20,7 @@ import { getPageConfig } from "./kt/config";
 import { processStreams, rerun, type Script, type StreamingOptions } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { defaultStyles } from "./styles";
+import { sanitizeCssLength } from "./utils/css";
 import { createErrorMessageJson } from "./utils/error";
 import { createWebSocketAdapterAsync } from "./websocket";
 import {
@@ -146,9 +147,10 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 		const baseLayoutClass = pageConfig.layout === "wide" ? "kt-layout-wide" : "kt-layout-centered";
 
 		// サイドバーがある場合のHTML構造を生成
-		const sidebarStyle = initialResult.sidebarConfig?.width
-			? ` style="--kt-sidebar-width: ${initialResult.sidebarConfig.width}"`
+		const sanitizedWidth = initialResult.sidebarConfig?.width
+			? sanitizeCssLength(initialResult.sidebarConfig.width)
 			: "";
+		const sidebarStyle = sanitizedWidth ? ` style="--kt-sidebar-width: ${sanitizedWidth}"` : "";
 		const bodyContent = initialResult.hasSidebar
 			? html`<div class="kt-layout-sidebar">
 					<aside class="kt-sidebar"${raw(sidebarStyle)} data-state="expanded">
@@ -239,11 +241,20 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 					sessionManager.initializePong(ws);
 				},
 				onMessage: (event, ws) => {
+					const messageData = event.data.toString();
+
+					// メッセージサイズ制限（DoS防止）
+					const MAX_MESSAGE_SIZE = 100 * 1024; // 100KB
+					if (messageData.length > MAX_MESSAGE_SIZE) {
+						ws.send(createErrorMessageJson("MESSAGE_TOO_LARGE", "Message size exceeds limit."));
+						return;
+					}
+
 					let parsed: unknown;
 					try {
-						parsed = JSON.parse(event.data.toString());
-					} catch (err) {
-						console.error("Failed to parse client message:", err);
+						parsed = JSON.parse(messageData);
+					} catch (_err) {
+						ws.send(createErrorMessageJson("INVALID_MESSAGE", "Failed to parse message."));
 						return;
 					}
 

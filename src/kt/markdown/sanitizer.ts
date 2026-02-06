@@ -56,6 +56,11 @@ const SAFE_DATA_PREFIXES = ["data:image/"];
 function isSafeUrl(url: string): boolean {
 	const trimmed = url.trim().toLowerCase();
 
+	// プロトコル相対URLをブロック（オープンリダイレクト防止）
+	if (trimmed.startsWith("//")) {
+		return false;
+	}
+
 	// 安全なdata: URLの場合は許可
 	for (const prefix of SAFE_DATA_PREFIXES) {
 		if (trimmed.startsWith(prefix)) {
@@ -100,7 +105,9 @@ function sanitizeAttributes(tagName: string, attributes: string): string {
 				// 危険なURLは空にする
 				result.push(`${attrName}=""`);
 			} else {
-				result.push(`${attrName}="${attrValue}"`);
+				// 属性値のクォートをエスケープ（属性インジェクション防止）
+				const escapedValue = attrValue.replace(/"/g, "&quot;");
+				result.push(`${attrName}="${escapedValue}"`);
 			}
 		}
 
