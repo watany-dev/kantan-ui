@@ -118,6 +118,7 @@ export {
 	toggle,
 } from "./widgets";
 export { renderAudio } from "./widgets/audio";
+export { normalizeChartData, renderLineChart } from "./widgets/line-chart";
 export { createPlaceholder } from "./widgets/placeholder";
 export type {
 	AudioConfig,
@@ -129,7 +130,11 @@ export type {
 	DownloadButtonConfig,
 	EmptyConfig,
 	FileUploaderConfig,
+	LineChartConfig,
+	LineChartData,
 	MultiselectConfig,
+	NormalizedChartData,
+	NormalizedSeries,
 	NumberInputConfig,
 	Placeholder,
 	PlaceholderContentType,

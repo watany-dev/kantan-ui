@@ -26,6 +26,7 @@
 // kt オブジェクト（すべてのAPIを1つのオブジェクトにまとめる）
 import { createSessionState } from "../session/state";
 import { cache_data, cache_resource, clear_all_caches } from "./cache";
+import * as charts from "./charts";
 import * as chat from "./chat";
 import * as config from "./config";
 import * as control from "./control";
@@ -94,6 +95,9 @@ export const kt = {
 	// Data APIs
 	table: data.table,
 	metric: metricModule.metric,
+
+	// Chart APIs
+	line_chart: charts.line_chart,
 
 	// Layout APIs
 	container: layout.container,
