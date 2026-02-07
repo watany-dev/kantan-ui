@@ -367,6 +367,42 @@ describe("renderBarChart", () => {
 			);
 			expect(html).toContain("kt-bar-chart");
 		});
+
+		it("renders x_label and y_label on horizontal bars", () => {
+			const html = renderBarChart(
+				{ A: 10, B: 20 },
+				{
+					horizontal: true,
+					x_label: "Amount",
+					y_label: "Category",
+				},
+			);
+			expect(html).toContain("Amount");
+			expect(html).toContain("Category");
+			expect(html).toContain("kt-chart-x-label");
+			expect(html).toContain("kt-chart-y-label");
+		});
+
+		it("renders title on horizontal bars", () => {
+			const html = renderBarChart(
+				{ A: 10, B: 20 },
+				{
+					horizontal: true,
+					title: "Horizontal Chart",
+				},
+			);
+			expect(html).toContain("Horizontal Chart");
+			expect(html).toContain("kt-bar-chart-title");
+		});
+
+		it("renders legend on horizontal multi-series bars", () => {
+			const data = [
+				{ cat: "A", x: 10, y: 20 },
+				{ cat: "B", x: 15, y: 25 },
+			];
+			const html = renderBarChart(data, { x: "cat", horizontal: true });
+			expect(html).toContain("kt-chart-legend");
+		});
 	});
 
 	describe("edge cases", () => {
@@ -462,6 +498,25 @@ describe("renderBarChart", () => {
 				const html = renderBarChart([10, 20], { color: "expression(alert(1))" });
 				expect(html).toContain("#4e79a7");
 				expect(html).not.toContain("expression(");
+			});
+
+			it("rejects invalid colors in array and keeps valid ones", () => {
+				const html = renderBarChart(
+					[
+						{ cat: "A", x: 10, y: 20 },
+						{ cat: "B", x: 15, y: 25 },
+					],
+					{ x: "cat", color: ["#ff0000", "javascript:alert(1)"] },
+				);
+				expect(html).toContain("#ff0000");
+				expect(html).not.toContain("javascript:");
+			});
+
+			it("falls back to default when all colors in array are invalid", () => {
+				const html = renderBarChart([10, 20], {
+					color: ["javascript:alert(1)", "url(evil)"],
+				});
+				expect(html).toContain("#4e79a7");
 			});
 
 			it("accepts valid hex, rgb, named colors", () => {
