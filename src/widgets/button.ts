@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { isButtonPressed } from "./core";
 import { generateWidgetId } from "./registry";
 import type { ButtonConfig } from "./types";
@@ -19,5 +19,5 @@ export function renderButton(label: string, config?: Partial<ButtonConfig>): str
 	const id = generateWidgetId(config?.key);
 	const disabled = config?.disabled ? " disabled" : "";
 
-	return `<button id="${id}" data-kt-event="click" class="kt-button"${disabled}>${escapeHtml(label)}</button>`;
+	return renderHtml`<button id="${raw(id)}" data-kt-event="click" class="kt-button"${raw(disabled)}>${label}</button>`;
 }

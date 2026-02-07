@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeCheckboxState } from "./core";
 import { generateWidgetId } from "./registry";
 import type { ToggleConfig } from "./types";
@@ -28,11 +28,11 @@ export function renderToggle(
 	const checked = value ? " checked" : "";
 	const disabled = config?.disabled ? " disabled" : "";
 
-	return `<div id="${id}-container" class="kt-toggle-container">
-  <label for="${id}" class="kt-toggle-label">
-    <span>${escapeHtml(label)}</span>
+	return renderHtml`<div id="${raw(id)}-container" class="kt-toggle-container">
+  <label for="${raw(id)}" class="kt-toggle-label">
+    <span>${label}</span>
     <div class="kt-toggle-switch">
-      <input id="${id}" type="checkbox" data-kt-event="change" class="kt-toggle-input"${checked}${disabled} />
+      <input id="${raw(id)}" type="checkbox" data-kt-event="change" class="kt-toggle-input"${raw(checked)}${raw(disabled)} />
       <span class="kt-toggle-slider"></span>
     </div>
   </label>

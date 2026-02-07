@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeCheckboxState } from "./core";
 import { generateWidgetId } from "./registry";
 import type { CheckboxConfig } from "./types";
@@ -28,10 +28,10 @@ export function renderCheckbox(
 	const checked = value ? " checked" : "";
 	const disabled = config?.disabled ? " disabled" : "";
 
-	return `<div id="${id}-container" class="kt-checkbox-container">
-  <label for="${id}" class="kt-checkbox-label">
-    <input id="${id}" type="checkbox" data-kt-event="change" class="kt-checkbox"${checked}${disabled} />
-    <span>${escapeHtml(label)}</span>
+	return renderHtml`<div id="${raw(id)}-container" class="kt-checkbox-container">
+  <label for="${raw(id)}" class="kt-checkbox-label">
+    <input id="${raw(id)}" type="checkbox" data-kt-event="change" class="kt-checkbox"${raw(checked)}${raw(disabled)} />
+    <span>${label}</span>
   </label>
 </div>`;
 }
