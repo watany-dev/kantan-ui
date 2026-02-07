@@ -739,6 +739,75 @@ kt.line_chart(data, {
 | `height` | `number` | `400` | グラフの高さ（px） |
 | `use_container_width` | `boolean` | `true` | コンテナ幅に合わせる |
 
+### 棒グラフ
+
+`kt.bar_chart()`は数値データを棒グラフとして表示します。カテゴリ別の数値比較に適しています。
+
+```typescript
+// 数値配列（最もシンプルな使い方）
+kt.bar_chart([10, 20, 15, 30, 25]);
+```
+
+キーと値のペアを渡すと、カテゴリ名が自動的に設定されます:
+
+```typescript
+kt.bar_chart({ "東京": 100, "大阪": 80, "名古屋": 60 });
+```
+
+オブジェクト配列を使うと、複数シリーズを自動的に描画します（デフォルトは積み上げ）:
+
+```typescript
+kt.bar_chart([
+  { month: "1月", 売上: 100, コスト: 50 },
+  { month: "2月", 売上: 120, コスト: 60 },
+  { month: "3月", 売上: 150, コスト: 80 },
+], { x: "month" });
+```
+
+グループ化（横並び）表示にする場合:
+
+```typescript
+kt.bar_chart(data, { x: "month", stack: false });
+```
+
+横向き表示やソートも可能です:
+
+```typescript
+kt.bar_chart(data, {
+  x: "category",
+  horizontal: true,
+  sort: "descending",
+  title: "カテゴリ別売上",
+  x_label: "売上金額",
+  y_label: "カテゴリ",
+});
+```
+
+**サポートするデータ形式:**
+
+| 形式 | 例 |
+|------|-----|
+| 数値配列 | `[10, 20, 30]` |
+| キー・値オブジェクト | `{ A: 10, B: 20 }` |
+| オブジェクト配列 | `[{ cat: "A", val: 10 }, { cat: "B", val: 20 }]` |
+| 2D配列 | `[[10, 20], [15, 25]]` |
+| 明示的カラム形式 | `{ columns: ["x", "y"], data: [[10, 20], [15, 25]] }` |
+
+**オプション:**
+
+| オプション | 型 | デフォルト | 説明 |
+|-----------|-----|---------|------|
+| `x` | `string` | 自動検出 | カテゴリのカラム名 |
+| `y` | `string \| string[]` | 自動検出 | 値のカラム名（複数可） |
+| `x_label` | `string` | - | x軸ラベル |
+| `y_label` | `string` | - | y軸ラベル |
+| `color` | `string \| string[]` | パレット | バーの色（Tableau 10 パレット） |
+| `height` | `number` | `400` | グラフの高さ（px） |
+| `stack` | `boolean` | `true` | 複数シリーズを積み上げる（falseでグループ化） |
+| `horizontal` | `boolean` | `false` | 横向き表示 |
+| `sort` | `"ascending" \| "descending"` | - | 値でソート |
+| `title` | `string` | - | グラフタイトル |
+
 ---
 
 ## メディア
@@ -1657,7 +1726,7 @@ export default await createApp(script, {
 - ✅ 日付・時刻入力（date_input, time_input）
 - ✅ ファイルアップロード（file_uploader）
 - ✅ データ表示（table, dataframe, metric）
-- ✅ チャート（line_chart）
+- ✅ チャート（line_chart, bar_chart）
 - ✅ メディア（image, audio, video）
 - ✅ レイアウト（tabs, sidebar, columns, container, expander, empty）
 - ✅ チャットUI（chat_message, chat_container, chat_input）
@@ -1675,7 +1744,7 @@ export default await createApp(script, {
 
 ### 今後の予定
 
-- チャート: `kt.bar_chart()`
+- チャート: `kt.area_chart()`, `kt.scatter_chart()`
 - プラグインシステム
 
 ### 関連ドキュメント
