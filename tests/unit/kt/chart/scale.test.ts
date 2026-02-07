@@ -37,6 +37,11 @@ describe("calculateAxisScale", () => {
 		expect(scale.ticks.length).toBeGreaterThanOrEqual(2);
 	});
 
+	it("returns default scale for empty array", () => {
+		const scale = calculateAxisScale([]);
+		expect(scale).toEqual({ min: 0, max: 1, step: 1, ticks: [0, 1] });
+	});
+
 	it("handles all-zero values", () => {
 		const scale = calculateAxisScale([0, 0, 0]);
 		expect(scale.min).toBeLessThan(scale.max);
