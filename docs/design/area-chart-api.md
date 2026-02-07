@@ -51,13 +51,28 @@ st.area_chart(df, x="date", y=["revenue", "cost"], color=["#FF000080", "#0000FF8
 
 ### 1.5 既存チャート基盤との共有
 
+現在、チャートの正規化パイプラインが2系統存在する:
+
+| パイプライン | 場所 | 内部表現 | 使用元 |
+|-------------|------|---------|--------|
+| **bar_chart系** | `src/kt/chart/normalize.ts` | `{ xValues, series: { values: (number\|null)[] } }` | bar_chart |
+| **line_chart系** | `src/widgets/line-chart.ts` | `{ xLabels, series: { points: [number, number][] } }` | line_chart |
+
+area_chartは **bar_chart系パイプライン**（`src/kt/chart/normalize.ts`）を使用する。理由:
+
+- `values[]` 形式はインデックスベースのアクセスが容易で、積み上げ計算やエリアパス構築に適する
+- bar_chartとの共有モジュール（`colors.ts`, `scale.ts`）との整合性が高い
+- null値の扱いが明示的（`(number | null)[]`）
+
+将来的に line_chart もこのパイプラインに統合することを推奨するが、area_chart の実装スコープ外とする。
+
 | モジュール | 役割 | 共有 |
 |-----------|------|------|
 | `src/kt/chart/types.ts` | 型定義 | 共通型 + area固有型 |
 | `src/kt/chart/colors.ts` | カラーパレット・バリデーション | 完全共有 |
 | `src/kt/chart/normalize.ts` | データ正規化 | 完全共有 |
 | `src/kt/chart/scale.ts` | 軸スケール計算 | 完全共有 |
-| `src/widgets/line-chart.ts` | 折れ線描画（参考） | ロジック参考・一部共有 |
+| `src/kt/chart/render-utils.ts` | グリッド・軸・凡例の共通描画 | **新規抽出** |
 | `src/kt/chart/area-chart.ts` | エリアチャート描画 | **area固有** |
 
 ### 1.6 line_chart との関係
@@ -79,10 +94,26 @@ area_chartは概念的に「塗りつぶし付きline_chart」である。主な
 ### 2.1 シグネチャ
 
 ```typescript
-function area_chart(data: ChartData, config?: AreaChartConfig): void;
+function area_chart(data: AreaChartData, config?: AreaChartConfig): void;
 ```
 
-### 2.2 Config
+### 2.2 データ型
+
+```typescript
+/**
+ * エリアチャートのデータ型
+ * line_chart と同様に number[] ショートハンドをサポート
+ */
+type AreaChartData =
+  | number[]                                    // (1) 単純な値配列（x軸はインデックス）
+  | Record<string, unknown>[]                   // (2) オブジェクト配列
+  | unknown[][]                                 // (3) 2D配列
+  | { columns: string[]; data: unknown[][] };   // (4) 明示的形式
+```
+
+`number[]` は line_chart と同様、インデックスを自動的にx軸として扱う。bar_chart の `Record<string, number>` ショートハンドは非サポート（エリアチャートはカテゴリ比較ではなく連続データの傾向表示が主用途のため、key-valueマップは不自然）。
+
+### 2.3 Config
 
 ```typescript
 /**
@@ -94,6 +125,7 @@ export interface AreaChartConfig {
    * 未指定の場合:
    * - オブジェクト配列: 最初の非数値カラム、なければ最初のカラム
    * - 2D配列: 行インデックス (0, 1, 2, ...)
+   * - number[]: インデックス (0, 1, 2, ...)
    */
   x?: string;
 
@@ -139,19 +171,28 @@ export interface AreaChartConfig {
   height?: number;
 
   /**
+   * コンテナ幅に合わせる
+   * @default true
+   */
+  use_container_width?: boolean;
+
+  /**
    * チャートのタイトル
    */
   title?: string;
 }
 ```
 
-### 2.3 使用例
+### 2.4 使用例
 
 ```typescript
 import { kt } from "kantan-ui";
 
-// ===== Level 1: 最小構成 =====
-// 数値配列 → インデックスがx軸
+// ===== Level 0: 最小構成（number[] ショートハンド） =====
+// line_chart と同様、インデックスがx軸
+kt.area_chart([10, 20, 15, 30, 25]);
+
+// ===== Level 1: オブジェクト配列 =====
 kt.area_chart([
   { month: "Jan", revenue: 100 },
   { month: "Feb", revenue: 120 },
@@ -212,42 +253,49 @@ kt.columns(2, (cols) => {
 
 ## 3. 型定義
 
-### 3.1 ChartData（共通型）
-
-既存の共通型を再利用:
-
-```typescript
-export type ChartData =
-  | Record<string, unknown>[]
-  | unknown[][]
-  | { columns: string[]; data: unknown[][] };
-```
-
-area_chartは bar_chart のようなショートハンド (`number[]`, `Record<string, number>`) を持たない。エリアチャートは時系列データが主用途であり、最低限x軸のコンテキスト（ラベルまたはインデックス）が必要なため、`ChartData` 型をそのまま使用する。
-
-### 3.2 AreaChartConfig
-
-セクション2.2で定義済み。
-
-### 3.3 内部型
-
-既存の `NormalizedBarChartData` を `NormalizedChartData` として共通化する（bar_chart、line_chartと共有）:
+### 3.1 AreaChartData
 
 ```typescript
 /**
- * 正規化されたチャートデータ（内部用、全チャート共有）
+ * エリアチャートのデータ型
+ * line_chart と同様に number[] ショートハンドをサポート
  */
-interface NormalizedChartData {
+export type AreaChartData = number[] | ChartData;
+```
+
+line_chart の `LineChartData` が `number[]` を含むのと同様に、area_chart も `number[]` を受け付ける。bar_chart 固有の `Record<string, number>` は含まない。
+
+| データ型 | line_chart | bar_chart | area_chart |
+|---------|-----------|-----------|------------|
+| `number[]` | **対応** | **対応** | **対応** |
+| `Record<string, number>` | 非対応 | **対応** | 非対応 |
+| `Record<string, unknown>[]` | **対応** | **対応** | **対応** |
+| `unknown[][]` | **対応** | **対応** | **対応** |
+| `{ columns, data }` | **対応** | **対応** | **対応** |
+
+### 3.2 AreaChartConfig
+
+セクション2.3で定義済み。
+
+### 3.3 内部型
+
+bar_chart パイプラインの既存型（`NormalizedBarChartData`, `BarChartSeries`）をそのまま利用する。area_chart 固有の内部型は追加しない:
+
+```typescript
+// src/kt/chart/types.ts に既に定義済み
+interface NormalizedBarChartData {
   xValues: (string | number)[];
-  series: ChartSeries[];
+  series: BarChartSeries[];
 }
 
-interface ChartSeries {
+interface BarChartSeries {
   name: string;
   values: (number | null)[];
   color: string;
 }
 ```
+
+> **将来の改善**: `NormalizedBarChartData` / `BarChartSeries` のリネームを検討（`NormalizedChartData` / `ChartSeries` に統一）。ただし area_chart 実装のスコープ外。
 
 ---
 
@@ -256,26 +304,40 @@ interface ChartSeries {
 ### 4.1 正規化フロー
 
 ```
-入力データ (ChartData)
+入力データ (AreaChartData)
   ↓
-normalizeChartData() [既存の共通正規化]
+normalizeAreaChartInput() [number[] ショートハンドを ChartData に変換]
   ↓
-NormalizedChartData { xValues, series[] }
+normalizeChartData() [src/kt/chart/normalize.ts の既存関数]
   ↓
-resolveChartColors() [色の解決]
+NormalizedBarChartData { xValues, series[] }
   ↓
-(stack ? computeStackedAreas : identity) [積み上げ計算]
+resolveChartColors() [src/kt/chart/colors.ts の既存関数]
+  ↓
+(stack ? computeStackedValues : identity) [積み上げ計算]
   ↓
 renderAreaChartHtml() [SVG生成]
 ```
 
-bar_chartと異なり、ショートハンド正規化のステップは不要。
+### 4.2 number[] ショートハンドの正規化
 
-### 4.2 カラム自動判定
+bar_chart と同じパターンで、`number[]` を `ChartData` に変換してから共通パイプラインに渡す:
 
-共通の `normalizeChartData()` を利用。x/y の自動判定ロジックは line_chart/bar_chart と同一。
+```typescript
+function normalizeAreaChartInput(data: AreaChartData): ChartData {
+  // number[] → オブジェクト配列
+  if (Array.isArray(data) && data.length > 0 && typeof data[0] === "number") {
+    return (data as number[]).map((v, i) => ({ index: i, value: v }));
+  }
+  return data as ChartData;
+}
+```
 
-### 4.3 積み上げ計算
+### 4.3 カラム自動判定
+
+共通の `normalizeChartData()`（`src/kt/chart/normalize.ts`）を利用。x/y の自動判定ロジックは bar_chart と同一。
+
+### 4.4 積み上げ計算
 
 `stack: true` の場合、各データポイントで前の系列の値を累積:
 
@@ -307,6 +369,57 @@ function computeStackedValues(
   return { xValues: data.xValues, series: stackedSeries };
 }
 ```
+
+### 4.5 null値によるパス分断
+
+系列の値に `null` が含まれる場合、連続した非null区間ごとに個別のエリアパス（`<path>`）を生成する。これにより欠損データが視覚的に明示される。
+
+```typescript
+/**
+ * 連続した非null値の区間（セグメント）に分割する
+ *
+ * 入力: values = [10, 20, null, null, 30, 40, null, 50]
+ * 出力: [
+ *   { startIndex: 0, values: [10, 20] },
+ *   { startIndex: 4, values: [30, 40] },
+ *   { startIndex: 7, values: [50] },
+ * ]
+ */
+interface Segment {
+  startIndex: number;
+  values: number[];
+}
+
+function splitByNull(values: (number | null)[]): Segment[] {
+  const segments: Segment[] = [];
+  let current: Segment | null = null;
+
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i];
+    if (v !== null) {
+      if (!current) {
+        current = { startIndex: i, values: [] };
+      }
+      current.values.push(v);
+    } else {
+      if (current) {
+        segments.push(current);
+        current = null;
+      }
+    }
+  }
+
+  if (current) {
+    segments.push(current);
+  }
+
+  return segments;
+}
+```
+
+各セグメントに対して個別の `<path>` (fill) と `<path>` (stroke) を生成する。セグメント間に線やつなぎは描画しない。
+
+**積み上げモードでのnull値**: 前の系列の値は維持し、null を含む系列のみがその区間で欠損扱いとなる。
 
 ---
 
@@ -594,6 +707,7 @@ src/
   kt/
     chart/
       area-chart.ts          # area_chart() メイン関数 + SVG描画
+      render-utils.ts        # 【新規】グリッド・軸・凡例の共通描画関数
       normalize.ts           # データ正規化（既存共有）
       scale.ts               # 軸スケール計算（既存共有）
       colors.ts              # カラーパレット・バリデーション（既存共有）
@@ -608,7 +722,48 @@ src/
 
 ## 10. イテレーション計画
 
-area_chartは既存のチャート基盤（normalize, scale, colors）を再利用するため、固有の実装に集中できる。
+### Iteration 0: 共通描画ユーティリティの抽出（Tidy First）
+
+**目標**: `src/widgets/line-chart.ts` からグリッド・軸・凡例の描画ロジックを `src/kt/chart/render-utils.ts` に抽出
+
+**背景**: 現在 line_chart のSVGレンダリングコード（グリッド線、x軸/y軸描画、凡例描画）は `src/widgets/line-chart.ts` に直接書かれている。bar_chart は `src/kt/chart/bar-chart.ts` に独自実装を持つ。area_chart でも同じ描画が必要になるため、先に共通関数を抽出する。
+
+**対象関数**:
+- `renderGrid()` → グリッド線の描画
+- `renderXAxis()` → x軸ラベル・目盛りの描画
+- `renderYAxis()` → y軸ラベル・目盛りの描画
+- `renderLegend()` → 凡例の描画
+- `niceScale()` → Nice numbers アルゴリズム（既に `scale.ts` に類似実装あり → 統合を検討）
+
+**方針**:
+- 構造的変更のみ（Tidy First の原則: 構造的変更と機能的変更を分離）
+- line_chart の既存テストがすべてパスすることを確認
+- bar_chart の既存テストに影響がないことを確認
+
+**Red（テスト）**:
+```typescript
+describe("render-utils", () => {
+  it("renderGrid generates grid lines SVG", () => {
+    const svg = renderGrid({ min: 0, max: 100, step: 20 }, { ... });
+    expect(svg).toContain("kt-chart-grid");
+    expect(svg).toContain("<line");
+  });
+
+  it("renderXAxis generates x-axis labels", () => {
+    const svg = renderXAxis(["Jan", "Feb", "Mar"], { ... });
+    expect(svg).toContain("Jan");
+  });
+
+  it("renderLegend generates legend for multiple series", () => {
+    const svg = renderLegend([{ name: "a", color: "#4e79a7" }], { ... });
+    expect(svg).toContain("kt-chart-legend");
+  });
+});
+```
+
+**成果物**: `src/kt/chart/render-utils.ts` + line_chart の既存テストが引き続きパス
+
+---
 
 ### Iteration 1: 型定義・基本レンダリング
 
@@ -634,6 +789,12 @@ describe("renderAreaChart", () => {
     // 塗りつぶしパスと境界線パスの両方が存在
     expect(html).toContain("fill-opacity");
     expect(html).toContain('fill="none"');
+  });
+
+  it("accepts number[] shorthand", () => {
+    const html = renderAreaChart([10, 20, 15, 30]);
+    expect(html).toContain("<svg");
+    expect(html).toContain("kt-chart-area");
   });
 
   it("renders stroke line on top of filled area", () => {
@@ -838,7 +999,9 @@ describe("edge cases", () => {
 
 | 項目 | 決定 | 理由 |
 |------|------|------|
-| データ型 | `ChartData`（ショートハンドなし） | エリアチャートはx軸コンテキストが重要 |
+| データ型 | `AreaChartData = number[] \| ChartData` | line_chartと同等の利便性を確保。bar_chartの`Record<string,number>`は非サポート |
+| normalizeパイプライン | bar_chart系（`src/kt/chart/normalize.ts`） | `values[]`形式が積み上げ計算・エリアパス構築に適する |
+| 共通描画ユーティリティ | `render-utils.ts` に抽出 | line_chart/bar_chart/area_chartで共有するグリッド・軸・凡例の描画 |
 | デフォルト `stack` | `false`（重ね表示） | Streamlit互換 |
 | デフォルト透明度 | `fill-opacity: 0.3` | 重なり部分の視認性確保 |
 | ユーザー指定alpha | `fill-opacity`を上書きしない | 二重透明度の防止 |
@@ -852,9 +1015,9 @@ describe("edge cases", () => {
 ## 12. チェックリスト
 
 ### 実装前
-- [ ] 既存チャート基盤（normalize, scale, colors）の共有方法確認
-- [ ] line_chart のレンダリングパターン確認
-- [ ] CSS クラス命名規則の確認
+- [ ] `src/kt/chart/normalize.ts` の `normalizeChartData()` のインターフェース確認
+- [ ] `src/widgets/line-chart.ts` から抽出可能な描画関数の洗い出し
+- [ ] CSS クラス命名規則の確認（`kt-chart-*` 共通 vs `kt-area-chart-*` 固有）
 
 ### 各イテレーション後
 - [ ] `bun run lint:fix`
@@ -867,11 +1030,13 @@ describe("edge cases", () => {
 - [ ] Streamlit互換APIになっている
 - [ ] アクセシビリティ属性が正しく設定されている
 - [ ] レスポンシブ表示が動作する
+- [ ] `number[]` ショートハンドが動作する
 - [ ] 単一シリーズのエリアチャートが正しく描画される
 - [ ] 複数シリーズの重ね表示が正しく描画される
 - [ ] 積み上げエリアチャートが正しく描画される
 - [ ] null値での分断が正しく動作する
 - [ ] ユーザー指定の透明度が尊重される
+- [ ] 共通描画ユーティリティ抽出後も line_chart/bar_chart の既存テストがパスする
 
 ---
 
