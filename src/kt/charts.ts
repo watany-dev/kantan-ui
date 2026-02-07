@@ -6,8 +6,9 @@
 
 import { renderLineChart } from "../widgets/line-chart";
 import type { LineChartConfig, LineChartData } from "../widgets/types";
+import { renderAreaChart } from "./chart/area-chart";
 import { renderBarChart } from "./chart/bar-chart";
-import type { BarChartConfig, BarChartData } from "./chart/types";
+import type { AreaChartConfig, AreaChartData, BarChartConfig, BarChartData } from "./chart/types";
 import { requireRenderContext } from "./context";
 
 /**
@@ -69,5 +70,31 @@ export function line_chart(data: LineChartData, config?: Partial<LineChartConfig
 export function bar_chart(data: BarChartData, config?: Partial<BarChartConfig>): void {
 	const ctx = requireRenderContext();
 	const html = renderBarChart(data, config);
+	ctx.append(html);
+}
+
+/**
+ * エリアチャートを表示
+ *
+ * @param data - チャートデータ（数値配列、オブジェクト配列、2D配列、明示的形式）
+ * @param config - オプション設定
+ *
+ * @example
+ * // 単純な数値配列
+ * kt.area_chart([10, 20, 15, 30, 25]);
+ *
+ * @example
+ * // 積み上げエリアチャート
+ * kt.area_chart(
+ *   [
+ *     { month: "Jan", revenue: 100, cost: 60 },
+ *     { month: "Feb", revenue: 120, cost: 70 },
+ *   ],
+ *   { stack: true }
+ * );
+ */
+export function area_chart(data: AreaChartData, config?: Partial<AreaChartConfig>): void {
+	const ctx = requireRenderContext();
+	const html = renderAreaChart(data, config);
 	ctx.append(html);
 }
