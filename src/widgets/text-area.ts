@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeTextInputState } from "./core";
 import { generateWidgetId } from "./registry";
 import type { TextAreaConfig } from "./types";
@@ -30,8 +30,8 @@ export function renderTextArea(
 	const disabled = config?.disabled ? " disabled" : "";
 	const maxLength = config?.maxChars ? ` maxlength="${config.maxChars}"` : "";
 
-	return `<div id="${id}-container" class="kt-text-area-container">
-  <label for="${id}" class="kt-text-area-label">${escapeHtml(label)}</label>
-  <textarea id="${id}" style="height: ${height}px" placeholder="${escapeHtml(placeholder)}" data-kt-event="change" class="kt-text-area"${maxLength}${disabled}>${escapeHtml(value)}</textarea>
+	return renderHtml`<div id="${raw(id)}-container" class="kt-text-area-container">
+  <label for="${raw(id)}" class="kt-text-area-label">${label}</label>
+  <textarea id="${raw(id)}" style="height: ${height}px" placeholder="${placeholder}" data-kt-event="change" class="kt-text-area"${raw(maxLength)}${raw(disabled)}>${value}</textarea>
 </div>`;
 }

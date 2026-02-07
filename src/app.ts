@@ -20,6 +20,7 @@ import { getPageConfig } from "./kt/config";
 import { processStreams, rerun, type Script, type StreamingOptions } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
 import { defaultStyles } from "./styles";
+import { getEnvVar } from "./utils/env";
 import { createErrorMessageJson } from "./utils/error";
 import { createWebSocketAdapterAsync } from "./websocket";
 import {
@@ -80,7 +81,7 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 	const app = new Hono();
 
 	// ミドルウェア設定（CI環境ではログを抑制）
-	if (!process.env["CI"]) {
+	if (!getEnvVar("CI")) {
 		app.use("*", logger());
 	}
 	app.use(

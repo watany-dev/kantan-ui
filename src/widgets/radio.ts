@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeRadioState, validateRadio } from "./core";
 import { generateWidgetId } from "./registry";
 import type { RadioConfig } from "./types";
@@ -34,17 +34,17 @@ export function renderRadio(
 	const optionsHtml = options
 		.map((opt) => {
 			const checked = opt === value ? " checked" : "";
-			return `<label class="kt-radio-option">
-      <input type="radio" name="${id}" value="${escapeHtml(opt)}" data-kt-event="change"${checked}${disabled} />
-      <span>${escapeHtml(opt)}</span>
+			return renderHtml`<label class="kt-radio-option">
+      <input type="radio" name="${raw(id)}" value="${opt}" data-kt-event="change"${raw(checked)}${raw(disabled)} />
+      <span>${opt}</span>
     </label>`;
 		})
 		.join("\n    ");
 
-	return `<div id="${id}-container" class="kt-radio-container ${layoutClass}">
-  <div class="kt-radio-label">${escapeHtml(label)}</div>
+	return renderHtml`<div id="${raw(id)}-container" class="kt-radio-container ${raw(layoutClass)}">
+  <div class="kt-radio-label">${label}</div>
   <div class="kt-radio-options">
-    ${optionsHtml}
+    ${raw(optionsHtml)}
   </div>
 </div>`;
 }

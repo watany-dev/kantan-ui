@@ -4,7 +4,7 @@
  * 基本的なMarkdown構文をHTMLに変換する
  */
 
-import { escapeHtml } from "../../utils/html";
+import { raw, renderHtml } from "../../utils/html";
 
 /**
  * Markdownをパースする
@@ -202,10 +202,10 @@ export function parseMarkdown(markdown: string): string {
 				codeBlockLang = trimmedLine.slice(3).trim();
 				codeBlockContent = [];
 			} else {
-				const escapedLang = escapeHtml(codeBlockLang);
-				const langAttr = codeBlockLang ? ` class="language-${escapedLang}"` : "";
-				const escapedContent = escapeHtml(codeBlockContent.join("\n"));
-				result.push(`<pre><code${langAttr}>${escapedContent}</code></pre>`);
+				const langAttr = codeBlockLang ? renderHtml` class="language-${codeBlockLang}"` : "";
+				result.push(
+					renderHtml`<pre><code${raw(langAttr)}>${codeBlockContent.join("\n")}</code></pre>`,
+				);
 				inCodeBlock = false;
 				codeBlockLang = "";
 			}
@@ -376,10 +376,8 @@ export function parseMarkdown(markdown: string): string {
 
 	// コードブロックが閉じられていない場合
 	if (inCodeBlock) {
-		const escapedLang = escapeHtml(codeBlockLang);
-		const langAttr = codeBlockLang ? ` class="language-${escapedLang}"` : "";
-		const escapedContent = escapeHtml(codeBlockContent.join("\n"));
-		result.push(`<pre><code${langAttr}>${escapedContent}</code></pre>`);
+		const langAttr = codeBlockLang ? renderHtml` class="language-${codeBlockLang}"` : "";
+		result.push(renderHtml`<pre><code${raw(langAttr)}>${codeBlockContent.join("\n")}</code></pre>`);
 	}
 
 	return result.join("\n");

@@ -1,5 +1,5 @@
 import { sanitizeCssLength } from "../utils/css";
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { chat_input as imperativeChatInput, renderChatInput } from "../widgets/chat-input";
 import { generateWidgetId } from "../widgets/registry";
 import type { ChatInputConfig } from "../widgets/types";
@@ -53,20 +53,20 @@ const defaultAvatars: Record<ChatRole, string> = {
  */
 export function chat_message(role: ChatRole, content: string, config?: ChatMessageConfig): void {
 	const ctx = requireRenderContext();
-	const avatar = escapeHtml(config?.avatar ?? defaultAvatars[role]);
+	const avatar = config?.avatar ?? defaultAvatars[role];
 
 	// Markdownをパースしてサニタイズ
 	const parsedContent = sanitizeMarkdownHtml(parseMarkdown(content));
 
 	// 名前の表示（オプション）
-	const nameHtml = config?.name ? `<div class="kt-chat-name">${escapeHtml(config.name)}</div>` : "";
+	const nameHtml = config?.name ? renderHtml`<div class="kt-chat-name">${config.name}</div>` : "";
 
 	ctx.append(
-		`<div class="kt-chat-message kt-chat-message-${role}" data-role="${role}">` +
-			`<div class="kt-chat-avatar">${avatar}</div>` +
+		renderHtml`<div class="kt-chat-message kt-chat-message-${raw(role)}" data-role="${raw(role)}">` +
+			renderHtml`<div class="kt-chat-avatar">${avatar}</div>` +
 			`<div class="kt-chat-body">` +
-			`${nameHtml}` +
-			`<div class="kt-chat-content">${parsedContent}</div>` +
+			raw(nameHtml) +
+			renderHtml`<div class="kt-chat-content">${raw(parsedContent)}</div>` +
 			`</div>` +
 			`</div>`,
 	);
@@ -92,7 +92,7 @@ export function chat_container(content: () => void, config: ChatContainerConfig 
 	const height = sanitizeCssLength(rawHeight) || "400px";
 
 	ctx.append(
-		`<div class="kt-chat-container" data-kt-chat-container style="height: ${height}; overflow-y: auto;">`,
+		renderHtml`<div class="kt-chat-container" data-kt-chat-container style="height: ${raw(height)}; overflow-y: auto;">`,
 	);
 	content();
 	ctx.append("</div>");

@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeColorPickerState } from "./core";
 import { generateWidgetId } from "./registry";
 import type { ColorPickerConfig } from "./types";
@@ -27,8 +27,8 @@ export function renderColorPicker(
 	const id = generateWidgetId(config?.key);
 	const disabled = config?.disabled ? " disabled" : "";
 
-	return `<div id="${id}-container" class="kt-color-picker-container">
-  <label for="${id}" class="kt-color-picker-label">${escapeHtml(label)}</label>
-  <input type="color" id="${id}" value="${escapeHtml(value)}" data-kt-event="change" class="kt-color-picker"${disabled} />
+	return renderHtml`<div id="${raw(id)}-container" class="kt-color-picker-container">
+  <label for="${raw(id)}" class="kt-color-picker-label">${label}</label>
+  <input type="color" id="${raw(id)}" value="${value}" data-kt-event="change" class="kt-color-picker"${raw(disabled)} />
 </div>`;
 }

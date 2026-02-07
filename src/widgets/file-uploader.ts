@@ -4,7 +4,7 @@
  */
 import { getSessionManager } from "../session/manager";
 import { getCurrentSessionId } from "../session/state";
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { generateWidgetId } from "./registry";
 import type { FileUploaderConfig, UploadedFile } from "./types";
 import { FILE_UPLOAD_LIMITS } from "./types";
@@ -102,7 +102,7 @@ export function renderFileUploader(label: string, config: Partial<FileUploaderCo
 
 	// 属性を構築
 	const accept = formatAccept(config.accept);
-	const acceptAttr = accept ? ` accept="${escapeHtml(accept)}"` : "";
+	const acceptAttr = accept ? renderHtml` accept="${accept}"` : "";
 	const multipleAttr = config.multiple ? " multiple" : "";
 	const disabledAttr = config.disabled ? " disabled" : "";
 	const maxSize = config.maxSize ?? FILE_UPLOAD_LIMITS.DEFAULT_MAX_SIZE;
@@ -114,7 +114,8 @@ export function renderFileUploader(label: string, config: Partial<FileUploaderCo
 
 	// ヘルプテキスト
 	const helpHtml = config.help
-		? `\n  <div class="kt-file-uploader-help">${escapeHtml(config.help)}</div>`
+		? renderHtml`
+  <div class="kt-file-uploader-help">${config.help}</div>`
 		: "";
 
 	// プログレス表示HTML
@@ -140,8 +141,8 @@ export function renderFileUploader(label: string, config: Partial<FileUploaderCo
 	const errorHtml = `
   <div class="kt-file-uploader-error" style="display: none"></div>`;
 
-	return `<div id="${id}-container" class="kt-file-uploader-container">
-  <label for="${id}" class="kt-file-uploader-label">${escapeHtml(label)}</label>
-  <input type="file" id="${id}" class="kt-file-uploader" data-kt-event="change"${acceptAttr}${multipleAttr}${disabledAttr} data-max-size="${maxSize}" data-strict-mode="${strictMode}" data-detect-polyglot="${detectPolyglot}" data-verify-magic-bytes="${verifyMagicBytes}" />${helpHtml}${progressHtml}${completeHtml}${errorHtml}
+	return renderHtml`<div id="${raw(id)}-container" class="kt-file-uploader-container">
+  <label for="${raw(id)}" class="kt-file-uploader-label">${label}</label>
+  <input type="file" id="${raw(id)}" class="kt-file-uploader" data-kt-event="change"${raw(acceptAttr)}${raw(multipleAttr)}${raw(disabledAttr)} data-max-size="${maxSize}" data-strict-mode="${raw(String(strictMode))}" data-detect-polyglot="${raw(String(detectPolyglot))}" data-verify-magic-bytes="${raw(String(verifyMagicBytes))}" />${raw(helpHtml)}${raw(progressHtml)}${raw(completeHtml)}${raw(errorHtml)}
 </div>`;
 }

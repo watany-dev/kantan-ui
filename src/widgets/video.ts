@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { binaryToDataUri } from "./image";
 import type { SubtitleTrack, VideoConfig, VideoSource } from "./types";
 
@@ -121,42 +121,38 @@ export function renderVideo(source: VideoSource, config?: Partial<VideoConfig>):
 	const fragment = buildMediaFragment(config);
 
 	// video 属性の構築
-	const videoAttrs: string[] = [
-		`src="${escapeHtml(src + fragment)}"`,
-		"controls",
-		'class="kt-video-player"',
-		'preload="metadata"',
-	];
+	const additionalAttrs: string[] = [];
 
 	// playsinline（デフォルト true）
 	if (config?.playsinline !== false) {
-		videoAttrs.push("playsinline");
+		additionalAttrs.push(" playsinline");
 	}
 
 	if (config?.poster) {
-		videoAttrs.push(`poster="${escapeHtml(config.poster)}"`);
+		additionalAttrs.push(renderHtml` poster="${config.poster}"`);
 	}
 
 	if (config?.loop) {
-		videoAttrs.push("loop");
+		additionalAttrs.push(" loop");
 	}
 
 	if (config?.autoplay) {
-		videoAttrs.push("autoplay");
+		additionalAttrs.push(" autoplay");
 	}
 
 	if (config?.muted) {
-		videoAttrs.push("muted");
+		additionalAttrs.push(" muted");
 	}
 
 	// 字幕トラック
 	const trackHtml = buildSubtitleTracks(config?.subtitles);
 
 	// フォールバック
-	const fallback =
-		'<p class="kt-video-fallback">お使いのブラウザは動画再生に対応していません。</p>';
+	const fallback = raw(
+		'<p class="kt-video-fallback">お使いのブラウザは動画再生に対応していません。</p>',
+	);
 
-	return `<figure class="kt-video" role="group" aria-label="動画プレイヤー"><video ${videoAttrs.join(" ")}>${trackHtml}${fallback}</video></figure>`;
+	return renderHtml`<figure class="kt-video" role="group" aria-label="動画プレイヤー"><video src="${src}${raw(fragment)}" controls class="kt-video-player" preload="metadata"${raw(additionalAttrs.join(""))}>${raw(trackHtml)}${fallback}</video></figure>`;
 }
 
 /**
@@ -172,16 +168,8 @@ function buildSubtitleTracks(subtitles?: SubtitleTrack | SubtitleTrack[]): strin
 	return tracks
 		.map((track, index) => {
 			validateUrl(track.src);
-			const attrs = [
-				'kind="subtitles"',
-				`src="${escapeHtml(track.src)}"`,
-				`srclang="${escapeHtml(track.srclang)}"`,
-				`label="${escapeHtml(track.label)}"`,
-			];
-			if (index === 0) {
-				attrs.push("default");
-			}
-			return `<track ${attrs.join(" ")} />`;
+			const defaultAttr = index === 0 ? " default" : "";
+			return renderHtml`<track kind="subtitles" src="${track.src}" srclang="${track.srclang}" label="${track.label}"${raw(defaultAttr)} />`;
 		})
 		.join("");
 }

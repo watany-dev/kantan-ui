@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { setWidgetValue } from "./registry";
 import type {
 	Placeholder,
@@ -25,73 +25,73 @@ export function createPlaceholder(id: string): Placeholder {
 		id,
 
 		write(content: string | number | boolean): void {
-			const html = `<div class="kt-write">${escapeHtml(String(content))}</div>`;
+			const html = renderHtml`<div class="kt-write">${String(content)}</div>`;
 			updateContent(id, html, "write");
 		},
 
 		text(content: string): void {
-			const html = `<p class="kt-text">${escapeHtml(content)}</p>`;
+			const html = renderHtml`<p class="kt-text">${content}</p>`;
 			updateContent(id, html, "text");
 		},
 
 		markdown(content: string): void {
 			// Note: Full markdown parsing would require a library
 			// For now, we wrap in a container and let CSS handle basic styling
-			const html = `<div class="kt-markdown">${escapeHtml(content)}</div>`;
+			const html = renderHtml`<div class="kt-markdown">${content}</div>`;
 			updateContent(id, html, "markdown");
 		},
 
 		html(content: string): void {
 			// WARNING: This is unsafe and can lead to XSS
 			// User is responsible for sanitizing input
-			const html = `<div class="kt-html">${content}</div>`;
+			const html = renderHtml`<div class="kt-html">${raw(content)}</div>`;
 			updateContent(id, html, "html");
 		},
 
 		json(data: unknown): void {
 			const formatted = JSON.stringify(data, null, 2);
-			const html = `<pre class="kt-json"><code>${escapeHtml(formatted)}</code></pre>`;
+			const html = renderHtml`<pre class="kt-json"><code>${formatted}</code></pre>`;
 			updateContent(id, html, "json");
 		},
 
 		code(content: string, language?: string): void {
-			const langClass = language ? ` language-${escapeHtml(language)}` : "";
-			const html = `<pre class="kt-code${langClass}"><code>${escapeHtml(content)}</code></pre>`;
+			const langClass = language ? renderHtml` language-${language}` : "";
+			const html = renderHtml`<pre class="kt-code${raw(langClass)}"><code>${content}</code></pre>`;
 			updateContent(id, html, "code");
 		},
 
 		success(message: string): void {
-			const html = `<div class="kt-alert kt-alert-success">${escapeHtml(message)}</div>`;
+			const html = renderHtml`<div class="kt-alert kt-alert-success">${message}</div>`;
 			updateContent(id, html, "success");
 		},
 
 		error(message: string): void {
-			const html = `<div class="kt-alert kt-alert-error">${escapeHtml(message)}</div>`;
+			const html = renderHtml`<div class="kt-alert kt-alert-error">${message}</div>`;
 			updateContent(id, html, "error");
 		},
 
 		warning(message: string): void {
-			const html = `<div class="kt-alert kt-alert-warning">${escapeHtml(message)}</div>`;
+			const html = renderHtml`<div class="kt-alert kt-alert-warning">${message}</div>`;
 			updateContent(id, html, "warning");
 		},
 
 		info(message: string): void {
-			const html = `<div class="kt-alert kt-alert-info">${escapeHtml(message)}</div>`;
+			const html = renderHtml`<div class="kt-alert kt-alert-info">${message}</div>`;
 			updateContent(id, html, "info");
 		},
 
 		progress(value: number, config?: ProgressConfig): void {
 			const percent = Math.max(0, Math.min(100, value * 100));
 			const textHtml = config?.text
-				? `<span class="kt-progress-text">${escapeHtml(config.text)}</span>`
+				? renderHtml`<span class="kt-progress-text">${config.text}</span>`
 				: "";
-			const html = `<div class="kt-progress-container">${textHtml}<progress class="kt-progress" value="${percent}" max="100"></progress></div>`;
+			const html = renderHtml`<div class="kt-progress-container">${raw(textHtml)}<progress class="kt-progress" value="${percent}" max="100"></progress></div>`;
 			updateContent(id, html, "progress");
 		},
 
 		spinner(text?: string): void {
-			const textHtml = text ? `<span class="kt-spinner-text">${escapeHtml(text)}</span>` : "";
-			const html = `<div class="kt-spinner">${textHtml}</div>`;
+			const textHtml = text ? renderHtml`<span class="kt-spinner-text">${text}</span>` : "";
+			const html = renderHtml`<div class="kt-spinner">${raw(textHtml)}</div>`;
 			updateContent(id, html, "spinner");
 		},
 

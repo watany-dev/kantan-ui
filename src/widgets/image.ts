@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import type { ImageConfig, ImageSource } from "./types";
 
 /**
@@ -173,16 +173,16 @@ function convertToStringSrc(source: ImageSource, config?: Partial<ImageConfig>):
  */
 function renderSingleImage(source: string, config?: Partial<ImageConfig>, index?: number): string {
 	const src = resolveStringSrc(source);
-	const alt = escapeHtml(resolveAlt(config, index));
+	const alt = resolveAlt(config, index);
 	const caption = resolveCaption(config, index);
 	const figureClass = resolveFigureClass(config);
 	const figureStyle = resolveFigureStyle(config);
 
 	const captionHtml = caption
-		? `<figcaption class="kt-image-caption">${escapeHtml(caption)}</figcaption>`
+		? renderHtml`<figcaption class="kt-image-caption">${caption}</figcaption>`
 		: "";
 
-	return `<figure class="${figureClass}"${figureStyle}><img src="${escapeHtml(src)}" alt="${alt}" class="kt-image-img" loading="lazy" />${captionHtml}</figure>`;
+	return renderHtml`<figure class="${raw(figureClass)}"${raw(figureStyle)}><img src="${src}" alt="${alt}" class="kt-image-img" loading="lazy" />${raw(captionHtml)}</figure>`;
 }
 
 /**
@@ -212,7 +212,7 @@ function renderGallery(sources: ImageSource[], config?: Partial<ImageConfig>): s
 	}
 
 	// ギャラリーラッパーで囲む
-	return `<div class="kt-image-gallery">${images.join("")}</div>`;
+	return renderHtml`<div class="kt-image-gallery">${raw(images.join(""))}</div>`;
 }
 
 /**

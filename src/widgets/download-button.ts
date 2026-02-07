@@ -5,7 +5,7 @@
 
 import { requireRenderContext } from "../kt/context";
 import { getSessionManager } from "../session/manager";
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { isButtonPressed } from "./core";
 import { generateWidgetId } from "./registry";
 import type { DownloadButtonConfig } from "./types";
@@ -36,14 +36,13 @@ function buildDownloadButtonHtml(
 	const mime = config.mime ?? "application/octet-stream";
 	const disabled = config.disabled ? " disabled" : "";
 	const disabledAttr = config.disabled ? ' aria-disabled="true"' : "";
-	const safeFilename = escapeHtml(filename).replace(/"/g, "&quot;");
 
 	const sessionManager = getSessionManager();
 	const arrayBuffer = toArrayBuffer(data);
 	const downloadId = sessionManager.registerDownload(arrayBuffer, filename, mime);
 
-	return `<div class="kt-download-button" id="${widgetId}">
-<button class="kt-button" data-kt-download-url="/download/${downloadId}" data-filename="${safeFilename}"${disabledAttr}${disabled} data-kt-event="click">${escapeHtml(label)}</button>
+	return renderHtml`<div class="kt-download-button" id="${raw(widgetId)}">
+<button class="kt-button" data-kt-download-url="/download/${raw(downloadId)}" data-filename="${filename}"${raw(disabledAttr)}${raw(disabled)} data-kt-event="click">${label}</button>
 </div>`;
 }
 

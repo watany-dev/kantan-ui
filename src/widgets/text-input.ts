@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeTextInputState } from "./core";
 import { generateWidgetId } from "./registry";
 import type { TextInputConfig } from "./types";
@@ -59,8 +59,8 @@ export function renderTextInput(
 	// 実行時型検証: typeはホワイトリストのみ許可
 	const inputType = validateInputType(config?.type);
 
-	return `<div id="${id}-container" class="kt-text-input-container">
-  <label for="${id}" class="kt-text-input-label">${escapeHtml(label)}</label>
-  <input type="${inputType}" id="${id}" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" data-kt-event="input" class="kt-text-input"${disabled}${maxLength} />
+	return renderHtml`<div id="${raw(id)}-container" class="kt-text-input-container">
+  <label for="${raw(id)}" class="kt-text-input-label">${label}</label>
+  <input type="${raw(inputType)}" id="${raw(id)}" value="${value}" placeholder="${placeholder}" data-kt-event="input" class="kt-text-input"${raw(disabled)}${raw(maxLength)} />
 </div>`;
 }

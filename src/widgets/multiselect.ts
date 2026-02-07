@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeMultiselectState, validateMultiselect } from "./core";
 import { generateWidgetId } from "./registry";
 import type { MultiselectConfig } from "./types";
@@ -38,17 +38,17 @@ export function renderMultiselect(
 				maxSelections !== undefined && value.length >= maxSelections && !value.includes(opt)
 					? " disabled"
 					: "";
-			return `<label class="kt-multiselect-option">
-      <input type="checkbox" name="${id}" value="${escapeHtml(opt)}" data-kt-event="change"${checked}${disabled}${optionDisabled} />
-      <span>${escapeHtml(opt)}</span>
+			return renderHtml`<label class="kt-multiselect-option">
+      <input type="checkbox" name="${raw(id)}" value="${opt}" data-kt-event="change"${raw(checked)}${raw(disabled)}${raw(optionDisabled)} />
+      <span>${opt}</span>
     </label>`;
 		})
 		.join("\n    ");
 
-	return `<div id="${id}-container" class="kt-multiselect-container">
-  <label class="kt-multiselect-label">${escapeHtml(label)}</label>
-  <div id="${id}" class="kt-multiselect-options">
-    ${optionsHtml}
+	return renderHtml`<div id="${raw(id)}-container" class="kt-multiselect-container">
+  <label class="kt-multiselect-label">${label}</label>
+  <div id="${raw(id)}" class="kt-multiselect-options">
+    ${raw(optionsHtml)}
   </div>
 </div>`;
 }

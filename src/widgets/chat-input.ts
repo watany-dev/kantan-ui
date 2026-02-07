@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { clearWidgetValue, generateWidgetId, getWidgetValue } from "./registry";
 import type { ChatInputConfig } from "./types";
 
@@ -34,29 +34,29 @@ function validateMaxLength(value: unknown): number | undefined {
  */
 export function renderChatInput(placeholder: string, config?: Partial<ChatInputConfig>): string {
 	const id = generateWidgetId(config?.key);
-	const escapedPlaceholder = escapeHtml(placeholder || "メッセージを入力...");
+	const effectivePlaceholder = placeholder || "メッセージを入力...";
 	const disabled = config?.disabled ? " disabled" : "";
 	const maxLength = validateMaxLength(config?.maxLength);
 	const maxLengthAttr = maxLength ? ` maxlength="${maxLength}"` : "";
 	const pinClass = config?.pinToBottom !== false ? " kt-chat-input-pinned" : "";
-	const submitLabel = escapeHtml(config?.submitLabel || "送信");
+	const submitLabel = config?.submitLabel || "送信";
 	const buttonStyle = config?.hideSubmitButton ? ' style="display:none"' : "";
-	const ariaLabel = escapeHtml(placeholder || "チャットメッセージ入力");
+	const ariaLabel = placeholder || "チャットメッセージ入力";
 
-	return `<div class="kt-chat-input-wrapper${pinClass}">
+	return renderHtml`<div class="kt-chat-input-wrapper${raw(pinClass)}">
   <div class="kt-chat-input-container">
     <textarea
-      id="${id}"
+      id="${raw(id)}"
       class="kt-chat-input-field"
-      placeholder="${escapedPlaceholder}"
+      placeholder="${effectivePlaceholder}"
       data-kt-event="chat-submit"
       rows="1"
-      aria-label="${ariaLabel}"${disabled}${maxLengthAttr}></textarea>
+      aria-label="${ariaLabel}"${raw(disabled)}${raw(maxLengthAttr)}></textarea>
     <button
       type="button"
       class="kt-chat-input-submit"
-      data-kt-trigger="${id}"
-      aria-label="送信"${disabled}${buttonStyle}>${submitLabel}</button>
+      data-kt-trigger="${raw(id)}"
+      aria-label="送信"${raw(disabled)}${raw(buttonStyle)}>${submitLabel}</button>
   </div>
 </div>`;
 }

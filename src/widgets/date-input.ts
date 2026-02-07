@@ -1,5 +1,5 @@
 import { toDateString } from "../utils/date";
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeDateInputState } from "./core";
 import { generateWidgetId } from "./registry";
 import type { DateInputConfig } from "./types";
@@ -36,11 +36,11 @@ export function renderDateInput(
 	const disabled = config?.disabled ? " disabled" : "";
 	const minStr = toDateString(config?.min);
 	const maxStr = toDateString(config?.max);
-	const minAttr = minStr ? ` min="${escapeHtml(minStr)}"` : "";
-	const maxAttr = maxStr ? ` max="${escapeHtml(maxStr)}"` : "";
+	const minAttr = minStr ? ` min="${minStr}"` : "";
+	const maxAttr = maxStr ? ` max="${maxStr}"` : "";
 
-	return `<div id="${id}-container" class="kt-date-input-container">
-  <label for="${id}" class="kt-date-input-label">${escapeHtml(label)}</label>
-  <input type="date" id="${id}" value="${escapeHtml(value)}" data-kt-event="change" class="kt-date-input"${minAttr}${maxAttr}${disabled} />
+	return renderHtml`<div id="${raw(id)}-container" class="kt-date-input-container">
+  <label for="${raw(id)}" class="kt-date-input-label">${label}</label>
+  <input type="date" id="${raw(id)}" value="${value}" data-kt-event="change" class="kt-date-input"${raw(minAttr)}${raw(maxAttr)}${raw(disabled)} />
 </div>`;
 }

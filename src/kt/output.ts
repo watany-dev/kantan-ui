@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { applyHighlight } from "./code/highlighter";
 import { requireRenderContext } from "./context";
 import { parseMarkdown } from "./markdown/parser";
@@ -30,7 +30,7 @@ function renderArg(arg: unknown): string {
 
 	// number / boolean → 文字列化
 	if (typeof arg === "number" || typeof arg === "boolean") {
-		return `<span class="kt-write">${escapeHtml(String(arg))}</span>`;
+		return renderHtml`<span class="kt-write">${String(arg)}</span>`;
 	}
 
 	// string → Markdown としてパース・レンダリング（XSSサニタイズ付き）
@@ -53,7 +53,7 @@ function renderArg(arg: unknown): string {
 	}
 
 	// その他 → 文字列化
-	return `<div class="kt-write">${escapeHtml(String(arg))}</div>`;
+	return renderHtml`<div class="kt-write">${String(arg)}</div>`;
 }
 
 /**
@@ -61,7 +61,7 @@ function renderArg(arg: unknown): string {
  */
 export function title(text: string): void {
 	const ctx = requireRenderContext();
-	ctx.append(`<h1 class="kt-title">${escapeHtml(text)}</h1>`);
+	ctx.append(renderHtml`<h1 class="kt-title">${text}</h1>`);
 }
 
 /**
@@ -69,7 +69,7 @@ export function title(text: string): void {
  */
 export function header(text: string): void {
 	const ctx = requireRenderContext();
-	ctx.append(`<h2 class="kt-header">${escapeHtml(text)}</h2>`);
+	ctx.append(renderHtml`<h2 class="kt-header">${text}</h2>`);
 }
 
 /**
@@ -77,7 +77,7 @@ export function header(text: string): void {
  */
 export function subheader(text: string): void {
 	const ctx = requireRenderContext();
-	ctx.append(`<h3 class="kt-subheader">${escapeHtml(text)}</h3>`);
+	ctx.append(renderHtml`<h3 class="kt-subheader">${text}</h3>`);
 }
 
 /**
@@ -88,7 +88,7 @@ export function subheader(text: string): void {
  */
 export function text(content: string): void {
 	const ctx = requireRenderContext();
-	ctx.append(`<pre class="kt-text">${escapeHtml(content)}</pre>`);
+	ctx.append(renderHtml`<pre class="kt-text">${content}</pre>`);
 }
 
 /**
@@ -134,23 +134,23 @@ export interface AlertConfig {
 
 function alert(type: MessageType, message: string, config: AlertConfig = {}): void {
 	const ctx = requireRenderContext();
-	const icon = escapeHtml(config.icon ?? messageIcons[type]);
+	const iconValue = config.icon ?? messageIcons[type];
 
 	// カスタムカラーが指定されている場合はインラインスタイルを生成
 	const styles: string[] = [];
 	if (config.background) {
-		styles.push(`background-color:${escapeHtml(config.background)}`);
+		styles.push(renderHtml`background-color:${config.background}`);
 	}
 	if (config.color) {
-		styles.push(`color:${escapeHtml(config.color)}`);
+		styles.push(renderHtml`color:${config.color}`);
 	}
 	if (config.border) {
-		styles.push(`border-color:${escapeHtml(config.border)}`);
+		styles.push(renderHtml`border-color:${config.border}`);
 	}
 	const styleAttr = styles.length > 0 ? ` style="${styles.join(";")}"` : "";
 
 	ctx.append(
-		`<div class="kt-alert kt-alert-${type}"${styleAttr}><span class="kt-alert-icon">${icon}</span><span class="kt-alert-message">${escapeHtml(message)}</span></div>`,
+		renderHtml`<div class="kt-alert kt-alert-${raw(type)}"${raw(styleAttr)}><span class="kt-alert-icon">${iconValue}</span><span class="kt-alert-message">${message}</span></div>`,
 	);
 }
 
@@ -210,7 +210,7 @@ export function code(body: string, language?: string, config?: CodeConfig): void
 	const ctx = requireRenderContext();
 
 	// コード内容をエスケープ
-	const escapedCode = escapeHtml(body);
+	const escapedCode = renderHtml`${body}`;
 
 	// 構文ハイライト適用（言語指定がある場合）
 	const highlightedCode = language ? applyHighlight(escapedCode, language) : escapedCode;
@@ -220,16 +220,15 @@ export function code(body: string, language?: string, config?: CodeConfig): void
 
 	// コピーボタンの生成（オプション）
 	const copyButton = config?.copy_button
-		? `<button class="kt-code-copy" data-kt-copy title="Copy code">Copy</button>`
+		? '<button class="kt-code-copy" data-kt-copy title="Copy code">Copy</button>'
 		: "";
 
 	const wrapClass = config?.wrap_lines ? " kt-code-wrap" : "";
-	const langAttr = `data-language="${escapeHtml(language ?? "")}"`;
 	// コピー用に元のコード（エスケープ済み）をdata属性に保存
-	const codeDataAttr = config?.copy_button ? ` data-code="${escapeHtml(body)}"` : "";
+	const codeDataAttr = config?.copy_button ? renderHtml` data-code="${body}"` : "";
 
 	ctx.append(
-		`<div class="kt-code${wrapClass}" ${langAttr}${codeDataAttr}>${copyButton}${lineNumbers}<pre><code class="kt-code-content">${highlightedCode}</code></pre></div>`,
+		renderHtml`<div class="kt-code${raw(wrapClass)}" data-language="${language ?? ""}"${raw(codeDataAttr)}>${raw(copyButton)}${raw(lineNumbers)}<pre><code class="kt-code-content">${raw(highlightedCode)}</code></pre></div>`,
 	);
 }
 
@@ -315,7 +314,7 @@ function renderJsonTree(data: unknown, depth: number, expandedDepth: number): st
 	}
 
 	if (typeof data === "string") {
-		return `<span class="kt-json-string">"${escapeHtml(data)}"</span>`;
+		return renderHtml`<span class="kt-json-string">"${data}"</span>`;
 	}
 
 	if (Array.isArray(data)) {
@@ -344,7 +343,7 @@ function renderJsonTree(data: unknown, depth: number, expandedDepth: number): st
 		const items = entries
 			.map(
 				([key, value], i) =>
-					`<div class="kt-json-item"><span class="kt-json-key">"${escapeHtml(key)}"</span>: ${renderJsonTree(value, depth + 1, expandedDepth)}${i < entries.length - 1 ? "," : ""}</div>`,
+					renderHtml`<div class="kt-json-item"><span class="kt-json-key">"${key}"</span>: ${raw(renderJsonTree(value, depth + 1, expandedDepth))}${raw(i < entries.length - 1 ? "," : "")}</div>`,
 			)
 			.join("");
 
@@ -352,5 +351,5 @@ function renderJsonTree(data: unknown, depth: number, expandedDepth: number): st
 	}
 
 	// その他の型（undefined等）
-	return escapeHtml(String(data));
+	return renderHtml`${String(data)}`;
 }

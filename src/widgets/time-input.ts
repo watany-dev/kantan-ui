@@ -1,5 +1,5 @@
 import { toTimeString } from "../utils/date";
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeTimeInputState } from "./core";
 import { generateWidgetId } from "./registry";
 import type { TimeInputConfig } from "./types";
@@ -50,8 +50,8 @@ export function renderTimeInput(
 	const validStep = validateNumericAttr(config?.step);
 	const stepAttr = validStep !== undefined ? ` step="${validStep}"` : "";
 
-	return `<div id="${id}-container" class="kt-time-input-container">
-  <label for="${id}" class="kt-time-input-label">${escapeHtml(label)}</label>
-  <input type="time" id="${id}" value="${escapeHtml(value)}" data-kt-event="change" class="kt-time-input"${stepAttr}${disabled} />
+	return renderHtml`<div id="${raw(id)}-container" class="kt-time-input-container">
+  <label for="${raw(id)}" class="kt-time-input-label">${label}</label>
+  <input type="time" id="${raw(id)}" value="${value}" data-kt-event="change" class="kt-time-input"${raw(stepAttr)}${raw(disabled)} />
 </div>`;
 }

@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { binaryToDataUri } from "./image";
 import type { AudioConfig, AudioSource } from "./types";
 
@@ -32,15 +32,15 @@ export function renderAudio(source: AudioSource, config?: Partial<AudioConfig>):
 
 	const src = resolveAudioSrc(source, config);
 
-	const attrs: string[] = ["controls", `src="${escapeHtml(src)}"`, 'preload="metadata"'];
+	const additionalAttrs: string[] = [];
 
 	if (config?.loop) {
-		attrs.push("loop");
+		additionalAttrs.push(" loop");
 	}
 
 	if (config?.autoplay) {
-		attrs.push("autoplay");
+		additionalAttrs.push(" autoplay");
 	}
 
-	return `<div class="kt-audio"><audio ${attrs.join(" ")}></audio></div>`;
+	return renderHtml`<div class="kt-audio"><audio controls src="${src}" preload="metadata"${raw(additionalAttrs.join(""))}></audio></div>`;
 }

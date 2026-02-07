@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeSelectboxState, validateSelectbox } from "./core";
 import { generateWidgetId } from "./registry";
 import type { SelectboxConfig } from "./types";
@@ -33,14 +33,14 @@ export function renderSelectbox(
 	const optionsHtml = options
 		.map(
 			(opt) =>
-				`<option value="${escapeHtml(opt)}" ${opt === value ? "selected" : ""}>${escapeHtml(opt)}</option>`,
+				renderHtml`<option value="${opt}" ${raw(opt === value ? "selected" : "")}>${opt}</option>`,
 		)
 		.join("\n    ");
 
-	return `<div id="${id}-container" class="kt-selectbox-container">
-  <label for="${id}" class="kt-selectbox-label">${escapeHtml(label)}</label>
-  <select id="${id}" data-kt-event="change" class="kt-selectbox"${disabled}>
-    ${optionsHtml}
+	return renderHtml`<div id="${raw(id)}-container" class="kt-selectbox-container">
+  <label for="${raw(id)}" class="kt-selectbox-label">${label}</label>
+  <select id="${raw(id)}" data-kt-event="change" class="kt-selectbox"${raw(disabled)}>
+    ${raw(optionsHtml)}
   </select>
 </div>`;
 }
