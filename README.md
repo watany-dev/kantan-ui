@@ -351,6 +351,45 @@ kt.line_chart(data, {
 | config.height | `number` | `400` | Chart height in pixels |
 | config.use_container_width | `boolean` | `true` | Fit to container width |
 
+```typescript
+// Bar chart - simple number array
+kt.bar_chart([10, 20, 15, 30, 25]);
+
+// Key-value pairs
+kt.bar_chart({ A: 10, B: 20, C: 30 });
+
+// Multi-series with stacking (default)
+kt.bar_chart([
+  { month: "Jan", revenue: 100, cost: 50 },
+  { month: "Feb", revenue: 120, cost: 60 },
+], { x: "month" });
+
+// Grouped bars (side by side)
+kt.bar_chart(data, { x: "month", stack: false });
+
+// Horizontal bars with sorting
+kt.bar_chart(data, {
+  x: "category",
+  horizontal: true,
+  sort: "descending",
+  title: "Sales by Category",
+});
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| data | `BarChartData` | - | Number array, key-value object, object array, 2D array, or columnar format |
+| config.x | `string` | auto | Category column name |
+| config.y | `string \| string[]` | auto | Value column name(s) |
+| config.x_label | `string` | - | X-axis label |
+| config.y_label | `string` | - | Y-axis label |
+| config.color | `string \| string[]` | palette | Bar color(s) - Tableau 10 palette |
+| config.height | `number` | `400` | Chart height in pixels |
+| config.stack | `boolean` | `true` | Stack multiple series (false for grouped) |
+| config.horizontal | `boolean` | `false` | Render horizontal bars |
+| config.sort | `"ascending" \| "descending"` | - | Sort bars by value |
+| config.title | `string` | - | Chart title |
+
 #### Media API
 
 ```typescript
@@ -744,7 +783,13 @@ src/
 │   ├── context.ts    # Render context
 │   ├── config.ts     # Page config (set_page_config)
 │   ├── control.ts    # Control API (rerun)
-│   ├── charts.ts     # Chart API (line_chart)
+│   ├── charts.ts     # Chart API (line_chart, bar_chart)
+│   ├── chart/        # Bar chart module
+│   │   ├── types.ts      # Type definitions
+│   │   ├── colors.ts     # Color palette & validation
+│   │   ├── normalize.ts  # Data normalization
+│   │   ├── scale.ts      # Axis scale calculation
+│   │   └── bar-chart.ts  # SVG rendering
 │   ├── chat.ts       # Chat API (chat_message, chat_container)
 │   ├── data.ts       # Data display (table, dataframe)
 │   ├── empty.ts      # Empty placeholder
