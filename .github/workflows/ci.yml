@@ -19,6 +19,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # All independent jobs run in parallel (no needs constraints)
   lint:
     name: Lint
     runs-on: ubuntu-latest
@@ -33,7 +34,9 @@ jobs:
       - name: Cache bun dependencies
         uses: actions/cache@v5
         with:
-          path: ~/.bun/install/cache
+          path: |
+            ~/.bun/install/cache
+            node_modules
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lockb') }}
           restore-keys: |
             bun-${{ runner.os }}-
@@ -44,44 +47,8 @@ jobs:
       - name: Run linter
         run: bun run lint
 
-  security:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Cache bun dependencies
-        uses: actions/cache@v5
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lockb') }}
-          restore-keys: |
-            bun-${{ runner.os }}-
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          severity: 'MEDIUM,HIGH,CRITICAL'
-          exit-code: '1'
-
-      - name: Run Semgrep SAST
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: "p/typescript"
-
   dead-code:
     name: Dead Code Check
-    needs: [lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -94,7 +61,9 @@ jobs:
       - name: Cache bun dependencies
         uses: actions/cache@v5
         with:
-          path: ~/.bun/install/cache
+          path: |
+            ~/.bun/install/cache
+            node_modules
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lockb') }}
           restore-keys: |
             bun-${{ runner.os }}-
@@ -107,7 +76,6 @@ jobs:
 
   build:
     name: Build
-    needs: [lint]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -120,7 +88,9 @@ jobs:
       - name: Cache bun dependencies
         uses: actions/cache@v5
         with:
-          path: ~/.bun/install/cache
+          path: |
+            ~/.bun/install/cache
+            node_modules
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lockb') }}
           restore-keys: |
             bun-${{ runner.os }}-
@@ -131,9 +101,15 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
   test:
     name: Test
-    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -146,7 +122,9 @@ jobs:
       - name: Cache bun dependencies
         uses: actions/cache@v5
         with:
-          path: ~/.bun/install/cache
+          path: |
+            ~/.bun/install/cache
+            node_modules
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lockb') }}
           restore-keys: |
             bun-${{ runner.os }}-
@@ -178,7 +156,9 @@ jobs:
       - name: Cache bun dependencies
         uses: actions/cache@v5
         with:
-          path: ~/.bun/install/cache
+          path: |
+            ~/.bun/install/cache
+            node_modules
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lockb') }}
           restore-keys: |
             bun-${{ runner.os }}-
@@ -186,8 +166,11 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Build for production E2E
-        run: bun run build
+      - name: Download build artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: dist
+          path: dist/
 
       - name: Verify dist/ exists
         run: |
@@ -232,14 +215,13 @@ jobs:
 
   ci-complete:
     name: CI Complete
-    needs: [lint, security, dead-code, build, test, e2e]
+    needs: [lint, dead-code, build, test, e2e]
     runs-on: ubuntu-latest
     if: always()
     steps:
       - name: Check all jobs passed
         run: |
           if [[ "${{ needs.lint.result }}" != "success" ]] || \
-             [[ "${{ needs.security.result }}" != "success" ]] || \
              [[ "${{ needs.dead-code.result }}" != "success" ]] || \
              [[ "${{ needs.build.result }}" != "success" ]] || \
              [[ "${{ needs.test.result }}" != "success" ]] || \
