@@ -1,3 +1,25 @@
+import { html as honoHtml, raw as honoRaw } from "hono/html";
+import type { HtmlEscapedString } from "hono/utils/html";
+
+/**
+ * Hono html タグのラッパー（同期版）
+ *
+ * 補間された文字列値を自動エスケープし、プリミティブ string を返す。
+ * エスケープ不要な値（内部生成のID、既に安全なHTML断片等）は raw() で包むこと。
+ *
+ * @example
+ * renderHtml`<button id="${raw(id)}">${userLabel}</button>`
+ */
+export function renderHtml(strings: TemplateStringsArray, ...values: unknown[]): string {
+	const result = honoHtml(strings, ...values);
+	if (result instanceof Promise) {
+		throw new Error("Async values are not supported in renderHtml. Use only synchronous values.");
+	}
+	return (result as HtmlEscapedString).toString();
+}
+
+export { honoRaw as raw };
+
 /**
  * HTML属性をビルドする
  * @param attrs 属性名と値のオブジェクト。値がundefined/null/falseの属性は除外される
