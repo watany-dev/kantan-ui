@@ -1,5 +1,5 @@
 import { sanitizeCssLength } from "../utils/css";
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { generateWidgetId, getWidgetValue, setWidgetValue } from "../widgets/registry";
 import { requireRenderContext } from "./context";
 
@@ -34,11 +34,11 @@ export function renderTabsHeader(labels: string[], activeIndex: number, widgetId
 	const tabButtons = labels
 		.map((label, index) => {
 			const activeClass = index === activeIndex ? " kt-tab-active" : "";
-			return `<button data-kt-tab="${index}" class="kt-tab${activeClass}">${escapeHtml(label)}</button>`;
+			return renderHtml`<button data-kt-tab="${index}" class="kt-tab${raw(activeClass)}">${label}</button>`;
 		})
 		.join("");
 
-	return `<div id="${widgetId}" class="kt-tabs" data-kt-event="tab"><div class="kt-tabs-header">${tabButtons}</div></div>`;
+	return renderHtml`<div id="${raw(widgetId)}" class="kt-tabs" data-kt-event="tab"><div class="kt-tabs-header">${raw(tabButtons)}</div></div>`;
 }
 
 /**
@@ -73,7 +73,9 @@ export function tabs(labels: string[], config?: TabsConfig): TabFunction[] {
 
 		const tabFn: TabFunction = (callback: () => void) => {
 			if (isActive) {
-				ctx.append(`<div class="kt-tab-panel kt-tab-panel-active" data-kt-panel="${index}">`);
+				ctx.append(
+					renderHtml`<div class="kt-tab-panel kt-tab-panel-active" data-kt-panel="${index}">`,
+				);
 				callback();
 				ctx.append("</div>");
 			}
@@ -141,7 +143,7 @@ export function container(content: () => void, config: ContainerConfig = {}): vo
 
 	const styleAttr = styles.length > 0 ? ` style="${styles.join("; ")};"` : "";
 
-	ctx.append(`<div class="kt-container"${styleAttr}>`);
+	ctx.append(renderHtml`<div class="kt-container"${raw(styleAttr)}>`);
 	content();
 	ctx.append("</div>");
 }
@@ -192,12 +194,14 @@ export function columns(contents: Array<() => void>, config: ColumnsConfig = {})
 	const responsive = config.responsive !== false;
 	const responsiveClass = responsive ? " kt-columns-responsive" : "";
 
-	ctx.append(`<div class="kt-columns${responsiveClass}" style="display: flex; gap: ${safeGap};">`);
+	ctx.append(
+		renderHtml`<div class="kt-columns${raw(responsiveClass)}" style="display: flex; gap: ${raw(safeGap)};">`,
+	);
 
 	contents.forEach((content, i) => {
 		const ratio = ratios[i] ?? 1;
 		const width = (ratio / totalRatio) * 100;
-		ctx.append(`<div class="kt-column" style="flex: 0 0 ${width}%;">`);
+		ctx.append(renderHtml`<div class="kt-column" style="flex: 0 0 ${width}%;">`);
 		content();
 		ctx.append("</div>");
 	});
@@ -237,7 +241,7 @@ export function expander(label: string, content: () => void, config: ExpanderCon
 	const openAttr = config.expanded ? " open" : "";
 
 	ctx.append(
-		`<details class="kt-expander"${openAttr}><summary class="kt-expander-header">${escapeHtml(label)}</summary><div class="kt-expander-content">`,
+		renderHtml`<details class="kt-expander"${raw(openAttr)}><summary class="kt-expander-header">${label}</summary><div class="kt-expander-content">`,
 	);
 	content();
 	ctx.append("</div></details>");

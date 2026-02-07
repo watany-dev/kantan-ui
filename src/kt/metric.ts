@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
 
 /**
@@ -125,25 +125,22 @@ function getDeltaColorClass(
 export function metric(label: string, value: string | number, config?: MetricConfig): void {
 	const ctx = requireRenderContext();
 
-	const escapedLabel = escapeHtml(label);
-	const escapedValue = escapeHtml(String(value));
 	const labelVisibility = config?.label_visibility ?? "visible";
 
 	// Label部分の生成
 	let labelHtml = "";
 	if (labelVisibility === "visible") {
-		labelHtml = `<div class="kt-metric-label">${escapedLabel}</div>`;
+		labelHtml = renderHtml`<div class="kt-metric-label">${label}</div>`;
 	} else if (labelVisibility === "hidden") {
 		// スクリーンリーダー向けに保持
-		labelHtml = `<div class="kt-metric-label kt-sr-only">${escapedLabel}</div>`;
+		labelHtml = renderHtml`<div class="kt-metric-label kt-sr-only">${label}</div>`;
 	}
 	// collapsed の場合は labelHtml は空のまま
 
 	// Help部分の生成
 	let helpHtml = "";
 	if (config?.help) {
-		const escapedHelp = escapeHtml(config.help);
-		helpHtml = `<span class="kt-metric-help" title="${escapedHelp}">?</span>`;
+		helpHtml = renderHtml`<span class="kt-metric-help" title="${config.help}">?</span>`;
 	}
 
 	// Delta部分の生成
@@ -154,13 +151,12 @@ export function metric(label: string, value: string | number, config?: MetricCon
 		const colorClass = getDeltaColorClass(direction, colorMode);
 		const icon = getDeltaIcon(direction);
 		const formattedDelta = formatDelta(config.delta);
-		const escapedDelta = escapeHtml(formattedDelta);
 
-		const iconHtml = icon ? `<span class="kt-metric-delta-icon">${icon}</span>` : "";
-		deltaHtml = `<div class="kt-metric-delta kt-metric-delta-${colorClass}">${iconHtml}<span class="kt-metric-delta-text">${escapedDelta}</span></div>`;
+		const iconHtml = icon ? renderHtml`<span class="kt-metric-delta-icon">${raw(icon)}</span>` : "";
+		deltaHtml = renderHtml`<div class="kt-metric-delta kt-metric-delta-${raw(colorClass)}">${raw(iconHtml)}<span class="kt-metric-delta-text">${formattedDelta}</span></div>`;
 	}
 
 	ctx.append(
-		`<div class="kt-metric">${labelHtml}${helpHtml}<div class="kt-metric-value">${escapedValue}</div>${deltaHtml}</div>`,
+		renderHtml`<div class="kt-metric">${raw(labelHtml)}${raw(helpHtml)}<div class="kt-metric-value">${String(value)}</div>${raw(deltaHtml)}</div>`,
 	);
 }

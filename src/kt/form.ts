@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { generateWidgetId, getWidgetValue } from "../widgets/registry";
 import { requireRenderContext } from "./context";
 
@@ -47,7 +47,7 @@ export function form(key: string, content: () => void, config: FormConfig = {}):
 
 	const clearAttr = config.clear_on_submit ? ' data-clear-on-submit="true"' : "";
 
-	ctx.append(`<form class="kt-form" data-form-key="${escapeHtml(key)}"${clearAttr}>`);
+	ctx.append(renderHtml`<form class="kt-form" data-form-key="${key}"${raw(clearAttr)}>`);
 	content();
 	ctx.append("</form>");
 }
@@ -78,7 +78,7 @@ export function form_submit_button(label: string, config: FormSubmitButtonConfig
 	const disabled = config.disabled ? " disabled" : "";
 
 	ctx.append(
-		`<button id="${id}" type="submit" data-kt-event="submit" class="kt-form-submit"${disabled}>${escapeHtml(label)}</button>`,
+		renderHtml`<button id="${raw(id)}" type="submit" data-kt-event="submit" class="kt-form-submit"${raw(disabled)}>${label}</button>`,
 	);
 
 	// ボタンが押されたかどうかを確認
@@ -110,7 +110,7 @@ export function form_submit_button(label: string, config: FormSubmitButtonConfig
  */
 export function validation_error(message: string): void {
 	const ctx = requireRenderContext();
-	ctx.append(`<div class="kt-validation-error" role="alert">${escapeHtml(message)}</div>`);
+	ctx.append(renderHtml`<div class="kt-validation-error" role="alert">${message}</div>`);
 }
 
 /**
@@ -140,6 +140,8 @@ export function validation_errors(messages: string[]): void {
 	if (messages.length === 0) return;
 
 	const ctx = requireRenderContext();
-	const items = messages.map((msg) => `<li>${escapeHtml(msg)}</li>`).join("");
-	ctx.append(`<div class="kt-validation-errors" role="alert"><ul>${items}</ul></div>`);
+	const items = messages.map((msg) => renderHtml`<li>${msg}</li>`).join("");
+	ctx.append(
+		renderHtml`<div class="kt-validation-errors" role="alert"><ul>${raw(items)}</ul></div>`,
+	);
 }

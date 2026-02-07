@@ -4,7 +4,7 @@
  * テーブルやデータフレームの表示機能
  */
 
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeDataframeSelection, renderDataframe } from "../widgets/dataframe";
 import { generateWidgetId } from "../widgets/registry";
 import type { DataframeConfig, DataframeSelection } from "../widgets/types";
@@ -106,7 +106,7 @@ export function table(data: TableData, config: TableConfig = {}): void {
 	if (headers.length > 0) {
 		parts.push("<thead><tr>");
 		for (const h of headers) {
-			parts.push(`<th>${escapeHtml(String(h))}</th>`);
+			parts.push(renderHtml`<th>${String(h)}</th>`);
 		}
 		parts.push("</tr></thead>");
 	}
@@ -116,13 +116,13 @@ export function table(data: TableData, config: TableConfig = {}): void {
 	for (const row of rows) {
 		parts.push("<tr>");
 		for (const cell of row) {
-			parts.push(`<td>${escapeHtml(String(cell))}</td>`);
+			parts.push(renderHtml`<td>${String(cell)}</td>`);
 		}
 		parts.push("</tr>");
 	}
 	parts.push("</tbody></table>");
 
-	ctx.append(parts.join(""));
+	ctx.append(raw(parts.join("")));
 }
 
 /**

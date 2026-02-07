@@ -1,6 +1,6 @@
 import { SPINNER_SIZES, type SpinnerSize } from "../constants";
 import { sanitizeCssColor } from "../utils/css";
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { requireRenderContext } from "./context";
 import { type MessageType, messageColors } from "./theme";
 
@@ -96,11 +96,11 @@ export function progress(value: number, config: ProgressConfig = {}): void {
 	const animatedClass = config.animated ? " kt-progress-animated" : "";
 
 	const labelHtml = config.label
-		? `<div class="kt-progress-label">${escapeHtml(config.label)}</div>`
+		? renderHtml`<div class="kt-progress-label">${config.label}</div>`
 		: "";
 
 	ctx.append(
-		`<div class="kt-progress">${labelHtml}<div class="kt-progress-bar"><div class="kt-progress-fill${animatedClass}" style="background: ${color}; width: ${percentage}%;"></div></div></div>`,
+		renderHtml`<div class="kt-progress">${raw(labelHtml)}<div class="kt-progress-bar"><div class="kt-progress-fill${raw(animatedClass)}" style="background: ${raw(color)}; width: ${percentage}%;"></div></div></div>`,
 	);
 }
 
@@ -129,7 +129,7 @@ export function spinner(text = "Loading...", config: SpinnerConfig = {}): void {
 	const size = SPINNER_SIZES[config.size ?? "medium"];
 
 	ctx.append(
-		`<div class="kt-spinner"><div class="kt-spinner-icon" style="width: ${size}; height: ${size};"></div><span class="kt-spinner-text">${escapeHtml(text)}</span></div>`,
+		renderHtml`<div class="kt-spinner"><div class="kt-spinner-icon" style="width: ${raw(size)}; height: ${raw(size)};"></div><span class="kt-spinner-text">${text}</span></div>`,
 	);
 }
 
@@ -157,6 +157,6 @@ export function toast(message: string, config: ToastConfig = {}): void {
 	const colors = messageColors[type];
 
 	ctx.append(
-		`<div class="kt-toast kt-toast-${type}" data-duration="${duration}" style="background: ${colors.bg}; border: 1px solid ${colors.border}; padding: 12px 16px; border-radius: 4px; margin: 8px 0; display: flex; align-items: center;"><span class="kt-toast-icon" style="margin-right: 8px;">${colors.icon}</span><span class="kt-toast-message">${escapeHtml(message)}</span></div>`,
+		renderHtml`<div class="kt-toast kt-toast-${raw(type)}" data-duration="${duration}" style="background: ${raw(colors.bg)}; border: 1px solid ${raw(colors.border)}; padding: 12px 16px; border-radius: 4px; margin: 8px 0; display: flex; align-items: center;"><span class="kt-toast-icon" style="margin-right: 8px;">${raw(colors.icon)}</span><span class="kt-toast-message">${message}</span></div>`,
 	);
 }
