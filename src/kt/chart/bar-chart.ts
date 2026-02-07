@@ -7,6 +7,7 @@
 import { raw, renderHtml } from "../../utils/html";
 import { isValidColor, resolveChartColors } from "./colors";
 import { normalizeChartData } from "./normalize";
+import { renderGrid, renderLegend, renderXAxis, renderYAxis } from "./render-utils";
 import { calculateAxisScale, formatTickValue } from "./scale";
 import type { BarChartConfig, BarChartData, ChartData, NormalizedBarChartData } from "./types";
 
@@ -278,7 +279,7 @@ function renderVerticalBarChartHtml(
 	}
 
 	if (showLegend) {
-		parts.push(renderLegend(data, marginLeft, MARGIN.top + plotHeight + 30));
+		parts.push(renderLegend(data.series, marginLeft, MARGIN.top + plotHeight + 30));
 	}
 
 	parts.push("</svg>");
@@ -363,82 +364,11 @@ function renderHorizontalBarChartHtml(
 	}
 
 	if (showLegend) {
-		parts.push(renderLegend(data, marginLeft, MARGIN.top + plotHeight + 30));
+		parts.push(renderLegend(data.series, marginLeft, MARGIN.top + plotHeight + 30));
 	}
 
 	parts.push("</svg>");
 	parts.push("</figure>");
-	return parts.join("");
-}
-
-/**
- * グリッド線
- */
-function renderGrid(
-	scale: { min: number; max: number; step: number; ticks: number[] },
-	marginLeft: number,
-	plotWidth: number,
-	scaleY: (v: number) => number,
-): string {
-	const parts: string[] = ['<g class="kt-chart-grid">'];
-	for (const tick of scale.ticks) {
-		const y = scaleY(tick);
-		parts.push(
-			`<line x1="${marginLeft}" y1="${y}" x2="${marginLeft + plotWidth}" y2="${y}" stroke="#e9ecef" stroke-width="1" />`,
-		);
-	}
-	parts.push("</g>");
-	return parts.join("");
-}
-
-/**
- * y軸
- */
-function renderYAxis(
-	scale: { min: number; max: number; step: number; ticks: number[] },
-	marginLeft: number,
-	scaleY: (v: number) => number,
-): string {
-	const parts: string[] = ['<g class="kt-chart-axis-y">'];
-	// 軸線
-	parts.push(
-		`<line x1="${marginLeft}" y1="${scaleY(scale.max)}" x2="${marginLeft}" y2="${scaleY(scale.min)}" stroke="#dee2e6" stroke-width="1" />`,
-	);
-	for (const tick of scale.ticks) {
-		const y = scaleY(tick);
-		parts.push(
-			`<text x="${marginLeft - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#6c757d">${formatTickValue(tick)}</text>`,
-		);
-	}
-	parts.push("</g>");
-	return parts.join("");
-}
-
-/**
- * x軸
- */
-function renderXAxis(
-	xValues: (string | number)[],
-	marginLeft: number,
-	plotWidth: number,
-	baseY: number,
-): string {
-	const parts: string[] = ['<g class="kt-chart-axis-x">'];
-	// 軸線
-	parts.push(
-		`<line x1="${marginLeft}" y1="${baseY}" x2="${marginLeft + plotWidth}" y2="${baseY}" stroke="#dee2e6" stroke-width="1" />`,
-	);
-
-	const categoryWidth = plotWidth / xValues.length;
-	for (let i = 0; i < xValues.length; i++) {
-		const label = String(xValues[i] ?? "");
-		const x = marginLeft + categoryWidth * i + categoryWidth / 2;
-		parts.push(
-			renderHtml`<text x="${x}" y="${baseY + 16}" text-anchor="middle" font-size="11" fill="#6c757d">${label}</text>`,
-		);
-	}
-
-	parts.push("</g>");
 	return parts.join("");
 }
 
@@ -544,27 +474,6 @@ function renderStackedBars(
 		parts.push("</g>");
 	}
 
-	return parts.join("");
-}
-
-/**
- * 凡例
- */
-function renderLegend(data: NormalizedBarChartData, startX: number, y: number): string {
-	const parts: string[] = ['<g class="kt-chart-legend">'];
-	let x = startX;
-
-	for (const series of data.series) {
-		parts.push(
-			renderHtml`<rect x="${x}" y="${y}" width="10" height="10" fill="${series.color}" />`,
-		);
-		parts.push(
-			renderHtml`<text x="${x + 14}" y="${y + 9}" font-size="11" fill="#495057">${series.name}</text>`,
-		);
-		x += 80;
-	}
-
-	parts.push("</g>");
 	return parts.join("");
 }
 
