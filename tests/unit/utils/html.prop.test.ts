@@ -73,7 +73,6 @@ describe("containsUnsafeHtml property-based tests", () => {
 		const plainText = fc.stringMatching(/^[a-zA-Z0-9 _\-,.!?@#$%^()[\]{}+=~`]*$/);
 		fc.assert(
 			fc.property(plainText, (input) => {
-				// Plain text without angle brackets, javascript/vbscript/data keywords
 				if (
 					!input.toLowerCase().includes("javascript") &&
 					!input.toLowerCase().includes("vbscript") &&
@@ -94,6 +93,9 @@ describe("containsUnsafeHtml property-based tests", () => {
 		);
 	});
 
+	// ========================================================================
+	// Script tags
+	// ========================================================================
 	it("script tags are always detected regardless of surrounding content", () => {
 		fc.assert(
 			fc.property(fc.string(), fc.string(), (prefix, suffix) => {
@@ -103,13 +105,136 @@ describe("containsUnsafeHtml property-based tests", () => {
 		);
 	});
 
+	it("script tags with attributes are detected", () => {
+		const attrArb = fc.constantFrom(
+			' src="evil.js"',
+			" type='text/javascript'",
+			" nonce=abc",
+			" defer",
+			" async",
+		);
+		fc.assert(
+			fc.property(attrArb, (attr) => {
+				expect(containsUnsafeHtml(`<script${attr}>`)).toBe(true);
+			}),
+		);
+	});
+
+	// ========================================================================
+	// Event handlers
+	// ========================================================================
 	it("event handlers in tags are always detected regardless of surrounding content", () => {
-		const handler = fc.constantFrom("onclick", "onerror", "onload", "onmouseover", "onfocus");
+		const handler = fc.constantFrom(
+			"onclick",
+			"onerror",
+			"onload",
+			"onmouseover",
+			"onfocus",
+			"onblur",
+			"onsubmit",
+			"onchange",
+			"oninput",
+			"onkeydown",
+			"onkeyup",
+			"onmousedown",
+		);
 		fc.assert(
 			fc.property(fc.string(), handler, fc.string(), (prefix, h, suffix) => {
-				// containsUnsafeHtml requires `<` in input to pass the early exit check
 				const html = `${prefix}<div ${h}="alert(1)">${suffix}`;
 				expect(containsUnsafeHtml(html)).toBe(true);
+			}),
+		);
+	});
+
+	// ========================================================================
+	// Dangerous URL schemes
+	// ========================================================================
+	it("javascript: URLs are always detected", () => {
+		const payloadArb = fc.constantFrom("alert(1)", "void(0)", "document.cookie", "eval('x')");
+		fc.assert(
+			fc.property(payloadArb, (payload) => {
+				expect(containsUnsafeHtml(`<a href="javascript:${payload}">`)).toBe(true);
+			}),
+		);
+	});
+
+	it("javascript: with whitespace variations is detected", () => {
+		const wsArb = fc.constantFrom("", " ", "\t", "\n");
+		fc.assert(
+			fc.property(wsArb, (ws) => {
+				expect(containsUnsafeHtml(`javascript${ws}:alert(1)`)).toBe(true);
+			}),
+		);
+	});
+
+	it("vbscript: URLs are always detected", () => {
+		fc.assert(
+			fc.property(fc.string(), (suffix) => {
+				expect(containsUnsafeHtml(`vbscript:${suffix}`)).toBe(true);
+			}),
+		);
+	});
+
+	it("data: URLs with base64 are detected", () => {
+		const dataArb = fc.constantFrom(
+			"data:text/html;base64,PHNjcmlwdD4=",
+			"data:application/javascript;base64,YWxlcnQo",
+		);
+		fc.assert(
+			fc.property(dataArb, (data) => {
+				expect(containsUnsafeHtml(data)).toBe(true);
+			}),
+		);
+	});
+
+	// ========================================================================
+	// Dangerous tags
+	// ========================================================================
+	it("dangerous tags are always detected", () => {
+		const tagArb = fc.constantFrom("iframe", "embed", "object", "base", "form", "meta", "link");
+		fc.assert(
+			fc.property(tagArb, (tag) => {
+				expect(containsUnsafeHtml(`<${tag} >`)).toBe(true);
+				expect(containsUnsafeHtml(`<${tag}>`)).toBe(true);
+			}),
+		);
+	});
+
+	it("dangerous tags detected regardless of case", () => {
+		const tagArb = fc.constantFrom("iframe", "embed", "object", "form", "meta");
+		const caseTransform = fc.constantFrom(
+			(s: string) => s.toUpperCase(),
+			(s: string) => s.toLowerCase(),
+			(s: string) =>
+				s
+					.split("")
+					.map((c, i) => (i % 2 === 0 ? c.toUpperCase() : c.toLowerCase()))
+					.join(""),
+		);
+		fc.assert(
+			fc.property(tagArb, caseTransform, (tag, transform) => {
+				expect(containsUnsafeHtml(`<${transform(tag)}>`)).toBe(true);
+			}),
+		);
+	});
+
+	// ========================================================================
+	// SVG/MathML with event handlers
+	// ========================================================================
+	it("SVG with event handlers is detected", () => {
+		const handler = fc.constantFrom("onload", "onerror", "onclick");
+		fc.assert(
+			fc.property(handler, (h) => {
+				expect(containsUnsafeHtml(`<svg ${h}="alert(1)">`)).toBe(true);
+			}),
+		);
+	});
+
+	it("MathML with event handlers is detected", () => {
+		const handler = fc.constantFrom("onload", "onerror", "onclick");
+		fc.assert(
+			fc.property(handler, (h) => {
+				expect(containsUnsafeHtml(`<math ${h}="alert(1)">`)).toBe(true);
 			}),
 		);
 	});
