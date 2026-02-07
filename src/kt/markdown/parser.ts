@@ -203,7 +203,9 @@ export function parseMarkdown(markdown: string): string {
 				codeBlockContent = [];
 			} else {
 				const langAttr = codeBlockLang ? renderHtml` class="language-${codeBlockLang}"` : "";
-				result.push(renderHtml`<pre><code${raw(langAttr)}>${codeBlockContent.join("\n")}</code></pre>`);
+				result.push(
+					renderHtml`<pre><code${raw(langAttr)}>${codeBlockContent.join("\n")}</code></pre>`,
+				);
 				inCodeBlock = false;
 				codeBlockLang = "";
 			}
