@@ -1331,6 +1331,86 @@ const dataframeStyles = `
   }
 `;
 
+/** 折れ線グラフスタイル */
+const lineChartStyles = `
+  /* Line Chart Container */
+  .kt-line-chart {
+    margin: 0.5rem 0;
+  }
+
+  .kt-line-chart-container-width {
+    width: 100%;
+  }
+
+  /* SVG */
+  .kt-line-chart-svg {
+    display: block;
+    overflow: visible;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  .kt-line-chart-container-width .kt-line-chart-svg {
+    width: 100%;
+    height: auto;
+  }
+
+  /* Grid */
+  .kt-line-chart-grid line {
+    stroke: #e9ecef;
+    stroke-width: 1;
+  }
+
+  /* Axis */
+  .kt-line-chart-axis-line {
+    stroke: #dee2e6;
+    stroke-width: 1;
+  }
+
+  .kt-line-chart-tick-label {
+    font-size: 11px;
+    fill: #6c757d;
+  }
+
+  .kt-line-chart-axis-label {
+    font-size: 12px;
+    fill: #495057;
+    font-weight: 500;
+  }
+
+  /* Line */
+  .kt-line-chart-line {
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  /* Data Points */
+  .kt-line-chart-point {
+    stroke: #fff;
+    stroke-width: 1.5;
+    transition: r 0.15s ease;
+  }
+
+  .kt-line-chart-point:hover {
+    r: 5;
+  }
+
+  /* Legend */
+  .kt-line-chart-legend-text {
+    font-size: 11px;
+    fill: #495057;
+  }
+
+  /* Empty State */
+  .kt-line-chart-empty {
+    padding: 2rem;
+    text-align: center;
+    color: #6c757d;
+    background: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+  }
+`;
+
 /** カラーピッカースタイル */
 const colorPickerStyles = `
   /* Color Picker Container */
@@ -1412,6 +1492,7 @@ export const defaultStyles = [
 	audioStyles,
 	videoStyles,
 	colorPickerStyles,
+	lineChartStyles,
 ].join("\n");
 
 /**
