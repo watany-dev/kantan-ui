@@ -133,8 +133,9 @@ function renderBarChartHtml(
 	const plotHeight = height - MARGIN.top - marginBottom;
 
 	// y軸スケール計算
-	const allValues = data.series.flatMap((s) => s.values.filter((v): v is number => v !== null));
-	const scale = calculateAxisScale(allValues);
+	const isStacked = config?.stack !== false && data.series.length > 1;
+	const scaleValues = isStacked ? getStackedMaxValues(data) : getAllValues(data);
+	const scale = calculateAxisScale(scaleValues);
 
 	const scaleY = (v: number): number => {
 		return MARGIN.top + plotHeight - ((v - scale.min) / (scale.max - scale.min)) * plotHeight;
@@ -168,8 +169,12 @@ function renderBarChartHtml(
 	// x軸
 	parts.push(renderXAxis(data.xValues, marginLeft, plotWidth, MARGIN.top + plotHeight));
 
-	// バー（単一シリーズ）
-	parts.push(renderBars(data, marginLeft, plotWidth, scaleY, scale));
+	// バー
+	if (isStacked) {
+		parts.push(renderStackedBars(data, marginLeft, plotWidth, scaleY, scale));
+	} else {
+		parts.push(renderGroupedBars(data, marginLeft, plotWidth, scaleY, scale));
+	}
 
 	// 軸ラベル
 	if (config?.x_label) {
@@ -270,9 +275,32 @@ function renderXAxis(
 }
 
 /**
- * バー描画（単一シリーズ）
+ * 全データ値を取得（グループ化モード用）
  */
-function renderBars(
+function getAllValues(data: NormalizedBarChartData): number[] {
+	return data.series.flatMap((s) => s.values.filter((v): v is number => v !== null));
+}
+
+/**
+ * 積み上げモード用の最大値を取得
+ * 各カテゴリのシリーズ合計値を返す
+ */
+function getStackedMaxValues(data: NormalizedBarChartData): number[] {
+	const values: number[] = [];
+	for (let i = 0; i < data.xValues.length; i++) {
+		let total = 0;
+		for (const s of data.series) {
+			total += s.values[i] ?? 0;
+		}
+		values.push(total);
+	}
+	return values;
+}
+
+/**
+ * グループ化バー描画（stack: false）
+ */
+function renderGroupedBars(
 	data: NormalizedBarChartData,
 	marginLeft: number,
 	plotWidth: number,
@@ -281,24 +309,68 @@ function renderBars(
 ): string {
 	const parts: string[] = [];
 	const categoryWidth = plotWidth / data.xValues.length;
+	const groupWidth = categoryWidth * 0.8;
+	const barWidth = groupWidth / data.series.length;
 	const zeroY = scaleY(Math.max(0, scale.min));
 
-	for (const series of data.series) {
+	for (const [seriesIdx, series] of data.series.entries()) {
 		parts.push(`<g class="kt-chart-bars" data-series="${escapeHtml(series.name)}">`);
-
-		const barWidth = categoryWidth * 0.6;
 
 		for (let i = 0; i < data.xValues.length; i++) {
 			const value = series.values[i];
 			if (value === null || value === undefined) continue;
 
-			const barX = marginLeft + categoryWidth * i + (categoryWidth - barWidth) / 2;
+			const barX = marginLeft + categoryWidth * i + categoryWidth * 0.1 + seriesIdx * barWidth;
 			const barY = value >= 0 ? scaleY(value) : zeroY;
 			const barHeight = Math.abs(scaleY(value) - zeroY);
 
 			parts.push(
 				`<rect x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" fill="${escapeHtml(series.color)}" rx="2" />`,
 			);
+		}
+
+		parts.push("</g>");
+	}
+
+	return parts.join("");
+}
+
+/**
+ * 積み上げバー描画（stack: true）
+ */
+function renderStackedBars(
+	data: NormalizedBarChartData,
+	marginLeft: number,
+	plotWidth: number,
+	scaleY: (v: number) => number,
+	_scale: { min: number; max: number },
+): string {
+	const parts: string[] = [];
+	const categoryWidth = plotWidth / data.xValues.length;
+	const barWidth = categoryWidth * 0.6;
+
+	// 各カテゴリごとの累積値を追跡
+	const cumulative = new Array<number>(data.xValues.length).fill(0);
+
+	for (const series of data.series) {
+		parts.push(`<g class="kt-chart-bars" data-series="${escapeHtml(series.name)}">`);
+
+		for (let i = 0; i < data.xValues.length; i++) {
+			const value = series.values[i];
+			if (value === null || value === undefined) continue;
+
+			const base = cumulative[i] ?? 0;
+			const top = base + value;
+
+			const barX = marginLeft + categoryWidth * i + (categoryWidth - barWidth) / 2;
+			const barY = scaleY(top);
+			const barHeight = Math.abs(scaleY(base) - scaleY(top));
+
+			parts.push(
+				`<rect x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" fill="${escapeHtml(series.color)}" rx="2" />`,
+			);
+
+			cumulative[i] = top;
 		}
 
 		parts.push("</g>");

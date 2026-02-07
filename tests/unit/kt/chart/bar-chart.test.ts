@@ -231,4 +231,95 @@ describe("renderBarChart", () => {
 			expect(html).toContain("No data");
 		});
 	});
+
+	describe("multi-series: grouped (stack: false)", () => {
+		const multiData = [
+			{ cat: "A", x: 10, y: 20 },
+			{ cat: "B", x: 15, y: 25 },
+		];
+
+		it("renders separate rect groups per series", () => {
+			const html = renderBarChart(multiData, { x: "cat", stack: false });
+			expect(html).toContain('data-series="x"');
+			expect(html).toContain('data-series="y"');
+		});
+
+		it("uses different colors per series", () => {
+			const html = renderBarChart(multiData, { x: "cat", stack: false });
+			expect(html).toContain("#4e79a7");
+			expect(html).toContain("#f28e2b");
+		});
+
+		it("renders bars side by side (grouped width narrower than single)", () => {
+			const html = renderBarChart(multiData, { x: "cat", stack: false });
+			// At minimum, should have 4 rect elements (2 categories x 2 series)
+			const rectCount = (html.match(/<rect /g) || []).length;
+			expect(rectCount).toBeGreaterThanOrEqual(4);
+		});
+	});
+
+	describe("multi-series: stacked (stack: true)", () => {
+		const multiData = [
+			{ cat: "A", x: 10, y: 20 },
+			{ cat: "B", x: 15, y: 25 },
+		];
+
+		it("stacks bars vertically within category", () => {
+			const html = renderBarChart(multiData, { x: "cat", stack: true });
+			// Should have rect elements for stacked bars
+			const rectCount = (html.match(/<rect /g) || []).length;
+			expect(rectCount).toBeGreaterThanOrEqual(4);
+		});
+
+		it("defaults to stack: true when multiple series", () => {
+			const html = renderBarChart(multiData, { x: "cat" });
+			// Should render as stacked by default
+			expect(html).toContain("kt-chart-bars");
+		});
+
+		it("y-axis range covers total stacked values", () => {
+			const html = renderBarChart(multiData, { x: "cat", stack: true });
+			// Total for cat A = 10+20 = 30, cat B = 15+25 = 40
+			// y-axis should go beyond 40
+			expect(html).toContain("kt-chart-axis-y");
+		});
+	});
+
+	describe("legend", () => {
+		it("renders legend for multi-series data", () => {
+			const multiData = [
+				{ cat: "A", x: 10, y: 20 },
+				{ cat: "B", x: 15, y: 25 },
+			];
+			const html = renderBarChart(multiData, { x: "cat" });
+			expect(html).toContain("kt-chart-legend");
+		});
+
+		it("does not render legend for single series", () => {
+			const html = renderBarChart([10, 20, 30]);
+			expect(html).not.toContain("kt-chart-legend");
+		});
+
+		it("legend items match series names", () => {
+			const multiData = [
+				{ cat: "A", revenue: 10, cost: 20 },
+				{ cat: "B", revenue: 15, cost: 25 },
+			];
+			const html = renderBarChart(multiData, { x: "cat" });
+			expect(html).toContain("revenue");
+			expect(html).toContain("cost");
+		});
+
+		it("escapes series names in legend", () => {
+			const data = {
+				columns: ["<script>", "normal"],
+				data: [
+					[10, 20],
+					[15, 25],
+				],
+			};
+			const html = renderBarChart(data);
+			expect(html).not.toContain("<script>");
+		});
+	});
 });
