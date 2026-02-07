@@ -1,8 +1,7 @@
 /**
- * BarChart 型定義
+ * チャート型定義
  *
- * バーチャートに必要な型定義を提供する。
- * 将来的に line_chart と共通型を共有予定。
+ * バーチャート・エリアチャートに必要な型定義を提供する。
  */
 
 /**
@@ -60,4 +59,34 @@ export interface BarChartSeries {
 	name: string;
 	values: (number | null)[];
 	color: string;
+}
+
+/**
+ * エリアチャートのデータ型
+ * number[] ショートハンドをサポート
+ */
+export type AreaChartData = number[] | ChartData;
+
+/**
+ * エリアチャートの設定オプション
+ */
+export interface AreaChartConfig {
+	/** x軸に使用するカラム名 */
+	x?: string;
+	/** y軸に使用するカラム名（単一または複数） */
+	y?: string | string[];
+	/** x軸のラベル */
+	x_label?: string;
+	/** y軸のラベル */
+	y_label?: string;
+	/** 各系列の色 */
+	color?: string | string[];
+	/** 積み上げ表示 @default false */
+	stack?: boolean;
+	/** チャートの高さ（px） @default 400 */
+	height?: number;
+	/** コンテナ幅に合わせる @default true */
+	use_container_width?: boolean;
+	/** チャートのタイトル */
+	title?: string;
 }
