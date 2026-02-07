@@ -171,6 +171,57 @@ describe("renderAreaChart", () => {
 		});
 	});
 
+	describe("stacked area chart", () => {
+		const stackedData = [
+			{ month: "Jan", a: 10, b: 20 },
+			{ month: "Feb", a: 15, b: 25 },
+		];
+
+		it("renders stacked areas with stack: true", () => {
+			const html = renderAreaChart(stackedData, { stack: true });
+			expect(html).toContain("kt-chart-area");
+			expect(html).toContain("<svg");
+		});
+
+		it("stacks values cumulatively", () => {
+			const data = [
+				{ x: "0", a: 10, b: 20 },
+				{ x: "1", a: 15, b: 25 },
+			];
+			const html = renderAreaChart(data, { stack: true });
+			// 最大値は 40 (15+25) に基づくスケール
+			expect(html).toContain("40");
+		});
+
+		it("renders both series in stacked mode", () => {
+			const html = renderAreaChart(stackedData, { stack: true });
+			expect(html).toContain('data-series="a"');
+			expect(html).toContain('data-series="b"');
+		});
+
+		it("draws stacked areas bottom to top order", () => {
+			const html = renderAreaChart(stackedData, { stack: true });
+			const aPos = html.indexOf('data-series="a"');
+			const bPos = html.indexOf('data-series="b"');
+			// First series (a) drawn first, then b on top
+			expect(aPos).toBeLessThan(bPos);
+		});
+
+		it("renders legend for stacked multi-series", () => {
+			const html = renderAreaChart(stackedData, { stack: true });
+			expect(html).toContain("kt-chart-legend");
+		});
+
+		it("defaults to non-stacked (stack: false)", () => {
+			const html1 = renderAreaChart(stackedData);
+			const html2 = renderAreaChart(stackedData, { stack: false });
+			// Both should have the same drawing order (back-to-front for non-stacked)
+			const costFirst1 = html1.indexOf('data-series="b"') < html1.indexOf('data-series="a"');
+			const costFirst2 = html2.indexOf('data-series="b"') < html2.indexOf('data-series="a"');
+			expect(costFirst1).toBe(costFirst2);
+		});
+	});
+
 	describe("config options", () => {
 		it("renders with custom height", () => {
 			const html = renderAreaChart([10, 20], { height: 500 });
