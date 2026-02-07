@@ -1,11 +1,13 @@
 /**
  * kt チャートAPI
  *
- * 折れ線グラフ等のデータ可視化機能
+ * 折れ線グラフ、棒グラフ等のデータ可視化機能
  */
 
 import { renderLineChart } from "../widgets/line-chart";
 import type { LineChartConfig, LineChartData } from "../widgets/types";
+import { renderBarChart } from "./chart/bar-chart";
+import type { BarChartConfig, BarChartData } from "./chart/types";
 import { requireRenderContext } from "./context";
 
 /**
@@ -40,5 +42,32 @@ import { requireRenderContext } from "./context";
 export function line_chart(data: LineChartData, config?: Partial<LineChartConfig>): void {
 	const ctx = requireRenderContext();
 	const html = renderLineChart(data, config);
+	ctx.append(html);
+}
+
+/**
+ * 棒グラフを表示
+ *
+ * @param data - チャートデータ（数値配列、key-valueマップ、オブジェクト配列、2D配列、明示的形式）
+ * @param config - オプション設定
+ *
+ * @example
+ * // 単純な数値配列
+ * kt.bar_chart([10, 20, 30, 25, 15]);
+ *
+ * @example
+ * // key-valueマップ
+ * kt.bar_chart({ "React": 45, "Vue": 30, "Svelte": 15 });
+ *
+ * @example
+ * // オブジェクト配列 + config
+ * kt.bar_chart(
+ *   [{ month: "Jan", revenue: 100 }, { month: "Feb", revenue: 120 }],
+ *   { x: "month", y: "revenue", title: "Revenue" }
+ * );
+ */
+export function bar_chart(data: BarChartData, config?: Partial<BarChartConfig>): void {
+	const ctx = requireRenderContext();
+	const html = renderBarChart(data, config);
 	ctx.append(html);
 }

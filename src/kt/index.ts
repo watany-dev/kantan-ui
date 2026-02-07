@@ -99,6 +99,7 @@ export const kt = {
 
 	// Chart APIs
 	line_chart: charts.line_chart,
+	bar_chart: charts.bar_chart,
 
 	// Layout APIs
 	container: layout.container,

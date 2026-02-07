@@ -29,6 +29,12 @@ export {
 	cache_resource,
 	clear_all_caches,
 } from "./kt/cache";
+export { renderBarChart } from "./kt/chart/bar-chart";
+export type {
+	BarChartConfig,
+	BarChartData,
+	NormalizedBarChartData,
+} from "./kt/chart/types";
 export type {
 	ChatContainerConfig,
 	ChatMessageConfig,
