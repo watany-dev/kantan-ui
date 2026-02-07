@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeSliderState, validateSlider } from "./core";
 import { generateWidgetId } from "./registry";
 import type { SliderConfig } from "./types";
@@ -33,8 +33,8 @@ export function renderSlider(
 	const step = config?.step ?? 1;
 	const disabled = config?.disabled ? " disabled" : "";
 
-	return `<div id="${id}-container" class="kt-slider-container">
-  <label for="${id}" class="kt-slider-label">${escapeHtml(label)}: ${value}</label>
-  <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}" data-kt-event="input" data-kt-type="number" class="kt-slider"${disabled} />
+	return renderHtml`<div id="${raw(id)}-container" class="kt-slider-container">
+  <label for="${raw(id)}" class="kt-slider-label">${label}: ${value}</label>
+  <input type="range" id="${raw(id)}" min="${min}" max="${max}" step="${step}" value="${value}" data-kt-event="input" data-kt-type="number" class="kt-slider"${raw(disabled)} />
 </div>`;
 }

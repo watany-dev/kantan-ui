@@ -1,4 +1,4 @@
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { initializeNumberInputState, validateNumberInput } from "./core";
 import { generateWidgetId } from "./registry";
 import type { NumberInputConfig } from "./types";
@@ -35,8 +35,8 @@ export function renderNumberInput(
 	const minAttr = min !== undefined ? ` min="${min}"` : "";
 	const maxAttr = max !== undefined ? ` max="${max}"` : "";
 
-	return `<div id="${id}-container" class="kt-number-input-container">
-  <label for="${id}" class="kt-number-input-label">${escapeHtml(label)}</label>
-  <input id="${id}" type="number" value="${value}" step="${step}" data-kt-event="change" class="kt-number-input"${minAttr}${maxAttr}${disabled} />
+	return renderHtml`<div id="${raw(id)}-container" class="kt-number-input-container">
+  <label for="${raw(id)}" class="kt-number-input-label">${label}</label>
+  <input id="${raw(id)}" type="number" value="${value}" step="${step}" data-kt-event="change" class="kt-number-input"${raw(minAttr)}${raw(maxAttr)}${raw(disabled)} />
 </div>`;
 }
