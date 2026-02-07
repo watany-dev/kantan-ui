@@ -113,8 +113,8 @@
 | Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
 |---------------|-----------|------|--------|--------|------|
 | `st.image` | `kt.image` | ✅ | - | - | 実装済み |
-| `st.audio` | - | ❌ | P1 | Medium | 音声プレーヤー |
-| `st.video` | - | ❌ | P1 | Medium | 動画プレーヤー |
+| `st.audio` | `kt.audio` | ✅ | - | - | 実装済み（URL、data URI、バイナリ対応） |
+| `st.video` | `kt.video` | ✅ | - | - | 実装済み（ポスター、字幕トラック、時間範囲対応） |
 | `st.logo` | - | ❌ | P2 | Easy | ロゴ表示 |
 | `st.pdf` | - | ❌ | P2 | Medium | PDF表示 |
 
@@ -221,15 +221,13 @@
 
 すべてのP0 APIが実装済みです。
 
-### P1 (高) - 10件
+### P1 (高) - 8件
 | API | 難易度 | 説明 |
 |-----|--------|------|
 | `st.datetime_input` | Medium | 日付+時刻入力 |
 | `st.data_editor` | Very Hard | データ編集ウィジェット |
 | `st.area_chart` | Hard | エリアチャート |
 | `st.scatter_chart` | Hard | 散布図 |
-| `st.audio` | Medium | 音声プレーヤー |
-| `st.video` | Medium | 動画プレーヤー |
 | `st.dialog` | Hard | モーダルダイアログ |
 | `st.status` | Medium | ステータスコンテナ |
 | `st.navigation` | Hard | マルチページナビ |
@@ -283,31 +281,27 @@
 2. ~~**`st.bar_chart`**~~ - ✅ 実装済み
 3. ~~**`st.dataframe`**~~ - ✅ 実装済み
 
-### Phase 2: メディア・UX改善
-4. **`st.video`** - 動画再生
-5. **`st.audio`** - 音声再生
-6. **`st.status`** - 長時間処理の表示
+### Phase 2: UX改善
+4. **`st.status`** - 長時間処理の表示
+5. **`st.dialog`** - モーダル対応
+6. **`st.datetime_input`** - 日時入力統合
 
-### Phase 3: 高度な機能
-7. **`st.dialog`** - モーダル対応
-8. **`st.datetime_input`** - 日時入力統合
-
-### Phase 4: マルチページ対応
-9. **`st.navigation`** / **`st.Page`** - マルチページアプリ
+### Phase 3: マルチページ対応
+7. **`st.navigation`** / **`st.Page`** - マルチページアプリ
 
 ---
 
 ## 実装済みAPI サマリー
 
-kantan-uiで実装済みのStreamlit互換API: **44件**
+kantan-uiで実装済みのStreamlit互換API: **46件**
 
-- Input Widgets: 15件 (color_picker追加)
-- Data Display: 4件 (dataframe追加)
+- Input Widgets: 15件
+- Data Display: 4件
 - Chart Elements: 2件 (line_chart, bar_chart)
 - Text Elements: 8件
-- Media: 1件
-- Layout: 6件 (empty追加)
-- Chat: 2件 (chat_input追加)
+- Media: 3件 (image, audio, video)
+- Layout: 6件
+- Chat: 2件
 - Status: 7件
 - Control Flow: 3件
 - Configuration: 1件
