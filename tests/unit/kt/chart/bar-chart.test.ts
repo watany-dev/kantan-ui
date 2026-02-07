@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { applySortOrder, normalizeBarChartInput } from "../../../../src/kt/chart/bar-chart";
+import {
+	applySortOrder,
+	normalizeBarChartInput,
+	renderBarChart,
+} from "../../../../src/kt/chart/bar-chart";
 import type { NormalizedBarChartData } from "../../../../src/kt/chart/types";
 
 describe("normalizeBarChartInput", () => {
@@ -96,5 +100,135 @@ describe("applySortOrder", () => {
 		const sorted = applySortOrder(withNull, "ascending");
 		expect(sorted.xValues).toEqual(["B", "C", "A"]);
 		expect(sorted.series[0].values).toEqual([null, 10, 20]);
+	});
+});
+
+describe("renderBarChart", () => {
+	describe("basic structure", () => {
+		it("generates figure with kt-bar-chart class", () => {
+			const html = renderBarChart([10, 20, 30]);
+			expect(html).toContain("kt-bar-chart");
+			expect(html).toContain("<figure");
+		});
+
+		it("generates SVG with viewBox 600xheight", () => {
+			const html = renderBarChart([10, 20, 30]);
+			expect(html).toContain("viewBox");
+			expect(html).toContain("<svg");
+		});
+
+		it("generates rect elements for each data point", () => {
+			const html = renderBarChart([10, 20, 30]);
+			const rectCount = (html.match(/<rect /g) || []).length;
+			expect(rectCount).toBeGreaterThanOrEqual(3);
+		});
+
+		it("applies default color #4e79a7 to bars", () => {
+			const html = renderBarChart([10, 20, 30]);
+			expect(html).toContain("#4e79a7");
+		});
+
+		it("adds rx=2 for rounded corners", () => {
+			const html = renderBarChart([10, 20, 30]);
+			expect(html).toContain('rx="2"');
+		});
+	});
+
+	describe("axes and grid", () => {
+		it("renders x-axis with category labels", () => {
+			const html = renderBarChart({ A: 10, B: 20, C: 30 });
+			expect(html).toContain("A");
+			expect(html).toContain("B");
+			expect(html).toContain("C");
+		});
+
+		it("renders y-axis with nice tick values", () => {
+			const html = renderBarChart([0, 50, 100]);
+			expect(html).toContain("kt-chart-axis-y");
+		});
+
+		it("renders grid lines for y-axis ticks", () => {
+			const html = renderBarChart([10, 20, 30]);
+			expect(html).toContain("kt-chart-grid");
+		});
+
+		it("always starts y-axis from 0", () => {
+			const html = renderBarChart([50, 80, 100]);
+			expect(html).toContain(">0<");
+		});
+	});
+
+	describe("labels", () => {
+		it("renders title as figcaption", () => {
+			const html = renderBarChart([10, 20], { title: "My Chart" });
+			expect(html).toContain("<figcaption");
+			expect(html).toContain("My Chart");
+		});
+
+		it("renders x_label below x-axis", () => {
+			const html = renderBarChart([10, 20], { x_label: "Categories" });
+			expect(html).toContain("Categories");
+		});
+
+		it("renders y_label rotated on left", () => {
+			const html = renderBarChart([10, 20], { y_label: "Values" });
+			expect(html).toContain("Values");
+			expect(html).toContain("rotate");
+		});
+	});
+
+	describe("security", () => {
+		it("escapes title for XSS prevention", () => {
+			const html = renderBarChart([10], { title: "<script>alert(1)</script>" });
+			expect(html).not.toContain("<script>");
+			expect(html).toContain("&lt;script&gt;");
+		});
+
+		it("escapes axis labels for XSS prevention", () => {
+			const html = renderBarChart([10], { x_label: "<img onerror=alert(1)>" });
+			expect(html).not.toContain("<img");
+		});
+
+		it("escapes category names in x-axis", () => {
+			const html = renderBarChart({ "<script>": 10 });
+			expect(html).not.toContain("<script>");
+		});
+	});
+
+	describe("accessibility", () => {
+		it("has role=img on figure", () => {
+			const html = renderBarChart([10, 20]);
+			expect(html).toContain('role="img"');
+		});
+
+		it("has aria-label on figure", () => {
+			const html = renderBarChart([10, 20]);
+			expect(html).toContain("aria-label");
+		});
+
+		it("has SVG title and desc elements", () => {
+			const html = renderBarChart([10, 20]);
+			expect(html).toContain("<title>");
+			expect(html).toContain("<desc>");
+		});
+	});
+
+	describe("custom height", () => {
+		it("uses default height 400", () => {
+			const html = renderBarChart([10, 20]);
+			expect(html).toContain("400");
+		});
+
+		it("uses custom height", () => {
+			const html = renderBarChart([10, 20], { height: 500 });
+			expect(html).toContain("500");
+		});
+	});
+
+	describe("empty data", () => {
+		it("renders empty state for empty array", () => {
+			const html = renderBarChart([]);
+			expect(html).toContain("No data");
+		});
 	});
 });
