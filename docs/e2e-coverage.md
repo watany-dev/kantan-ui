@@ -2,8 +2,8 @@
 
 ## 現状サマリ
 
-- **テストファイル数**: 9
-- **テストケース数**: 53
+- **テストファイル数**: 23
+- **テストケース数**: 約199
 - **テストフレームワーク**: Playwright
 - **対応ブラウザ**: Chromiumのみ
 
@@ -81,6 +81,46 @@
 - [x] 高速連続操作でクラッシュしない
 - [x] ヘルスエンドポイントの応答確認
 
+### レイアウト (layout.spec.ts - 24 tests)
+- [x] tabs, columns, container, expander のレンダリング・操作
+
+### フォーム (form.spec.ts - 6 tests)
+- [x] フォーム送信、バリデーションエラー表示
+
+### チャット (chat-input.spec.ts - 9 tests)
+- [x] チャットメッセージ表示、チャット入力
+
+### メディア (media.spec.ts - 12 tests)
+- [x] image, audio, video の表示
+
+### ファイルアップロード (file-upload.spec.ts - 18 tests)
+- [x] 単一/複数ファイルアップロード、チャンクアップロード
+
+### フィードバック (feedback.spec.ts - 15 tests)
+- [x] progress, spinner, toast の表示
+
+### Write Stream (write-stream.spec.ts - 7 tests)
+- [x] ストリーミング出力のテスト
+
+### Emptyプレースホルダー (empty.spec.ts - 3 tests)
+- [x] 動的プレースホルダーの更新
+
+### セキュリティ (security.spec.ts - 4 tests)
+- [x] XSS対策、入力サニタイズ
+
+### キーボード (keyboard.spec.ts - 4 tests)
+- [x] キーボード操作の基本テスト
+
+### エッジケース (edge-cases.spec.ts - 5 tests)
+- [x] 境界値・異常系のテスト
+
+### ウィジェット詳細 (widgets-advanced.spec.ts - 10 tests, widgets-new.spec.ts - 17 tests)
+- [x] checkbox, toggle, radio, number_input, text_area
+- [x] multiselect, date_input, time_input, download_button
+
+### 本番ビルド (production-build.spec.ts - 5 tests)
+- [x] ビルド成果物の動作確認
+
 ---
 
 ## 不足している観点
@@ -128,8 +168,9 @@
 - [ ] 空の値・境界値（スライダーmin/max、空文字列入力など）
 - [ ] 極端に長い文字列入力
 
-### 6. キーボード操作 - 優先度: 中
+### 6. キーボード操作 - 優先度: 中 ✅ 部分完了
 
+- [x] keyboard.spec.ts (4 tests) でキーボード操作をカバー
 - [ ] Tabキーによるフォーカス移動
 - [ ] Enterキーでのボタン押下
 - [ ] スライダーの矢印キー操作
@@ -163,14 +204,14 @@
 - [ ] `client.baseReconnectDelay` の動作確認
 - [ ] カスタム `sessionKey` の動作
 
-### 12. ファイルアップロード - 優先度: 中 (実装済み、E2E未テスト)
+### 12. ファイルアップロード - 優先度: 中 ✅ 完了
 
-- [ ] 単一ファイルアップロード
-- [ ] 複数ファイルアップロード
-- [ ] ファイルサイズ制限の動作確認
-- [ ] ファイルタイプ制限の動作確認
-- [ ] エラーメッセージ表示
-- [ ] アップロード成功時のUI更新
+- [x] 単一ファイルアップロード (file-upload.spec.ts)
+- [x] 複数ファイルアップロード (file-upload.spec.ts)
+- [x] ファイルサイズ制限の動作確認
+- [x] ファイルタイプ制限の動作確認
+- [x] エラーメッセージ表示
+- [x] アップロード成功時のUI更新
 
 ### 11. 複数タブ/ウィンドウ - 優先度: 低
 
@@ -204,3 +245,4 @@
 - 2026-01-04: 初版作成
 - 2026-01-04: 優先度高テスト追加（出力API 8件、パッチ操作 4件、エラーハンドリング 5件）
 - 2026-01-11: ファイルアップロードE2Eテスト項目追加
+- 2026-02-07: テストファイル数・テストケース数を現状に更新（9→23ファイル、53→199テスト）

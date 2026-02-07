@@ -1,19 +1,19 @@
 # Streamlit API拡張計画（Phase 3-B）
 
 作成日: 2025-01-06
-更新日: 2026-02-04
+更新日: 2026-02-07
 
 ## 実装状況サマリー
 
 | Iteration | API | 状態 |
 |-----------|-----|------|
 | 1 | markdown, code, json | ✅ 実装済み |
-| 2 | image, audio, video | ⚠️ 部分実装（image のみ） |
+| 2 | image, audio, video | ✅ 実装済み |
 | 3 | metric | ✅ 実装済み |
-| 4 | line_chart, bar_chart | ❌ 未実装 |
+| 4 | line_chart, bar_chart | ✅ 実装済み |
 | 5 | date_input, time_input | ✅ 実装済み |
 | 5b | color_picker | ✅ 実装済み |
-| 6 | dataframe | ❌ 未実装 |
+| 6 | dataframe | ✅ 実装済み |
 | 7 | file_uploader | ✅ 実装済み |
 | 8 | sidebar | ✅ 実装済み |
 
@@ -86,19 +86,20 @@ download_button, rerun, set_page_config
 
 ---
 
-## Iteration 2: メディア表示 ⚠️ 部分実装
+## Iteration 2: メディア表示 ✅ 実装済み
 
 ### kt.image() ✅ 実装済み
 
 `src/widgets/image.ts` に実装済み。詳細は `docs/impl/image-design.md` を参照。
 
-### kt.audio() ❌ 未実装
+### kt.audio() ✅ 実装済み
 
-**工数**: 0.5日
+`src/widgets/audio.ts` に実装済み。URL、data URI、バイナリ対応。loop/autoplay対応。
 
-### kt.video() ❌ 未実装
+### kt.video() ✅ 実装済み
 
-**工数**: 0.5日
+`src/widgets/video.ts` に実装済み。詳細は `docs/design/video-api.md` を参照。
+ポスター画像、字幕トラック、時間範囲（Media Fragment URI）対応。
 
 ---
 
@@ -112,22 +113,18 @@ delta方向判定、色モード（normal/inverse/off）、ヘルプテキスト
 
 ---
 
-## Iteration 4: チャート基盤 ❌ 未実装
+## Iteration 4: チャート基盤 ✅ 実装済み
 
-### kt.line_chart()
+### kt.line_chart() ✅ 実装済み
 
-**工数**: 1.5日
+SVGベースで実装。複数データフォーマット対応。詳細は `docs/design/line-chart-api.md` を参照。
 
-### kt.bar_chart()
+### kt.bar_chart() ✅ 実装済み
 
-**工数**: 0.5日
+SVGベースで実装。単一/複数シリーズ、積み上げ/グループ化、横向き対応。
+詳細は `docs/design/bar-chart-api.md` を参照。
 
-**ライブラリ選定**:
-| Option | サイズ | 特徴 |
-|--------|--------|------|
-| Chart.js | ~60KB | 高機能、広く使われている |
-| uPlot | ~30KB | 高速、軽量 |
-| 自作SVG | 0KB | 最小依存、カスタマイズ自由 |
+**採用方式**: 自作SVG（0KB、最小依存、カスタマイズ自由）
 
 ---
 
@@ -178,20 +175,21 @@ const alarm = kt.time_input("アラーム", "08:30", { step: 60 });
 
 ---
 
-## Iteration 6: データフレーム拡張 ❌ 未実装
+## Iteration 6: データフレーム拡張 ✅ 実装済み
 
-### kt.dataframe()
+### kt.dataframe() ✅ 実装済み
 
-**工数**: 1.5日
+`src/widgets/dataframe.ts` および `src/kt/data.ts` に実装済み。詳細は `docs/design/dataframe-api.md` を参照。
 
-既存tableとの差分:
-| 機能 | table | dataframe |
-|------|-------|-----------|
-| 基本表示 | ✓ | ✓ |
-| ソート | - | ✓ |
-| フィルタ | - | ✓ |
-| ページング | - | ✓ |
-| 行選択 | - | ✓ |
+実装機能:
+| 機能 | 状態 |
+|------|------|
+| 基本表示 | ✅ |
+| ソート（クライアントサイド） | ✅ |
+| テキスト検索フィルタ | ✅ |
+| 行選択（single/multi） | ✅ |
+| カラム並べ替え | ✅ |
+| インデックス列非表示 | ✅ |
 
 ---
 
@@ -217,16 +215,16 @@ const alarm = kt.time_input("アラーム", "08:30", { step: 60 });
 
 ## 今後の優先順位
 
-1. **中**: audio, video - シンプルなHTMLタグ生成
-2. **低**: dataframe - table()で代替可能
-3. **低**: charts - 工数が大きい
+全Iterationが完了。本計画は完了。
 
 ### 実装済み
 - ✅ markdown, code, json (Iteration 1)
-- ✅ image (Iteration 2)
+- ✅ image, audio, video (Iteration 2)
 - ✅ metric (Iteration 3)
+- ✅ line_chart, bar_chart (Iteration 4)
 - ✅ date_input, time_input (Iteration 5)
 - ✅ color_picker (Iteration 5b)
+- ✅ dataframe (Iteration 6)
 - ✅ file_uploader (Iteration 7)
 - ✅ sidebar (Iteration 8)
 
@@ -234,10 +232,10 @@ const alarm = kt.time_input("アラーム", "08:30", { step: 60 });
 
 ## 完了基準
 
-- [ ] 全ユニットテストパス
-- [ ] 全E2Eテストパス
-- [ ] `bun run ci` 成功
-- [ ] Streamlitチュートリアル相当のサンプルが動作
+- [x] 全ユニットテストパス
+- [x] 全E2Eテストパス
+- [x] `bun run ci` 成功
+- [x] Streamlitチュートリアル相当のサンプルが動作
 
 ---
 
