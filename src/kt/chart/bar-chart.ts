@@ -4,7 +4,7 @@
  * ショートハンド正規化、ソート、SVG描画を提供する。
  */
 
-import { escapeHtml } from "../../utils/html";
+import { raw, renderHtml } from "../../utils/html";
 import { isValidColor, resolveChartColors } from "./colors";
 import { normalizeChartData } from "./normalize";
 import { calculateAxisScale, formatTickValue } from "./scale";
@@ -237,19 +237,21 @@ function renderVerticalBarChartHtml(
 		return MARGIN.top + plotHeight - ((v - scale.min) / (scale.max - scale.min)) * plotHeight;
 	};
 
-	const ariaLabel = title ? `Bar chart: ${escapeHtml(title)}` : "Bar chart";
+	const ariaLabel = title ? renderHtml`Bar chart: ${title}` : "Bar chart";
 	const parts: string[] = [];
 
-	parts.push(`<figure class="kt-bar-chart" role="img" aria-label="${ariaLabel}">`);
+	parts.push(renderHtml`<figure class="kt-bar-chart" role="img" aria-label="${raw(ariaLabel)}">`);
 	if (title) {
-		parts.push(`<figcaption class="kt-bar-chart-title">${escapeHtml(title)}</figcaption>`);
+		parts.push(renderHtml`<figcaption class="kt-bar-chart-title">${title}</figcaption>`);
 	}
 
 	parts.push(
-		`<svg viewBox="0 0 ${SVG_WIDTH} ${height}" width="100%" preserveAspectRatio="xMidYMid meet" class="kt-bar-chart-svg" xmlns="http://www.w3.org/2000/svg">`,
+		renderHtml`<svg viewBox="0 0 ${SVG_WIDTH} ${height}" width="100%" preserveAspectRatio="xMidYMid meet" class="kt-bar-chart-svg" xmlns="http://www.w3.org/2000/svg">`,
 	);
-	parts.push(`<title>${escapeHtml(title ?? "Bar chart")}</title>`);
-	parts.push(`<desc>Bar chart${title ? ` showing ${escapeHtml(title)}` : ""}</desc>`);
+	parts.push(renderHtml`<title>${title ?? "Bar chart"}</title>`);
+	parts.push(
+		title ? renderHtml`<desc>Bar chart showing ${title}</desc>` : "<desc>Bar chart</desc>",
+	);
 
 	parts.push(renderGrid(scale, marginLeft, plotWidth, scaleY));
 	parts.push(renderYAxis(scale, marginLeft, scaleY));
@@ -264,14 +266,14 @@ function renderVerticalBarChartHtml(
 	if (config?.x_label) {
 		const labelY = MARGIN.top + plotHeight + 35 + (showLegend ? LEGEND_HEIGHT : 0);
 		parts.push(
-			`<text class="kt-chart-x-label" x="${marginLeft + plotWidth / 2}" y="${labelY}" text-anchor="middle" font-size="12" fill="#495057">${escapeHtml(config.x_label)}</text>`,
+			renderHtml`<text class="kt-chart-x-label" x="${marginLeft + plotWidth / 2}" y="${labelY}" text-anchor="middle" font-size="12" fill="#495057">${config.x_label}</text>`,
 		);
 	}
 	if (config?.y_label) {
 		const labelX = 15;
 		const labelY = MARGIN.top + plotHeight / 2;
 		parts.push(
-			`<text class="kt-chart-y-label" x="${labelX}" y="${labelY}" text-anchor="middle" transform="rotate(-90, ${labelX}, ${labelY})" font-size="12" fill="#495057">${escapeHtml(config.y_label)}</text>`,
+			renderHtml`<text class="kt-chart-y-label" x="${labelX}" y="${labelY}" text-anchor="middle" transform="rotate(-90, ${labelX}, ${labelY})" font-size="12" fill="#495057">${config.y_label}</text>`,
 		);
 	}
 
@@ -312,19 +314,21 @@ function renderHorizontalBarChartHtml(
 		return marginLeft + ((v - scale.min) / (scale.max - scale.min)) * plotWidth;
 	};
 
-	const ariaLabel = title ? `Bar chart: ${escapeHtml(title)}` : "Bar chart";
+	const ariaLabel = title ? renderHtml`Bar chart: ${title}` : "Bar chart";
 	const parts: string[] = [];
 
-	parts.push(`<figure class="kt-bar-chart" role="img" aria-label="${ariaLabel}">`);
+	parts.push(renderHtml`<figure class="kt-bar-chart" role="img" aria-label="${raw(ariaLabel)}">`);
 	if (title) {
-		parts.push(`<figcaption class="kt-bar-chart-title">${escapeHtml(title)}</figcaption>`);
+		parts.push(renderHtml`<figcaption class="kt-bar-chart-title">${title}</figcaption>`);
 	}
 
 	parts.push(
-		`<svg viewBox="0 0 ${SVG_WIDTH} ${height}" width="100%" preserveAspectRatio="xMidYMid meet" class="kt-bar-chart-svg" xmlns="http://www.w3.org/2000/svg">`,
+		renderHtml`<svg viewBox="0 0 ${SVG_WIDTH} ${height}" width="100%" preserveAspectRatio="xMidYMid meet" class="kt-bar-chart-svg" xmlns="http://www.w3.org/2000/svg">`,
 	);
-	parts.push(`<title>${escapeHtml(title ?? "Bar chart")}</title>`);
-	parts.push(`<desc>Bar chart${title ? ` showing ${escapeHtml(title)}` : ""}</desc>`);
+	parts.push(renderHtml`<title>${title ?? "Bar chart"}</title>`);
+	parts.push(
+		title ? renderHtml`<desc>Bar chart showing ${title}</desc>` : "<desc>Bar chart</desc>",
+	);
 
 	// 横向きグリッド（値軸の縦線）
 	parts.push(renderHorizontalGrid(scale, marginLeft, plotWidth, MARGIN.top, plotHeight, scaleX));
@@ -347,14 +351,14 @@ function renderHorizontalBarChartHtml(
 	if (config?.x_label) {
 		const labelY = MARGIN.top + plotHeight + 35 + (showLegend ? LEGEND_HEIGHT : 0);
 		parts.push(
-			`<text class="kt-chart-x-label" x="${marginLeft + plotWidth / 2}" y="${labelY}" text-anchor="middle" font-size="12" fill="#495057">${escapeHtml(config.x_label)}</text>`,
+			renderHtml`<text class="kt-chart-x-label" x="${marginLeft + plotWidth / 2}" y="${labelY}" text-anchor="middle" font-size="12" fill="#495057">${config.x_label}</text>`,
 		);
 	}
 	if (config?.y_label) {
 		const labelX = 15;
 		const labelY = MARGIN.top + plotHeight / 2;
 		parts.push(
-			`<text class="kt-chart-y-label" x="${labelX}" y="${labelY}" text-anchor="middle" transform="rotate(-90, ${labelX}, ${labelY})" font-size="12" fill="#495057">${escapeHtml(config.y_label)}</text>`,
+			renderHtml`<text class="kt-chart-y-label" x="${labelX}" y="${labelY}" text-anchor="middle" transform="rotate(-90, ${labelX}, ${labelY})" font-size="12" fill="#495057">${config.y_label}</text>`,
 		);
 	}
 
@@ -430,7 +434,7 @@ function renderXAxis(
 		const label = String(xValues[i] ?? "");
 		const x = marginLeft + categoryWidth * i + categoryWidth / 2;
 		parts.push(
-			`<text x="${x}" y="${baseY + 16}" text-anchor="middle" font-size="11" fill="#6c757d">${escapeHtml(label)}</text>`,
+			renderHtml`<text x="${x}" y="${baseY + 16}" text-anchor="middle" font-size="11" fill="#6c757d">${label}</text>`,
 		);
 	}
 
@@ -478,7 +482,7 @@ function renderGroupedBars(
 	const zeroY = scaleY(Math.max(0, scale.min));
 
 	for (const [seriesIdx, series] of data.series.entries()) {
-		parts.push(`<g class="kt-chart-bars" data-series="${escapeHtml(series.name)}">`);
+		parts.push(renderHtml`<g class="kt-chart-bars" data-series="${series.name}">`);
 
 		for (let i = 0; i < data.xValues.length; i++) {
 			const value = series.values[i];
@@ -489,7 +493,7 @@ function renderGroupedBars(
 			const barHeight = Math.abs(scaleY(value) - zeroY);
 
 			parts.push(
-				`<rect x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" fill="${escapeHtml(series.color)}" rx="2" />`,
+				renderHtml`<rect x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" fill="${series.color}" rx="2" />`,
 			);
 		}
 
@@ -517,7 +521,7 @@ function renderStackedBars(
 	const cumulative = new Array<number>(data.xValues.length).fill(0);
 
 	for (const series of data.series) {
-		parts.push(`<g class="kt-chart-bars" data-series="${escapeHtml(series.name)}">`);
+		parts.push(renderHtml`<g class="kt-chart-bars" data-series="${series.name}">`);
 
 		for (let i = 0; i < data.xValues.length; i++) {
 			const value = series.values[i];
@@ -531,7 +535,7 @@ function renderStackedBars(
 			const barHeight = Math.abs(scaleY(base) - scaleY(top));
 
 			parts.push(
-				`<rect x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" fill="${escapeHtml(series.color)}" rx="2" />`,
+				renderHtml`<rect x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" fill="${series.color}" rx="2" />`,
 			);
 
 			cumulative[i] = top;
@@ -552,10 +556,10 @@ function renderLegend(data: NormalizedBarChartData, startX: number, y: number): 
 
 	for (const series of data.series) {
 		parts.push(
-			`<rect x="${x}" y="${y}" width="10" height="10" fill="${escapeHtml(series.color)}" />`,
+			renderHtml`<rect x="${x}" y="${y}" width="10" height="10" fill="${series.color}" />`,
 		);
 		parts.push(
-			`<text x="${x + 14}" y="${y + 9}" font-size="11" fill="#495057">${escapeHtml(series.name)}</text>`,
+			renderHtml`<text x="${x + 14}" y="${y + 9}" font-size="11" fill="#495057">${series.name}</text>`,
 		);
 		x += 80;
 	}
@@ -631,7 +635,7 @@ function renderHorizontalCategoryAxis(
 		const label = String(xValues[i] ?? "");
 		const y = marginTop + categoryHeight * i + categoryHeight / 2;
 		parts.push(
-			`<text x="${marginLeft - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#6c757d">${escapeHtml(label)}</text>`,
+			renderHtml`<text x="${marginLeft - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#6c757d">${label}</text>`,
 		);
 	}
 
@@ -656,7 +660,7 @@ function renderHorizontalGroupedBars(
 	const zeroX = scaleX(Math.max(0, scale.min));
 
 	for (const [seriesIdx, series] of data.series.entries()) {
-		parts.push(`<g class="kt-chart-bars" data-series="${escapeHtml(series.name)}">`);
+		parts.push(renderHtml`<g class="kt-chart-bars" data-series="${series.name}">`);
 
 		for (let i = 0; i < data.xValues.length; i++) {
 			const value = series.values[i];
@@ -667,7 +671,7 @@ function renderHorizontalGroupedBars(
 			const barW = Math.abs(scaleX(value) - zeroX);
 
 			parts.push(
-				`<rect x="${barX}" y="${barY}" width="${barW}" height="${barHeight}" fill="${escapeHtml(series.color)}" rx="2" />`,
+				renderHtml`<rect x="${barX}" y="${barY}" width="${barW}" height="${barHeight}" fill="${series.color}" rx="2" />`,
 			);
 		}
 
@@ -692,7 +696,7 @@ function renderHorizontalStackedBars(
 	const cumulative = new Array<number>(data.xValues.length).fill(0);
 
 	for (const series of data.series) {
-		parts.push(`<g class="kt-chart-bars" data-series="${escapeHtml(series.name)}">`);
+		parts.push(renderHtml`<g class="kt-chart-bars" data-series="${series.name}">`);
 
 		for (let i = 0; i < data.xValues.length; i++) {
 			const value = series.values[i];
@@ -706,7 +710,7 @@ function renderHorizontalStackedBars(
 			const barW = Math.abs(scaleX(top) - scaleX(base));
 
 			parts.push(
-				`<rect x="${barX}" y="${barY}" width="${barW}" height="${barHeight}" fill="${escapeHtml(series.color)}" rx="2" />`,
+				renderHtml`<rect x="${barX}" y="${barY}" width="${barW}" height="${barHeight}" fill="${series.color}" rx="2" />`,
 			);
 
 			cumulative[i] = top;

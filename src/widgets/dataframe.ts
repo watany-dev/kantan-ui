@@ -6,7 +6,7 @@
  * サーバーサイドの行選択状態管理を提供する。
  */
 
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import { getWidgetValue, hasWidgetValue, setWidgetValue } from "./registry";
 import type { DataframeConfig, DataframeSelection } from "./types";
 
@@ -139,7 +139,7 @@ function renderHeader(headers: string[], resolved: ResolvedConfig): string {
 
 	for (let i = 0; i < headers.length; i++) {
 		parts.push(
-			`<th data-kt-dataframe-sort="${resolved.id}" data-col="${i}" class="kt-dataframe-sortable">${escapeHtml(String(headers[i]))}<span class="kt-dataframe-sort-icon"></span></th>`,
+			renderHtml`<th data-kt-dataframe-sort="${raw(resolved.id)}" data-col="${raw(String(i))}" class="kt-dataframe-sortable">${String(headers[i])}<span class="kt-dataframe-sort-icon"></span></th>`,
 		);
 	}
 
@@ -169,7 +169,7 @@ function renderRow(row: unknown[], rowIdx: number, resolved: ResolvedConfig): st
 
 	for (const cell of row) {
 		const cellStr = cell === null || cell === undefined ? "" : String(cell);
-		parts.push(`<td>${escapeHtml(cellStr)}</td>`);
+		parts.push(renderHtml`<td>${cellStr}</td>`);
 	}
 
 	parts.push("</tr>");

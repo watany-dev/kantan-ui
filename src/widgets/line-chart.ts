@@ -4,7 +4,7 @@
  * 純粋なSVGで折れ線グラフを描画する（外部ライブラリ不要）
  */
 
-import { escapeHtml } from "../utils/html";
+import { raw, renderHtml } from "../utils/html";
 import type {
 	LineChartConfig,
 	LineChartData,
@@ -326,7 +326,7 @@ export function renderLineChart(data: LineChartData, config?: Partial<LineChartC
 
 	// SVG開始
 	parts.push(
-		`<svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="kt-line-chart-svg" role="img" aria-label="${escapeHtml(config?.y_label ?? "Line chart")}">`,
+		renderHtml`<svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="kt-line-chart-svg" role="img" aria-label="${config?.y_label ?? "Line chart"}">`,
 	);
 
 	// グリッド線
@@ -358,13 +358,13 @@ export function renderLineChart(data: LineChartData, config?: Partial<LineChartC
 	if (config?.x_label) {
 		const labelY = MARGIN.top + plotHeight + 35;
 		parts.push(
-			`<text x="${marginLeft + plotWidth / 2}" y="${labelY}" text-anchor="middle" class="kt-line-chart-axis-label">${escapeHtml(config.x_label)}</text>`,
+			renderHtml`<text x="${marginLeft + plotWidth / 2}" y="${labelY}" text-anchor="middle" class="kt-line-chart-axis-label">${config.x_label}</text>`,
 		);
 	}
 
 	if (config?.y_label) {
 		parts.push(
-			`<text x="${marginLeft - 40}" y="${MARGIN.top + plotHeight / 2}" text-anchor="middle" transform="rotate(-90, ${marginLeft - 40}, ${MARGIN.top + plotHeight / 2})" class="kt-line-chart-axis-label">${escapeHtml(config.y_label)}</text>`,
+			renderHtml`<text x="${marginLeft - 40}" y="${MARGIN.top + plotHeight / 2}" text-anchor="middle" transform="rotate(-90, ${marginLeft - 40}, ${MARGIN.top + plotHeight / 2})" class="kt-line-chart-axis-label">${config.y_label}</text>`,
 		);
 	}
 
@@ -439,7 +439,7 @@ function renderXAxis(
 				? marginLeft + plotWidth / 2
 				: scaleX(xMin + (i / (labels.length - 1)) * (xMax - xMin));
 		parts.push(
-			`<text x="${px}" y="${baseY + 16}" text-anchor="middle" class="kt-line-chart-tick-label">${escapeHtml(label)}</text>`,
+			renderHtml`<text x="${px}" y="${baseY + 16}" text-anchor="middle" class="kt-line-chart-tick-label">${label}</text>`,
 		);
 	}
 
@@ -500,13 +500,13 @@ function renderLine(
 
 	// 線
 	parts.push(
-		`<path d="${pathD}" fill="none" stroke="${escapeHtml(color)}" stroke-width="2" class="kt-line-chart-line" />`,
+		renderHtml`<path d="${raw(pathD)}" fill="none" stroke="${color}" stroke-width="2" class="kt-line-chart-line" />`,
 	);
 
 	// ドットポイント
 	for (const p of sorted) {
 		parts.push(
-			`<circle cx="${scaleX(p[0])}" cy="${scaleY(p[1])}" r="3" fill="${escapeHtml(color)}" class="kt-line-chart-point" />`,
+			renderHtml`<circle cx="${scaleX(p[0])}" cy="${scaleY(p[1])}" r="3" fill="${color}" class="kt-line-chart-point" />`,
 		);
 	}
 
@@ -532,9 +532,9 @@ function renderLegend(
 	for (const [i, s] of series.entries()) {
 		const c = colors[i] ?? FALLBACK_COLOR;
 		const x = offsetX + i * itemWidth;
-		parts.push(`<rect x="${x}" y="${y}" width="12" height="12" rx="2" fill="${escapeHtml(c)}" />`);
+		parts.push(renderHtml`<rect x="${x}" y="${y}" width="12" height="12" rx="2" fill="${c}" />`);
 		parts.push(
-			`<text x="${x + 16}" y="${y + 10}" class="kt-line-chart-legend-text">${escapeHtml(s.name)}</text>`,
+			renderHtml`<text x="${x + 16}" y="${y + 10}" class="kt-line-chart-legend-text">${s.name}</text>`,
 		);
 	}
 
