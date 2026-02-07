@@ -1,7 +1,7 @@
 import { createApp } from "./app";
 import { kt } from "./kt";
 import { createTypedSessionState } from "./session";
-import { escapeHtml } from "./utils/html";
+import { renderHtml } from "./utils/html";
 
 /**
  * 型安全なセッションステート定義
@@ -103,7 +103,7 @@ function fileUploadSection() {
 			const content = singleFile.text();
 			kt.write("Content preview:");
 			kt.html(
-				`<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; max-height: 200px; overflow: auto;">${escapeHtml(content.slice(0, 1000))}${content.length > 1000 ? "..." : ""}</pre>`,
+				`<pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; max-height: 200px; overflow: auto;">${renderHtml`${content.slice(0, 1000)}`}${content.length > 1000 ? "..." : ""}</pre>`,
 			);
 		}
 	}
@@ -198,7 +198,7 @@ const script = () => {
 	kt.html(`
 		<div id="results-card" style="background: linear-gradient(135deg, ${color} 0%, ${color}88 100%);
 		            color: white; padding: 20px; border-radius: 8px; margin: 10px 0;">
-			<h2 style="margin: 0 0 10px 0;">Hello, ${escapeHtml(name)}!</h2>
+			<h2 style="margin: 0 0 10px 0;">Hello, ${renderHtml`${name}`}!</h2>
 			<p style="margin: 0;">Volume: ${volume}%</p>
 			<div style="background: rgba(255,255,255,0.3); height: 10px; border-radius: 5px; margin-top: 10px;">
 				<div style="background: white; height: 100%; width: ${volume}%; border-radius: 5px;"></div>
@@ -423,37 +423,35 @@ const script = () => {
 	kt.subheader("Session State (Debug)");
 	kt.html(`
 		<pre id="debug-state" style="background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px;">
-${escapeHtml(
-	JSON.stringify(
-		{
-			counter: state.counter,
-			name,
-			shortName,
-			volume,
-			stepVolume,
-			color,
-			agreed,
-			notifications,
-			size,
-			age,
-			quantity,
-			bio,
-			darkMode,
-			autoSave,
-			tags,
-			chatMessages: state.chatMessages,
-			singleFile: singleFile
-				? { name: singleFile.name, size: singleFile.size, type: singleFile.type }
-				: null,
-			imageFile: imageFile
-				? { name: imageFile.name, size: imageFile.size, type: imageFile.type }
-				: null,
-			multiFiles: multiFiles.map((f) => ({ name: f.name, size: f.size, type: f.type })),
-		},
-		null,
-		2,
-	),
-)}
+${renderHtml`${JSON.stringify(
+	{
+		counter: state.counter,
+		name,
+		shortName,
+		volume,
+		stepVolume,
+		color,
+		agreed,
+		notifications,
+		size,
+		age,
+		quantity,
+		bio,
+		darkMode,
+		autoSave,
+		tags,
+		chatMessages: state.chatMessages,
+		singleFile: singleFile
+			? { name: singleFile.name, size: singleFile.size, type: singleFile.type }
+			: null,
+		imageFile: imageFile
+			? { name: imageFile.name, size: imageFile.size, type: imageFile.type }
+			: null,
+		multiFiles: multiFiles.map((f) => ({ name: f.name, size: f.size, type: f.type })),
+	},
+	null,
+	2,
+)}`}
 		</pre>
 	`);
 
