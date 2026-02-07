@@ -322,4 +322,50 @@ describe("renderBarChart", () => {
 			expect(html).not.toContain("<script>");
 		});
 	});
+
+	describe("horizontal bar chart", () => {
+		it("renders categories on y-axis (contains category labels)", () => {
+			const html = renderBarChart({ A: 10, B: 20, C: 30 }, { horizontal: true });
+			expect(html).toContain("A");
+			expect(html).toContain("B");
+			expect(html).toContain("C");
+		});
+
+		it("renders rect elements for horizontal bars", () => {
+			const html = renderBarChart([10, 20, 30], { horizontal: true });
+			const rectCount = (html.match(/<rect /g) || []).length;
+			expect(rectCount).toBeGreaterThanOrEqual(3);
+		});
+
+		it("supports grouped horizontal bars (stack: false)", () => {
+			const data = [
+				{ cat: "A", x: 10, y: 20 },
+				{ cat: "B", x: 15, y: 25 },
+			];
+			const html = renderBarChart(data, { x: "cat", horizontal: true, stack: false });
+			expect(html).toContain('data-series="x"');
+			expect(html).toContain('data-series="y"');
+		});
+
+		it("supports stacked horizontal bars (stack: true)", () => {
+			const data = [
+				{ cat: "A", x: 10, y: 20 },
+				{ cat: "B", x: 15, y: 25 },
+			];
+			const html = renderBarChart(data, { x: "cat", horizontal: true, stack: true });
+			const rectCount = (html.match(/<rect /g) || []).length;
+			expect(rectCount).toBeGreaterThanOrEqual(4);
+		});
+
+		it("applies sort to horizontal bars correctly", () => {
+			const html = renderBarChart(
+				{ A: 30, B: 10, C: 20 },
+				{
+					horizontal: true,
+					sort: "ascending",
+				},
+			);
+			expect(html).toContain("kt-bar-chart");
+		});
+	});
 });

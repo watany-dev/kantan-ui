@@ -121,6 +121,21 @@ function renderBarChartHtml(
 	data: NormalizedBarChartData,
 	config?: Partial<BarChartConfig>,
 ): string {
+	const horizontal = config?.horizontal === true;
+
+	if (horizontal) {
+		return renderHorizontalBarChartHtml(data, config);
+	}
+	return renderVerticalBarChartHtml(data, config);
+}
+
+/**
+ * 縦棒グラフHTMLレンダリング
+ */
+function renderVerticalBarChartHtml(
+	data: NormalizedBarChartData,
+	config?: Partial<BarChartConfig>,
+): string {
 	const height = config?.height ?? DEFAULT_HEIGHT;
 	const title = config?.title;
 	const showLegend = data.series.length > 1;
@@ -132,7 +147,6 @@ function renderBarChartHtml(
 	const plotWidth = SVG_WIDTH - marginLeft - MARGIN.right;
 	const plotHeight = height - MARGIN.top - marginBottom;
 
-	// y軸スケール計算
 	const isStacked = config?.stack !== false && data.series.length > 1;
 	const scaleValues = isStacked ? getStackedMaxValues(data) : getAllValues(data);
 	const scale = calculateAxisScale(scaleValues);
@@ -142,48 +156,35 @@ function renderBarChartHtml(
 	};
 
 	const ariaLabel = title ? `Bar chart: ${escapeHtml(title)}` : "Bar chart";
-
 	const parts: string[] = [];
 
-	// figure
 	parts.push(`<figure class="kt-bar-chart" role="img" aria-label="${ariaLabel}">`);
-
-	// title
 	if (title) {
 		parts.push(`<figcaption class="kt-bar-chart-title">${escapeHtml(title)}</figcaption>`);
 	}
 
-	// svg
 	parts.push(
 		`<svg viewBox="0 0 ${SVG_WIDTH} ${height}" width="100%" preserveAspectRatio="xMidYMid meet" class="kt-bar-chart-svg" xmlns="http://www.w3.org/2000/svg">`,
 	);
 	parts.push(`<title>${escapeHtml(title ?? "Bar chart")}</title>`);
 	parts.push(`<desc>Bar chart${title ? ` showing ${escapeHtml(title)}` : ""}</desc>`);
 
-	// グリッド
 	parts.push(renderGrid(scale, marginLeft, plotWidth, scaleY));
-
-	// y軸
 	parts.push(renderYAxis(scale, marginLeft, scaleY));
-
-	// x軸
 	parts.push(renderXAxis(data.xValues, marginLeft, plotWidth, MARGIN.top + plotHeight));
 
-	// バー
 	if (isStacked) {
 		parts.push(renderStackedBars(data, marginLeft, plotWidth, scaleY, scale));
 	} else {
 		parts.push(renderGroupedBars(data, marginLeft, plotWidth, scaleY, scale));
 	}
 
-	// 軸ラベル
 	if (config?.x_label) {
 		const labelY = MARGIN.top + plotHeight + 35 + (showLegend ? LEGEND_HEIGHT : 0);
 		parts.push(
 			`<text class="kt-chart-x-label" x="${marginLeft + plotWidth / 2}" y="${labelY}" text-anchor="middle" font-size="12" fill="#495057">${escapeHtml(config.x_label)}</text>`,
 		);
 	}
-
 	if (config?.y_label) {
 		const labelX = 15;
 		const labelY = MARGIN.top + plotHeight / 2;
@@ -192,14 +193,95 @@ function renderBarChartHtml(
 		);
 	}
 
-	// 凡例（複数シリーズ時のみ）
 	if (showLegend) {
 		parts.push(renderLegend(data, marginLeft, MARGIN.top + plotHeight + 30));
 	}
 
 	parts.push("</svg>");
 	parts.push("</figure>");
+	return parts.join("");
+}
 
+/**
+ * 横向きバーチャートHTMLレンダリング
+ */
+function renderHorizontalBarChartHtml(
+	data: NormalizedBarChartData,
+	config?: Partial<BarChartConfig>,
+): string {
+	const height = config?.height ?? DEFAULT_HEIGHT;
+	const title = config?.title;
+	const showLegend = data.series.length > 1;
+
+	// 横向きの場合、左マージンを広めにしてカテゴリラベルを配置
+	const marginLeft = MARGIN.left + 20 + (config?.y_label ? Y_LABEL_MARGIN : 0);
+	const marginBottom =
+		MARGIN.bottom + (config?.x_label ? X_LABEL_MARGIN : 0) + (showLegend ? LEGEND_HEIGHT : 0);
+
+	const plotWidth = SVG_WIDTH - marginLeft - MARGIN.right;
+	const plotHeight = height - MARGIN.top - marginBottom;
+
+	const isStacked = config?.stack !== false && data.series.length > 1;
+	const scaleValues = isStacked ? getStackedMaxValues(data) : getAllValues(data);
+	const scale = calculateAxisScale(scaleValues);
+
+	// 横向き: x軸（値軸）スケール
+	const scaleX = (v: number): number => {
+		return marginLeft + ((v - scale.min) / (scale.max - scale.min)) * plotWidth;
+	};
+
+	const ariaLabel = title ? `Bar chart: ${escapeHtml(title)}` : "Bar chart";
+	const parts: string[] = [];
+
+	parts.push(`<figure class="kt-bar-chart" role="img" aria-label="${ariaLabel}">`);
+	if (title) {
+		parts.push(`<figcaption class="kt-bar-chart-title">${escapeHtml(title)}</figcaption>`);
+	}
+
+	parts.push(
+		`<svg viewBox="0 0 ${SVG_WIDTH} ${height}" width="100%" preserveAspectRatio="xMidYMid meet" class="kt-bar-chart-svg" xmlns="http://www.w3.org/2000/svg">`,
+	);
+	parts.push(`<title>${escapeHtml(title ?? "Bar chart")}</title>`);
+	parts.push(`<desc>Bar chart${title ? ` showing ${escapeHtml(title)}` : ""}</desc>`);
+
+	// 横向きグリッド（値軸の縦線）
+	parts.push(renderHorizontalGrid(scale, marginLeft, plotWidth, MARGIN.top, plotHeight, scaleX));
+
+	// 横向きx軸（値軸 → 下）
+	parts.push(
+		renderHorizontalValueAxis(scale, marginLeft, plotWidth, MARGIN.top + plotHeight, scaleX),
+	);
+
+	// 横向きy軸（カテゴリ軸 → 左）
+	parts.push(renderHorizontalCategoryAxis(data.xValues, marginLeft, MARGIN.top, plotHeight));
+
+	// 横向きバー
+	if (isStacked) {
+		parts.push(renderHorizontalStackedBars(data, marginLeft, plotHeight, scaleX));
+	} else {
+		parts.push(renderHorizontalGroupedBars(data, marginLeft, plotHeight, scaleX, scale));
+	}
+
+	if (config?.x_label) {
+		const labelY = MARGIN.top + plotHeight + 35 + (showLegend ? LEGEND_HEIGHT : 0);
+		parts.push(
+			`<text class="kt-chart-x-label" x="${marginLeft + plotWidth / 2}" y="${labelY}" text-anchor="middle" font-size="12" fill="#495057">${escapeHtml(config.x_label)}</text>`,
+		);
+	}
+	if (config?.y_label) {
+		const labelX = 15;
+		const labelY = MARGIN.top + plotHeight / 2;
+		parts.push(
+			`<text class="kt-chart-y-label" x="${labelX}" y="${labelY}" text-anchor="middle" transform="rotate(-90, ${labelX}, ${labelY})" font-size="12" fill="#495057">${escapeHtml(config.y_label)}</text>`,
+		);
+	}
+
+	if (showLegend) {
+		parts.push(renderLegend(data, marginLeft, MARGIN.top + plotHeight + 30));
+	}
+
+	parts.push("</svg>");
+	parts.push("</figure>");
 	return parts.join("");
 }
 
@@ -397,5 +479,159 @@ function renderLegend(data: NormalizedBarChartData, startX: number, y: number): 
 	}
 
 	parts.push("</g>");
+	return parts.join("");
+}
+
+// ===== 横向きバーチャート用レンダリング関数 =====
+
+/**
+ * 横向きグリッド（値軸の縦線）
+ */
+function renderHorizontalGrid(
+	scale: { ticks: number[] },
+	_marginLeft: number,
+	_plotWidth: number,
+	marginTop: number,
+	plotHeight: number,
+	scaleX: (v: number) => number,
+): string {
+	const parts: string[] = ['<g class="kt-chart-grid">'];
+	for (const tick of scale.ticks) {
+		const x = scaleX(tick);
+		parts.push(
+			`<line x1="${x}" y1="${marginTop}" x2="${x}" y2="${marginTop + plotHeight}" stroke="#e9ecef" stroke-width="1" />`,
+		);
+	}
+	parts.push("</g>");
+	return parts.join("");
+}
+
+/**
+ * 横向き値軸（x軸 → 下）
+ */
+function renderHorizontalValueAxis(
+	scale: { ticks: number[] },
+	marginLeft: number,
+	plotWidth: number,
+	baseY: number,
+	scaleX: (v: number) => number,
+): string {
+	const parts: string[] = ['<g class="kt-chart-axis-x">'];
+	parts.push(
+		`<line x1="${marginLeft}" y1="${baseY}" x2="${marginLeft + plotWidth}" y2="${baseY}" stroke="#dee2e6" stroke-width="1" />`,
+	);
+	for (const tick of scale.ticks) {
+		const x = scaleX(tick);
+		parts.push(
+			`<text x="${x}" y="${baseY + 16}" text-anchor="middle" font-size="11" fill="#6c757d">${formatTickValue(tick)}</text>`,
+		);
+	}
+	parts.push("</g>");
+	return parts.join("");
+}
+
+/**
+ * 横向きカテゴリ軸（y軸 → 左）
+ */
+function renderHorizontalCategoryAxis(
+	xValues: (string | number)[],
+	marginLeft: number,
+	marginTop: number,
+	plotHeight: number,
+): string {
+	const parts: string[] = ['<g class="kt-chart-axis-y">'];
+	parts.push(
+		`<line x1="${marginLeft}" y1="${marginTop}" x2="${marginLeft}" y2="${marginTop + plotHeight}" stroke="#dee2e6" stroke-width="1" />`,
+	);
+
+	const categoryHeight = plotHeight / xValues.length;
+	for (let i = 0; i < xValues.length; i++) {
+		const label = String(xValues[i] ?? "");
+		const y = marginTop + categoryHeight * i + categoryHeight / 2;
+		parts.push(
+			`<text x="${marginLeft - 8}" y="${y + 4}" text-anchor="end" font-size="11" fill="#6c757d">${escapeHtml(label)}</text>`,
+		);
+	}
+
+	parts.push("</g>");
+	return parts.join("");
+}
+
+/**
+ * 横向きグループ化バー
+ */
+function renderHorizontalGroupedBars(
+	data: NormalizedBarChartData,
+	_marginLeft: number,
+	plotHeight: number,
+	scaleX: (v: number) => number,
+	scale: { min: number; max: number },
+): string {
+	const parts: string[] = [];
+	const categoryHeight = plotHeight / data.xValues.length;
+	const groupHeight = categoryHeight * 0.8;
+	const barHeight = groupHeight / data.series.length;
+	const zeroX = scaleX(Math.max(0, scale.min));
+
+	for (const [seriesIdx, series] of data.series.entries()) {
+		parts.push(`<g class="kt-chart-bars" data-series="${escapeHtml(series.name)}">`);
+
+		for (let i = 0; i < data.xValues.length; i++) {
+			const value = series.values[i];
+			if (value === null || value === undefined) continue;
+
+			const barY = MARGIN.top + categoryHeight * i + categoryHeight * 0.1 + seriesIdx * barHeight;
+			const barX = value >= 0 ? zeroX : scaleX(value);
+			const barW = Math.abs(scaleX(value) - zeroX);
+
+			parts.push(
+				`<rect x="${barX}" y="${barY}" width="${barW}" height="${barHeight}" fill="${escapeHtml(series.color)}" rx="2" />`,
+			);
+		}
+
+		parts.push("</g>");
+	}
+
+	return parts.join("");
+}
+
+/**
+ * 横向き積み上げバー
+ */
+function renderHorizontalStackedBars(
+	data: NormalizedBarChartData,
+	_marginLeft: number,
+	plotHeight: number,
+	scaleX: (v: number) => number,
+): string {
+	const parts: string[] = [];
+	const categoryHeight = plotHeight / data.xValues.length;
+	const barHeight = categoryHeight * 0.6;
+	const cumulative = new Array<number>(data.xValues.length).fill(0);
+
+	for (const series of data.series) {
+		parts.push(`<g class="kt-chart-bars" data-series="${escapeHtml(series.name)}">`);
+
+		for (let i = 0; i < data.xValues.length; i++) {
+			const value = series.values[i];
+			if (value === null || value === undefined) continue;
+
+			const base = cumulative[i] ?? 0;
+			const top = base + value;
+
+			const barY = MARGIN.top + categoryHeight * i + (categoryHeight - barHeight) / 2;
+			const barX = scaleX(base);
+			const barW = Math.abs(scaleX(top) - scaleX(base));
+
+			parts.push(
+				`<rect x="${barX}" y="${barY}" width="${barW}" height="${barHeight}" fill="${escapeHtml(series.color)}" rx="2" />`,
+			);
+
+			cumulative[i] = top;
+		}
+
+		parts.push("</g>");
+	}
+
 	return parts.join("");
 }
