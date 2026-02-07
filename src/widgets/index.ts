@@ -8,7 +8,6 @@ export {
 	initializeFileUploaderState,
 	renderFileUploader,
 } from "./file-uploader";
-export { normalizeChartData, renderLineChart } from "./line-chart";
 export { multiselect, renderMultiselect } from "./multiselect";
 export { number_input, renderNumberInput } from "./number-input";
 export { radio, renderRadio } from "./radio";
