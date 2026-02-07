@@ -118,6 +118,59 @@ describe("renderAreaChart", () => {
 		});
 	});
 
+	describe("multi-series area chart", () => {
+		const multiSeriesData = [
+			{ month: "Jan", revenue: 100, cost: 60 },
+			{ month: "Feb", revenue: 120, cost: 70 },
+		];
+
+		it("renders multiple areas with different colors", () => {
+			const html = renderAreaChart(multiSeriesData);
+			expect(html).toContain('data-series="revenue"');
+			expect(html).toContain('data-series="cost"');
+		});
+
+		it("applies default opacity to overlapping areas", () => {
+			const html = renderAreaChart(multiSeriesData);
+			expect(html).toContain('fill-opacity="0.3"');
+		});
+
+		it("renders legend for multi-series", () => {
+			const html = renderAreaChart(multiSeriesData);
+			expect(html).toContain("kt-chart-legend");
+			expect(html).toContain("revenue");
+			expect(html).toContain("cost");
+		});
+
+		it("does not render legend for single series", () => {
+			const html = renderAreaChart([10, 20, 30]);
+			expect(html).not.toContain("kt-chart-legend");
+		});
+
+		it("draws areas in back-to-front order (first series in front)", () => {
+			const html = renderAreaChart(multiSeriesData);
+			const revenuePos = html.indexOf('data-series="revenue"');
+			const costPos = html.indexOf('data-series="cost"');
+			// cost is drawn first (background), revenue last (foreground)
+			expect(costPos).toBeLessThan(revenuePos);
+		});
+
+		it("uses different default colors per series", () => {
+			const html = renderAreaChart(multiSeriesData);
+			// Tableau 10 first two colors
+			expect(html).toContain("#4e79a7");
+			expect(html).toContain("#f28e2b");
+		});
+
+		it("applies custom colors to series", () => {
+			const html = renderAreaChart(multiSeriesData, {
+				color: ["#ff0000", "#0000ff"],
+			});
+			expect(html).toContain("#ff0000");
+			expect(html).toContain("#0000ff");
+		});
+	});
+
 	describe("config options", () => {
 		it("renders with custom height", () => {
 			const html = renderAreaChart([10, 20], { height: 500 });

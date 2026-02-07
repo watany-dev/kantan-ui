@@ -44,7 +44,7 @@ const DEFAULT_FILL_OPACITY = 0.3;
  */
 function normalizeAreaChartInput(data: AreaChartData): ChartData {
 	if (Array.isArray(data) && data.length > 0 && typeof data[0] === "number") {
-		return (data as number[]).map((v, i) => ({ index: i, value: v }));
+		return (data as number[]).map((v, i) => ({ index: String(i), value: v }));
 	}
 	return data as ChartData;
 }
