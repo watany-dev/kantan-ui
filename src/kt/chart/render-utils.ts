@@ -65,8 +65,8 @@ export function renderXAxis(
 	);
 
 	const categoryWidth = plotWidth / xValues.length;
-	for (let i = 0; i < xValues.length; i++) {
-		const label = String(xValues[i] ?? "");
+	for (const [i, xVal] of xValues.entries()) {
+		const label = String(xVal);
 		const x = marginLeft + categoryWidth * i + categoryWidth / 2;
 		parts.push(
 			renderHtml`<text x="${x}" y="${baseY + 16}" text-anchor="middle" font-size="11" fill="#6c757d">${label}</text>`,

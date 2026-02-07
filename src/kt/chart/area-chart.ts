@@ -139,7 +139,7 @@ function computeStackedValues(data: NormalizedBarChartData): NormalizedBarChartD
 		const newValues: (number | null)[] = [];
 
 		for (let i = 0; i < data.xValues.length; i++) {
-			const value = series.values[i];
+			const value = series.values[i] ?? null;
 			if (value === null) {
 				newValues.push(null);
 			} else {
@@ -168,7 +168,7 @@ function splitByNull(values: (number | null)[]): Segment[] {
 	let current: Segment | null = null;
 
 	for (let i = 0; i < values.length; i++) {
-		const v = values[i];
+		const v = values[i] ?? null;
 		if (v !== null) {
 			if (!current) {
 				current = { startIndex: i, values: [] };
@@ -471,7 +471,7 @@ function renderDataPoints(
 ): string {
 	const parts: string[] = ['<g class="kt-chart-points">'];
 	for (let i = 0; i < series.values.length; i++) {
-		const value = series.values[i];
+		const value = series.values[i] ?? null;
 		if (value === null) continue;
 
 		const cx = marginLeft + categoryWidth * i + categoryWidth / 2;
@@ -506,7 +506,7 @@ function computeStackedPoints(
 
 	for (let i = 0; i < xValues.length; i++) {
 		const x = marginLeft + categoryWidth * i + categoryWidth / 2;
-		const value = series.values[i];
+		const value = series.values[i] ?? null;
 
 		currentPoints.push({
 			x,
@@ -515,7 +515,7 @@ function computeStackedPoints(
 		});
 
 		if (prevSeries) {
-			const prevVal = prevSeries.values[i];
+			const prevVal = prevSeries.values[i] ?? null;
 			prevPoints.push({
 				x,
 				y: prevVal !== null ? scaleY(prevVal) : baselineY,
@@ -560,10 +560,8 @@ function renderStackedAreaSeries(
 			prevSeries ? prevPoints.filter((_, i) => currentPoints[i]?.value !== null) : [],
 			baselineY,
 		);
-		if (fillPath) {
-			const opacityAttr = useDefaultOpacity ? ` fill-opacity="${DEFAULT_FILL_OPACITY}"` : "";
-			parts.push(`<path d="${fillPath}" fill="${series.color}"${opacityAttr} stroke="none" />`);
-		}
+		const opacityAttr = useDefaultOpacity ? ` fill-opacity="${DEFAULT_FILL_OPACITY}"` : "";
+		parts.push(`<path d="${fillPath}" fill="${series.color}"${opacityAttr} stroke="none" />`);
 
 		const strokePath = validPoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
 		parts.push(
@@ -579,15 +577,12 @@ function renderStackedAreaSeries(
 /**
  * エリアの閉じたパスを構築（非積み上げ）
  */
-function buildAreaPath(points: { x: number; y: number }[], baselineY: number): string {
-	if (points.length === 0) return "";
+export function buildAreaPath(points: { x: number; y: number }[], baselineY: number): string {
+	const firstPoint = points[0];
+	const lastPoint = points[points.length - 1];
+	if (!firstPoint || !lastPoint) return "";
 
 	const upperPath = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
-
-	const lastPoint = points[points.length - 1];
-	const firstPoint = points[0];
-	if (!lastPoint || !firstPoint) return "";
-
 	const lowerPath = `L${lastPoint.x},${baselineY} L${firstPoint.x},${baselineY} Z`;
 
 	return `${upperPath} ${lowerPath}`;
@@ -596,12 +591,14 @@ function buildAreaPath(points: { x: number; y: number }[], baselineY: number): s
 /**
  * 積み上げエリアの閉じたパスを構築
  */
-function buildStackedAreaPath(
+export function buildStackedAreaPath(
 	currentPoints: { x: number; y: number }[],
 	prevPoints: { x: number; y: number }[],
 	baselineY: number,
 ): string {
-	if (currentPoints.length === 0) return "";
+	const firstPoint = currentPoints[0];
+	const lastPoint = currentPoints[currentPoints.length - 1];
+	if (!firstPoint || !lastPoint) return "";
 
 	// 上辺: 左→右（現在の系列）
 	const upperPath = currentPoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
@@ -614,9 +611,6 @@ function buildStackedAreaPath(
 			.map((p) => `L${p.x},${p.y}`)
 			.join(" ")} Z`;
 	} else {
-		const lastPoint = currentPoints[currentPoints.length - 1];
-		const firstPoint = currentPoints[0];
-		if (!lastPoint || !firstPoint) return "";
 		lowerPath = `L${lastPoint.x},${baselineY} L${firstPoint.x},${baselineY} Z`;
 	}
 
