@@ -76,7 +76,7 @@
 
 | Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
 |---------------|-----------|------|--------|--------|------|
-| `st.line_chart` | - | ❌ | P0 | Hard | 折れ線グラフ |
+| `st.line_chart` | `kt.line_chart` | ✅ | - | - | 実装済み（SVGベース） |
 | `st.area_chart` | - | ❌ | P1 | Hard | エリアチャート |
 | `st.bar_chart` | - | ❌ | P0 | Hard | 棒グラフ |
 | `st.scatter_chart` | - | ❌ | P1 | Hard | 散布図 |
@@ -217,10 +217,9 @@
 
 ## 優先度別 未実装API一覧
 
-### P0 (必須) - 2件
+### P0 (必須) - 1件
 | API | 難易度 | 説明 |
 |-----|--------|------|
-| `st.line_chart` | Hard | 折れ線グラフ |
 | `st.bar_chart` | Hard | 棒グラフ |
 
 ### P1 (高) - 10件
@@ -281,9 +280,9 @@
 ## 推奨実装順序
 
 ### Phase 1: チャート基盤 (P0)
-1. **`st.line_chart`** - 基本チャート
+1. ~~**`st.line_chart`**~~ - ✅ 実装済み
 2. **`st.bar_chart`** - 基本チャート
-3. **`st.dataframe`** - データ表示の強化
+3. ~~**`st.dataframe`**~~ - ✅ 実装済み
 
 ### Phase 2: メディア・UX改善
 4. **`st.video`** - 動画再生
@@ -301,10 +300,11 @@
 
 ## 実装済みAPI サマリー
 
-kantan-uiで実装済みのStreamlit互換API: **42件**
+kantan-uiで実装済みのStreamlit互換API: **43件**
 
 - Input Widgets: 15件 (color_picker追加)
 - Data Display: 4件 (dataframe追加)
+- Chart Elements: 1件 (line_chart追加)
 - Text Elements: 8件
 - Media: 1件
 - Layout: 6件 (empty追加)

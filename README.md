@@ -316,6 +316,41 @@ const color = kt.color_picker("Pick a color", "#ff0000", { key: "color_pick" });
 kt.write(`Selected: ${color}`);
 ```
 
+#### Chart API
+
+```typescript
+// Simple number array
+kt.line_chart([10, 20, 15, 30, 25]);
+
+// Object array (auto-detects series)
+kt.line_chart([
+  { month: "Jan", sales: 100, profit: 50 },
+  { month: "Feb", sales: 120, profit: 60 },
+  { month: "Mar", sales: 150, profit: 80 },
+]);
+
+// With configuration
+kt.line_chart(data, {
+  x: "month",
+  y: ["sales", "profit"],
+  x_label: "Month",
+  y_label: "Amount ($)",
+  color: ["#ff6384", "#36a2eb"],
+  height: 300,
+});
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| data | `LineChartData` | - | Number array, object array, 2D array, or columnar format |
+| config.x | `string` | auto | X-axis column name |
+| config.y | `string \| string[]` | auto | Y-axis column name(s) |
+| config.x_label | `string` | - | X-axis label |
+| config.y_label | `string` | - | Y-axis label |
+| config.color | `string \| string[]` | palette | Line color(s) in HEX |
+| config.height | `number` | `400` | Chart height in pixels |
+| config.use_container_width | `boolean` | `true` | Fit to container width |
+
 #### Media API
 
 ```typescript
@@ -709,6 +744,7 @@ src/
 │   ├── context.ts    # Render context
 │   ├── config.ts     # Page config (set_page_config)
 │   ├── control.ts    # Control API (rerun)
+│   ├── charts.ts     # Chart API (line_chart)
 │   ├── chat.ts       # Chat API (chat_message, chat_container)
 │   ├── data.ts       # Data display (table, dataframe)
 │   ├── empty.ts      # Empty placeholder
@@ -761,6 +797,7 @@ src/
     ├── time-input.ts
     ├── file-uploader.ts
     ├── uploaded-file.ts
+    ├── line-chart.ts
     ├── image.ts
     ├── audio.ts
     ├── video.ts
