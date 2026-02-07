@@ -368,4 +368,144 @@ describe("renderBarChart", () => {
 			expect(html).toContain("kt-bar-chart");
 		});
 	});
+
+	describe("edge cases", () => {
+		describe("empty and minimal data", () => {
+			it("handles empty array []", () => {
+				const html = renderBarChart([]);
+				expect(html).toContain("No data");
+			});
+
+			it("handles empty object {}", () => {
+				const html = renderBarChart({});
+				expect(html).toContain("No data");
+			});
+
+			it("handles single data point [42]", () => {
+				const html = renderBarChart([42]);
+				expect(html).toContain("<rect ");
+				expect(html).toContain("kt-bar-chart");
+			});
+
+			it("handles single key-value pair { A: 10 }", () => {
+				const html = renderBarChart({ A: 10 });
+				expect(html).toContain("<rect ");
+				expect(html).toContain("A");
+			});
+		});
+
+		describe("data validation", () => {
+			it("limits data points to MAX_DATA_POINTS (10,000)", () => {
+				const data: Record<string, number> = {};
+				for (let i = 0; i < 10_050; i++) {
+					data[`cat_${i}`] = i;
+				}
+				const html = renderBarChart(data);
+				// Should not crash and should render (truncated)
+				expect(html).toContain("kt-bar-chart");
+				// Count rects should be <= 10,000
+				const rectCount = (html.match(/<rect /g) || []).length;
+				expect(rectCount).toBeLessThanOrEqual(10_000);
+			});
+
+			it("limits series to MAX_SERIES (20)", () => {
+				const row: Record<string, unknown> = { cat: "A" };
+				for (let i = 0; i < 25; i++) {
+					row[`series_${i}`] = i * 10;
+				}
+				const html = renderBarChart([row] as Record<string, unknown>[], { x: "cat" });
+				// Should render with at most 20 series
+				expect(html).toContain("kt-bar-chart");
+				const seriesGroups = (html.match(/data-series="/g) || []).length;
+				expect(seriesGroups).toBeLessThanOrEqual(20);
+			});
+
+			it("handles NaN values gracefully (treated as null)", () => {
+				const data = [
+					{ cat: "A", val: 10 },
+					{ cat: "B", val: Number.NaN },
+					{ cat: "C", val: 30 },
+				];
+				const html = renderBarChart(data, { x: "cat" });
+				expect(html).toContain("kt-bar-chart");
+				// NaN should be skipped (no rect for B)
+				expect(html).not.toContain("NaN");
+			});
+
+			it("handles Infinity values gracefully", () => {
+				const data = [
+					{ cat: "A", val: 10 },
+					{ cat: "B", val: Number.POSITIVE_INFINITY },
+					{ cat: "C", val: 30 },
+				];
+				const html = renderBarChart(data, { x: "cat" });
+				expect(html).toContain("kt-bar-chart");
+				expect(html).not.toContain("Infinity");
+			});
+		});
+
+		describe("color validation", () => {
+			it("rejects javascript: in color parameter", () => {
+				const html = renderBarChart([10, 20], { color: "javascript:alert(1)" });
+				// Should fall back to default color
+				expect(html).toContain("#4e79a7");
+				expect(html).not.toContain("javascript:");
+			});
+
+			it("rejects url() in color parameter", () => {
+				const html = renderBarChart([10, 20], { color: "url(evil)" });
+				expect(html).toContain("#4e79a7");
+				expect(html).not.toContain("url(");
+			});
+
+			it("rejects expression() in color parameter", () => {
+				const html = renderBarChart([10, 20], { color: "expression(alert(1))" });
+				expect(html).toContain("#4e79a7");
+				expect(html).not.toContain("expression(");
+			});
+
+			it("accepts valid hex, rgb, named colors", () => {
+				const html1 = renderBarChart([10], { color: "#ff0000" });
+				expect(html1).toContain("#ff0000");
+
+				const html2 = renderBarChart([10], { color: "rgb(255, 0, 0)" });
+				expect(html2).toContain("rgb(255, 0, 0)");
+
+				const html3 = renderBarChart([10], { color: "red" });
+				expect(html3).toContain("red");
+			});
+		});
+
+		describe("config edge cases", () => {
+			it("handles height: 0 (uses default)", () => {
+				const html = renderBarChart([10, 20], { height: 0 });
+				expect(html).toContain("400");
+			});
+
+			it("handles negative height (uses default)", () => {
+				const html = renderBarChart([10, 20], { height: -100 });
+				expect(html).toContain("400");
+			});
+
+			it("handles non-existent x column (falls back to auto)", () => {
+				const data = [
+					{ cat: "A", val: 10 },
+					{ cat: "B", val: 20 },
+				];
+				const html = renderBarChart(data, { x: "nonexistent" });
+				// Should still render (auto-detection should handle it)
+				expect(html).toContain("kt-bar-chart");
+			});
+
+			it("handles non-existent y column (empty series)", () => {
+				const data = [
+					{ cat: "A", val: 10 },
+					{ cat: "B", val: 20 },
+				];
+				const html = renderBarChart(data, { x: "cat", y: "nonexistent" });
+				// Should show empty state or render without bars
+				expect(html).toContain("No data");
+			});
+		});
+	});
 });

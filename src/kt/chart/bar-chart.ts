@@ -5,7 +5,7 @@
  */
 
 import { escapeHtml } from "../../utils/html";
-import { resolveChartColors } from "./colors";
+import { isValidColor, resolveChartColors } from "./colors";
 import { normalizeChartData } from "./normalize";
 import { calculateAxisScale, formatTickValue } from "./scale";
 import type { BarChartConfig, BarChartData, ChartData, NormalizedBarChartData } from "./types";
@@ -15,6 +15,12 @@ const SVG_WIDTH = 600;
 
 /** デフォルトの高さ */
 const DEFAULT_HEIGHT = 400;
+
+/** データポイントの最大数 */
+const MAX_DATA_POINTS = 10_000;
+
+/** シリーズの最大数 */
+const MAX_SERIES = 20;
 
 /** マージン */
 const MARGIN = { top: 20, right: 20, bottom: 40, left: 60 };
@@ -83,24 +89,50 @@ export function applySortOrder(
  * BarChartData → HTML文字列（figure > svg）
  */
 export function renderBarChart(data: BarChartData, config?: Partial<BarChartConfig>): string {
+	// 0. カラーバリデーション（無効な色はデフォルトにフォールバック）
+	const safeConfig = sanitizeConfig(config);
+
 	// 1. ショートハンド正規化
 	const chartData = normalizeBarChartInput(data);
 
 	// 2. データ正規化
 	const normalizeConfig: { x?: string; y?: string | string[]; color?: string | string[] } = {};
-	if (config?.x) normalizeConfig.x = config.x;
-	if (config?.y) normalizeConfig.y = config.y;
-	if (config?.color) normalizeConfig.color = config.color;
-	const normalized = normalizeChartData(chartData, normalizeConfig);
+	if (safeConfig?.x) normalizeConfig.x = safeConfig.x;
+	if (safeConfig?.y) normalizeConfig.y = safeConfig.y;
+	if (safeConfig?.color) normalizeConfig.color = safeConfig.color;
+	let normalized = normalizeChartData(chartData, normalizeConfig);
 
-	// 空データ
-	if (normalized.series.length === 0 || normalized.xValues.length === 0) {
+	// Infinity値をnullに変換
+	normalized = sanitizeValues(normalized);
+
+	// 空データチェック（全シリーズの値がすべてnullの場合も含む）
+	const hasAnyValue = normalized.series.some((s) => s.values.some((v) => v !== null));
+	if (normalized.series.length === 0 || normalized.xValues.length === 0 || !hasAnyValue) {
 		return '<div class="kt-bar-chart kt-bar-chart-empty">No data</div>';
 	}
 
+	// データポイント数の制限
+	if (normalized.xValues.length > MAX_DATA_POINTS) {
+		normalized = {
+			xValues: normalized.xValues.slice(0, MAX_DATA_POINTS),
+			series: normalized.series.map((s) => ({
+				...s,
+				values: s.values.slice(0, MAX_DATA_POINTS),
+			})),
+		};
+	}
+
+	// シリーズ数の制限
+	if (normalized.series.length > MAX_SERIES) {
+		normalized = {
+			xValues: normalized.xValues,
+			series: normalized.series.slice(0, MAX_SERIES),
+		};
+	}
+
 	// 3. カラー再解決（configのカラーを優先）
-	if (config?.color) {
-		const colors = resolveChartColors(normalized.series.length, config.color);
+	if (safeConfig?.color) {
+		const colors = resolveChartColors(normalized.series.length, safeConfig.color);
 		for (let i = 0; i < normalized.series.length; i++) {
 			const s = normalized.series[i];
 			if (s) s.color = colors[i] ?? s.color;
@@ -108,10 +140,60 @@ export function renderBarChart(data: BarChartData, config?: Partial<BarChartConf
 	}
 
 	// 4. ソート適用
-	const sorted = applySortOrder(normalized, config?.sort);
+	const sorted = applySortOrder(normalized, safeConfig?.sort);
 
 	// 5. SVG描画
-	return renderBarChartHtml(sorted, config);
+	return renderBarChartHtml(sorted, safeConfig);
+}
+
+/**
+ * 設定をサニタイズ
+ */
+function sanitizeConfig(config?: Partial<BarChartConfig>): Partial<BarChartConfig> | undefined {
+	if (!config) return config;
+
+	const sanitized = { ...config };
+
+	// 高さの検証
+	if (sanitized.height !== undefined && sanitized.height <= 0) {
+		sanitized.height = DEFAULT_HEIGHT;
+	}
+
+	// カラーの検証
+	if (sanitized.color) {
+		if (typeof sanitized.color === "string") {
+			if (!isValidColor(sanitized.color)) {
+				delete sanitized.color;
+			}
+		} else if (Array.isArray(sanitized.color)) {
+			const validColors = sanitized.color.filter(isValidColor);
+			if (validColors.length === 0) {
+				delete sanitized.color;
+			} else {
+				sanitized.color = validColors;
+			}
+		}
+	}
+
+	return sanitized;
+}
+
+/**
+ * NaN/Infinity値をnullに変換
+ */
+function sanitizeValues(data: NormalizedBarChartData): NormalizedBarChartData {
+	let changed = false;
+	const series = data.series.map((s) => {
+		const values = s.values.map((v) => {
+			if (v !== null && !Number.isFinite(v)) {
+				changed = true;
+				return null;
+			}
+			return v;
+		});
+		return { ...s, values };
+	});
+	return changed ? { xValues: data.xValues, series } : data;
 }
 
 /**
