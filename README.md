@@ -104,8 +104,14 @@ kt.text("Text");             // Alias for write
 kt.divider();                // Horizontal rule <hr>
 kt.html("<div>Raw HTML</div>"); // Raw HTML output (caution: XSS risk)
 kt.markdown("**Bold** text");   // Markdown rendering
+kt.caption("Small annotation text");  // Small caption text (supports Markdown)
 kt.code("const x = 1;", "typescript"); // Code block with syntax highlighting
 kt.json({ key: "value" });   // Collapsible JSON viewer
+
+// Link button - opens URL in new tab
+kt.link_button("Visit Docs", "https://docs.example.com");
+kt.link_button("Disabled", "https://example.com", { disabled: true });
+kt.link_button("Full Width", "https://example.com", { use_container_width: true });
 ```
 
 #### Streaming API
