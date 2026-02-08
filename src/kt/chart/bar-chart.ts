@@ -5,35 +5,21 @@
  */
 
 import { raw, renderHtml } from "../../utils/html";
-import { isValidColor, resolveChartColors } from "./colors";
-import { normalizeChartData } from "./normalize";
 import { renderGrid, renderLegend, renderXAxis, renderYAxis } from "./render-utils";
 import { calculateAxisScale, formatTickValue } from "./scale";
+import {
+	DEFAULT_HEIGHT,
+	getAllValues,
+	getStackedMaxValues,
+	LEGEND_HEIGHT,
+	MARGIN,
+	prepareChartData,
+	SVG_WIDTH,
+	sanitizeConfig,
+	X_LABEL_MARGIN,
+	Y_LABEL_MARGIN,
+} from "./shared";
 import type { BarChartConfig, BarChartData, ChartData, NormalizedBarChartData } from "./types";
-
-/** SVG viewBox 幅 */
-const SVG_WIDTH = 600;
-
-/** デフォルトの高さ */
-const DEFAULT_HEIGHT = 400;
-
-/** データポイントの最大数 */
-const MAX_DATA_POINTS = 10_000;
-
-/** シリーズの最大数 */
-const MAX_SERIES = 20;
-
-/** マージン */
-const MARGIN = { top: 20, right: 20, bottom: 40, left: 60 };
-
-/** y軸ラベルの追加マージン */
-const Y_LABEL_MARGIN = 20;
-
-/** x軸ラベルの追加マージン */
-const X_LABEL_MARGIN = 20;
-
-/** 凡例の高さ */
-const LEGEND_HEIGHT = 25;
 
 /**
  * ショートハンド形式を ChartData に変換
@@ -90,111 +76,22 @@ export function applySortOrder(
  * BarChartData → HTML文字列（figure > svg）
  */
 export function renderBarChart(data: BarChartData, config?: Partial<BarChartConfig>): string {
-	// 0. カラーバリデーション（無効な色はデフォルトにフォールバック）
 	const safeConfig = sanitizeConfig(config);
 
 	// 1. ショートハンド正規化
 	const chartData = normalizeBarChartInput(data);
 
-	// 2. データ正規化
-	const normalizeConfig: { x?: string; y?: string | string[]; color?: string | string[] } = {};
-	if (safeConfig?.x) normalizeConfig.x = safeConfig.x;
-	if (safeConfig?.y) normalizeConfig.y = safeConfig.y;
-	if (safeConfig?.color) normalizeConfig.color = safeConfig.color;
-	let normalized = normalizeChartData(chartData, normalizeConfig);
-
-	// Infinity値をnullに変換
-	normalized = sanitizeValues(normalized);
-
-	// 空データチェック（全シリーズの値がすべてnullの場合も含む）
-	const hasAnyValue = normalized.series.some((s) => s.values.some((v) => v !== null));
-	if (normalized.series.length === 0 || normalized.xValues.length === 0 || !hasAnyValue) {
+	// 2. 共通前処理パイプライン
+	const normalized = prepareChartData(chartData, safeConfig);
+	if (!normalized) {
 		return '<div class="kt-bar-chart kt-bar-chart-empty">No data</div>';
 	}
 
-	// データポイント数の制限
-	if (normalized.xValues.length > MAX_DATA_POINTS) {
-		normalized = {
-			xValues: normalized.xValues.slice(0, MAX_DATA_POINTS),
-			series: normalized.series.map((s) => ({
-				...s,
-				values: s.values.slice(0, MAX_DATA_POINTS),
-			})),
-		};
-	}
-
-	// シリーズ数の制限
-	if (normalized.series.length > MAX_SERIES) {
-		normalized = {
-			xValues: normalized.xValues,
-			series: normalized.series.slice(0, MAX_SERIES),
-		};
-	}
-
-	// 3. カラー再解決（configのカラーを優先）
-	if (safeConfig?.color) {
-		const colors = resolveChartColors(normalized.series.length, safeConfig.color);
-		for (let i = 0; i < normalized.series.length; i++) {
-			const s = normalized.series[i];
-			if (s) s.color = colors[i] ?? s.color;
-		}
-	}
-
-	// 4. ソート適用
+	// 3. ソート適用
 	const sorted = applySortOrder(normalized, safeConfig?.sort);
 
-	// 5. SVG描画
+	// 4. SVG描画
 	return renderBarChartHtml(sorted, safeConfig);
-}
-
-/**
- * 設定をサニタイズ
- */
-function sanitizeConfig(config?: Partial<BarChartConfig>): Partial<BarChartConfig> | undefined {
-	if (!config) return config;
-
-	const sanitized = { ...config };
-
-	// 高さの検証
-	if (sanitized.height !== undefined && sanitized.height <= 0) {
-		sanitized.height = DEFAULT_HEIGHT;
-	}
-
-	// カラーの検証
-	if (sanitized.color) {
-		if (typeof sanitized.color === "string") {
-			if (!isValidColor(sanitized.color)) {
-				delete sanitized.color;
-			}
-		} else if (Array.isArray(sanitized.color)) {
-			const validColors = sanitized.color.filter(isValidColor);
-			if (validColors.length === 0) {
-				delete sanitized.color;
-			} else {
-				sanitized.color = validColors;
-			}
-		}
-	}
-
-	return sanitized;
-}
-
-/**
- * NaN/Infinity値をnullに変換
- */
-function sanitizeValues(data: NormalizedBarChartData): NormalizedBarChartData {
-	let changed = false;
-	const series = data.series.map((s) => {
-		const values = s.values.map((v) => {
-			if (v !== null && !Number.isFinite(v)) {
-				changed = true;
-				return null;
-			}
-			return v;
-		});
-		return { ...s, values };
-	});
-	return changed ? { xValues: data.xValues, series } : data;
 }
 
 /**
@@ -332,7 +229,7 @@ function renderHorizontalBarChartHtml(
 	);
 
 	// 横向きグリッド（値軸の縦線）
-	parts.push(renderHorizontalGrid(scale, marginLeft, plotWidth, MARGIN.top, plotHeight, scaleX));
+	parts.push(renderHorizontalGrid(scale, marginLeft, MARGIN.top, plotHeight, scaleX));
 
 	// 横向きx軸（値軸 → 下）
 	parts.push(
@@ -344,9 +241,9 @@ function renderHorizontalBarChartHtml(
 
 	// 横向きバー
 	if (isStacked) {
-		parts.push(renderHorizontalStackedBars(data, marginLeft, plotHeight, scaleX));
+		parts.push(renderHorizontalStackedBars(data, plotHeight, scaleX));
 	} else {
-		parts.push(renderHorizontalGroupedBars(data, marginLeft, plotHeight, scaleX, scale));
+		parts.push(renderHorizontalGroupedBars(data, plotHeight, scaleX, scale));
 	}
 
 	if (config?.x_label) {
@@ -370,29 +267,6 @@ function renderHorizontalBarChartHtml(
 	parts.push("</svg>");
 	parts.push("</figure>");
 	return parts.join("");
-}
-
-/**
- * 全データ値を取得（グループ化モード用）
- */
-function getAllValues(data: NormalizedBarChartData): number[] {
-	return data.series.flatMap((s) => s.values.filter((v): v is number => v !== null));
-}
-
-/**
- * 積み上げモード用の最大値を取得
- * 各カテゴリのシリーズ合計値を返す
- */
-function getStackedMaxValues(data: NormalizedBarChartData): number[] {
-	const values: number[] = [];
-	for (let i = 0; i < data.xValues.length; i++) {
-		let total = 0;
-		for (const s of data.series) {
-			total += s.values[i] ?? 0;
-		}
-		values.push(total);
-	}
-	return values;
 }
 
 /**
@@ -485,7 +359,6 @@ function renderStackedBars(
 function renderHorizontalGrid(
 	scale: { ticks: number[] },
 	_marginLeft: number,
-	_plotWidth: number,
 	marginTop: number,
 	plotHeight: number,
 	scaleX: (v: number) => number,
@@ -557,7 +430,6 @@ function renderHorizontalCategoryAxis(
  */
 function renderHorizontalGroupedBars(
 	data: NormalizedBarChartData,
-	_marginLeft: number,
 	plotHeight: number,
 	scaleX: (v: number) => number,
 	scale: { min: number; max: number },
@@ -595,7 +467,6 @@ function renderHorizontalGroupedBars(
  */
 function renderHorizontalStackedBars(
 	data: NormalizedBarChartData,
-	_marginLeft: number,
 	plotHeight: number,
 	scaleX: (v: number) => number,
 ): string {
