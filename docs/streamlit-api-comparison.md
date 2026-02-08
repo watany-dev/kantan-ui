@@ -77,7 +77,7 @@
 | Streamlit API | kantan-ui | 状況 | 優先度 | 難易度 | 備考 |
 |---------------|-----------|------|--------|--------|------|
 | `st.line_chart` | `kt.line_chart` | ✅ | - | - | 実装済み（SVGベース） |
-| `st.area_chart` | - | ❌ | P1 | Hard | エリアチャート |
+| `st.area_chart` | `kt.area_chart` | ✅ | - | - | 実装済み（SVGベース、積み上げ対応） |
 | `st.bar_chart` | `kt.bar_chart` | ✅ | - | - | 実装済み（SVGベース、グループ化/積み上げ/横向き対応） |
 | `st.scatter_chart` | - | ❌ | P1 | Hard | 散布図 |
 | `st.map` | - | ❌ | P2 | Very Hard | 地図表示 |
@@ -221,12 +221,11 @@
 
 すべてのP0 APIが実装済みです。
 
-### P1 (高) - 8件
+### P1 (高) - 7件
 | API | 難易度 | 説明 |
 |-----|--------|------|
 | `st.datetime_input` | Medium | 日付+時刻入力 |
 | `st.data_editor` | Very Hard | データ編集ウィジェット |
-| `st.area_chart` | Hard | エリアチャート |
 | `st.scatter_chart` | Hard | 散布図 |
 | `st.dialog` | Hard | モーダルダイアログ |
 | `st.status` | Medium | ステータスコンテナ |
@@ -293,11 +292,11 @@
 
 ## 実装済みAPI サマリー
 
-kantan-uiで実装済みのStreamlit互換API: **46件**
+kantan-uiで実装済みのStreamlit互換API: **47件**
 
 - Input Widgets: 15件
 - Data Display: 4件
-- Chart Elements: 2件 (line_chart, bar_chart)
+- Chart Elements: 3件 (line_chart, bar_chart, area_chart)
 - Text Elements: 8件
 - Media: 3件 (image, audio, video)
 - Layout: 6件
