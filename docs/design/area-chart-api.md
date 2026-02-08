@@ -70,11 +70,12 @@ area_chartは **bar_chart系パイプライン**（`src/kt/chart/normalize.ts`�
 
 | モジュール | 役割 | 共有 |
 |-----------|------|------|
-| `src/kt/chart/types.ts` | 型定義 | 共通型 + area固有型 |
+| `src/kt/chart/types.ts` | 型定義（`BaseChartConfig`, `AreaChartConfig`, `NormalizeConfig` 等） | 共通型 + area固有型 |
 | `src/kt/chart/colors.ts` | カラーパレット・バリデーション | 完全共有 |
 | `src/kt/chart/normalize.ts` | データ正規化 | 完全共有 |
-| `src/kt/chart/scale.ts` | 軸スケール計算 | 完全共有 |
-| `src/kt/chart/render-utils.ts` | グリッド・軸・凡例の共通描画 | **新規抽出** |
+| `src/kt/chart/scale.ts` | 軸スケール計算（`niceScale`, `calculateAxisScale`） | 完全共有 |
+| `src/kt/chart/shared.ts` | 共通前処理（`prepareChartData`, `sanitizeConfig` 等） | bar/area共有 |
+| `src/kt/chart/render-utils.ts` | グリッド・軸・凡例の共通描画 | 完全共有 |
 | `src/kt/chart/area-chart.ts` | エリアチャート描画 | **area固有** |
 
 ### 1.6 line_chart との関係
@@ -709,11 +710,12 @@ src/
   kt/
     chart/
       area-chart.ts          # area_chart() メイン関数 + SVG描画
-      render-utils.ts        # 【新規】グリッド・軸・凡例の共通描画関数
+      shared.ts              # 共通前処理（prepareChartData, sanitizeConfig等）
+      render-utils.ts        # グリッド・軸・凡例の共通描画関数
       normalize.ts           # データ正規化（既存共有）
-      scale.ts               # 軸スケール計算（既存共有）
+      scale.ts               # 軸スケール計算（niceScale + calculateAxisScale）
       colors.ts              # カラーパレット・バリデーション（既存共有）
-      types.ts               # 型定義（共通型 + area固有型を追加）
+      types.ts               # 型定義（BaseChartConfig, AreaChartConfig, NormalizeConfig等）
     charts.ts                # kt.area_chart を追加
     index.ts                 # kt.area_chart をエクスポート
   styles/
