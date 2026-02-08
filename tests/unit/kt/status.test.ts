@@ -1,10 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import { write } from "../../../src/kt/output";
-import { status } from "../../../src/kt/status";
+import { status, type StatusState } from "../../../src/kt/status";
 import { resetSessionManager, setSessionManager } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
-import { getWidgetValue, resetWidgetCounter } from "../../../src/widgets/registry";
+import {
+	getWidgetValue,
+	resetWidgetCounter,
+	setWidgetValue,
+} from "../../../src/widgets/registry";
 
 // Mock SessionManager
 class MockSessionManager {
@@ -196,6 +200,90 @@ describe("kt.status", () => {
 			const html = ctx.getHtml();
 			expect(html).toContain("Failed!");
 			expect(html).toContain("kt-status-error");
+		});
+	});
+
+	describe("Iteration 3.5: edge cases and security", () => {
+		it("closes details tag even when callback throws", () => {
+			expect(() => {
+				status("Crash", () => {
+					write("Before error");
+					throw new Error("Callback error");
+				});
+			}).toThrow("Callback error");
+			const html = ctx.getHtml();
+			expect(html).toContain("</details>");
+		});
+
+		it("auto-completes state after callback throws", () => {
+			try {
+				status(
+					"Crash",
+					() => {
+						throw new Error("fail");
+					},
+					{ key: "status_throw" },
+				);
+			} catch {
+				/* expected */
+			}
+			const saved = getWidgetValue<{ state: string }>("status_throw", {
+				state: "",
+			});
+			expect(saved.state).toBe("complete");
+		});
+
+		it("falls back to running for invalid state in config", () => {
+			status("Test", () => {}, { state: "invalid" as StatusState });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-status-running");
+		});
+
+		it("falls back to running for invalid saved state", () => {
+			setWidgetValue("status_invalid_saved", {
+				label: "Bad",
+				state: "hacked",
+				expanded: true,
+			});
+			status("Test", () => {}, { key: "status_invalid_saved" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-status-running");
+		});
+
+		it("renders with empty label", () => {
+			status("", () => {
+				write("Content");
+			});
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-status-label");
+			expect(html).toContain("Content");
+		});
+
+		it("includes aria-hidden on status icon", () => {
+			status("Loading", () => {});
+			const html = ctx.getHtml();
+			expect(html).toContain('aria-hidden="true"');
+		});
+
+		it("includes sr-only text for screen readers", () => {
+			status("Loading", () => {});
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-sr-only");
+		});
+
+		it("validates state in update() call", () => {
+			status(
+				"Test",
+				(s) => {
+					s.update({ state: "hacked" as StatusState });
+				},
+				{ key: "status_update_invalid" },
+			);
+			const saved = getWidgetValue<{ state: string }>(
+				"status_update_invalid",
+				{ state: "" },
+			);
+			expect(saved.state).toBe("running");
 		});
 	});
 });
