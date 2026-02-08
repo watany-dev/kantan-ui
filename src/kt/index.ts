@@ -39,6 +39,7 @@ import * as media from "./media";
 import * as metricModule from "./metric";
 import * as output from "./output";
 import { sidebar } from "./sidebar";
+import { status } from "./status";
 import { write_stream } from "./stream";
 import * as widgets from "./widgets";
 
@@ -111,6 +112,7 @@ export const kt = {
 	expander: layout.expander,
 	tabs: layout.tabs,
 	sidebar,
+	status,
 	empty,
 
 	// Form APIs
