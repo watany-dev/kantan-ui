@@ -41,6 +41,7 @@ Streamlit の `st.status` に相当する機能を kantan-ui に実装する。�
 | `with st.status("label") as s:` | `kt.status("label", (s) => { ... })` | コールバックパターンで代替 |
 | `s.update(label=..., state=..., expanded=...)` | `s.update({ label, state, expanded })` | オブジェクト引数 |
 | `st.write()` inside status | `kt.write()` inside callback | コンテキスト内で通常のAPIが使える |
+| `status.write()` outside `with` | 非対応 | Streamlitはコンテナオブジェクト経由で外部からコンテンツ追加可能。kantan-uiはコールバック内のみ |
 | state: "running" / "complete" / "error" | 同一 | 3状態をサポート |
 
 ---
@@ -1008,6 +1009,8 @@ try {
 
 **例外自体の処理**: 例外は呼び出し元に再スローする（握りつぶさない）。`kt.expander` や `kt.container` と同じ方針。
 
+**自動完了の適用**: 例外発生時も `update()` が呼ばれていなければ `"complete"` に自動遷移する。これは意図的な設計判断である。理由: 例外はユーザーコードの問題であり、status コンテナの状態とは独立。エラー状態にしたい場合は `try/catch` 内で `s.update({ state: "error" })` を明示的に呼ぶべき。
+
 ### 7.6 空ラベル
 
 空文字列のラベルは許容する。`<summary>` 内にアイコンのみが表示される。バリデーションエラーにはしないが、アクセシビリティ上は非推奨。
@@ -1068,14 +1071,17 @@ function validateState(state: string): StatusState {
 
 HTML出力で `kt-status-${raw(currentState.state)}` のように状態値を直接クラス名に埋め込むため、状態値は検証済みの値のみ使用する（8.2 の `validateState` で担保）。
 
-### 8.4 コンテンツ領域のセキュリティ
+### 8.4 update() の label 安全性
+
+`controller.update({ label })` で保存されたラベルは、次回 rerun 時に `renderHtml` テンプレートタグ内の `${currentState.label}` として出力される。`renderHtml` は自動エスケープするため、ユーザー入力を含む label も安全に処理される。
+
+### 8.5 コンテンツ領域のセキュリティ
 
 status コンテナ内で呼ばれる `kt.write()` や `kt.html()` 等は、それぞれの API が持つエスケープ・サニタイズ機構に従う。status 側で追加のサニタイズは不要。
 
 ---
 
 ## 9. 非実装項目（将来検討）
-
 
 | 項目 | 理由 |
 |------|------|
