@@ -79,4 +79,58 @@ describe("kt.status", () => {
 			expect(html).toContain("&lt;script&gt;");
 		});
 	});
+
+	describe("Iteration 2: status states", () => {
+		it("defaults to running state with spinner icon", () => {
+			status("Processing...", () => {});
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-status-running");
+			expect(html).toContain("kt-spinner-icon");
+		});
+
+		it("uses complete state when config.state is complete", () => {
+			status("Done", () => {}, { state: "complete" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-status-complete");
+			expect(html).toContain("&#10003;");
+		});
+
+		it("uses error state when config.state is error", () => {
+			status("Failed", () => {}, { state: "error" });
+			const html = ctx.getHtml();
+			expect(html).toContain("kt-status-error");
+			expect(html).toContain("&#10007;");
+		});
+
+		it("defaults expanded=true when state is running", () => {
+			status("Processing...", () => {}, { state: "running" });
+			const html = ctx.getHtml();
+			expect(html).toContain(" open");
+		});
+
+		it("defaults expanded=false when state is complete", () => {
+			status("Done", () => {}, { state: "complete" });
+			const html = ctx.getHtml();
+			expect(html).not.toContain(" open");
+		});
+
+		it("defaults expanded=false when state is error", () => {
+			status("Failed", () => {}, { state: "error" });
+			const html = ctx.getHtml();
+			expect(html).not.toContain(" open");
+		});
+
+		it("respects explicit expanded config", () => {
+			status("Done", () => {}, { state: "complete", expanded: true });
+			const html = ctx.getHtml();
+			expect(html).toContain(" open");
+		});
+
+		it("renders status label in a span with kt-status-label class", () => {
+			status("My Status", () => {});
+			const html = ctx.getHtml();
+			expect(html).toContain('class="kt-status-label"');
+			expect(html).toContain("My Status");
+		});
+	});
 });
