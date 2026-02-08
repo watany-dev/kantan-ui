@@ -396,6 +396,43 @@ kt.bar_chart(data, {
 | config.sort | `"ascending" \| "descending"` | - | Sort bars by value |
 | config.title | `string` | - | Chart title |
 
+```typescript
+// Area chart - filled line chart for showing quantities over time
+kt.area_chart([10, 20, 15, 30, 25]);
+
+// Multi-series with overlay (default)
+kt.area_chart([
+  { month: "Jan", revenue: 100, cost: 50 },
+  { month: "Feb", revenue: 120, cost: 60 },
+], { x: "month" });
+
+// Stacked area chart
+kt.area_chart(data, { x: "month", stack: true });
+
+// With custom colors and labels
+kt.area_chart(data, {
+  x: "month",
+  y: ["revenue", "cost"],
+  color: ["#FF000080", "#0000FF80"],
+  x_label: "Month",
+  y_label: "Amount ($)",
+  title: "Revenue vs Cost",
+});
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| data | `AreaChartData` | - | Number array, object array, 2D array, or columnar format |
+| config.x | `string` | auto | X-axis column name |
+| config.y | `string \| string[]` | auto | Y-axis column name(s) |
+| config.x_label | `string` | - | X-axis label |
+| config.y_label | `string` | - | Y-axis label |
+| config.color | `string \| string[]` | palette | Area color(s) - Tableau 10 palette |
+| config.height | `number` | `400` | Chart height in pixels |
+| config.stack | `boolean` | `false` | Stack multiple series (false for overlay) |
+| config.use_container_width | `boolean` | `true` | Fit to container width |
+| config.title | `string` | - | Chart title |
+
 #### Media API
 
 ```typescript
@@ -789,13 +826,15 @@ src/
 │   ├── context.ts    # Render context
 │   ├── config.ts     # Page config (set_page_config)
 │   ├── control.ts    # Control API (rerun)
-│   ├── charts.ts     # Chart API (line_chart, bar_chart)
-│   ├── chart/        # Bar chart module
+│   ├── charts.ts     # Chart API (line_chart, bar_chart, area_chart)
+│   ├── chart/        # Chart modules
 │   │   ├── types.ts      # Type definitions
 │   │   ├── colors.ts     # Color palette & validation
 │   │   ├── normalize.ts  # Data normalization
 │   │   ├── scale.ts      # Axis scale calculation
-│   │   └── bar-chart.ts  # SVG rendering
+│   │   ├── render-utils.ts # Shared rendering utilities (grid, axes, legend)
+│   │   ├── bar-chart.ts  # Bar chart SVG rendering
+│   │   └── area-chart.ts # Area chart SVG rendering
 │   ├── chat.ts       # Chat API (chat_message, chat_container)
 │   ├── data.ts       # Data display (table, dataframe)
 │   ├── empty.ts      # Empty placeholder
