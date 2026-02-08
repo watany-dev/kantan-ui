@@ -58,6 +58,40 @@ describe("calculateAxisScale", () => {
 		const scale = calculateAxisScale([0, 1000], 3);
 		expect(scale.ticks.length).toBeLessThanOrEqual(4);
 	});
+
+	describe("includeZero option", () => {
+		it("includes zero by default (backward compatible)", () => {
+			const scale = calculateAxisScale([10, 50]);
+			expect(scale.min).toBe(0);
+		});
+
+		it("excludes zero when includeZero is false", () => {
+			const scale = calculateAxisScale([10, 50], 5, { includeZero: false });
+			expect(scale.min).toBeGreaterThan(0);
+			expect(scale.min).toBeLessThanOrEqual(10);
+		});
+
+		it("still includes zero if data crosses zero", () => {
+			const scale = calculateAxisScale([-10, 50], 5, { includeZero: false });
+			expect(scale.min).toBeLessThanOrEqual(-10);
+			expect(scale.max).toBeGreaterThanOrEqual(50);
+		});
+
+		it("handles single value with includeZero false", () => {
+			const scale = calculateAxisScale([42], 5, { includeZero: false });
+			expect(scale.min).toBeLessThan(42);
+			expect(scale.max).toBeGreaterThan(42);
+			expect(scale.ticks.length).toBeGreaterThanOrEqual(2);
+		});
+
+		it("handles all-negative values with includeZero false", () => {
+			const scale = calculateAxisScale([-100, -50, -20], 5, { includeZero: false });
+			expect(scale.min).toBeLessThanOrEqual(-100);
+			expect(scale.max).toBeGreaterThanOrEqual(-20);
+			// Should NOT force max to 0
+			expect(scale.max).toBeLessThan(0);
+		});
+	});
 });
 
 describe("formatTickValue", () => {

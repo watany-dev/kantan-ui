@@ -1639,6 +1639,53 @@ const areaChartStyles = `
   }
 `;
 
+/** 散布図スタイル */
+const scatterChartStyles = `
+  /* Scatter Chart Container */
+  .kt-scatter-chart {
+    margin: 0.5rem 0;
+    padding: 0;
+  }
+
+  /* Title */
+  .kt-scatter-chart-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 0.5rem;
+  }
+
+  /* SVG */
+  .kt-scatter-chart-svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  /* Scatter points */
+  .kt-chart-scatter-group circle {
+    stroke: #fff;
+    stroke-width: 1;
+    transition: r 0.15s ease, fill-opacity 0.15s ease;
+  }
+
+  .kt-chart-scatter-group circle:hover {
+    fill-opacity: 1;
+    stroke-width: 2;
+  }
+
+  /* Empty State */
+  .kt-scatter-chart-empty {
+    padding: 2rem;
+    text-align: center;
+    color: #6c757d;
+    background: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+  }
+`;
+
 /**
  * 全デフォルトスタイルを結合
  */
@@ -1669,6 +1716,7 @@ export const defaultStyles = [
 	lineChartStyles,
 	barChartStyles,
 	areaChartStyles,
+	scatterChartStyles,
 ].join("\n");
 
 /**

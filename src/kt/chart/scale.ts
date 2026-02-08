@@ -15,24 +15,36 @@ export interface AxisScale {
 /**
  * Nice numbers アルゴリズムで軸スケールを計算
  *
- * バーチャートの特性:
+ * デフォルト（includeZero: true）:
  * - min >= 0 の場合、scale.min = 0 に固定
  * - max <= 0 の場合（全て負の値）、scale.max = 0 に固定
  *
+ * includeZero: false の場合（散布図等）:
+ * - 0を含めるルールをスキップし、データ範囲にフォーカス
+ *
  * @param values - データ値の配列
  * @param maxTicks - 最大目盛り数（デフォルト: 5）
+ * @param options - オプション設定
  */
-export function calculateAxisScale(values: number[], maxTicks = 5): AxisScale {
+export function calculateAxisScale(
+	values: number[],
+	maxTicks = 5,
+	options?: { includeZero?: boolean },
+): AxisScale {
 	if (values.length === 0) {
 		return { min: 0, max: 1, step: 1, ticks: [0, 1] };
 	}
 
+	const includeZero = options?.includeZero ?? true;
+
 	let dataMin = Math.min(...values);
 	let dataMax = Math.max(...values);
 
-	// バーチャート: 0を含めるルール
-	if (dataMin >= 0) dataMin = 0;
-	if (dataMax <= 0) dataMax = 0;
+	// 0を含めるルール（includeZero が true の場合のみ）
+	if (includeZero) {
+		if (dataMin >= 0) dataMin = 0;
+		if (dataMax <= 0) dataMax = 0;
+	}
 
 	// 同じ値の場合
 	if (dataMin === dataMax) {
@@ -40,13 +52,19 @@ export function calculateAxisScale(values: number[], maxTicks = 5): AxisScale {
 			return { min: 0, max: 1, step: 0.5, ticks: [0, 0.5, 1] };
 		}
 		const offset = Math.abs(dataMin) * 0.1 || 1;
-		// 0を含めるルール適用後なので、0から適切な範囲を設定
-		if (dataMin > 0) {
-			dataMax = dataMin + offset;
-			dataMin = 0;
+		if (includeZero) {
+			// 0を含めるルール適用後なので、0から適切な範囲を設定
+			if (dataMin > 0) {
+				dataMax = dataMin + offset;
+				dataMin = 0;
+			} else {
+				dataMin = dataMin - offset;
+				dataMax = 0;
+			}
 		} else {
+			// データ値を中心に前後に広げる
 			dataMin = dataMin - offset;
-			dataMax = 0;
+			dataMax = dataMax + offset;
 		}
 	}
 
@@ -66,9 +84,9 @@ export function calculateAxisScale(values: number[], maxTicks = 5): AxisScale {
 	const niceMin = Math.floor(dataMin / niceStep) * niceStep;
 	const niceMax = Math.ceil(dataMax / niceStep) * niceStep;
 
-	// 0を含めるルール（niceScale後も維持）
-	const finalMin = dataMin >= 0 ? 0 : niceMin;
-	const finalMax = dataMax <= 0 ? 0 : niceMax;
+	// 0を含めるルール（niceScale後も維持、includeZero が true の場合のみ）
+	const finalMin = includeZero && dataMin >= 0 ? 0 : niceMin;
+	const finalMax = includeZero && dataMax <= 0 ? 0 : niceMax;
 
 	// 目盛り生成
 	const ticks: number[] = [];

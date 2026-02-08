@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
 	renderGrid,
 	renderLegend,
+	renderNumericXAxis,
+	renderScatterLegend,
+	renderVerticalGrid,
 	renderXAxis,
 	renderYAxis,
 } from "../../../../src/kt/chart/render-utils";
@@ -85,6 +88,72 @@ describe("render-utils", () => {
 
 		it("escapes series names to prevent XSS", () => {
 			const svg = renderLegend([{ name: "<script>alert(1)</script>", color: "#4e79a7" }], 60, 370);
+			expect(svg).not.toContain("<script>");
+		});
+	});
+
+	describe("renderNumericXAxis", () => {
+		it("renders numeric tick labels", () => {
+			const scale = { min: 0, max: 100, step: 20, ticks: [0, 20, 40, 60, 80, 100] };
+			const scaleX = (v: number) => 60 + (v / 100) * 520;
+			const svg = renderNumericXAxis(scale, scaleX, 350, 60, 520);
+			expect(svg).toContain("kt-chart-axis-x");
+			expect(svg).toContain("20");
+			expect(svg).toContain("80");
+		});
+
+		it("renders axis line", () => {
+			const scale = { min: 0, max: 100, step: 50, ticks: [0, 50, 100] };
+			const scaleX = (v: number) => 60 + (v / 100) * 520;
+			const svg = renderNumericXAxis(scale, scaleX, 350, 60, 520);
+			expect(svg).toContain("<line");
+		});
+	});
+
+	describe("renderVerticalGrid", () => {
+		it("renders vertical grid lines for x-axis ticks", () => {
+			const scale = { min: 0, max: 100, step: 20, ticks: [0, 20, 40, 60, 80, 100] };
+			const scaleX = (v: number) => 60 + (v / 100) * 520;
+			const svg = renderVerticalGrid(scale, scaleX, 20, 330);
+			expect(svg).toContain("<line");
+		});
+
+		it("generates one line per tick", () => {
+			const scale = { min: 0, max: 100, step: 50, ticks: [0, 50, 100] };
+			const scaleX = (v: number) => 60 + (v / 100) * 520;
+			const svg = renderVerticalGrid(scale, scaleX, 20, 330);
+			const lineCount = (svg.match(/<line /g) || []).length;
+			expect(lineCount).toBe(3);
+		});
+	});
+
+	describe("renderScatterLegend", () => {
+		it("renders circles instead of rectangles", () => {
+			const svg = renderScatterLegend([{ name: "Group A", color: "#4e79a7" }], 60, 370);
+			expect(svg).toContain("kt-chart-legend");
+			expect(svg).toContain("<circle");
+			expect(svg).not.toContain("<rect");
+		});
+
+		it("renders group names", () => {
+			const svg = renderScatterLegend(
+				[
+					{ name: "A", color: "#4e79a7" },
+					{ name: "B", color: "#e15759" },
+				],
+				60,
+				370,
+			);
+			expect(svg).toContain("A");
+			expect(svg).toContain("B");
+		});
+
+		it("escapes group names to prevent XSS", () => {
+			const svg = renderScatterLegend(
+				[{ name: "<script>alert(1)</script>", color: "#4e79a7" }],
+				60,
+				370,
+			);
 			expect(svg).not.toContain("<script>");
 		});
 	});
