@@ -10,6 +10,8 @@ import { isUUID } from "../utils/type-guards";
 import type { ChunkUploadStartMessage } from "../websocket/types";
 import type { InternalUploadData } from "../widgets/types";
 import { FILE_UPLOAD_LIMITS } from "../widgets/types";
+import type { Scheduler } from "./scheduler";
+import { defaultScheduler } from "./scheduler";
 import type {
 	DownloadData,
 	DownloadId,
@@ -107,7 +109,8 @@ export class SessionManager {
 	private sessionToWs = new Map<SessionId, Set<WSContext>>();
 	private config: ResolvedSessionConfig;
 	private securityConfig: Required<SecurityConfig>;
-	private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+	private scheduler: Scheduler;
+	private cleanupIntervalId: unknown = null;
 
 	// イベントキュー関連
 	private eventQueues = new Map<SessionId, EventQueueItem[]>();
@@ -117,7 +120,7 @@ export class SessionManager {
 
 	// ping/pong関連
 	private wsLastPong = new Map<WSContext, number>();
-	private pingIntervalId: ReturnType<typeof setInterval> | null = null;
+	private pingIntervalId: unknown = null;
 	private pingInterval = 0;
 	private pongTimeout = 0;
 
@@ -142,7 +145,12 @@ export class SessionManager {
 	// Web標準 TextEncoder（バイトサイズ計算用）
 	private static readonly textEncoder = new TextEncoder();
 
-	constructor(config: SessionConfig = {}, securityConfig: SecurityConfig = {}) {
+	constructor(
+		config: SessionConfig = {},
+		securityConfig: SecurityConfig = {},
+		scheduler: Scheduler = defaultScheduler,
+	) {
+		this.scheduler = scheduler;
 		this.config = {
 			...DEFAULT_SESSION_CONFIG,
 			...config,
@@ -173,7 +181,7 @@ export class SessionManager {
 	private startCleanupInterval(): void {
 		if (this.cleanupIntervalId) return;
 
-		this.cleanupIntervalId = setInterval(() => {
+		this.cleanupIntervalId = this.scheduler.setInterval(() => {
 			const cleaned = this.cleanup();
 			if (cleaned > 0) {
 				console.log(`Session cleanup: removed ${cleaned} expired session(s)`);
@@ -184,7 +192,7 @@ export class SessionManager {
 	// クリーンアップインターバルを停止
 	stopCleanupInterval(): void {
 		if (this.cleanupIntervalId) {
-			clearInterval(this.cleanupIntervalId);
+			this.scheduler.clearInterval(this.cleanupIntervalId);
 			this.cleanupIntervalId = null;
 		}
 	}
@@ -196,7 +204,7 @@ export class SessionManager {
 		this.pingInterval = pingInterval;
 		this.pongTimeout = pongTimeout;
 
-		this.pingIntervalId = setInterval(() => {
+		this.pingIntervalId = this.scheduler.setInterval(() => {
 			this.sendPingToAll();
 		}, pingInterval);
 	}
@@ -204,7 +212,7 @@ export class SessionManager {
 	// ping/pong接続維持を停止
 	stopPingInterval(): void {
 		if (this.pingIntervalId) {
-			clearInterval(this.pingIntervalId);
+			this.scheduler.clearInterval(this.pingIntervalId);
 			this.pingIntervalId = null;
 		}
 	}

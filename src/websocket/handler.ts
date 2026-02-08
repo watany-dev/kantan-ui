@@ -59,6 +59,15 @@ async function createDenoAdapter(): Promise<WebSocketAdapter> {
 }
 
 /**
+ * Cloudflare Workers用WebSocketアダプターを作成
+ */
+async function createCloudflareAdapter(): Promise<WebSocketAdapter> {
+	// biome-ignore lint/suspicious/noExplicitAny: dynamic import for runtime-specific module
+	const { upgradeWebSocket } = (await import("hono/cloudflare-workers")) as any;
+	return { upgradeWebSocket };
+}
+
+/**
  * ランタイムに応じたWebSocketアダプターを非同期で作成
  * Node.jsの場合は app が必要
  */
@@ -73,6 +82,8 @@ export async function createWebSocketAdapterAsync(app?: Hono): Promise<WebSocket
 		cachedAdapter = await createBunAdapter();
 	} else if (runtime === "deno") {
 		cachedAdapter = await createDenoAdapter();
+	} else if (runtime === "workerd") {
+		cachedAdapter = await createCloudflareAdapter();
 	} else {
 		// Node.js環境
 		if (!app) {

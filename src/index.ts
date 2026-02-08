@@ -61,9 +61,11 @@ export type { CaptionConfig, LinkButtonConfig } from "./kt/output";
 export type { RerunContext, Script } from "./runtime";
 // Runtime
 export { clearContext, getContext, rerun, setContext } from "./runtime";
+export type { Scheduler } from "./session";
 // Session
 export {
 	createTypedSessionState,
+	defaultScheduler,
 	getCurrentSessionId,
 	getSessionManager,
 	resetSessionManager,

@@ -1,5 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getEnvVar } from "../../../src/utils/env";
+
+vi.mock("hono/adapter", async (importOriginal) => {
+	const original = await importOriginal<typeof import("hono/adapter")>();
+	return {
+		...original,
+		getRuntimeKey: vi.fn(original.getRuntimeKey),
+	};
+});
+
+import { getRuntimeKey } from "hono/adapter";
 
 describe("getEnvVar", () => {
 	it("returns the value of an existing environment variable", () => {
@@ -23,5 +33,21 @@ describe("getEnvVar", () => {
 		} finally {
 			delete process.env["__KANTAN_UI_TEST_VAR__"];
 		}
+	});
+
+	describe("Cloudflare Workers runtime", () => {
+		beforeEach(() => {
+			vi.mocked(getRuntimeKey).mockReturnValue("workerd");
+		});
+
+		afterEach(() => {
+			vi.mocked(getRuntimeKey).mockRestore();
+		});
+
+		it("returns undefined for any key in workerd runtime", () => {
+			expect(getEnvVar("PATH")).toBeUndefined();
+			expect(getEnvVar("HOME")).toBeUndefined();
+			expect(getEnvVar("CI")).toBeUndefined();
+		});
 	});
 });
