@@ -4,7 +4,7 @@ import { write } from "../../../src/kt/output";
 import { status } from "../../../src/kt/status";
 import { resetSessionManager, setSessionManager } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
-import { resetWidgetCounter } from "../../../src/widgets/registry";
+import { getWidgetValue, resetWidgetCounter } from "../../../src/widgets/registry";
 
 // Mock SessionManager
 class MockSessionManager {
@@ -131,6 +131,71 @@ describe("kt.status", () => {
 			const html = ctx.getHtml();
 			expect(html).toContain('class="kt-status-label"');
 			expect(html).toContain("My Status");
+		});
+	});
+
+	describe("Iteration 3: StatusController.update()", () => {
+		it("auto-completes when update() is not called", () => {
+			status("Processing...", () => {}, { key: "status_auto" });
+			const saved = getWidgetValue<{ state: string; expanded: boolean }>(
+				"status_auto",
+				{ state: "", expanded: true },
+			);
+			expect(saved.state).toBe("complete");
+			expect(saved.expanded).toBe(false);
+		});
+
+		it("preserves state when update() is called", () => {
+			status(
+				"Processing...",
+				(s) => {
+					s.update({ state: "error", label: "Failed!" });
+				},
+				{ key: "status_manual" },
+			);
+			const saved = getWidgetValue<{ state: string; label: string }>(
+				"status_manual",
+				{ state: "", label: "" },
+			);
+			expect(saved.state).toBe("error");
+			expect(saved.label).toBe("Failed!");
+		});
+
+		it("allows partial updates", () => {
+			status(
+				"Processing...",
+				(s) => {
+					s.update({ label: "Almost done..." });
+				},
+				{ key: "status_partial" },
+			);
+			const saved = getWidgetValue<{ label: string; state: string }>(
+				"status_partial",
+				{ label: "", state: "" },
+			);
+			expect(saved.label).toBe("Almost done...");
+			// state remains running since update() was called but state wasn't changed
+			expect(saved.state).toBe("running");
+		});
+
+		it("restores saved state on next rerun", () => {
+			// 1回目: update でエラー状態を保存
+			status(
+				"Processing...",
+				(s) => {
+					s.update({ state: "error", label: "Failed!" });
+				},
+				{ key: "status_rerun" },
+			);
+
+			// 2回目: 保存された状態が復元される
+			ctx = new RenderContext();
+			setRenderContext(ctx);
+			resetWidgetCounter();
+			status("Processing...", () => {}, { key: "status_rerun" });
+			const html = ctx.getHtml();
+			expect(html).toContain("Failed!");
+			expect(html).toContain("kt-status-error");
 		});
 	});
 });
