@@ -215,6 +215,47 @@ describe("verifyMagicBytes", () => {
 		});
 	});
 
+	describe("RIFF non-WebP detection", () => {
+		it("does not detect RIFF+WAVE as WebP", () => {
+			// RIFF header + size placeholder + WAVE (not WEBP)
+			const wav = new Uint8Array([
+				0x52,
+				0x49,
+				0x46,
+				0x46, // RIFF
+				0x00,
+				0x00,
+				0x00,
+				0x00, // size
+				0x57,
+				0x41,
+				0x56,
+				0x45, // WAVE (not WEBP)
+			]);
+			const result = verifyMagicBytes(wav.buffer, "audio/wav");
+			// RIFF header matches the WebP safe signature entry, so detectedMime is "image/webp"
+			// but isWebP() returns false because offset 8 is WAVE not WEBP
+			expect(result.detectedMime).toBe("image/webp");
+			expect(result.mismatch).toBe(true);
+		});
+	});
+
+	describe("MIME type matching edge cases", () => {
+		it("treats case-insensitive MIME match as valid", () => {
+			const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00]);
+			const result = verifyMagicBytes(png.buffer, "Image/PNG");
+			expect(result.detectedMime).toBe("image/png");
+			expect(result.mismatch).toBe(false);
+		});
+
+		it("allows application/octet-stream as wildcard claimed type", () => {
+			const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00]);
+			const result = verifyMagicBytes(png.buffer, "application/octet-stream");
+			expect(result.detectedMime).toBe("image/png");
+			expect(result.mismatch).toBe(false);
+		});
+	});
+
 	describe("SVG detection", () => {
 		it("detects SVG with xml declaration", () => {
 			const svg = new TextEncoder().encode(

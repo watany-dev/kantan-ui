@@ -353,4 +353,16 @@ describe("renderLineChart", () => {
 		const html = renderLineChart([10, 20]);
 		expect(html).toContain('aria-label="Line chart"');
 	});
+
+	it("should format large y-axis values in exponential notation", () => {
+		const html = renderLineChart([0, 5_000_000]);
+		// niceScale ticks at 1e6 intervals → formatNumber uses toExponential(1)
+		expect(html).toMatch(/\de\+\d/);
+	});
+
+	it("should format decimal y-axis values without trailing zeros", () => {
+		const html = renderLineChart([0, 0.3]);
+		// niceScale ticks at 0.1 intervals → formatNumber uses toPrecision(4)
+		expect(html).toContain("0.1");
+	});
 });
