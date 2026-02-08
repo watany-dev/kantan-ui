@@ -50,10 +50,8 @@ interface StatusInternalState {
 const STATUS_ICONS: Record<StatusState, string> = {
 	running:
 		'<div class="kt-status-icon kt-status-running" aria-hidden="true"><div class="kt-spinner-icon" style="width: 16px; height: 16px;"></div></div>',
-	complete:
-		'<div class="kt-status-icon kt-status-complete" aria-hidden="true">&#10003;</div>',
-	error:
-		'<div class="kt-status-icon kt-status-error" aria-hidden="true">&#10007;</div>',
+	complete: '<div class="kt-status-icon kt-status-complete" aria-hidden="true">&#10003;</div>',
+	error: '<div class="kt-status-icon kt-status-error" aria-hidden="true">&#10007;</div>',
 };
 
 const STATUS_SR_TEXT: Record<StatusState, string> = {
@@ -117,10 +115,8 @@ export function status(
 		update(options) {
 			updated = true;
 			if (options.label !== undefined) currentState.label = options.label;
-			if (options.state !== undefined)
-				currentState.state = validateState(options.state);
-			if (options.expanded !== undefined)
-				currentState.expanded = options.expanded;
+			if (options.state !== undefined) currentState.state = validateState(options.state);
+			if (options.expanded !== undefined) currentState.expanded = options.expanded;
 			setWidgetValue(id, currentState);
 		},
 	};

@@ -1,14 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import { write } from "../../../src/kt/output";
-import { status, type StatusState } from "../../../src/kt/status";
+import { type StatusState, status } from "../../../src/kt/status";
 import { resetSessionManager, setSessionManager } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
-import {
-	getWidgetValue,
-	resetWidgetCounter,
-	setWidgetValue,
-} from "../../../src/widgets/registry";
+import { getWidgetValue, resetWidgetCounter, setWidgetValue } from "../../../src/widgets/registry";
 
 // Mock SessionManager
 class MockSessionManager {
@@ -141,10 +137,10 @@ describe("kt.status", () => {
 	describe("Iteration 3: StatusController.update()", () => {
 		it("auto-completes when update() is not called", () => {
 			status("Processing...", () => {}, { key: "status_auto" });
-			const saved = getWidgetValue<{ state: string; expanded: boolean }>(
-				"status_auto",
-				{ state: "", expanded: true },
-			);
+			const saved = getWidgetValue<{ state: string; expanded: boolean }>("status_auto", {
+				state: "",
+				expanded: true,
+			});
 			expect(saved.state).toBe("complete");
 			expect(saved.expanded).toBe(false);
 		});
@@ -157,10 +153,10 @@ describe("kt.status", () => {
 				},
 				{ key: "status_manual" },
 			);
-			const saved = getWidgetValue<{ state: string; label: string }>(
-				"status_manual",
-				{ state: "", label: "" },
-			);
+			const saved = getWidgetValue<{ state: string; label: string }>("status_manual", {
+				state: "",
+				label: "",
+			});
 			expect(saved.state).toBe("error");
 			expect(saved.label).toBe("Failed!");
 		});
@@ -173,10 +169,10 @@ describe("kt.status", () => {
 				},
 				{ key: "status_partial" },
 			);
-			const saved = getWidgetValue<{ label: string; state: string }>(
-				"status_partial",
-				{ label: "", state: "" },
-			);
+			const saved = getWidgetValue<{ label: string; state: string }>("status_partial", {
+				label: "",
+				state: "",
+			});
 			expect(saved.label).toBe("Almost done...");
 			// state remains running since update() was called but state wasn't changed
 			expect(saved.state).toBe("running");
@@ -279,10 +275,7 @@ describe("kt.status", () => {
 				},
 				{ key: "status_update_invalid" },
 			);
-			const saved = getWidgetValue<{ state: string }>(
-				"status_update_invalid",
-				{ state: "" },
-			);
+			const saved = getWidgetValue<{ state: string }>("status_update_invalid", { state: "" });
 			expect(saved.state).toBe("running");
 		});
 	});

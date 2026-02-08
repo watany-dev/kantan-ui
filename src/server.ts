@@ -407,6 +407,44 @@ const script = () => {
 
 	kt.divider();
 
+	// ===== Status Section =====
+	kt.header("Status");
+
+	// Running state - explicitly maintain running state across reruns
+	kt.status(
+		"Processing data...",
+		(s) => {
+			kt.write("Connecting to database...");
+			kt.write("Fetching records...");
+			s.update({ state: "running", expanded: true });
+		},
+		{ key: "status_running" },
+	);
+
+	// Complete state - explicitly set complete
+	kt.status(
+		"Download complete!",
+		(s) => {
+			kt.write("Downloaded 1,000 records");
+			kt.write("Processing finished");
+			s.update({ state: "complete", expanded: false });
+		},
+		{ key: "status_complete" },
+	);
+
+	// Error state - explicitly set error
+	kt.status(
+		"Import failed",
+		(s) => {
+			kt.write("Reading file...");
+			kt.error("Invalid column: 'age' expected number");
+			s.update({ state: "error", expanded: true });
+		},
+		{ key: "status_error" },
+	);
+
+	kt.divider();
+
 	// ===== Form Section =====
 	kt.header("Form");
 	kt.form("contact_form", () => {
