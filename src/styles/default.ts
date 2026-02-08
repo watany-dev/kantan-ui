@@ -1540,6 +1540,61 @@ const colorPickerStyles = `
   }
 `;
 
+/** エリアチャートスタイル */
+const areaChartStyles = `
+  /* Area Chart Container */
+  .kt-area-chart {
+    margin: 0.5rem 0;
+    padding: 0;
+  }
+
+  /* Title */
+  .kt-area-chart-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 0.5rem;
+  }
+
+  /* SVG */
+  .kt-area-chart-svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  /* Area fill */
+  .kt-chart-area path {
+    transition: opacity 0.15s ease;
+  }
+
+  .kt-chart-area:hover path {
+    opacity: 0.9;
+  }
+
+  /* Data points */
+  .kt-chart-points circle {
+    stroke: #fff;
+    stroke-width: 1.5;
+    transition: r 0.15s ease;
+  }
+
+  .kt-chart-points circle:hover {
+    r: 5;
+  }
+
+  /* Empty State */
+  .kt-area-chart-empty {
+    padding: 2rem;
+    text-align: center;
+    color: #6c757d;
+    background: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+  }
+`;
+
 /**
  * 全デフォルトスタイルを結合
  */
@@ -1567,6 +1622,7 @@ export const defaultStyles = [
 	colorPickerStyles,
 	lineChartStyles,
 	barChartStyles,
+	areaChartStyles,
 ].join("\n");
 
 /**

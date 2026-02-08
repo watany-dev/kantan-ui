@@ -29,8 +29,11 @@ export {
 	cache_resource,
 	clear_all_caches,
 } from "./kt/cache";
+export { renderAreaChart } from "./kt/chart/area-chart";
 export { renderBarChart } from "./kt/chart/bar-chart";
 export type {
+	AreaChartConfig,
+	AreaChartData,
 	BarChartConfig,
 	BarChartData,
 	NormalizedBarChartData,
