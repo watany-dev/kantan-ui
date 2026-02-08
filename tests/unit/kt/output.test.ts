@@ -706,7 +706,7 @@ describe("Output APIs", () => {
 			expect(output).toContain("kt-link-button-disabled");
 			expect(output).toContain('aria-disabled="true"');
 			expect(output).toContain('tabindex="-1"');
-			expect(output).not.toContain('href=');
+			expect(output).not.toContain("href=");
 		});
 
 		it("should add full-width class when use_container_width is true", () => {
@@ -719,28 +719,28 @@ describe("Output APIs", () => {
 			link_button("Evil", "javascript:alert(1)");
 			const output = ctx.getHtml();
 			expect(output).toContain("kt-link-button-disabled");
-			expect(output).not.toContain('href=');
+			expect(output).not.toContain("href=");
 		});
 
 		it("should reject vbscript: URLs (render as disabled)", () => {
 			link_button("Evil", "vbscript:msgbox");
 			const output = ctx.getHtml();
 			expect(output).toContain("kt-link-button-disabled");
-			expect(output).not.toContain('href=');
+			expect(output).not.toContain("href=");
 		});
 
 		it("should reject data: URLs (render as disabled)", () => {
 			link_button("Evil", "data:text/html,<script>alert(1)</script>");
 			const output = ctx.getHtml();
 			expect(output).toContain("kt-link-button-disabled");
-			expect(output).not.toContain('href=');
+			expect(output).not.toContain("href=");
 		});
 
 		it("should reject empty URL (render as disabled)", () => {
 			link_button("Empty", "");
 			const output = ctx.getHtml();
 			expect(output).toContain("kt-link-button-disabled");
-			expect(output).not.toContain('href=');
+			expect(output).not.toContain("href=");
 		});
 
 		it("should allow relative URLs", () => {
@@ -752,7 +752,9 @@ describe("Output APIs", () => {
 
 		it("should throw error when no context", () => {
 			setRenderContext(null);
-			expect(() => link_button("test", "https://example.com")).toThrow("RenderContext is not available");
+			expect(() => link_button("test", "https://example.com")).toThrow(
+				"RenderContext is not available",
+			);
 		});
 	});
 
