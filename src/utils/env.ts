@@ -15,6 +15,12 @@ export function getEnvVar(key: string): string | undefined {
 		return (globalThis as any).Deno?.env?.get(key);
 	}
 
+	// Cloudflare Workers: process.env は使えない
+	// 環境変数は Hono の env(c) 経由でアクセスする
+	if (runtime === "workerd") {
+		return undefined;
+	}
+
 	// Node.js and Bun both support process.env
 	if (typeof globalThis.process !== "undefined" && globalThis.process.env) {
 		return globalThis.process.env[key];
