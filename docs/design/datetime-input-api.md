@@ -157,11 +157,11 @@ function datetime_input(
 
 ```typescript
 export interface DatetimeInputConfig {
-  /** ウィジェットキー（状態保持用） */
-  key?: string;
+  /** ラベルテキスト */
+  label: string;
 
-  /** 無効化フラグ */
-  disabled?: boolean;
+  /** デフォルト値（ISO形式文字列 or Date） */
+  defaultValue?: string | Date;
 
   /** 選択可能な最小日時 */
   min?: string | Date;
@@ -176,8 +176,16 @@ export interface DatetimeInputConfig {
    * - 60未満: 秒精度が有効になる（例: 1 = 1秒刻み）
    */
   step?: number;
+
+  /** ウィジェットキー（状態保持用） */
+  key?: string;
+
+  /** 無効化フラグ */
+  disabled?: boolean;
 }
 ```
+
+> **注意**: `label` と `defaultValue` は関数の引数として渡されるため、`config` 経由では通常使用しない。既存の `DateInputConfig` / `TimeInputConfig` とのインターフェース対称性のために定義している。
 
 ---
 
@@ -191,6 +199,8 @@ export interface DatetimeInputConfig {
 /**
  * Date オブジェクトまたは文字列を "YYYY-MM-DDTHH:MM" または
  * "YYYY-MM-DDTHH:MM:SS" 形式の文字列に変換
+ *
+ * Invalid Date が渡された場合は空文字列を返す（安全側に倒す）
  */
 export function toDatetimeString(
   value: string | Date | undefined,
@@ -202,13 +212,19 @@ export function toDatetimeString(
   if (typeof value === "string") {
     return value;
   }
+  // Invalid Date チェック
+  if (Number.isNaN(value.getTime())) {
+    return "";
+  }
   const datePart = toDateString(value);
   const timePart = toTimeString(value, includeSeconds);
   return `${datePart}T${timePart}`;
 }
 ```
 
-**設計判断**: `toDateString` と `toTimeString` を組み合わせることで、既存のテスト済みロジックを再利用し、重複を避ける。
+**設計判断**:
+- `toDateString` と `toTimeString` を組み合わせることで、既存のテスト済みロジックを再利用し、重複を避ける
+- Invalid Date に対しては空文字列を返す。`"NaN-NaN-NaN..."` のような不正値がHTMLに出力されることを防ぐ
 
 ---
 
@@ -443,6 +459,11 @@ describe("toDatetimeString", () => {
     const date = new Date(2026, 11, 31, 23, 59, 59);
     expect(toDatetimeString(date, true)).toBe("2026-12-31T23:59:59");
   });
+
+  it("should return empty string for Invalid Date", () => {
+    expect(toDatetimeString(new Date("invalid"))).toBe("");
+    expect(toDatetimeString(new Date(NaN))).toBe("");
+  });
 });
 ```
 
@@ -500,20 +521,54 @@ describe("toDatetimeString (property-based)", () => {
 
 ### 9.3 ウィジェットテスト（`tests/unit/widgets/datetime-input.test.ts`）
 
+既存の `date-input.test.ts` と同じセットアップパターンを使用する。
+
 ```typescript
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  resetSessionManager,
+  SessionManager,
+  setSessionManager,
+} from "../../../src/session/manager";
+import { setCurrentSessionId } from "../../../src/session/state";
+import {
+  datetime_input,
+  renderDatetimeInput,
+} from "../../../src/widgets/datetime-input";
+import { resetWidgetCounter, setWidgetValue } from "../../../src/widgets/registry";
+
 describe("datetime_input", () => {
+  let manager: SessionManager;
+
+  beforeEach(() => {
+    resetWidgetCounter();
+    manager = new SessionManager();
+    setSessionManager(manager);
+  });
+
+  afterEach(() => {
+    setCurrentSessionId(null);
+    resetSessionManager();
+  });
+
   // --- 状態管理 ---
   it("should return default value on first call", () => {
+    const session = manager.createSession();
+    setCurrentSessionId(session.id);
     const result = datetime_input("Start", "2026-01-15T09:00");
     expect(result).toBe("2026-01-15T09:00");
   });
 
   it("should return empty string when no default provided", () => {
+    const session = manager.createSession();
+    setCurrentSessionId(session.id);
     const result = datetime_input("Start");
     expect(result).toBe("");
   });
 
   it("should return stored value on subsequent calls", () => {
+    const session = manager.createSession();
+    setCurrentSessionId(session.id);
     datetime_input("Start", "2026-01-15T09:00", { key: "dt_test" });
     setWidgetValue("dt_test", "2026-06-01T14:30");
     const result = datetime_input("Start", "2026-01-15T09:00", { key: "dt_test" });
@@ -521,6 +576,8 @@ describe("datetime_input", () => {
   });
 
   it("should use custom key when provided", () => {
+    const session = manager.createSession();
+    setCurrentSessionId(session.id);
     const result = datetime_input("Start", "2026-01-15T09:00", {
       key: "my_datetime",
     });
@@ -528,12 +585,16 @@ describe("datetime_input", () => {
   });
 
   it("should accept Date object as default value", () => {
+    const session = manager.createSession();
+    setCurrentSessionId(session.id);
     const date = new Date(2026, 0, 15, 9, 0);
     const result = datetime_input("Start", date);
     expect(result).toBe("2026-01-15T09:00");
   });
 
   it("should include seconds when step < 60", () => {
+    const session = manager.createSession();
+    setCurrentSessionId(session.id);
     const date = new Date(2026, 0, 15, 9, 30, 45);
     const result = datetime_input("Start", date, { step: 1 });
     expect(result).toBe("2026-01-15T09:30:45");
@@ -719,7 +780,8 @@ test("datetime_input should be disabled when configured", async ({ page }) => {
 |--------|------|------|
 | `defaultValue` が `undefined` | 空文字列 `""` を返す | 既存 `date_input` / `time_input` と同じ挙動 |
 | `defaultValue` が不正な文字列（例: `"abc"`） | そのまま文字列として保存される | `toDatetimeString` は文字列をパススルーする。ブラウザ側が `<input>` で無効値として扱う |
-| `defaultValue` が Invalid Date | `"NaN-NaN-NaNTNaN:NaN"` 等の不正値 | `Date.getFullYear()` 等が `NaN` を返すため。実装時に `isNaN` チェックの追加を検討 |
+| `defaultValue` が Invalid Date | 空文字列 `""` を返す | `toDatetimeString` 内で `Number.isNaN(value.getTime())` チェックを行い、Invalid Date は `""` に変換する。既存の `toDateString` / `toTimeString` との一貫性は崩れるが、安全側に倒す |
+| ユーザーがブラウザで入力をクリア | 空文字列 `""` が状態に保存される | `<input type="datetime-local">` のクリア操作は `change` イベントで `""` を送信する。これは正常な操作であり、未選択状態として扱う |
 | `min` > `max` | ブラウザのネイティブ挙動に委ねる | HTML仕様上、ブラウザは `min` > `max` を無視する。サーバーサイド検証は行わない |
 | `step` が負数 | `validateNumericAttr` により有効な数値として扱われる | HTML仕様上、負の step は無視される。ブラウザのネイティブ挙動に委ねる |
 | `step` が `0` | `validateNumericAttr` により `0` がそのまま出力 | HTML仕様上、`step="0"` はエラー。ブラウザ側で適切に処理される |
