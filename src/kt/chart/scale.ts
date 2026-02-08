@@ -1,8 +1,7 @@
 /**
  * 軸スケール計算
  *
- * Nice numbers アルゴリズムで見やすいy軸目盛りを生成する。
- * バーチャートでは y 軸（値軸）のスケールに使用。
+ * Nice numbers アルゴリズムで見やすい軸目盛りを生成する。
  */
 
 export interface AxisScale {
@@ -13,9 +12,48 @@ export interface AxisScale {
 }
 
 /**
- * Nice numbers アルゴリズムで軸スケールを計算
+ * Nice numbers アルゴリズムでスケールを計算
  *
- * バーチャートの特性:
+ * 汎用のスケール計算。line_chart で使用。
+ *
+ * @param min - データの最小値
+ * @param max - データの最大値
+ * @param maxTicks - 最大目盛り数（デフォルト: 5）
+ */
+export function niceScale(
+	min: number,
+	max: number,
+	maxTicks = 5,
+): { min: number; max: number; step: number } {
+	if (min === max) {
+		if (min === 0) return { min: -1, max: 1, step: 1 };
+		const offset = Math.abs(min) * 0.1;
+		return niceScale(min - offset, max + offset, maxTicks);
+	}
+
+	const range = max - min;
+	const roughStep = range / maxTicks;
+	const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+	const normalized = roughStep / magnitude;
+
+	let niceStep: number;
+	if (normalized <= 1) niceStep = 1;
+	else if (normalized <= 2) niceStep = 2;
+	else if (normalized <= 5) niceStep = 5;
+	else niceStep = 10;
+
+	niceStep *= magnitude;
+
+	const niceMin = Math.floor(min / niceStep) * niceStep;
+	const niceMax = Math.ceil(max / niceStep) * niceStep;
+
+	return { min: niceMin, max: niceMax, step: niceStep };
+}
+
+/**
+ * バーチャート・エリアチャート用の軸スケール計算
+ *
+ * 0を含めるルール付き:
  * - min >= 0 の場合、scale.min = 0 に固定
  * - max <= 0 の場合（全て負の値）、scale.max = 0 に固定
  *
@@ -30,7 +68,7 @@ export function calculateAxisScale(values: number[], maxTicks = 5): AxisScale {
 	let dataMin = Math.min(...values);
 	let dataMax = Math.max(...values);
 
-	// バーチャート: 0を含めるルール
+	// 0を含めるルール
 	if (dataMin >= 0) dataMin = 0;
 	if (dataMax <= 0) dataMax = 0;
 
@@ -40,7 +78,6 @@ export function calculateAxisScale(values: number[], maxTicks = 5): AxisScale {
 			return { min: 0, max: 1, step: 0.5, ticks: [0, 0.5, 1] };
 		}
 		const offset = Math.abs(dataMin) * 0.1 || 1;
-		// 0を含めるルール適用後なので、0から適切な範囲を設定
 		if (dataMin > 0) {
 			dataMax = dataMin + offset;
 			dataMin = 0;
@@ -50,33 +87,19 @@ export function calculateAxisScale(values: number[], maxTicks = 5): AxisScale {
 		}
 	}
 
-	const range = dataMax - dataMin;
-	const roughStep = range / maxTicks;
-	const magnitude = 10 ** Math.floor(Math.log10(roughStep));
-	const normalized = roughStep / magnitude;
-
-	let niceStep: number;
-	if (normalized <= 1) niceStep = 1;
-	else if (normalized <= 2) niceStep = 2;
-	else if (normalized <= 5) niceStep = 5;
-	else niceStep = 10;
-
-	niceStep *= magnitude;
-
-	const niceMin = Math.floor(dataMin / niceStep) * niceStep;
-	const niceMax = Math.ceil(dataMax / niceStep) * niceStep;
+	const nice = niceScale(dataMin, dataMax, maxTicks);
 
 	// 0を含めるルール（niceScale後も維持）
-	const finalMin = dataMin >= 0 ? 0 : niceMin;
-	const finalMax = dataMax <= 0 ? 0 : niceMax;
+	const finalMin = dataMin >= 0 ? 0 : nice.min;
+	const finalMax = dataMax <= 0 ? 0 : nice.max;
 
 	// 目盛り生成
 	const ticks: number[] = [];
-	for (let v = finalMin; v <= finalMax + niceStep * 0.001; v += niceStep) {
+	for (let v = finalMin; v <= finalMax + nice.step * 0.001; v += nice.step) {
 		ticks.push(Math.round(v * 1e10) / 1e10);
 	}
 
-	return { min: finalMin, max: finalMax, step: niceStep, ticks };
+	return { min: finalMin, max: finalMax, step: nice.step, ticks };
 }
 
 /**

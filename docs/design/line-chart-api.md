@@ -663,18 +663,22 @@ const CHART_LIMITS = {
 
 ```
 src/
+  widgets/
+    line-chart.ts           # メインのline_chart()関数 + SVG描画
   kt/
     chart/
-      line-chart.ts       # メインのline_chart()関数
-      normalize.ts         # データ正規化
-      scale.ts            # 軸スケール計算
-      svg-renderer.ts     # SVG文字列生成
-      colors.ts           # カラーパレット・バリデーション
-      types.ts            # 型定義
-    index.ts              # kt.line_chart を追加
+      shared.ts             # 共通前処理（prepareChartData, sanitizeConfig等）
+      render-utils.ts       # グリッド・軸・凡例の共通描画
+      normalize.ts          # データ正規化
+      scale.ts              # 軸スケール計算（niceScale + calculateAxisScale）
+      colors.ts             # カラーパレット・バリデーション
+      types.ts              # 型定義（BaseChartConfig, NormalizeConfig等）
+    index.ts                # kt.line_chart を追加
   styles/
-    default.ts            # chartStyles を追加
+    default.ts              # chartStyles を追加
 ```
+
+> **注**: `niceScale()` は `src/kt/chart/scale.ts` に統合済み。`line-chart.ts` は `scale.ts` の `niceScale` と `formatTickValue`、`colors.ts` の `resolveChartColors` を import して使用。
 
 ---
 
