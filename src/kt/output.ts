@@ -119,6 +119,38 @@ export function html(rawHtml: string): void {
 }
 
 // ============================================
+// Caption API
+// ============================================
+
+export interface CaptionConfig {
+	/**
+	 * HTMLタグの直接埋め込みを許可（デフォルト: false）
+	 * @security trueにするとXSSリスクあり
+	 */
+	unsafe_allow_html?: boolean;
+}
+
+/**
+ * 小さいフォントでキャプション・注釈テキストを表示
+ * Markdownとして解釈される
+ *
+ * @param body - 表示するテキスト（Markdown対応）
+ * @param config - オプション設定
+ *
+ * @example
+ * kt.caption("This is a caption");
+ * kt.caption("Data source: *Wikipedia*");
+ */
+export function caption(body: string, config?: CaptionConfig): void {
+	const ctx = requireRenderContext();
+	let html = parseMarkdown(body);
+	if (!config?.unsafe_allow_html) {
+		html = sanitizeMarkdownHtml(html);
+	}
+	ctx.append(`<div class="kt-caption">${html}</div>`);
+}
+
+// ============================================
 // Alert APIs
 // ============================================
 

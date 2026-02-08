@@ -80,6 +80,7 @@ export const kt = {
 	json: output.json,
 	code: output.code,
 	markdown: output.markdown,
+	caption: output.caption,
 
 	// Alert APIs
 	success: output.success,
