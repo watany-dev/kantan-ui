@@ -31,6 +31,7 @@ Streamlit の `st.status` に相当する機能を kantan-ui に実装する。�
 | **Streamlit互換** | `st.status` と同様の使用感を提供 |
 | **expanderの拡張** | 既存の `kt.expander` パターンを基盤に、状態アイコンを追加 |
 | **Web標準活用** | `<details>` / `<summary>` 要素をベースに、CSS アニメーションで状態表示 |
+| **アクセシビリティ** | ネイティブ `<details>` のセマンティクスを活用し、ARIA補助でスクリーンリーダー対応 |
 | **rerunモデル対応** | `.update()` は状態を保存し、次回 rerun で反映 |
 
 ### 1.4 Streamlit との対応
@@ -169,6 +170,9 @@ export type StatusState = "running" | "complete" | "error";
  * kt.status() の設定オプション
  */
 export interface StatusConfig {
+  /** ウィジェットのユニークキー（状態保持用） */
+  key?: string;
+
   /** 初期展開状態 (デフォルト: state が "running" のとき true, それ以外は false) */
   expanded?: boolean;
 
@@ -334,17 +338,34 @@ e2e/
 
 **配置の理由**: `kt.status` はレイアウトコンテナ（expanderの拡張）とフィードバック（spinner/状態表示）の両方の性質を持つ。専用ファイル `status.ts` に分離することで責務を明確にする。
 
+### 4.4 技術選定の根拠
+
+| 選定 | 理由 | 代替案と棄却理由 |
+|------|------|-----------------|
+| `<details>` / `<summary>` | ブラウザネイティブの展開/折りたたみ。JSなしで動作し、アクセシビリティが組み込まれている。`kt.expander` と同じパターンで実装コストが低い | カスタム `div` + JS トグル: 追加の JS とARIA属性が必要。`<details>` の方がWeb標準に沿う |
+| CSSアニメーション（スピナー） | 既存の `.kt-spinner-icon` を再利用。外部ライブラリ不要 | SVGアニメーション: やや複雑で、既存CSSスピナーで十分 |
+| `setWidgetValue` による状態保存 | 既存のウィジェット状態管理機構を流用。`kt.empty` と同じパターン | 独自ストア: 新たな状態管理の追加は複雑度が増す |
+| `renderHtml` テンプレートタグ | 自動エスケープでXSS対策。プロジェクト標準のHTML生成方法 | 手動エスケープ: ミスのリスク大 |
+| 状態値の検証（`validateState`） | `raw()` で状態をクラス名に埋め込むため、不正値によるCSS injection を防止 | 型のみに依存: JS利用時やセッション改ざん時に無防備 |
+
 ---
 
 ## 5. 実装詳細
 
-### 5.1 状態アイコンの定義
+### 5.1 状態アイコンとアクセシビリティラベルの定義
 
 ```typescript
 const STATUS_ICONS: Record<StatusState, string> = {
-  running: '<div class="kt-status-icon kt-status-running"><div class="kt-spinner-icon" style="width: 16px; height: 16px;"></div></div>',
-  complete: '<div class="kt-status-icon kt-status-complete">&#10003;</div>',
-  error: '<div class="kt-status-icon kt-status-error">&#10007;</div>',
+  running: '<div class="kt-status-icon kt-status-running" aria-hidden="true"><div class="kt-spinner-icon" style="width: 16px; height: 16px;"></div></div>',
+  complete: '<div class="kt-status-icon kt-status-complete" aria-hidden="true">&#10003;</div>',
+  error: '<div class="kt-status-icon kt-status-error" aria-hidden="true">&#10007;</div>',
+};
+
+/** スクリーンリーダー用の状態テキスト */
+const STATUS_SR_TEXT: Record<StatusState, string> = {
+  running: "実行中",
+  complete: "完了",
+  error: "エラー",
 };
 ```
 
@@ -359,10 +380,23 @@ import type { StatusConfig, StatusController, StatusInternalState, StatusState }
 
 const STATUS_ICONS: Record<StatusState, string> = {
   running:
-    '<div class="kt-status-icon kt-status-running"><div class="kt-spinner-icon" style="width: 16px; height: 16px;"></div></div>',
-  complete: '<div class="kt-status-icon kt-status-complete">&#10003;</div>',
-  error: '<div class="kt-status-icon kt-status-error">&#10007;</div>',
+    '<div class="kt-status-icon kt-status-running" aria-hidden="true"><div class="kt-spinner-icon" style="width: 16px; height: 16px;"></div></div>',
+  complete: '<div class="kt-status-icon kt-status-complete" aria-hidden="true">&#10003;</div>',
+  error: '<div class="kt-status-icon kt-status-error" aria-hidden="true">&#10007;</div>',
 };
+
+const STATUS_SR_TEXT: Record<StatusState, string> = {
+  running: "実行中",
+  complete: "完了",
+  error: "エラー",
+};
+
+const VALID_STATES: Set<string> = new Set(["running", "complete", "error"]);
+
+/** 状態値を検証し、不正な値はデフォルトにフォールバック */
+function validateState(state: string): StatusState {
+  return VALID_STATES.has(state) ? (state as StatusState) : "running";
+}
 
 export function status(
   label: string,
@@ -372,8 +406,8 @@ export function status(
   const ctx = requireRenderContext();
   const id = generateWidgetId(config.key);
 
-  // 初期状態を決定
-  const initialState = config.state ?? "running";
+  // 初期状態を決定（不正値はフォールバック）
+  const initialState = validateState(config.state ?? "running");
   const initialExpanded = config.expanded ?? (initialState === "running");
 
   // 保存済みの状態を取得（なければ初期値）
@@ -383,20 +417,20 @@ export function status(
     expanded: initialExpanded,
   });
 
-  // 今回のrerunで渡されたlabelとconfigで状態を上書き
-  // （update() による変更は次回rerunで反映される）
+  // 保存済み状態を検証（セッション改ざん対策）
   const currentState: StatusInternalState = {
     label: savedState.label,
-    state: savedState.state,
+    state: validateState(savedState.state),
     expanded: savedState.expanded,
   };
 
   const icon = STATUS_ICONS[currentState.state];
+  const srText = STATUS_SR_TEXT[currentState.state];
   const openAttr = currentState.expanded ? " open" : "";
 
   // <details> 開始
   ctx.append(
-    renderHtml`<details class="kt-status kt-status-${raw(currentState.state)}"${raw(openAttr)}><summary class="kt-status-header">${raw(icon)}<span class="kt-status-label">${currentState.label}</span></summary><div class="kt-status-content">`,
+    renderHtml`<details class="kt-status kt-status-${raw(currentState.state)}"${raw(openAttr)}><summary class="kt-status-header">${raw(icon)}<span class="kt-sr-only">${srText}: </span><span class="kt-status-label">${currentState.label}</span></summary><div class="kt-status-content">`,
   );
 
   // コールバック実行
@@ -405,23 +439,25 @@ export function status(
     update(options) {
       updated = true;
       if (options.label !== undefined) currentState.label = options.label;
-      if (options.state !== undefined) currentState.state = options.state;
+      if (options.state !== undefined) currentState.state = validateState(options.state);
       if (options.expanded !== undefined) currentState.expanded = options.expanded;
       setWidgetValue(id, currentState);
     },
   };
 
-  content(controller);
+  try {
+    content(controller);
+  } finally {
+    // update() が呼ばれていなければ自動完了
+    if (!updated) {
+      currentState.state = "complete";
+      currentState.expanded = false;
+      setWidgetValue(id, currentState);
+    }
 
-  // update() が呼ばれていなければ自動完了
-  if (!updated) {
-    currentState.state = "complete";
-    currentState.expanded = false;
-    setWidgetValue(id, currentState);
+    // </details> 閉じ（例外時もHTMLの整合性を保証）
+    ctx.append("</div></details>");
   }
-
-  // </details> 閉じ
-  ctx.append("</div></details>");
 }
 ```
 
@@ -431,9 +467,10 @@ export function status(
 <!-- running 状態 (展開) -->
 <details class="kt-status kt-status-running" open>
   <summary class="kt-status-header">
-    <div class="kt-status-icon kt-status-running">
+    <div class="kt-status-icon kt-status-running" aria-hidden="true">
       <div class="kt-spinner-icon" style="width: 16px; height: 16px;"></div>
     </div>
+    <span class="kt-sr-only">実行中: </span>
     <span class="kt-status-label">Downloading data...</span>
   </summary>
   <div class="kt-status-content">
@@ -445,7 +482,8 @@ export function status(
 <!-- complete 状態 (折りたたみ) -->
 <details class="kt-status kt-status-complete">
   <summary class="kt-status-header">
-    <div class="kt-status-icon kt-status-complete">&#10003;</div>
+    <div class="kt-status-icon kt-status-complete" aria-hidden="true">&#10003;</div>
+    <span class="kt-sr-only">完了: </span>
     <span class="kt-status-label">Download complete!</span>
   </summary>
   <div class="kt-status-content">
@@ -458,7 +496,8 @@ export function status(
 <!-- error 状態 (展開) -->
 <details class="kt-status kt-status-error" open>
   <summary class="kt-status-header">
-    <div class="kt-status-icon kt-status-error">&#10007;</div>
+    <div class="kt-status-icon kt-status-error" aria-hidden="true">&#10007;</div>
+    <span class="kt-sr-only">エラー: </span>
     <span class="kt-status-label">Import failed</span>
   </summary>
   <div class="kt-status-content">
@@ -736,6 +775,95 @@ describe("StatusController.update()", () => {
 
 ---
 
+### Iteration 3.5: エッジケースとセキュリティ
+
+**目標**: 例外安全性、状態値検証、アクセシビリティのテスト
+
+**Red（テスト作成）**:
+```typescript
+describe("edge cases and security", () => {
+  it("closes details tag even when callback throws", () => {
+    setupRenderContext();
+    expect(() => {
+      kt.status("Crash", () => {
+        kt.write("Before error");
+        throw new Error("Callback error");
+      });
+    }).toThrow("Callback error");
+    const html = getRenderedHtml();
+    expect(html).toContain("</details>");
+  });
+
+  it("auto-completes state after callback throws", () => {
+    setupRenderContext();
+    const id = "status_throw";
+    try {
+      kt.status("Crash", () => { throw new Error("fail"); }, { key: id });
+    } catch { /* expected */ }
+    const saved = getWidgetValue<StatusInternalState>(id);
+    expect(saved.state).toBe("complete");
+  });
+
+  it("falls back to running for invalid state in config", () => {
+    setupRenderContext();
+    kt.status("Test", () => {}, { state: "invalid" as StatusState });
+    const html = getRenderedHtml();
+    expect(html).toContain("kt-status-running");
+  });
+
+  it("falls back to running for invalid saved state", () => {
+    const id = "status_invalid_saved";
+    setWidgetValue(id, { label: "Bad", state: "hacked", expanded: true });
+    setupRenderContext();
+    kt.status("Test", () => {}, { key: id });
+    const html = getRenderedHtml();
+    expect(html).toContain("kt-status-running");
+  });
+
+  it("renders with empty label", () => {
+    setupRenderContext();
+    kt.status("", () => { kt.write("Content"); });
+    const html = getRenderedHtml();
+    expect(html).toContain("kt-status-label");
+    expect(html).toContain("Content");
+  });
+
+  it("includes aria-hidden on status icon", () => {
+    setupRenderContext();
+    kt.status("Loading", () => {});
+    const html = getRenderedHtml();
+    expect(html).toContain('aria-hidden="true"');
+  });
+
+  it("includes sr-only text for screen readers", () => {
+    setupRenderContext();
+    kt.status("Loading", () => {});
+    const html = getRenderedHtml();
+    expect(html).toContain("kt-sr-only");
+  });
+
+  it("validates state in update() call", () => {
+    setupRenderContext();
+    const id = "status_update_invalid";
+    kt.status("Test", (s) => {
+      s.update({ state: "hacked" as StatusState });
+    }, { key: id });
+    const saved = getWidgetValue<StatusInternalState>(id);
+    expect(saved.state).toBe("running"); // fallback
+  });
+});
+```
+
+**Green（実装）**:
+- `try/finally` ブロック追加
+- `validateState()` 関数の実装
+- アイコンに `aria-hidden="true"` 追加
+- `kt-sr-only` スパン追加
+
+**成果物**: エッジケースの安全な処理
+
+---
+
 ### Iteration 4: CSSスタイル統合
 
 **目標**: スタイルの追加と視覚的な完成
@@ -757,7 +885,7 @@ describe("StatusController.update()", () => {
 ```typescript
 // e2e/status.spec.ts
 test.describe("kt.status", () => {
-  test("shows running state with spinner", async ({ page }) => {
+  test("shows running state with spinner and expanded by default", async ({ page }) => {
     await page.goto("/status-demo");
     const status = page.locator(".kt-status-running");
     await expect(status).toBeVisible();
@@ -765,19 +893,48 @@ test.describe("kt.status", () => {
     await expect(status).toHaveAttribute("open");
   });
 
-  test("shows complete state with checkmark", async ({ page }) => {
+  test("shows complete state with checkmark and collapsed", async ({ page }) => {
     await page.goto("/status-demo");
     const status = page.locator(".kt-status-complete");
     await expect(status).toBeVisible();
     await expect(status.locator(".kt-status-icon")).toContainText("✓");
+    await expect(status).not.toHaveAttribute("open");
   });
 
-  test("expands and collapses on click", async ({ page }) => {
+  test("shows error state with cross mark", async ({ page }) => {
     await page.goto("/status-demo");
-    const status = page.locator(".kt-status").first();
+    const status = page.locator(".kt-status-error");
+    await expect(status).toBeVisible();
+    await expect(status.locator(".kt-status-icon")).toContainText("✗");
+  });
+
+  test("expands and collapses on summary click", async ({ page }) => {
+    await page.goto("/status-demo");
+    const status = page.locator(".kt-status-complete").first();
     const summary = status.locator("summary");
+
+    // Initially collapsed
+    await expect(status).not.toHaveAttribute("open");
+
+    // Click to expand
     await summary.click();
-    // toggle state
+    await expect(status).toHaveAttribute("open");
+
+    // Click to collapse
+    await summary.click();
+    await expect(status).not.toHaveAttribute("open");
+  });
+
+  test("has accessible sr-only text", async ({ page }) => {
+    await page.goto("/status-demo");
+    const srText = page.locator(".kt-status-running .kt-sr-only");
+    await expect(srText).toHaveText(/実行中/);
+  });
+
+  test("has aria-hidden on icons", async ({ page }) => {
+    await page.goto("/status-demo");
+    const icon = page.locator(".kt-status-icon").first();
+    await expect(icon).toHaveAttribute("aria-hidden", "true");
   });
 });
 ```
@@ -831,9 +988,94 @@ kt.status("Outer", () => {
 
 `key` を省略した場合は `generateWidgetId()` で自動生成される。ただし、rerun 間で安定した ID が必要なため、動的に `kt.status` の呼び出し数が変わるケースでは明示的な `key` 指定を推奨する。
 
+### 7.5 コールバック内で例外が発生した場合
+
+コールバック実行中に例外がスローされた場合、`</details>` 閉じタグが出力されず HTML が壊れる可能性がある。`try/finally` で閉じタグの出力を保証する。
+
+```typescript
+try {
+  content(controller);
+} finally {
+  // update() が呼ばれていなければ自動完了
+  if (!updated) {
+    currentState.state = "complete";
+    currentState.expanded = false;
+    setWidgetValue(id, currentState);
+  }
+  ctx.append("</div></details>");
+}
+```
+
+**例外自体の処理**: 例外は呼び出し元に再スローする（握りつぶさない）。`kt.expander` や `kt.container` と同じ方針。
+
+### 7.6 空ラベル
+
+空文字列のラベルは許容する。`<summary>` 内にアイコンのみが表示される。バリデーションエラーにはしないが、アクセシビリティ上は非推奨。
+
+### 7.7 不正な config.state
+
+`StatusConfig.state` に `"running" | "complete" | "error"` 以外の値が渡された場合、`validateState()` により `"running"` にフォールバックする（セクション8.2 参照）。TypeScript の型チェックにより通常は発生しないが、JavaScript からの利用を考慮する。
+
+### 7.8 アクセシビリティ
+
+`<details>` / `<summary>` はブラウザネイティブの展開/折りたたみセマンティクスを持つため、スクリーンリーダーが自動的に「折りたたまれています」「展開されています」を読み上げる。
+
+追加のアクセシビリティ対応:
+- `<summary>` に `role="status"` 属性は **付与しない**（`<summary>` は暗黙のロールを持っており、上書きは不適切）
+- 状態アイコンに `aria-hidden="true"` を付与し、スクリーンリーダーでの冗長な読み上げを防ぐ
+- 状態を示すスクリーンリーダー用テキストを `<span class="kt-sr-only">` で追加
+
+```html
+<summary class="kt-status-header">
+  <div class="kt-status-icon kt-status-running" aria-hidden="true">...</div>
+  <span class="kt-sr-only">実行中: </span>
+  <span class="kt-status-label">Downloading data...</span>
+</summary>
+```
+
 ---
 
-## 8. 非実装項目（将来検討）
+## 8. セキュリティ考慮
+
+### 8.1 ラベルのXSS対策
+
+ラベルは `renderHtml` テンプレートタグで自動エスケープされる。ユーザー入力を直接ラベルに渡しても安全。
+
+```typescript
+// 安全: renderHtml がエスケープ
+kt.status(userInput, () => { ... });
+// <script> → &lt;script&gt; に変換される
+```
+
+### 8.2 状態値の検証
+
+`StatusState` は `"running" | "complete" | "error"` の3値のみ許容する。保存済みの状態を復元する際に不正な値が含まれている可能性があるため、検証を行う。
+
+```typescript
+const VALID_STATES: Set<string> = new Set(["running", "complete", "error"]);
+
+function validateState(state: string): StatusState {
+  if (VALID_STATES.has(state)) {
+    return state as StatusState;
+  }
+  return "running"; // 不正値はデフォルトにフォールバック
+}
+```
+
+**理由**: `raw(currentState.state)` を CSS クラス名に使用するため、不正な値がセッション状態に保存された場合に CSS class injection を防ぐ必要がある。
+
+### 8.3 CSS class injection の防止
+
+HTML出力で `kt-status-${raw(currentState.state)}` のように状態値を直接クラス名に埋め込むため、状態値は検証済みの値のみ使用する（8.2 の `validateState` で担保）。
+
+### 8.4 コンテンツ領域のセキュリティ
+
+status コンテナ内で呼ばれる `kt.write()` や `kt.html()` 等は、それぞれの API が持つエスケープ・サニタイズ機構に従う。status 側で追加のサニタイズは不要。
+
+---
+
+## 9. 非実装項目（将来検討）
+
 
 | 項目 | 理由 |
 |------|------|
@@ -844,7 +1086,7 @@ kt.status("Outer", () => {
 
 ---
 
-## 9. チェックリスト
+## 10. チェックリスト
 
 ### 実装前
 
@@ -864,6 +1106,9 @@ kt.status("Outer", () => {
 - [ ] 全状態（running / complete / error）のテストがある
 - [ ] `update()` のテストがある
 - [ ] 自動完了のテストがある
+- [ ] 例外安全性のテストがある（`try/finally`）
+- [ ] 状態値検証のテストがある（`validateState`）
+- [ ] アクセシビリティのテストがある（`aria-hidden`, `kt-sr-only`）
 - [ ] E2Eテストがパス
 - [ ] `src/kt/index.ts` にエクスポート追加
 - [ ] CSS スタイルが追加されている
@@ -871,7 +1116,7 @@ kt.status("Outer", () => {
 
 ---
 
-## 10. 参考資料
+## 11. 参考資料
 
 - [Streamlit st.status](https://docs.streamlit.io/develop/api-reference/status/st.status)
 - kantan-ui 既存実装
