@@ -862,10 +862,11 @@ src/
 │   ├── control.ts    # Control API (rerun)
 │   ├── charts.ts     # Chart API (line_chart, bar_chart, area_chart, scatter_chart)
 │   ├── chart/        # Chart modules
-│   │   ├── types.ts      # Type definitions
+│   │   ├── types.ts      # Type definitions (BaseChartConfig, NormalizeConfig, etc.)
 │   │   ├── colors.ts     # Color palette & validation
 │   │   ├── normalize.ts  # Data normalization
-│   │   ├── scale.ts      # Axis scale calculation
+│   │   ├── scale.ts      # Axis scale calculation (niceScale, calculateAxisScale)
+│   │   ├── shared.ts     # Common chart pipeline (prepareChartData, sanitizeConfig)
 │   │   ├── render-utils.ts # Shared rendering utilities (grid, axes, legend)
 │   │   ├── bar-chart.ts  # Bar chart SVG rendering
 │   │   ├── area-chart.ts # Area chart SVG rendering

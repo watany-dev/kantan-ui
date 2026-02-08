@@ -5,7 +5,7 @@
  */
 
 import { resolveChartColors } from "./colors";
-import type { ChartData, NormalizedBarChartData } from "./types";
+import type { ChartData, NormalizeConfig, NormalizedBarChartData } from "./types";
 
 /**
  * チャートデータを正規化する
@@ -15,7 +15,7 @@ import type { ChartData, NormalizedBarChartData } from "./types";
  */
 export function normalizeChartData(
 	data: ChartData,
-	config?: { x?: string; y?: string | string[]; color?: string | string[] },
+	config?: NormalizeConfig,
 ): NormalizedBarChartData {
 	if (Array.isArray(data) && data.length === 0) {
 		return { xValues: [], series: [] };
@@ -44,7 +44,7 @@ export function normalizeChartData(
  */
 function normalizeObjectArray(
 	data: Record<string, unknown>[],
-	config?: { x?: string; y?: string | string[]; color?: string | string[] },
+	config?: NormalizeConfig,
 ): NormalizedBarChartData {
 	const firstRow = data[0];
 	if (!firstRow) return { xValues: [], series: [] };
@@ -77,10 +77,7 @@ function normalizeObjectArray(
 /**
  * 2D配列を正規化
  */
-function normalize2DArray(
-	data: unknown[][],
-	config?: { x?: string; y?: string | string[]; color?: string | string[] },
-): NormalizedBarChartData {
+function normalize2DArray(data: unknown[][], config?: NormalizeConfig): NormalizedBarChartData {
 	if (data.length === 0) return { xValues: [], series: [] };
 
 	const firstRow = data[0];
@@ -109,7 +106,7 @@ function normalize2DArray(
  */
 function normalizeExplicitFormat(
 	data: { columns: string[]; data: unknown[][] },
-	config?: { x?: string; y?: string | string[]; color?: string | string[] },
+	config?: NormalizeConfig,
 ): NormalizedBarChartData {
 	const yColumns = config?.y ? (Array.isArray(config.y) ? config.y : [config.y]) : data.columns;
 

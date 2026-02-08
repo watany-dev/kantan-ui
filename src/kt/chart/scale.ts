@@ -1,8 +1,7 @@
 /**
  * 軸スケール計算
  *
- * Nice numbers アルゴリズムで見やすいy軸目盛りを生成する。
- * バーチャートでは y 軸（値軸）のスケールに使用。
+ * Nice numbers アルゴリズムで見やすい軸目盛りを生成する。
  */
 
 export interface AxisScale {
@@ -13,7 +12,46 @@ export interface AxisScale {
 }
 
 /**
- * Nice numbers アルゴリズムで軸スケールを計算
+ * Nice numbers アルゴリズムでスケールを計算
+ *
+ * 汎用のスケール計算。line_chart で使用。
+ *
+ * @param min - データの最小値
+ * @param max - データの最大値
+ * @param maxTicks - 最大目盛り数（デフォルト: 5）
+ */
+export function niceScale(
+	min: number,
+	max: number,
+	maxTicks = 5,
+): { min: number; max: number; step: number } {
+	if (min === max) {
+		if (min === 0) return { min: -1, max: 1, step: 1 };
+		const offset = Math.abs(min) * 0.1;
+		return niceScale(min - offset, max + offset, maxTicks);
+	}
+
+	const range = max - min;
+	const roughStep = range / maxTicks;
+	const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+	const normalized = roughStep / magnitude;
+
+	let niceStep: number;
+	if (normalized <= 1) niceStep = 1;
+	else if (normalized <= 2) niceStep = 2;
+	else if (normalized <= 5) niceStep = 5;
+	else niceStep = 10;
+
+	niceStep *= magnitude;
+
+	const niceMin = Math.floor(min / niceStep) * niceStep;
+	const niceMax = Math.ceil(max / niceStep) * niceStep;
+
+	return { min: niceMin, max: niceMax, step: niceStep };
+}
+
+/**
+ * バーチャート・エリアチャート用の軸スケール計算
  *
  * デフォルト（includeZero: true）:
  * - min >= 0 の場合、scale.min = 0 に固定
@@ -68,33 +106,19 @@ export function calculateAxisScale(
 		}
 	}
 
-	const range = dataMax - dataMin;
-	const roughStep = range / maxTicks;
-	const magnitude = 10 ** Math.floor(Math.log10(roughStep));
-	const normalized = roughStep / magnitude;
-
-	let niceStep: number;
-	if (normalized <= 1) niceStep = 1;
-	else if (normalized <= 2) niceStep = 2;
-	else if (normalized <= 5) niceStep = 5;
-	else niceStep = 10;
-
-	niceStep *= magnitude;
-
-	const niceMin = Math.floor(dataMin / niceStep) * niceStep;
-	const niceMax = Math.ceil(dataMax / niceStep) * niceStep;
+	const nice = niceScale(dataMin, dataMax, maxTicks);
 
 	// 0を含めるルール（niceScale後も維持、includeZero が true の場合のみ）
-	const finalMin = includeZero && dataMin >= 0 ? 0 : niceMin;
-	const finalMax = includeZero && dataMax <= 0 ? 0 : niceMax;
+	const finalMin = includeZero && dataMin >= 0 ? 0 : nice.min;
+	const finalMax = includeZero && dataMax <= 0 ? 0 : nice.max;
 
 	// 目盛り生成
 	const ticks: number[] = [];
-	for (let v = finalMin; v <= finalMax + niceStep * 0.001; v += niceStep) {
+	for (let v = finalMin; v <= finalMax + nice.step * 0.001; v += nice.step) {
 		ticks.push(Math.round(v * 1e10) / 1e10);
 	}
 
-	return { min: finalMin, max: finalMax, step: niceStep, ticks };
+	return { min: finalMin, max: finalMax, step: nice.step, ticks };
 }
 
 /**
