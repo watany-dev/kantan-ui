@@ -1,11 +1,13 @@
 # kt.caption / kt.link_button API 設計書
 
 作成日: 2026-02-07
-更新日: 2026-02-07（v2 — 自己レビュー指摘事項を反映）
+更新日: 2026-02-08（v3 — 実装完了）
 
 ## 実装ステータス
 
-> **📝 設計完了・未実装**
+> **✅ 実装完了** (2026-02-08)
+>
+> `kt.caption()` と `kt.link_button()` を設計書通りに実装。テスト・CSS含む全4イテレーション完了。
 
 ---
 
@@ -478,15 +480,15 @@ export type { CaptionConfig, LinkButtonConfig } from "./kt/output";
 
 ### 各イテレーション後
 
-- [ ] `bun run lint:fix` 実行
-- [ ] `bun run test` 実行
-- [ ] コミット
+- [x] `bun run lint:fix` 実行
+- [x] `bun run test` 実行
+- [x] コミット
 
 ### 完了時
 
-- [ ] `bun run ci` 全パス
-- [ ] 単体テスト作成済み
-- [ ] ドキュメント更新（API比較表、チュートリアル）
+- [x] `bun run ci` 全パス
+- [x] 単体テスト作成済み
+- [x] ドキュメント更新（API比較表、チュートリアル）
 
 ---
 

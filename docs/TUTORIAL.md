@@ -141,8 +141,48 @@ kt.header("ヘッダー");        // h2見出し
 kt.subheader("サブヘッダー"); // h3見出し
 kt.write("テキスト");         // 通常のテキスト
 kt.text("テキスト");          // writeのエイリアス
+kt.caption("注釈テキスト");   // 小さいフォントの注釈（Markdown対応）
 kt.divider();                 // 区切り線
 ```
+
+### キャプション
+
+`kt.caption()`は、小さいフォントで注釈・補足テキストを表示します。Markdownに対応しています。
+
+```typescript
+// 基本使用
+kt.caption("データソース: Wikipedia");
+
+// Markdown対応
+kt.caption("*注意*: この値は推定値です");
+
+// HTMLを許可する場合（XSSリスクあり）
+kt.caption("Contains <b>HTML</b>", { unsafe_allow_html: true });
+```
+
+チャートやテーブルの下に補足説明を付けるのに便利です:
+
+```typescript
+kt.table(data);
+kt.caption("2024年度のデータに基づく");
+```
+
+### リンクボタン
+
+`kt.link_button()`は、指定したURLに遷移するボタンを表示します。新しいタブで開きます。
+
+```typescript
+// 基本使用
+kt.link_button("ドキュメントを見る", "https://docs.example.com");
+
+// 無効化
+kt.link_button("Coming Soon", "https://example.com", { disabled: true });
+
+// コンテナ幅に合わせる
+kt.link_button("全幅ボタン", "https://example.com", { use_container_width: true });
+```
+
+**セキュリティ**: `javascript:`, `vbscript:`, `data:` スキームのURLは自動的にブロックされます。
 
 ### ボタン
 
@@ -1784,8 +1824,8 @@ export default await createApp(script, {
 
 ### 現在利用可能な機能
 
-- ✅ テキスト出力（title, header, write, divider, html）
-- ✅ 基本ウィジェット（button, slider, text_input, selectbox, download_button）
+- ✅ テキスト出力（title, header, write, caption, divider, html）
+- ✅ 基本ウィジェット（button, link_button, slider, text_input, selectbox, download_button）
 - ✅ フォームウィジェット（checkbox, toggle, radio, number_input, text_area, multiselect）
 - ✅ 日付・時刻入力（date_input, time_input）
 - ✅ ファイルアップロード（file_uploader）

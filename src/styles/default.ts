@@ -190,6 +190,50 @@ const markdownStyles = `
   .kt-markdown hr { border: none; border-top: 1px solid #e9ecef; margin: 1rem 0; }
 `;
 
+/** キャプションスタイル */
+const captionStyles = `
+  /* Caption */
+  .kt-caption {
+    font-size: 0.875rem;
+    color: rgba(49, 51, 63, 0.6);
+    line-height: 1.5;
+    margin: 0.25rem 0;
+  }
+`;
+
+/** リンクボタンスタイル */
+const linkButtonStyles = `
+  /* Link Button */
+  .kt-link-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid rgba(49, 51, 63, 0.2);
+    border-radius: 0.5rem;
+    color: inherit;
+    text-decoration: none;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+
+  .kt-link-button:hover {
+    border-color: rgba(49, 51, 63, 0.6);
+  }
+
+  .kt-link-button-disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .kt-link-button-full {
+    display: flex;
+    width: 100%;
+  }
+`;
+
 /** フィードバックスタイル（Progress, Spinner, Toast） */
 const feedbackStyles = `
   /* Progress Bar */
@@ -1605,6 +1649,8 @@ export const defaultStyles = [
 	codeStyles,
 	writeStyles,
 	markdownStyles,
+	captionStyles,
+	linkButtonStyles,
 	feedbackStyles,
 	layoutStyles,
 	tableStyles,

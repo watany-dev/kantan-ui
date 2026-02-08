@@ -33,7 +33,7 @@
 |---------------|-----------|------|--------|--------|------|
 | `st.button` | `kt.button` | ✅ | - | - | 実装済み |
 | `st.download_button` | `kt.download_button` | ✅ | - | - | 実装済み |
-| `st.link_button` | - | ❌ | P2 | Easy | リンク付きボタン |
+| `st.link_button` | `kt.link_button` | ✅ | - | - | 実装済み |
 | `st.page_link` | - | ❌ | P2 | Medium | マルチページ前提 |
 | `st.checkbox` | `kt.checkbox` | ✅ | - | - | 実装済み |
 | `st.radio` | `kt.radio` | ✅ | - | - | 実装済み |
@@ -99,7 +99,7 @@
 | `st.subheader` | `kt.subheader` | ✅ | - | - | 実装済み |
 | `st.text` | `kt.text` | ✅ | - | - | 固定幅フォント、Markdown非対応 |
 | `st.markdown` | `kt.markdown` | ✅ | - | - | 実装済み |
-| `st.caption` | - | ❌ | P2 | Easy | キャプションテキスト |
+| `st.caption` | `kt.caption` | ✅ | - | - | 実装済み |
 | `st.code` | `kt.code` | ✅ | - | - | 実装済み |
 | `st.latex` | - | ❌ | P2 | Medium | LaTeX数式表示 |
 | `st.divider` | `kt.divider` | ✅ | - | - | 実装済み |
@@ -232,10 +232,9 @@
 | `st.navigation` | Hard | マルチページナビ |
 | `st.Page` | Hard | ページ定義 |
 
-### P2 (中) - 19件
+### P2 (中) - 17件
 | API | 難易度 | 説明 |
 |-----|--------|------|
-| `st.link_button` | Easy | リンクボタン |
 | `st.page_link` | Medium | ページリンク |
 | `st.select_slider` | Medium | 選択スライダー |
 | `st.camera_input` | Hard | カメラ入力 |
@@ -247,7 +246,6 @@
 | `st.map` | Very Hard | 地図表示 |
 | `st.altair_chart` | Very Hard | Altairチャート |
 | `st.plotly_chart` | Very Hard | Plotlyチャート |
-| `st.caption` | Easy | キャプション |
 | `st.latex` | Medium | LaTeX数式 |
 | `st.logo` | Easy | ロゴ |
 | `st.pdf` | Medium | PDF表示 |
@@ -292,12 +290,12 @@
 
 ## 実装済みAPI サマリー
 
-kantan-uiで実装済みのStreamlit互換API: **47件**
+kantan-uiで実装済みのStreamlit互換API: **49件**
 
-- Input Widgets: 15件
+- Input Widgets: 16件
 - Data Display: 4件
 - Chart Elements: 3件 (line_chart, bar_chart, area_chart)
-- Text Elements: 8件
+- Text Elements: 9件
 - Media: 3件 (image, audio, video)
 - Layout: 6件
 - Chat: 2件

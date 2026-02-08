@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { RenderContext, setRenderContext } from "../../../src/kt/context";
 import {
+	caption,
 	code,
 	divider,
 	error,
@@ -8,6 +9,7 @@ import {
 	html,
 	info,
 	json,
+	link_button,
 	markdown,
 	subheader,
 	success,
@@ -622,6 +624,137 @@ describe("Output APIs", () => {
 			expect(output).toContain("kt-code-copy");
 			expect(output).toContain("kt-code-line-numbers");
 			expect(output).toContain("kt-code-wrap");
+		});
+	});
+
+	describe("caption", () => {
+		it("should output div with kt-caption class", () => {
+			caption("This is a caption");
+			expect(ctx.getHtml()).toContain('class="kt-caption"');
+			expect(ctx.getHtml()).toContain("This is a caption");
+		});
+
+		it("should render Markdown (italic)", () => {
+			caption("Data source: *Wikipedia*");
+			expect(ctx.getHtml()).toContain("<em>Wikipedia</em>");
+		});
+
+		it("should render Markdown (bold)", () => {
+			caption("**Important** note");
+			expect(ctx.getHtml()).toContain("<strong>Important</strong>");
+		});
+
+		it("should sanitize script tags by default", () => {
+			caption("<script>alert('xss')</script>");
+			expect(ctx.getHtml()).not.toContain("<script>");
+		});
+
+		it("should sanitize onclick handlers by default", () => {
+			caption('<div onclick="alert(1)">text</div>');
+			expect(ctx.getHtml()).not.toContain("onclick");
+		});
+
+		it("should allow HTML when unsafe_allow_html is true", () => {
+			caption("Contains <b>HTML</b>", { unsafe_allow_html: true });
+			expect(ctx.getHtml()).toContain("<b>HTML</b>");
+		});
+
+		it("should handle empty string", () => {
+			caption("");
+			expect(ctx.getHtml()).toContain('class="kt-caption"');
+		});
+
+		it("should wrap in div (not p) for block-level Markdown", () => {
+			caption("- Item 1\n- Item 2");
+			const output = ctx.getHtml();
+			expect(output).toContain("<ul>");
+			expect(output).toMatch(/^<div class="kt-caption">/);
+		});
+
+		it("should throw error when no context", () => {
+			setRenderContext(null);
+			expect(() => caption("test")).toThrow("RenderContext is not available");
+		});
+	});
+
+	describe("link_button", () => {
+		it("should output an anchor element with kt-link-button class", () => {
+			link_button("Visit Google", "https://google.com");
+			const output = ctx.getHtml();
+			expect(output).toContain('class="kt-link-button"');
+			expect(output).toContain("Visit Google");
+			expect(output).toContain('href="https://google.com"');
+		});
+
+		it("should set target=_blank and rel=noopener noreferrer", () => {
+			link_button("Link", "https://example.com");
+			const output = ctx.getHtml();
+			expect(output).toContain('target="_blank"');
+			expect(output).toContain('rel="noopener noreferrer"');
+		});
+
+		it("should escape HTML in label", () => {
+			link_button("<script>alert(1)</script>", "https://example.com");
+			const output = ctx.getHtml();
+			expect(output).toContain("&lt;script&gt;");
+			expect(output).not.toContain("<script>alert");
+		});
+
+		it("should render disabled state when disabled is true", () => {
+			link_button("Disabled", "https://example.com", { disabled: true });
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-link-button-disabled");
+			expect(output).toContain('aria-disabled="true"');
+			expect(output).toContain('tabindex="-1"');
+			expect(output).not.toContain("href=");
+		});
+
+		it("should add full-width class when use_container_width is true", () => {
+			link_button("Full Width", "https://example.com", { use_container_width: true });
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-link-button-full");
+		});
+
+		it("should reject javascript: URLs (render as disabled)", () => {
+			link_button("Evil", "javascript:alert(1)");
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-link-button-disabled");
+			expect(output).not.toContain("href=");
+		});
+
+		it("should reject vbscript: URLs (render as disabled)", () => {
+			link_button("Evil", "vbscript:msgbox");
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-link-button-disabled");
+			expect(output).not.toContain("href=");
+		});
+
+		it("should reject data: URLs (render as disabled)", () => {
+			link_button("Evil", "data:text/html,<script>alert(1)</script>");
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-link-button-disabled");
+			expect(output).not.toContain("href=");
+		});
+
+		it("should reject empty URL (render as disabled)", () => {
+			link_button("Empty", "");
+			const output = ctx.getHtml();
+			expect(output).toContain("kt-link-button-disabled");
+			expect(output).not.toContain("href=");
+		});
+
+		it("should allow relative URLs", () => {
+			link_button("About", "/about");
+			const output = ctx.getHtml();
+			expect(output).toContain('href="/about"');
+			expect(output).not.toContain("kt-link-button-disabled");
+		});
+
+		it("should throw error when no context", () => {
+			setRenderContext(null);
+			expect(() => link_button("test", "https://example.com")).toThrow(
+				"RenderContext is not available",
+			);
 		});
 	});
 

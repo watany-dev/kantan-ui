@@ -57,6 +57,7 @@ export {
 } from "./kt/context";
 export { empty } from "./kt/empty";
 export type { ProgressConfig, ProgressFormat } from "./kt/feedback";
+export type { CaptionConfig, LinkButtonConfig } from "./kt/output";
 export type { RerunContext, Script } from "./runtime";
 // Runtime
 export { clearContext, getContext, rerun, setContext } from "./runtime";
