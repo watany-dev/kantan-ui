@@ -15,10 +15,10 @@ export const SVG_WIDTH = 600;
 export const DEFAULT_HEIGHT = 400;
 
 /** データポイントの最大数 */
-export const MAX_DATA_POINTS = 10_000;
+const MAX_DATA_POINTS = 10_000;
 
 /** シリーズの最大数 */
-export const MAX_SERIES = 20;
+const MAX_SERIES = 20;
 
 /** マージン */
 export const MARGIN = { top: 20, right: 20, bottom: 40, left: 60 };
@@ -67,7 +67,7 @@ export function sanitizeConfig<T extends BaseChartConfig>(
 /**
  * NaN/Infinity値をnullに変換
  */
-export function sanitizeValues(data: NormalizedBarChartData): NormalizedBarChartData {
+function sanitizeValues(data: NormalizedBarChartData): NormalizedBarChartData {
 	let changed = false;
 	const series = data.series.map((s) => {
 		const values = s.values.map((v) => {
