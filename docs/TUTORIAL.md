@@ -19,8 +19,9 @@
 13. [実践: カウンターアプリ](#実践-カウンターアプリ)
 14. [実践: TODOアプリ](#実践-todoアプリ)
 15. [実践: チャットアプリ](#実践-チャットアプリ)
-16. [設定オプション](#設定オプション)
-17. [次のステップ](#次のステップ)
+16. [AWS Lambda へのデプロイ](#aws-lambda-へのデプロイ)
+17. [設定オプション](#設定オプション)
+18. [次のステップ](#次のステップ)
 
 ---
 
@@ -34,7 +35,7 @@ kantan-uiは、Streamlitライクな開発体験を提供する軽量UIフレー
 - **宣言的API**: `kt.button()`, `kt.slider()`などの直感的なAPI
 - **リアルタイム更新**: WebSocketによる即座のUI更新
 - **型安全**: TypeScriptによる完全な型サポート
-- **マルチランタイム**: Bun、Node.js、Denoで動作
+- **マルチランタイム**: Bun、Node.js、Deno、AWS Lambdaで動作
 
 ### Streamlitとの違い
 
@@ -1721,6 +1722,66 @@ async function callLLM(messages: Message[]): Promise<string> {
 
 ---
 
+## AWS Lambda へのデプロイ
+
+kantan-uiアプリケーションはAWS Lambda上でも動作します。Honoの `hono/aws-lambda` アダプターを内蔵しているため、新たな依存パッケージは不要です。
+
+### 基本的な使い方
+
+```typescript
+import { createApp, kt } from "kantan-ui";
+import { createLambdaHandler } from "kantan-ui/lambda";
+
+const script = () => {
+  kt.title("Lambda App");
+  kt.write("AWS Lambdaで動作しています！");
+  return undefined;
+};
+
+const kantanApp = await createApp(script);
+export const handler = createLambdaHandler(kantanApp);
+```
+
+`createLambdaHandler` は以下のイベントソースに対応しています:
+
+- API Gateway v1 (REST API)
+- API Gateway v2 (HTTP API)
+- Application Load Balancer (ALB)
+- Lambda Function URL
+
+### レスポンスストリーミング
+
+Lambda Function URL または Lambda Web Adapter を使用する場合、`createLambdaStreamHandler` でレスポンスストリーミングに対応できます。大きなHTMLの初期表示が高速になります。
+
+```typescript
+import { createApp, kt } from "kantan-ui";
+import { createLambdaStreamHandler } from "kantan-ui/lambda";
+
+const script = () => {
+  kt.title("Streaming Lambda App");
+  // 大量のコンテンツもストリーミングで効率的に配信
+  kt.table(largeDataset);
+  return undefined;
+};
+
+const kantanApp = await createApp(script);
+export const handler = createLambdaStreamHandler(kantanApp);
+```
+
+### デプロイの流れ
+
+1. esbuild等でバンドルします:
+
+```bash
+esbuild src/handler.ts --bundle --platform=node --target=node18 --outfile=dist/handler.js --format=esm
+```
+
+2. `dist/handler.js` をLambda関数としてデプロイします。
+
+3. API Gateway HTTP API または Function URL を設定して公開します。
+
+---
+
 ## 設定オプション
 
 `createApp`の第2引数で設定をカスタマイズできます。
@@ -1830,7 +1891,7 @@ export default await createApp(script, {
 - ✅ 日付・時刻入力（date_input, time_input）
 - ✅ ファイルアップロード（file_uploader）
 - ✅ データ表示（table, dataframe, metric）
-- ✅ チャート（line_chart, bar_chart）
+- ✅ チャート（line_chart, bar_chart, area_chart）
 - ✅ メディア（image, audio, video）
 - ✅ レイアウト（tabs, sidebar, columns, container, expander, empty）
 - ✅ チャットUI（chat_message, chat_container, chat_input）
@@ -1845,10 +1906,11 @@ export default await createApp(script, {
 - ✅ 自動再接続
 - ✅ フォーカス保持
 - ✅ ストリーミングレンダリング
+- ✅ AWS Lambda デプロイ対応
 
 ### 今後の予定
 
-- チャート: `kt.area_chart()`, `kt.scatter_chart()`
+- チャート: `kt.scatter_chart()`
 - プラグインシステム
 
 ### 関連ドキュメント
