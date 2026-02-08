@@ -397,6 +397,40 @@ kt.bar_chart(data, {
 | config.title | `string` | - | Chart title |
 
 ```typescript
+// Scatter chart - visualize relationships between two numeric variables
+kt.scatter_chart([
+  { height: 170, weight: 65 },
+  { height: 160, weight: 55 },
+  { height: 180, weight: 80 },
+]);
+
+// 2D array (each row is [x, y] pair)
+kt.scatter_chart([[1, 5], [2, 8], [3, 6]]);
+
+// Grouping by color column + bubble chart
+kt.scatter_chart(data, {
+  x: "gdp",
+  y: "lifeExp",
+  color: "region",
+  size: "population",
+  title: "GDP vs Life Expectancy",
+});
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| data | `ScatterChartData` | - | Object array, 2D array, or columnar format |
+| config.x | `string` | auto | X-axis column name |
+| config.y | `string \| string[]` | auto | Y-axis column name(s) |
+| config.x_label | `string` | - | X-axis label |
+| config.y_label | `string` | - | Y-axis label |
+| config.color | `string \| string[]` | palette | Group color column or color value(s) - Tableau 10 palette |
+| config.size | `string \| number` | `5` | Size column name or fixed radius |
+| config.height | `number` | `400` | Chart height in pixels |
+| config.opacity | `number` | `0.7` | Point opacity (0-1) |
+| config.title | `string` | - | Chart title |
+
+```typescript
 // Area chart - filled line chart for showing quantities over time
 kt.area_chart([10, 20, 15, 30, 25]);
 
@@ -826,7 +860,7 @@ src/
 │   ├── context.ts    # Render context
 │   ├── config.ts     # Page config (set_page_config)
 │   ├── control.ts    # Control API (rerun)
-│   ├── charts.ts     # Chart API (line_chart, bar_chart, area_chart)
+│   ├── charts.ts     # Chart API (line_chart, bar_chart, area_chart, scatter_chart)
 │   ├── chart/        # Chart modules
 │   │   ├── types.ts      # Type definitions
 │   │   ├── colors.ts     # Color palette & validation
@@ -834,7 +868,8 @@ src/
 │   │   ├── scale.ts      # Axis scale calculation
 │   │   ├── render-utils.ts # Shared rendering utilities (grid, axes, legend)
 │   │   ├── bar-chart.ts  # Bar chart SVG rendering
-│   │   └── area-chart.ts # Area chart SVG rendering
+│   │   ├── area-chart.ts # Area chart SVG rendering
+│   │   └── scatter-chart.ts # Scatter chart SVG rendering
 │   ├── chat.ts       # Chat API (chat_message, chat_container)
 │   ├── data.ts       # Data display (table, dataframe)
 │   ├── empty.ts      # Empty placeholder

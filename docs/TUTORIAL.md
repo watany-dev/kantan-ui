@@ -912,6 +912,76 @@ kt.area_chart(data, {
 
 **ヒント:** 色にアルファチャネル（rgba形式や8桁HEX）を指定すると、デフォルトの`fill-opacity: 0.3`は適用されず、指定した透明度がそのまま使われます。
 
+### 散布図
+
+`kt.scatter_chart()`は2つの数値変数間の関係性・分布を散布図として表示します。バブルチャートやグルーピングにも対応しています。
+
+```typescript
+// オブジェクト配列（最もシンプルな使い方）
+kt.scatter_chart([
+  { height: 170, weight: 65 },
+  { height: 160, weight: 55 },
+  { height: 180, weight: 80 },
+]);
+```
+
+2D配列で[x, y]ペアを渡すこともできます:
+
+```typescript
+kt.scatter_chart([[1, 5], [2, 8], [3, 6], [4, 12], [5, 9]]);
+```
+
+カラーカラムでグルーピングし、サイズカラムでバブルチャートにする場合:
+
+```typescript
+kt.scatter_chart(data, {
+  x: "gdp",
+  y: "lifeExp",
+  color: "region",      // グループ分けに使用するカラム
+  size: "population",   // 点のサイズに使用するカラム
+  title: "GDP vs 平均寿命",
+  x_label: "一人当たりGDP",
+  y_label: "平均寿命（年）",
+});
+```
+
+固定サイズとカスタムカラーも指定できます:
+
+```typescript
+kt.scatter_chart(data, {
+  x: "x",
+  y: "y",
+  size: 8,                          // 固定半径（px）
+  color: ["#ff6384", "#36a2eb"],    // カスタムカラー
+  opacity: 0.5,                     // 点の透明度
+  height: 300,
+});
+```
+
+**サポートするデータ形式:**
+
+| 形式 | 例 |
+|------|-----|
+| オブジェクト配列 | `[{ x: 1, y: 10 }, { x: 2, y: 20 }]` |
+| 2D配列 | `[[1, 10], [2, 20], [3, 30]]` |
+| 明示的カラム形式 | `{ columns: ["x", "y"], data: [[1, 10], [2, 20]] }` |
+
+**オプション:**
+
+| オプション | 型 | デフォルト | 説明 |
+|-----------|-----|---------|------|
+| `x` | `string` | 自動検出 | x軸のカラム名 |
+| `y` | `string \| string[]` | 自動検出 | y軸のカラム名（複数可） |
+| `x_label` | `string` | - | x軸ラベル |
+| `y_label` | `string` | - | y軸ラベル |
+| `color` | `string \| string[]` | パレット | グループカラム名またはカラー値 |
+| `size` | `string \| number` | `5` | サイズカラム名または固定半径 |
+| `height` | `number` | `400` | グラフの高さ（px） |
+| `opacity` | `number` | `0.7` | 点の透明度（0〜1） |
+| `title` | `string` | - | グラフタイトル |
+
+**ヒント:** `y`に複数カラムを指定すると、各カラムが異なるグループとして描画されます。`color`カラムとの併用はできません。
+
 ---
 
 ## メディア
@@ -1830,7 +1900,7 @@ export default await createApp(script, {
 - ✅ 日付・時刻入力（date_input, time_input）
 - ✅ ファイルアップロード（file_uploader）
 - ✅ データ表示（table, dataframe, metric）
-- ✅ チャート（line_chart, bar_chart）
+- ✅ チャート（line_chart, bar_chart, area_chart, scatter_chart）
 - ✅ メディア（image, audio, video）
 - ✅ レイアウト（tabs, sidebar, columns, container, expander, empty）
 - ✅ チャットUI（chat_message, chat_container, chat_input）
@@ -1848,7 +1918,6 @@ export default await createApp(script, {
 
 ### 今後の予定
 
-- チャート: `kt.area_chart()`, `kt.scatter_chart()`
 - プラグインシステム
 
 ### 関連ドキュメント
