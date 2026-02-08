@@ -234,7 +234,7 @@ describe("niceScale", () => {
 describe("renderLineChart", () => {
 	it("should return empty state for empty data", () => {
 		const html = renderLineChart([]);
-		expect(html).toContain("kt-line-chart-empty");
+		expect(html).toContain("kt-chart-empty");
 		expect(html).toContain("No data");
 	});
 

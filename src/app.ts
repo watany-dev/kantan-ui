@@ -1,14 +1,4 @@
 import { type Context, Hono } from "hono";
-
-/**
- * Node.js HTTP/HTTPS Server型（@hono/node-serverからの依存を避けるためローカル定義）
- * Deno互換性のため、@hono/node-serverを直接インポートしない
- */
-type NodeServerType = {
-	close: () => void;
-	listen: (port: number, hostname?: string, callback?: () => void) => void;
-};
-
 import { getCookie, setCookie } from "hono/cookie";
 import { html, raw } from "hono/html";
 import { logger } from "hono/logger";
@@ -19,6 +9,7 @@ import { diff, toWebSocketPatches } from "./diff";
 import { getPageConfig } from "./kt/config";
 import { processStreams, rerun, type Script, type StreamingOptions } from "./runtime";
 import { SessionManager, setSessionManager } from "./session";
+import type { Session } from "./session/types";
 import { defaultStyles } from "./styles";
 import { getEnvVar } from "./utils/env";
 import { createErrorMessageJson } from "./utils/error";
@@ -30,7 +21,7 @@ import {
 } from "./websocket/chunk-upload-handler";
 import { handleFileUpload } from "./websocket/file-upload-handler";
 import { validateOrigin } from "./websocket/origin-validation";
-import type { Patch } from "./websocket/types";
+import type { NodeServerType, Patch } from "./websocket/types";
 import {
 	type ClientMessage,
 	isChunkUploadDataMessage,
@@ -125,6 +116,76 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 		}
 		// scope='tab'の場合、初期レンダリング用に一時セッションを作成
 		return { sessionId: sessionManager.createSession().id, isTemporary: true };
+	};
+
+	// ストリーミング設定を生成
+	const createStreamingOpts = (sessionId: string): StreamingOptions | undefined => {
+		if (!config.streaming.enabled) return undefined;
+		return {
+			onFlush: (htmlContent, _itemCount) => {
+				const streamMessage: ServerMessage = {
+					type: "patch",
+					patches: [{ type: "streamAppend", html: htmlContent }],
+					partial: true,
+				};
+				sessionManager.broadcast(sessionId, JSON.stringify(streamMessage));
+			},
+			flushThreshold: config.streaming.flushThreshold,
+		};
+	};
+
+	// rerun実行→差分計算→パッチ配信→ストリーム処理
+	const rerunAndBroadcast = (
+		session: Session,
+		event: { widgetId: string; value: unknown },
+	): void => {
+		const streamingOptions = createStreamingOpts(session.id);
+		const newResult = rerun(script, event, session.id, undefined, streamingOptions);
+
+		// 差分計算（メインコンテンツ）
+		let patches: Patch[];
+		if (session.lastHtml) {
+			const diffResult = diff(session.lastHtml, newResult.mainHtml);
+			patches = toWebSocketPatches(diffResult, newResult.mainHtml);
+		} else {
+			patches = [{ type: "replaceRoot", html: newResult.mainHtml }];
+		}
+
+		// サイドバーの差分計算
+		if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
+			const sidebarDiffResult = diff(session.lastSidebarHtml ?? "", newResult.sidebarHtml);
+			const sidebarPatches = toWebSocketPatches(
+				sidebarDiffResult,
+				newResult.sidebarHtml,
+				"kt-sidebar-content",
+			);
+			patches.push(...sidebarPatches);
+		}
+
+		session.lastHtml = newResult.mainHtml;
+		session.lastSidebarHtml = newResult.sidebarHtml;
+
+		if (patches.length > 0) {
+			const seq = sessionManager.addPatchToHistory(session.id, patches);
+			const message: ServerMessage = {
+				type: "patch",
+				patches,
+				seq,
+			};
+			sessionManager.broadcast(session.id, JSON.stringify(message));
+		}
+
+		// Process pending streams from write_stream() calls
+		if (newResult.hasPendingStreams) {
+			processStreams(newResult.streamSessionKey, (patch) => {
+				const streamMessage: ServerMessage = {
+					type: "patch",
+					patches: [patch],
+					partial: true,
+				};
+				sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
+			});
+		}
 	};
 
 	// ルートページ
@@ -364,74 +425,10 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 							sessionManager.setState(session.id, data.widgetId, data.value);
 						}
 
-						// ストリーミング設定
-						const streamingOptions: StreamingOptions | undefined = config.streaming.enabled
-							? {
-									onFlush: (htmlContent, _itemCount) => {
-										const streamMessage: ServerMessage = {
-											type: "patch",
-											patches: [{ type: "streamAppend", html: htmlContent }],
-											partial: true,
-										};
-										sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
-									},
-									flushThreshold: config.streaming.flushThreshold,
-								}
-							: undefined;
-
-						const widgetId = data.widgetId ?? "";
-						const newResult = rerun(
-							script,
-							{ widgetId, value: data.value },
-							session.id,
-							undefined,
-							streamingOptions,
-						);
-
-						// 差分計算（メインコンテンツ）
-						let patches: Patch[];
-						if (session.lastHtml) {
-							const diffResult = diff(session.lastHtml, newResult.mainHtml);
-							patches = toWebSocketPatches(diffResult, newResult.mainHtml);
-						} else {
-							patches = [{ type: "replaceRoot", html: newResult.mainHtml }];
-						}
-
-						// サイドバーの差分計算
-						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
-							const sidebarDiffResult = diff(session.lastSidebarHtml ?? "", newResult.sidebarHtml);
-							const sidebarPatches = toWebSocketPatches(
-								sidebarDiffResult,
-								newResult.sidebarHtml,
-								"kt-sidebar-content",
-							);
-							patches.push(...sidebarPatches);
-						}
-
-						session.lastHtml = newResult.mainHtml;
-						session.lastSidebarHtml = newResult.sidebarHtml;
-
-						if (patches.length > 0) {
-							const seq = sessionManager.addPatchToHistory(session.id, patches);
-							const message: ServerMessage = {
-								type: "patch",
-								patches,
-								seq,
-							};
-							sessionManager.broadcast(session.id, JSON.stringify(message));
-						}
-
-						// Process pending streams from write_stream() calls
-						if (newResult.hasPendingStreams) {
-							processStreams(newResult.streamSessionKey, (patch) => {
-								const streamMessage: ServerMessage = {
-									type: "patch",
-									patches: [patch],
-									partial: true,
-								};
-								sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
-							});
-						}
+						rerunAndBroadcast(session, {
+							widgetId: data.widgetId ?? "",
+							value: data.value,
+						});
 					} else if (data.type === "file_upload" && isFileUploadMessage(parsed)) {
 						// ファイルアップロード処理
 						const uploadSessionId = cookieSessionId ?? data.sessionId;
@@ -489,73 +486,10 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						);
 
 						// アップロード成功 - rerunを実行してUIを更新
-						const streamingOptions: StreamingOptions | undefined = config.streaming.enabled
-							? {
-									onFlush: (htmlContent, _itemCount) => {
-										const streamMessage: ServerMessage = {
-											type: "patch",
-											patches: [{ type: "streamAppend", html: htmlContent }],
-											partial: true,
-										};
-										sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
-									},
-									flushThreshold: config.streaming.flushThreshold,
-								}
-							: undefined;
-
-						const newResult = rerun(
-							script,
-							{ widgetId: parsed.widgetId, value: uploadResult.uploadId },
-							session.id,
-							undefined,
-							streamingOptions,
-						);
-						session.lastAccessedAt = new Date();
-
-						// 差分計算（メインコンテンツ）
-						let patches: Patch[];
-						if (session.lastHtml) {
-							const diffResult = diff(session.lastHtml, newResult.mainHtml);
-							patches = toWebSocketPatches(diffResult, newResult.mainHtml);
-						} else {
-							patches = [{ type: "replaceRoot", html: newResult.mainHtml }];
-						}
-
-						// サイドバーの差分計算
-						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
-							const sidebarDiffResult = diff(session.lastSidebarHtml ?? "", newResult.sidebarHtml);
-							const sidebarPatches = toWebSocketPatches(
-								sidebarDiffResult,
-								newResult.sidebarHtml,
-								"kt-sidebar-content",
-							);
-							patches.push(...sidebarPatches);
-						}
-
-						session.lastHtml = newResult.mainHtml;
-						session.lastSidebarHtml = newResult.sidebarHtml;
-
-						if (patches.length > 0) {
-							const seq = sessionManager.addPatchToHistory(session.id, patches);
-							const message: ServerMessage = {
-								type: "patch",
-								patches,
-								seq,
-							};
-							sessionManager.broadcast(session.id, JSON.stringify(message));
-						}
-
-						// Process pending streams from write_stream() calls
-						if (newResult.hasPendingStreams) {
-							processStreams(newResult.streamSessionKey, (patch) => {
-								const streamMessage: ServerMessage = {
-									type: "patch",
-									patches: [patch],
-									partial: true,
-								};
-								sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
-							});
-						}
+						rerunAndBroadcast(session, {
+							widgetId: parsed.widgetId,
+							value: uploadResult.uploadId,
+						});
 					} else if (data.type === "chunk_upload_start" && isChunkUploadStartMessage(parsed)) {
 						// チャンクアップロード開始処理
 						const uploadSessionId = cookieSessionId ?? data.sessionId;
@@ -650,73 +584,10 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 							}),
 						);
 
-						const streamingOptions: StreamingOptions | undefined = config.streaming.enabled
-							? {
-									onFlush: (htmlContent, _itemCount) => {
-										const streamMessage: ServerMessage = {
-											type: "patch",
-											patches: [{ type: "streamAppend", html: htmlContent }],
-											partial: true,
-										};
-										sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
-									},
-									flushThreshold: config.streaming.flushThreshold,
-								}
-							: undefined;
-
-						const newResult = rerun(
-							script,
-							{ widgetId, value: result.registeredUploadId },
-							session.id,
-							undefined,
-							streamingOptions,
-						);
-						session.lastAccessedAt = new Date();
-
-						// 差分計算（メインコンテンツ）
-						let chunkPatches: Patch[];
-						if (session.lastHtml) {
-							const diffResult = diff(session.lastHtml, newResult.mainHtml);
-							chunkPatches = toWebSocketPatches(diffResult, newResult.mainHtml);
-						} else {
-							chunkPatches = [{ type: "replaceRoot", html: newResult.mainHtml }];
-						}
-
-						// サイドバーの差分計算
-						if (newResult.hasSidebar && newResult.sidebarHtml !== session.lastSidebarHtml) {
-							const sidebarDiffResult = diff(session.lastSidebarHtml ?? "", newResult.sidebarHtml);
-							const sidebarPatches = toWebSocketPatches(
-								sidebarDiffResult,
-								newResult.sidebarHtml,
-								"kt-sidebar-content",
-							);
-							chunkPatches.push(...sidebarPatches);
-						}
-
-						session.lastHtml = newResult.mainHtml;
-						session.lastSidebarHtml = newResult.sidebarHtml;
-
-						if (chunkPatches.length > 0) {
-							const seq = sessionManager.addPatchToHistory(session.id, chunkPatches);
-							const patchMessage: ServerMessage = {
-								type: "patch",
-								patches: chunkPatches,
-								seq,
-							};
-							sessionManager.broadcast(session.id, JSON.stringify(patchMessage));
-						}
-
-						// Process pending streams from write_stream() calls
-						if (newResult.hasPendingStreams) {
-							processStreams(newResult.streamSessionKey, (patch) => {
-								const streamMessage: ServerMessage = {
-									type: "patch",
-									patches: [patch],
-									partial: true,
-								};
-								sessionManager.broadcast(session.id, JSON.stringify(streamMessage));
-							});
-						}
+						rerunAndBroadcast(session, {
+							widgetId,
+							value: result.registeredUploadId,
+						});
 					}
 				},
 				onClose: (_evt, ws) => {

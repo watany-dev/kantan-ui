@@ -342,7 +342,7 @@ describe("renderScatterChart", () => {
 	describe("edge cases", () => {
 		it("handles empty data", () => {
 			const html = renderScatterChart([]);
-			expect(html).toContain("kt-scatter-chart-empty");
+			expect(html).toContain("kt-chart-empty");
 		});
 
 		it("handles single data point", () => {
@@ -386,7 +386,7 @@ describe("renderScatterChart", () => {
 				{ name: "Bob", city: "Osaka" },
 			];
 			const html = renderScatterChart(data as Record<string, unknown>[]);
-			expect(html).toContain("kt-scatter-chart-empty");
+			expect(html).toContain("kt-chart-empty");
 		});
 
 		it("handles data where all values are NaN", () => {
@@ -395,7 +395,7 @@ describe("renderScatterChart", () => {
 				{ x: Number.NaN, y: Number.NaN },
 			];
 			const html = renderScatterChart(data);
-			expect(html).toContain("kt-scatter-chart-empty");
+			expect(html).toContain("kt-chart-empty");
 		});
 
 		it("handles size column with negative values", () => {

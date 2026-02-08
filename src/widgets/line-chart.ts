@@ -216,7 +216,7 @@ export function renderLineChart(data: LineChartData, config?: Partial<LineChartC
 	const normalized = normalizeChartData(data, config);
 
 	if (normalized.series.length === 0) {
-		return '<div class="kt-line-chart kt-line-chart-empty">No data</div>';
+		return '<div class="kt-line-chart kt-chart-empty">No data</div>';
 	}
 
 	const height = config?.height ?? 400;

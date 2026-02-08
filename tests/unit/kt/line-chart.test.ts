@@ -26,7 +26,7 @@ describe("kt.line_chart", () => {
 		line_chart([]);
 
 		const html = ctx.getHtml();
-		expect(html).toContain("kt-line-chart-empty");
+		expect(html).toContain("kt-chart-empty");
 	});
 
 	it("should render object array data", () => {

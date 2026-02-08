@@ -82,7 +82,7 @@ export function renderBarChart(data: BarChartData, config?: Partial<BarChartConf
 
 	const normalized = prepareChartData(chartData, safeConfig);
 	if (!normalized) {
-		return '<div class="kt-bar-chart kt-bar-chart-empty">No data</div>';
+		return '<div class="kt-bar-chart kt-chart-empty">No data</div>';
 	}
 
 	const sorted = applySortOrder(normalized, safeConfig?.sort);
