@@ -60,10 +60,12 @@ st.bar_chart(df, x="name", y="score", horizontal=True, sort="descending")
 
 | モジュール | 役割 | 共有 |
 |-----------|------|------|
-| `src/kt/chart/types.ts` | 型定義 | 共通型 + bar固有型 |
+| `src/kt/chart/types.ts` | 型定義（`BaseChartConfig`, `NormalizeConfig` 等） | 共通型 + bar固有型 |
 | `src/kt/chart/colors.ts` | カラーパレット・バリデーション | 完全共有 |
 | `src/kt/chart/normalize.ts` | データ正規化 | 完全共有 |
-| `src/kt/chart/scale.ts` | 軸スケール計算 | 完全共有 |
+| `src/kt/chart/scale.ts` | 軸スケール計算（`niceScale`, `calculateAxisScale`） | 完全共有 |
+| `src/kt/chart/shared.ts` | 共通前処理（`prepareChartData`, `sanitizeConfig` 等） | bar/area共有 |
+| `src/kt/chart/render-utils.ts` | グリッド・軸・凡例の共通描画 | 完全共有 |
 | `src/kt/chart/bar-chart.ts` | バーチャート描画 | **bar固有** |
 
 ---
@@ -523,11 +525,13 @@ line_chart と同じ方針（`line-chart-api.md` セクション7参照）:
 src/
   kt/
     chart/
-      bar-chart.ts          # bar_chart() メイン関数 + SVG描画
+      bar-chart.ts          # bar_chart() メイン関数 + SVG描画（縦横統合済み）
+      shared.ts             # 共通前処理（prepareChartData, sanitizeConfig等）
+      render-utils.ts       # グリッド・軸・凡例の共通描画
       normalize.ts          # データ正規化（line_chartと共有）
-      scale.ts              # 軸スケール計算（line_chartと共有）
+      scale.ts              # 軸スケール計算（niceScale + calculateAxisScale）
       colors.ts             # カラーパレット・バリデーション（共有）
-      types.ts              # 型定義（共通型 + bar固有型）
+      types.ts              # 型定義（BaseChartConfig, NormalizeConfig等）
     index.ts                # kt.bar_chart を追加
   styles/
     default.ts              # chartStyles を追加（共有 + bar固有）

@@ -78,6 +78,54 @@ export function renderXAxis(
 }
 
 /**
+ * 数値x軸を描画する
+ *
+ * renderXAxis()がカテゴリ軸を描画するのに対し、
+ * こちらはcalculateAxisScale()のticksに基づく数値目盛りを描画する
+ */
+export function renderNumericXAxis(
+	scale: { min: number; max: number; step: number; ticks: number[] },
+	scaleX: (v: number) => number,
+	baseY: number,
+	marginLeft: number,
+	plotWidth: number,
+): string {
+	const parts: string[] = ['<g class="kt-chart-axis-x">'];
+	parts.push(
+		`<line x1="${marginLeft}" y1="${baseY}" x2="${marginLeft + plotWidth}" y2="${baseY}" stroke="#dee2e6" stroke-width="1" />`,
+	);
+
+	for (const tick of scale.ticks) {
+		const x = scaleX(tick);
+		parts.push(
+			`<text x="${x}" y="${baseY + 16}" text-anchor="middle" font-size="11" fill="#6c757d">${formatTickValue(tick)}</text>`,
+		);
+	}
+
+	parts.push("</g>");
+	return parts.join("");
+}
+
+/**
+ * 垂直グリッド線を描画する（x軸ticks用）
+ */
+export function renderVerticalGrid(
+	scale: { min: number; max: number; step: number; ticks: number[] },
+	scaleX: (v: number) => number,
+	marginTop: number,
+	plotHeight: number,
+): string {
+	const parts: string[] = [];
+	for (const tick of scale.ticks) {
+		const x = scaleX(tick);
+		parts.push(
+			`<line x1="${x}" y1="${marginTop}" x2="${x}" y2="${marginTop + plotHeight}" stroke="#e9ecef" stroke-width="1" />`,
+		);
+	}
+	return parts.join("");
+}
+
+/**
  * 凡例を描画する
  */
 export function renderLegend(
@@ -92,6 +140,29 @@ export function renderLegend(
 		parts.push(renderHtml`<rect x="${x}" y="${y}" width="10" height="10" fill="${s.color}" />`);
 		parts.push(
 			renderHtml`<text x="${x + 14}" y="${y + 9}" font-size="11" fill="#495057">${s.name}</text>`,
+		);
+		x += 80;
+	}
+
+	parts.push("</g>");
+	return parts.join("");
+}
+
+/**
+ * 散布図用の凡例を描画（circle アイコン）
+ */
+export function renderScatterLegend(
+	groups: { name: string; color: string }[],
+	startX: number,
+	y: number,
+): string {
+	const parts: string[] = ['<g class="kt-chart-legend">'];
+	let x = startX;
+
+	for (const g of groups) {
+		parts.push(renderHtml`<circle cx="${x + 5}" cy="${y + 5}" r="5" fill="${g.color}" />`);
+		parts.push(
+			renderHtml`<text x="${x + 14}" y="${y + 9}" font-size="11" fill="#495057">${g.name}</text>`,
 		);
 		x += 80;
 	}

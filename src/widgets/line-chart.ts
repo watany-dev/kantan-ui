@@ -4,6 +4,8 @@
  * 純粋なSVGで折れ線グラフを描画する（外部ライブラリ不要）
  */
 
+import { resolveChartColors } from "../kt/chart/colors";
+import { formatTickValue, niceScale } from "../kt/chart/scale";
 import { raw, renderHtml } from "../utils/html";
 import type {
 	LineChartConfig,
@@ -12,28 +14,10 @@ import type {
 	NormalizedSeries,
 } from "./types";
 
-/** デフォルトカラーパレット */
-const DEFAULT_COLORS: readonly string[] = [
-	"#4e79a7",
-	"#f28e2b",
-	"#e15759",
-	"#76b7b2",
-	"#59a14f",
-	"#edc948",
-	"#b07aa1",
-	"#ff9da7",
-	"#9c755f",
-	"#bab0ac",
-];
+// re-export for backward compatibility with tests
+export { niceScale } from "../kt/chart/scale";
 
 const FALLBACK_COLOR = "#4e79a7";
-
-/**
- * デフォルトパレットから色を取得
- */
-function getDefaultColor(index: number): string {
-	return DEFAULT_COLORS[index % DEFAULT_COLORS.length] ?? FALLBACK_COLOR;
-}
 
 /** チャートのマージン */
 const MARGIN = { top: 20, right: 20, bottom: 40, left: 50 };
@@ -210,7 +194,6 @@ function normalizeObjectArray(
  * x軸に適したカラムを自動判定
  */
 function findXColumn(firstRow: Record<string, unknown>, keys: string[]): string | undefined {
-	// 非数値カラムがあればそれをx軸に
 	for (const key of keys) {
 		if (typeof firstRow[key] === "string") {
 			return key;
@@ -224,49 +207,6 @@ function findXColumn(firstRow: Record<string, unknown>, keys: string[]): string 
  */
 function isNumericColumn(data: Record<string, unknown>[], key: string): boolean {
 	return data.some((row) => typeof row[key] === "number");
-}
-
-/**
- * 適切な目盛り値を計算する（Nice numbers アルゴリズム）
- */
-export function niceScale(
-	min: number,
-	max: number,
-	maxTicks = 5,
-): { min: number; max: number; step: number } {
-	if (min === max) {
-		if (min === 0) return { min: -1, max: 1, step: 1 };
-		const offset = Math.abs(min) * 0.1;
-		return niceScale(min - offset, max + offset, maxTicks);
-	}
-
-	const range = max - min;
-	const roughStep = range / maxTicks;
-	const magnitude = 10 ** Math.floor(Math.log10(roughStep));
-	const normalized = roughStep / magnitude;
-
-	let niceStep: number;
-	if (normalized <= 1) niceStep = 1;
-	else if (normalized <= 2) niceStep = 2;
-	else if (normalized <= 5) niceStep = 5;
-	else niceStep = 10;
-
-	niceStep *= magnitude;
-
-	const niceMin = Math.floor(min / niceStep) * niceStep;
-	const niceMax = Math.ceil(max / niceStep) * niceStep;
-
-	return { min: niceMin, max: niceMax, step: niceStep };
-}
-
-/**
- * 数値を表示用にフォーマット
- */
-function formatNumber(n: number): string {
-	if (Number.isInteger(n) && Math.abs(n) < 1e6) return String(n);
-	if (Math.abs(n) >= 1e6) return n.toExponential(1);
-	// 小数点以下の不要な0を除去
-	return Number.parseFloat(n.toPrecision(4)).toString();
 }
 
 /**
@@ -313,7 +253,7 @@ export function renderLineChart(data: LineChartData, config?: Partial<LineChartC
 	};
 
 	// 色の解決
-	const colors = resolveColors(normalized.series.length, config?.color);
+	const colors = resolveChartColors(normalized.series.length, config?.color);
 
 	// SVG構築
 	const parts: string[] = [];
@@ -466,7 +406,7 @@ function renderYAxis(
 		const rounded = Math.round(y * 1e10) / 1e10;
 		const py = scaleY(rounded);
 		parts.push(
-			`<text x="${marginLeft - 8}" y="${py + 4}" text-anchor="end" class="kt-line-chart-tick-label">${formatNumber(rounded)}</text>`,
+			`<text x="${marginLeft - 8}" y="${py + 4}" text-anchor="end" class="kt-line-chart-tick-label">${formatTickValue(rounded)}</text>`,
 		);
 	}
 
@@ -540,19 +480,4 @@ function renderLegend(
 
 	parts.push("</g>");
 	return parts.join("");
-}
-
-/**
- * カラーの解決
- */
-function resolveColors(count: number, color?: string | string[]): string[] {
-	if (!color) {
-		return Array.from({ length: count }, (_, i) => getDefaultColor(i));
-	}
-
-	if (typeof color === "string") {
-		return Array.from({ length: count }, () => color);
-	}
-
-	return Array.from({ length: count }, (_, i) => color[i] ?? getDefaultColor(i));
 }

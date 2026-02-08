@@ -4,6 +4,8 @@ export {
 	SessionManager,
 	setSessionManager,
 } from "./manager";
+export type { Scheduler } from "./scheduler";
+export { defaultScheduler } from "./scheduler";
 export {
 	createTypedSessionState,
 	getCurrentSessionId,

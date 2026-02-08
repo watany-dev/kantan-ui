@@ -8,7 +8,15 @@ import { renderLineChart } from "../widgets/line-chart";
 import type { LineChartConfig, LineChartData } from "../widgets/types";
 import { renderAreaChart } from "./chart/area-chart";
 import { renderBarChart } from "./chart/bar-chart";
-import type { AreaChartConfig, AreaChartData, BarChartConfig, BarChartData } from "./chart/types";
+import { renderScatterChart } from "./chart/scatter-chart";
+import type {
+	AreaChartConfig,
+	AreaChartData,
+	BarChartConfig,
+	BarChartData,
+	ScatterChartConfig,
+	ScatterChartData,
+} from "./chart/types";
 import { requireRenderContext } from "./context";
 
 /**
@@ -96,5 +104,38 @@ export function bar_chart(data: BarChartData, config?: Partial<BarChartConfig>):
 export function area_chart(data: AreaChartData, config?: Partial<AreaChartConfig>): void {
 	const ctx = requireRenderContext();
 	const html = renderAreaChart(data, config);
+	ctx.append(html);
+}
+
+/**
+ * 散布図を表示
+ *
+ * @param data - チャートデータ（オブジェクト配列、2D配列、明示的形式）
+ * @param config - オプション設定
+ *
+ * @example
+ * // オブジェクト配列
+ * kt.scatter_chart([
+ *   { height: 170, weight: 65 },
+ *   { height: 160, weight: 55 },
+ *   { height: 180, weight: 80 },
+ * ]);
+ *
+ * @example
+ * // 2D配列（各行が [x, y] ペア）
+ * kt.scatter_chart([[1, 5], [2, 8], [3, 6]]);
+ *
+ * @example
+ * // カラーカラムでグルーピング + バブルチャート
+ * kt.scatter_chart(data, {
+ *   x: "gdp",
+ *   y: "lifeExp",
+ *   color: "region",
+ *   size: "population",
+ * });
+ */
+export function scatter_chart(data: ScatterChartData, config?: Partial<ScatterChartConfig>): void {
+	const ctx = requireRenderContext();
+	const html = renderScatterChart(data, config);
 	ctx.append(html);
 }
