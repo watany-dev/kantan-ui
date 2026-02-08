@@ -6,7 +6,7 @@ A Streamlit-style UI framework that depends only on Web standards and [Hono](htt
 
 - **Simple** - Declarative API like Streamlit (`kt.button()`, `kt.slider()`, etc.)
 - **Real-time** - Instant UI updates via WebSocket with multi-tab sync support
-- **Lightweight** - Depends only on Hono, supports multiple runtimes (Bun, Node.js, Deno)
+- **Lightweight** - Depends only on Hono, supports multiple runtimes (Bun, Node.js, Deno, AWS Lambda)
 - **Session Management** - Automatic state management for multiple users
 - **Connection Stability** - Ping/Pong, auto-reconnect, sequence-based patch recovery
 - **Streaming** - Progressive rendering for large UIs
@@ -85,6 +85,27 @@ import { serve } from "kantan-ui/serve";
 
 const app = await createApp(script);
 serve(app, { port: 3000 });
+```
+
+**AWS Lambda**
+
+```typescript
+import { createApp } from "kantan-ui";
+import { createLambdaHandler } from "kantan-ui/lambda";
+
+const kantanApp = await createApp(script);
+export const handler = createLambdaHandler(kantanApp);
+```
+
+Supports API Gateway v1 (REST API), v2 (HTTP API), ALB, and Lambda Function URLs.
+
+For response streaming (Lambda Function URL / Lambda Web Adapter):
+
+```typescript
+import { createLambdaStreamHandler } from "kantan-ui/lambda";
+
+const kantanApp = await createApp(script);
+export const handler = createLambdaStreamHandler(kantanApp);
 ```
 
 ### kt API (Declarative API)
@@ -846,6 +867,7 @@ const html = renderButton("Click me", { key: "my_button" });
 src/
 ├── index.ts          # Entry point (exports)
 ├── app.ts            # createApp function
+├── lambda.ts         # AWS Lambda handler helpers
 ├── server.ts         # Demo server
 ├── client/           # Client script generation
 │   ├── script.ts     # WebSocket/event handling script

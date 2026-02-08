@@ -22,6 +22,7 @@ export default defineConfig({
 				"src/server-error-test.ts",
 				"src/server-write-stream-test.ts",
 				"src/serve.ts",
+				"src/lambda.ts",
 				"src/app.ts",
 				"src/websocket/handler.ts",
 				"src/client/script.ts", // クライアント生成スクリプト（E2Eでテスト）
