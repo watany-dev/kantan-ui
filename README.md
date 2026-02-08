@@ -585,7 +585,47 @@ kt.expander("See details", () => {
 kt.expander("Important notice", () => {
   kt.write("Please read this!");
 }, { expanded: true });
+
+// Status container - collapsible with state indicators
+kt.status("Processing data...", (s) => {
+  kt.write("Connecting to database...");
+  kt.write("Fetching records...");
+  s.update({ state: "running", expanded: true });
+}, { key: "my_status" });
+
+// Auto-completes to "complete" when update() is not called
+kt.status("Quick task", () => {
+  kt.write("Done instantly");
+});
+
+// Manual state control
+kt.status("Upload files", (s) => {
+  kt.write("Uploading...");
+  s.update({ state: "complete", label: "Upload finished!", expanded: false });
+}, { key: "upload_status" });
+
+// Error state
+kt.status("Validation", (s) => {
+  kt.write("Checking data...");
+  s.update({ state: "error", label: "Validation failed" });
+}, { key: "validation_status" });
 ```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| label | `string` | Status container label |
+| content | `(controller: StatusController) => void` | Callback with content and controller |
+| config.key | `string` | Widget key for state persistence |
+| config.state | `"running" \| "complete" \| "error"` | Initial state (default: `"running"`) |
+| config.expanded | `boolean` | Initial expanded state (default: `true` when running) |
+
+**StatusController methods:**
+- `update({ state?, label?, expanded? })` - Update status state, label, or expanded state
+
+**Behavior:**
+- If `update()` is never called, auto-completes to `"complete"` with `expanded: false`
+- State persists across reruns via widget registry
+- Invalid states fall back to `"running"`
 
 #### Sidebar API
 
@@ -901,6 +941,7 @@ src/
 │   ├── layout.ts     # Layout (tabs, columns, container, expander)
 │   ├── media.ts      # Media API (image, audio, video)
 │   ├── sidebar.ts    # Sidebar API
+│   ├── status.ts     # Status container API
 │   ├── output.ts     # Output API (title, write, header, etc.)
 │   ├── stream.ts     # Streaming API (write_stream)
 │   ├── stream-utils.ts   # Stream normalization utilities

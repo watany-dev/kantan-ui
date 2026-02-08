@@ -156,7 +156,7 @@
 | `st.info` | `kt.info` | ✅ | - | - | 実装済み |
 | `st.warning` | `kt.warning` | ✅ | - | - | 実装済み |
 | `st.error` | `kt.error` | ✅ | - | - | 実装済み |
-| `st.status` | - | ❌ | P1 | Medium | 展開可能なステータスコンテナ |
+| `st.status` | `kt.status` | ✅ | - | - | 実装済み |
 | `st.exception` | - | ❌ | P2 | Easy | 例外表示 |
 | `st.balloons` | - | ❌ | P3 | Easy | お祝いアニメーション |
 | `st.snow` | - | ❌ | P3 | Easy | 雪アニメーション |
@@ -221,13 +221,12 @@
 
 すべてのP0 APIが実装済みです。
 
-### P1 (高) - 6件
+### P1 (高) - 5件
 | API | 難易度 | 説明 |
 |-----|--------|------|
 | `st.datetime_input` | Medium | 日付+時刻入力 |
 | `st.data_editor` | Very Hard | データ編集ウィジェット |
 | `st.dialog` | Hard | モーダルダイアログ |
-| `st.status` | Medium | ステータスコンテナ |
 | `st.navigation` | Hard | マルチページナビ |
 | `st.Page` | Hard | ページ定義 |
 
@@ -278,7 +277,7 @@
 3. ~~**`st.dataframe`**~~ - ✅ 実装済み
 
 ### Phase 2: UX改善
-4. **`st.status`** - 長時間処理の表示
+4. ~~**`st.status`**~~ - ✅ 実装済み
 5. **`st.dialog`** - モーダル対応
 6. **`st.datetime_input`** - 日時入力統合
 
@@ -289,7 +288,7 @@
 
 ## 実装済みAPI サマリー
 
-kantan-uiで実装済みのStreamlit互換API: **50件**
+kantan-uiで実装済みのStreamlit互換API: **51件**
 
 - Input Widgets: 16件
 - Data Display: 4件
@@ -298,7 +297,7 @@ kantan-uiで実装済みのStreamlit互換API: **50件**
 - Media: 3件 (image, audio, video)
 - Layout: 6件
 - Chat: 2件
-- Status: 7件
+- Status: 8件
 - Control Flow: 3件
 - Configuration: 1件
 - Caching & State: 2件 (cache_data, cache_resource)
