@@ -81,6 +81,7 @@ export const kt = {
 	code: output.code,
 	markdown: output.markdown,
 	caption: output.caption,
+	link_button: output.link_button,
 
 	// Alert APIs
 	success: output.success,

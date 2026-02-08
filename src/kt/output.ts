@@ -151,6 +151,54 @@ export function caption(body: string, config?: CaptionConfig): void {
 }
 
 // ============================================
+// Link Button API
+// ============================================
+
+export interface LinkButtonConfig {
+	/** ボタンを無効化 */
+	disabled?: boolean;
+
+	/** コンテナ幅に合わせる（デフォルト: false） */
+	use_container_width?: boolean;
+}
+
+function isSafeUrl(url: string): boolean {
+	const trimmed = url.trim();
+	if (trimmed === "") return false;
+
+	const lower = trimmed.toLowerCase();
+	const dangerousSchemes = ["javascript:", "vbscript:", "data:"];
+	return !dangerousSchemes.some((scheme) => lower.startsWith(scheme));
+}
+
+/**
+ * 指定URLに遷移するリンクボタンを表示
+ *
+ * @param label - ボタンに表示するラベル（プレーンテキスト）
+ * @param url - 遷移先のURL
+ * @param config - オプション設定
+ *
+ * @example
+ * kt.link_button("Visit Google", "https://google.com");
+ * kt.link_button("Docs", "https://docs.example.com", { disabled: true });
+ */
+export function link_button(label: string, url: string, config?: LinkButtonConfig): void {
+	const ctx = requireRenderContext();
+	const isDisabled = config?.disabled || !isSafeUrl(url);
+	const fullClass = config?.use_container_width ? " kt-link-button-full" : "";
+
+	if (isDisabled) {
+		ctx.append(
+			renderHtml`<a class="kt-link-button kt-link-button-disabled${raw(fullClass)}" aria-disabled="true" tabindex="-1">${label}</a>`,
+		);
+	} else {
+		ctx.append(
+			renderHtml`<a href="${url}" class="kt-link-button${raw(fullClass)}" target="_blank" rel="noopener noreferrer">${label}</a>`,
+		);
+	}
+}
+
+// ============================================
 // Alert APIs
 // ============================================
 
