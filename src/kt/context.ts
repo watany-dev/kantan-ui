@@ -129,10 +129,10 @@ export class RenderContext {
 	}
 
 	/**
-	 * バッファを結合してHTMLを取得（後方互換性のため維持、メインのみ返す）
+	 * バッファを結合してHTMLを取得（getMainHtml のエイリアス）
 	 */
 	getHtml(): string {
-		return this.mainBuffer.join("\n");
+		return this.getMainHtml();
 	}
 
 	/**
