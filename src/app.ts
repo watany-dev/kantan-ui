@@ -290,6 +290,33 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 			const shouldValidateOrigin = config.security.validateWebSocketOrigin;
 			const allowedOrigins = config.security.allowedOrigins;
 
+			// セッションID解決
+			const resolveSessionId = (data: ClientMessage): string | undefined =>
+				cookieSessionId ?? data.sessionId;
+
+			// セッションID解決＋検証ヘルパー（event / file_upload 共通）
+			const getValidatedSession = (
+				data: ClientMessage,
+				ws: { send: (data: string) => void },
+			): Session | null => {
+				const sessionId = resolveSessionId(data);
+				if (!sessionId) {
+					ws.send(createErrorMessageJson("SESSION_ID_REQUIRED", "sessionId is required."));
+					return null;
+				}
+				const session = sessionManager.getSession(sessionId);
+				if (!session) {
+					ws.send(
+						createErrorMessageJson(
+							"SESSION_NOT_FOUND",
+							"Session not found. Please refresh or reconnect.",
+						),
+					);
+					return null;
+				}
+				return session;
+			};
+
 			return {
 				onOpen: (_evt, ws) => {
 					// Origin検証（設定で有効な場合のみ）
@@ -321,7 +348,7 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 					}
 
 					if (data.type === "init") {
-						const requestedSessionId = cookieSessionId ?? data.sessionId;
+						const requestedSessionId = resolveSessionId(data);
 						const session = sessionManager.getOrCreateSession(requestedSessionId);
 						sessionManager.associateWebSocket(ws, session.id);
 
@@ -380,29 +407,8 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						};
 						ws.send(JSON.stringify(message));
 					} else if (data.type === "event") {
-						const eventSessionId = cookieSessionId ?? data.sessionId;
-						if (!eventSessionId) {
-							console.error("Event received without sessionId");
-							ws.send(
-								createErrorMessageJson(
-									"SESSION_ID_REQUIRED",
-									"sessionId is required for event messages.",
-								),
-							);
-							return;
-						}
-
-						const session = sessionManager.getSession(eventSessionId);
-						if (!session) {
-							console.error("Session not found:", eventSessionId);
-							ws.send(
-								createErrorMessageJson(
-									"SESSION_NOT_FOUND",
-									"Session not found. Please refresh or reconnect.",
-								),
-							);
-							return;
-						}
+						const session = getValidatedSession(data, ws);
+						if (!session) return;
 
 						// レート制限チェック
 						const rateLimitResult = sessionManager.checkRateLimit(session.id);
@@ -430,33 +436,11 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 							value: data.value,
 						});
 					} else if (data.type === "file_upload" && isFileUploadMessage(parsed)) {
-						// ファイルアップロード処理
-						const uploadSessionId = cookieSessionId ?? data.sessionId;
-						if (!uploadSessionId) {
-							console.error("File upload received without sessionId");
-							ws.send(
-								createErrorMessageJson(
-									"SESSION_ID_REQUIRED",
-									"sessionId is required for file upload messages.",
-								),
-							);
-							return;
-						}
-
-						const session = sessionManager.getSession(uploadSessionId);
-						if (!session) {
-							console.error("Session not found for file upload:", uploadSessionId);
-							ws.send(
-								createErrorMessageJson(
-									"SESSION_NOT_FOUND",
-									"Session not found. Please refresh or reconnect.",
-								),
-							);
-							return;
-						}
+						const session = getValidatedSession(data, ws);
+						if (!session) return;
 
 						// ファイルアップロード処理
-						const uploadResult = handleFileUpload(parsed, uploadSessionId, sessionManager);
+						const uploadResult = handleFileUpload(parsed, session.id, sessionManager);
 
 						if (!uploadResult.success) {
 							// エラーをクライアントに送信
@@ -492,7 +476,7 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						});
 					} else if (data.type === "chunk_upload_start" && isChunkUploadStartMessage(parsed)) {
 						// チャンクアップロード開始処理
-						const uploadSessionId = cookieSessionId ?? data.sessionId;
+						const uploadSessionId = resolveSessionId(data);
 						if (!uploadSessionId) {
 							ws.send(
 								JSON.stringify({
@@ -530,7 +514,7 @@ export async function createApp(script: Script, options?: KantanAppOptions): Pro
 						);
 					} else if (data.type === "chunk_upload_end" && isChunkUploadEndMessage(parsed)) {
 						// チャンクアップロード完了処理
-						const uploadSessionId = cookieSessionId ?? data.sessionId;
+						const uploadSessionId = resolveSessionId(data);
 						if (!uploadSessionId) {
 							ws.send(
 								JSON.stringify({
