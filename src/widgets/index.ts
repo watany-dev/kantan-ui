@@ -2,6 +2,7 @@ export { button, renderButton } from "./button";
 export { checkbox, renderCheckbox } from "./checkbox";
 export { color_picker, renderColorPicker } from "./color-picker";
 export { date_input, renderDateInput } from "./date-input";
+export { datetime_input, renderDatetimeInput } from "./datetime-input";
 export { download_button, renderDownloadButton } from "./download-button";
 export {
 	getFileUploaderValue,

@@ -1528,6 +1528,14 @@ const barChartStyles = `
   }
 `;
 
+/** 日時入力スタイル */
+const datetimeInputStyles = `
+  /* Datetime Input */
+  .kt-datetime-input-container { margin: 10px 0; }
+  .kt-datetime-input-label { display: block; margin-bottom: 4px; }
+  .kt-datetime-input { padding: 8px; }
+`;
+
 /** カラーピッカースタイル */
 const colorPickerStyles = `
   /* Color Picker Container */
@@ -1772,6 +1780,7 @@ export const defaultStyles = [
 	fileUploaderStyles,
 	audioStyles,
 	videoStyles,
+	datetimeInputStyles,
 	colorPickerStyles,
 	lineChartStyles,
 	barChartStyles,

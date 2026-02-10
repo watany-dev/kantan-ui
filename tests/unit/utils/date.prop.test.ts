@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import "../pbt-setup";
-import { toDateString, toTimeString } from "../../../src/utils/date";
+import { toDateString, toDatetimeString, toTimeString } from "../../../src/utils/date";
 
 // Practical date range (4-digit years, valid Date objects, no NaN)
 const validDate = fc
@@ -136,6 +136,54 @@ describe("toTimeString property-based tests", () => {
 				const short = toTimeString(date);
 				const long = toTimeString(date, true);
 				expect(long.startsWith(short)).toBe(true);
+			}),
+		);
+	});
+});
+
+describe("toDatetimeString property-based tests", () => {
+	it("should always match YYYY-MM-DDTHH:MM format", () => {
+		fc.assert(
+			fc.property(validDate, (date) => {
+				const result = toDatetimeString(date);
+				expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
+			}),
+		);
+	});
+
+	it("should always match YYYY-MM-DDTHH:MM:SS format with seconds", () => {
+		fc.assert(
+			fc.property(validDate, (date) => {
+				const result = toDatetimeString(date, true);
+				expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/);
+			}),
+		);
+	});
+
+	it("should pass through strings unchanged", () => {
+		fc.assert(
+			fc.property(fc.string(), (str) => {
+				expect(toDatetimeString(str)).toBe(str);
+			}),
+		);
+	});
+
+	it("without seconds should be prefix of with seconds", () => {
+		fc.assert(
+			fc.property(validDate, (date) => {
+				const withoutSec = toDatetimeString(date);
+				const withSec = toDatetimeString(date, true);
+				expect(withSec.startsWith(withoutSec)).toBe(true);
+			}),
+		);
+	});
+
+	it("should equal toDateString + T + toTimeString", () => {
+		fc.assert(
+			fc.property(validDate, (date) => {
+				const result = toDatetimeString(date);
+				const expected = `${toDateString(date)}T${toTimeString(date)}`;
+				expect(result).toBe(expected);
 			}),
 		);
 	});

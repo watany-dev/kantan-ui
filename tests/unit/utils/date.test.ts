@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toDateString, toTimeString } from "../../../src/utils/date";
+import { toDateString, toDatetimeString, toTimeString } from "../../../src/utils/date";
 
 describe("toDateString", () => {
 	it("should return empty string for undefined", () => {
@@ -61,5 +61,46 @@ describe("toTimeString", () => {
 		const date = new Date(2024, 0, 1, 23, 59, 59);
 		expect(toTimeString(date)).toBe("23:59");
 		expect(toTimeString(date, true)).toBe("23:59:59");
+	});
+});
+
+describe("toDatetimeString", () => {
+	it("should return empty string for undefined", () => {
+		expect(toDatetimeString(undefined)).toBe("");
+	});
+
+	it("should return strings as-is", () => {
+		expect(toDatetimeString("2026-01-15T09:30")).toBe("2026-01-15T09:30");
+	});
+
+	it("should convert Date to YYYY-MM-DDTHH:MM format", () => {
+		const date = new Date(2026, 0, 15, 9, 30);
+		expect(toDatetimeString(date)).toBe("2026-01-15T09:30");
+	});
+
+	it("should include seconds when includeSeconds is true", () => {
+		const date = new Date(2026, 0, 15, 9, 30, 45);
+		expect(toDatetimeString(date, true)).toBe("2026-01-15T09:30:45");
+	});
+
+	it("should zero-pad all components", () => {
+		const date = new Date(2026, 0, 5, 3, 7);
+		expect(toDatetimeString(date)).toBe("2026-01-05T03:07");
+	});
+
+	it("should handle midnight", () => {
+		const date = new Date(2026, 0, 1, 0, 0, 0);
+		expect(toDatetimeString(date)).toBe("2026-01-01T00:00");
+		expect(toDatetimeString(date, true)).toBe("2026-01-01T00:00:00");
+	});
+
+	it("should handle end of day", () => {
+		const date = new Date(2026, 11, 31, 23, 59, 59);
+		expect(toDatetimeString(date, true)).toBe("2026-12-31T23:59:59");
+	});
+
+	it("should return empty string for Invalid Date", () => {
+		expect(toDatetimeString(new Date("invalid"))).toBe("");
+		expect(toDatetimeString(new Date(NaN))).toBe("");
 	});
 });

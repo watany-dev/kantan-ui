@@ -126,6 +126,16 @@ export interface TimeInputConfig {
 	disabled?: boolean;
 }
 
+export interface DatetimeInputConfig {
+	label: string;
+	defaultValue?: string | Date;
+	min?: string | Date;
+	max?: string | Date;
+	step?: number;
+	key?: string;
+	disabled?: boolean;
+}
+
 /**
  * 画像ソースの型
  * - string: URL, data URI, または SVG文字列

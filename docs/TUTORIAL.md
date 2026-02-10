@@ -585,6 +585,48 @@ const preciseNow = kt.time_input("正確な時刻", now, { step: 1 });
 
 **戻り値**: `"HH:MM"` または `"HH:MM:SS"` 形式の文字列（stepによる）
 
+### 日時入力
+
+`kt.datetime_input()` は日付と時刻を1つのウィジェットで入力できます。HTML5の `<input type="datetime-local">` を使用した **kantan-ui独自のAPI** です。
+
+```typescript
+// 基本的な使い方
+const startTime = kt.datetime_input("開始日時");
+kt.write(`選択された日時: ${startTime}`);
+
+// デフォルト値付き
+const deadline = kt.datetime_input("締切", "2026-01-15T09:00");
+
+// Dateオブジェクトをデフォルト値として使用
+const event = kt.datetime_input("イベント開始", new Date(2026, 0, 15, 9, 0));
+```
+
+範囲指定やステップも設定できます:
+
+```typescript
+// 範囲指定付き
+const appointment = kt.datetime_input("予約日時", undefined, {
+  min: "2026-01-01T00:00",
+  max: "2026-12-31T23:59",
+});
+
+// 秒精度を有効にする（step < 60 で秒が含まれる）
+const preciseTime = kt.datetime_input("精密な日時", undefined, {
+  step: 1,
+});
+
+// Dateオブジェクトでmin/maxを指定
+const booking = kt.datetime_input("予約", undefined, {
+  min: new Date(2026, 0, 1, 0, 0),
+  max: new Date(2026, 11, 31, 23, 59),
+  key: "booking_datetime",
+});
+```
+
+**戻り値**: `"YYYY-MM-DDTHH:MM"` または `"YYYY-MM-DDTHH:MM:SS"` 形式の文字列（stepによる）
+
+> **ヒント**: `kt.date_input()` と `kt.time_input()` を個別に使う代わりに、`kt.datetime_input()` を使うと日付と時刻を1つの変数で管理できて便利です。
+
 ---
 
 ## データ表示
@@ -2033,7 +2075,7 @@ export default await createApp(script, {
 - ✅ テキスト出力（title, header, write, caption, divider, html）
 - ✅ 基本ウィジェット（button, link_button, slider, text_input, selectbox, download_button）
 - ✅ フォームウィジェット（checkbox, toggle, radio, number_input, text_area, multiselect）
-- ✅ 日付・時刻入力（date_input, time_input）
+- ✅ 日付・時刻入力（date_input, time_input, datetime_input）
 - ✅ ファイルアップロード（file_uploader）
 - ✅ データ表示（table, dataframe, metric）
 - ✅ チャート（line_chart, bar_chart, area_chart, scatter_chart）

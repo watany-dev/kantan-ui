@@ -325,6 +325,12 @@ const birthday = kt.date_input("Birthday", "2000-01-15", {
 // Time input - returns "HH:MM" string
 const alarm = kt.time_input("Alarm", "08:30", { step: 60 });
 
+// Datetime input - returns "YYYY-MM-DDTHH:MM" string (kantan-ui unique)
+const start = kt.datetime_input("Start time", "2026-01-15T09:00", {
+  min: "2026-01-01T00:00",
+  max: "2026-12-31T23:59",
+});
+
 // File uploader - returns UploadedFile object
 const file = kt.file_uploader("Upload file", { accept: "image/*", maxSize: 5 * 1024 * 1024 });
 if (file) {

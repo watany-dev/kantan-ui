@@ -22,6 +22,27 @@ export function toDateString(value: string | Date | undefined): string {
 /**
  * Date オブジェクトまたは文字列を "HH:MM" または "HH:MM:SS" 形式の文字列に変換
  */
+/**
+ * Date オブジェクトまたは文字列を "YYYY-MM-DDTHH:MM" または
+ * "YYYY-MM-DDTHH:MM:SS" 形式の文字列に変換
+ *
+ * Invalid Date が渡された場合は空文字列を返す（安全側に倒す）
+ */
+export function toDatetimeString(value: string | Date | undefined, includeSeconds = false): string {
+	if (value === undefined) {
+		return "";
+	}
+	if (typeof value === "string") {
+		return value;
+	}
+	if (Number.isNaN(value.getTime())) {
+		return "";
+	}
+	const datePart = toDateString(value);
+	const timePart = toTimeString(value, includeSeconds);
+	return `${datePart}T${timePart}`;
+}
+
 export function toTimeString(value: string | Date | undefined, includeSeconds = false): string {
 	if (value === undefined) {
 		return "";
