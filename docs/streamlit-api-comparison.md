@@ -270,18 +270,95 @@
 
 ## 推奨実装順序
 
-### Phase 1: チャート基盤 (P0)
+### 実装済み (P0)
+
 1. ~~**`st.line_chart`**~~ - ✅ 実装済み
 2. ~~**`st.bar_chart`**~~ - ✅ 実装済み
 3. ~~**`st.dataframe`**~~ - ✅ 実装済み
-
-### Phase 2: UX改善
 4. ~~**`st.status`**~~ - ✅ 実装済み
-5. **`st.dialog`** - モーダル対応
-6. ~~**`st.datetime_input`**~~ - ✅ 実装済み
+5. ~~**`st.datetime_input`**~~ - ✅ 実装済み
 
-### Phase 3: マルチページ対応
-7. **`st.navigation`** / **`st.Page`** - マルチページアプリ
+### P1 実装順序
+
+依存関係が少ない順に進め、アーキテクチャ変更を伴うものは中盤、最高難度を最後に回す。
+
+#### P1-1: `st.dialog` (Hard)
+- 他のP1 APIに依存せず、既存レイアウト系API（container, expander）のパターンを拡張できる
+- HTML標準の`<dialog>`要素を活用でき、Web標準方針と合致
+- ルーティングやアプリ構造の変更が不要で、独立して実装可能
+
+#### P1-2: `st.navigation` + `st.Page` (Hard × 2)
+- この2つは密結合: `Page`がページを定義し、`navigation`がルーティングを管理する
+- `app.ts`やセッション管理への変更が必要なため、data_editorより先に基盤を固める
+- P2の`st.switch_page`や`st.page_link`がこれに依存するため、後続APIのブロッカーを解消
+
+#### P1-3: `st.data_editor` (Very Hard)
+- 最も複雑: セル編集、行追加/削除、型バリデーション、column_config連携など多機能
+- 既存の`kt.dataframe`を基盤にできるが、クライアントサイドのインタラクティブ性が大幅に増す
+- P2の`st.column_config.*`と相互に関連するため、設計時にまとめて検討
+
+### P2 実装順序
+
+P1との依存関係でブロックされるもの以外は、P1と並行して進められる。
+
+#### Phase A: Easy wins（即効性が高い）
+| 順 | API | 難易度 | 理由 |
+|----|-----|--------|------|
+| 1 | `st.stop` | Easy | throwで実装可能。制御フローの基本機能 |
+| 2 | `st.exception` | Easy | エラー表示。既存のalert系パターン拡張 |
+| 3 | `st.logo` | Easy | `kt.image`のパターン流用。見た目の完成度向上 |
+
+#### Phase B: 選択系ウィジェット（まとめて設計）
+| 順 | API | 難易度 | 理由 |
+|----|-----|--------|------|
+| 4 | `st.select_slider` | Medium | 既存`kt.slider`の拡張。パターンが明確 |
+| 5 | `st.pills` | Medium | 選択UIのバリエーション |
+| 6 | `st.segmented_control` | Medium | pillsと内部構造が類似。セットで設計すると効率的 |
+| 7 | `st.feedback` | Medium | 星/サムズアップ等の選択。上記と同系統 |
+
+#### Phase C: レイアウト拡張（P1 dialog完了後）
+| 順 | API | 難易度 | 理由 |
+|----|-----|--------|------|
+| 8 | `st.popover` | Medium | P1のdialogと類似パターン。dialog実装後なら容易 |
+
+#### Phase D: ナビゲーション関連（P1 navigation完了後）
+| 順 | API | 難易度 | 理由 |
+|----|-----|--------|------|
+| 9 | `st.switch_page` | Medium | P1のnavigation/Pageに依存 |
+| 10 | `st.page_link` | Medium | 同上。マルチページ基盤が前提 |
+
+#### Phase E: プラットフォーム機能
+| 順 | API | 難易度 | 理由 |
+|----|-----|--------|------|
+| 11 | `st.query_params` | Medium | URL状態管理。navigationと相性がよい |
+| 12 | `st.user` | Medium | 認証・認可の基盤。商用対応に重要 |
+
+#### Phase F: コンテンツ表示系
+| 順 | API | 難易度 | 理由 |
+|----|-----|--------|------|
+| 13 | `st.latex` | Medium | KaTeX等のクライアントサイドレンダリング。外部CDN利用の判断が必要 |
+| 14 | `st.pdf` | Medium | `<iframe>`/`<embed>`で表示。比較的シンプル |
+
+#### Phase G: メディア入力（ブラウザAPI依存）
+| 順 | API | 難易度 | 理由 |
+|----|-----|--------|------|
+| 15 | `st.camera_input` | Hard | MediaDevices API。file_uploaderのパターン拡張 |
+| 16 | `st.audio_input` | Hard | MediaRecorder API。上記と類似のブラウザAPI |
+
+#### Phase H: 高度な機能（P1 data_editor完了後）
+| 順 | API | 難易度 | 理由 |
+|----|-----|--------|------|
+| 17 | `st.column_config.*` | Hard | P1のdata_editorと密結合。同時設計が望ましい |
+| 18 | `st.fragment` | Hard | 部分再実行。ランタイムのアーキテクチャ変更が必要 |
+
+#### Phase I: 外部ライブラリ統合（要方針決定）
+| 順 | API | 難易度 | 理由 |
+|----|-----|--------|------|
+| 19 | `st.map` | Very Hard | 地図ライブラリ依存 |
+| 20 | `st.altair_chart` | Very Hard | Vega-Lite統合 |
+| 21 | `st.plotly_chart` | Very Hard | Plotly統合 |
+
+> **Note**: Phase Iは「Honoのみ依存」方針との整合が必要。プラグイン機構として切り出すか、CDN経由のクライアントサイドレンダリングにするか、方針決定が先。
 
 ---
 
