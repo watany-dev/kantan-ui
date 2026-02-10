@@ -1,5 +1,4 @@
 import type {
-	InsertNodePatch,
 	Patch,
 	RemoveNodePatch,
 	ReplaceNodePatch,
@@ -126,13 +125,6 @@ export function toWebSocketPatches(
 					type: "removeNode",
 					id: p.id,
 				} satisfies RemoveNodePatch;
-			case "insert":
-				return {
-					type: "insertNode",
-					parentId: p.parentId,
-					index: p.index,
-					html: p.html,
-				} satisfies InsertNodePatch;
 			default:
 				throw new Error(`Unknown patch type: ${(p as { type: string }).type}`);
 		}
