@@ -47,7 +47,7 @@
 | `st.text_area` | `kt.text_area` | ✅ | - | - | 実装済み |
 | `st.date_input` | `kt.date_input` | ✅ | - | - | 実装済み |
 | `st.time_input` | `kt.time_input` | ✅ | - | - | 実装済み |
-| `st.datetime_input` | - | ❌ | P1 | Medium | 2025年新機能、日付+時刻統合 |
+| `st.datetime_input` | `kt.datetime_input` | ✅ | - | - | 実装済み（kantan-ui独自API、HTML5 datetime-local使用） |
 | `st.file_uploader` | `kt.file_uploader` | ✅ | - | - | 実装済み |
 | `st.camera_input` | - | ❌ | P2 | Hard | カメラからの画像取得 |
 | `st.audio_input` | - | ❌ | P2 | Hard | マイク録音 |
@@ -221,10 +221,9 @@
 
 すべてのP0 APIが実装済みです。
 
-### P1 (高) - 6件
+### P1 (高) - 5件
 | API | 難易度 | 説明 |
 |-----|--------|------|
-| `st.datetime_input` | Medium | 日付+時刻入力 |
 | `st.data_editor` | Very Hard | データ編集ウィジェット |
 | `st.dialog` | Hard | モーダルダイアログ |
 | `st.status` | Medium | ステータスコンテナ |
@@ -280,7 +279,7 @@
 ### Phase 2: UX改善
 4. **`st.status`** - 長時間処理の表示
 5. **`st.dialog`** - モーダル対応
-6. **`st.datetime_input`** - 日時入力統合
+6. ~~**`st.datetime_input`**~~ - ✅ 実装済み
 
 ### Phase 3: マルチページ対応
 7. **`st.navigation`** / **`st.Page`** - マルチページアプリ
@@ -289,9 +288,9 @@
 
 ## 実装済みAPI サマリー
 
-kantan-uiで実装済みのStreamlit互換API: **50件**
+kantan-uiで実装済みのStreamlit互換API: **51件**
 
-- Input Widgets: 16件
+- Input Widgets: 17件
 - Data Display: 4件
 - Chart Elements: 4件 (line_chart, bar_chart, area_chart, scatter_chart)
 - Text Elements: 9件
