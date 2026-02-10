@@ -85,8 +85,13 @@ function sanitizeAttributes(tagName: string, attributes: string): string {
 	return result.length > 0 ? ` ${result.join(" ")}` : "";
 }
 
-/** 完全に削除するタグ（コンテンツごと） */
-const STRIP_TAGS_WITH_CONTENT = ["script", "style", "iframe", "object", "embed", "form"];
+/** 完全に削除するタグ（コンテンツごと） - 事前コンパイル済み正規表現 */
+const STRIP_TAG_PATTERNS = ["script", "style", "iframe", "object", "embed", "form"].flatMap(
+	(tag) => [
+		new RegExp(`<${tag}[\\s\\S]*?<\\/${tag}>`, "gi"),
+		new RegExp(`<${tag}[^>]*\\/?>`, "gi"),
+	],
+);
 
 /**
  * HTMLをサニタイズ
@@ -102,12 +107,9 @@ export function sanitizeMarkdownHtml(html: string): string {
 	let sanitized = html;
 
 	// 危険なタグをコンテンツごと削除（最初に実行）
-	for (const tag of STRIP_TAGS_WITH_CONTENT) {
-		const pattern = new RegExp(`<${tag}[\\s\\S]*?<\\/${tag}>`, "gi");
+	for (const pattern of STRIP_TAG_PATTERNS) {
+		pattern.lastIndex = 0;
 		sanitized = sanitized.replace(pattern, "");
-		// 自己終了タグも削除
-		const selfClosingPattern = new RegExp(`<${tag}[^>]*\\/?>`, "gi");
-		sanitized = sanitized.replace(selfClosingPattern, "");
 	}
 
 	// イベントハンドラ属性を削除（タグ解析前に）
