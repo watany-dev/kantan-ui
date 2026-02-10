@@ -12,16 +12,17 @@
 6. [チャート](#チャート)
 7. [メディア](#メディア)
 8. [レイアウト](#レイアウト)
-9. [チャットUI](#チャットui)
-10. [セッションステート](#セッションステート)
-11. [キャッシュ](#キャッシュ)
-12. [ページ設定](#ページ設定)
-13. [実践: カウンターアプリ](#実践-カウンターアプリ)
-14. [実践: TODOアプリ](#実践-todoアプリ)
-15. [実践: チャットアプリ](#実践-チャットアプリ)
-16. [AWS Lambda へのデプロイ](#aws-lambda-へのデプロイ)
-17. [設定オプション](#設定オプション)
-18. [次のステップ](#次のステップ)
+9. [ステータスコンテナ](#ステータスコンテナ)
+10. [チャットUI](#チャットui)
+11. [セッションステート](#セッションステート)
+12. [キャッシュ](#キャッシュ)
+13. [ページ設定](#ページ設定)
+14. [実践: カウンターアプリ](#実践-カウンターアプリ)
+15. [実践: TODOアプリ](#実践-todoアプリ)
+16. [実践: チャットアプリ](#実践-チャットアプリ)
+17. [AWS Lambda へのデプロイ](#aws-lambda-へのデプロイ)
+18. [設定オプション](#設定オプション)
+19. [次のステップ](#次のステップ)
 
 ---
 
@@ -1275,6 +1276,80 @@ placeholder.code("const x = 1;", "typescript");
 
 ---
 
+## ステータスコンテナ
+
+長時間処理の進捗状況を、展開/折りたたみ可能なコンテナで表示します。Streamlitの`st.status`に相当します。
+
+### 基本的な使い方
+
+```typescript
+// コールバック内でコンテンツを表示
+kt.status("データ処理中...", () => {
+  kt.write("データベースに接続中...");
+  kt.write("レコードを取得中...");
+});
+// update()を呼ばなければ自動的に「完了」状態になる
+```
+
+### 状態の制御
+
+`StatusController`を使って、ステータスの状態を明示的に制御できます。
+
+```typescript
+// 実行中の状態を維持
+kt.status("データ処理中...", (s) => {
+  kt.write("接続中...");
+  s.update({ state: "running", expanded: true });
+}, { key: "process_status" });
+
+// 完了状態
+kt.status("アップロード", (s) => {
+  kt.write("ファイルをアップロードしました");
+  s.update({ state: "complete", label: "アップロード完了!" });
+}, { key: "upload_status" });
+
+// エラー状態
+kt.status("バリデーション", (s) => {
+  kt.write("データの検証に失敗しました");
+  s.update({ state: "error", label: "バリデーション失敗" });
+}, { key: "validation_status" });
+```
+
+### 3つの状態
+
+| 状態 | アイコン | デフォルトの展開 | 説明 |
+|------|---------|----------------|------|
+| `running` | スピナー | 展開 | 処理中 |
+| `complete` | ✓ | 折りたたみ | 完了 |
+| `error` | ✗ | 折りたたみ | エラー |
+
+### オプション
+
+| オプション | 型 | デフォルト | 説明 |
+|-----------|-----|---------|------|
+| `key` | `string` | 自動生成 | ウィジェットキー（状態保持用） |
+| `state` | `"running" \| "complete" \| "error"` | `"running"` | 初期状態 |
+| `expanded` | `boolean` | 状態による | 初期展開状態 |
+
+### 自動完了の動作
+
+`update()`を呼ばずにコールバックが終了した場合、ステータスは自動的に`"complete"`（折りたたみ）に遷移します。長時間処理の状態を維持したい場合は、必ず`s.update()`を呼び出してください。
+
+```typescript
+// 自動完了: コールバック完了後に「完了」状態
+kt.status("クイックタスク", () => {
+  kt.write("完了しました");
+});
+
+// 手動制御: update()で状態を維持
+kt.status("長時間処理", (s) => {
+  kt.write("処理中...");
+  s.update({ state: "running" });
+}, { key: "long_task" });
+```
+
+---
+
 ## チャットUI
 
 チャットアプリケーションを構築するためのAPIです。
@@ -1963,7 +2038,7 @@ export default await createApp(script, {
 - ✅ データ表示（table, dataframe, metric）
 - ✅ チャート（line_chart, bar_chart, area_chart, scatter_chart）
 - ✅ メディア（image, audio, video）
-- ✅ レイアウト（tabs, sidebar, columns, container, expander, empty）
+- ✅ レイアウト（tabs, sidebar, columns, container, expander, empty, status）
 - ✅ チャットUI（chat_message, chat_container, chat_input）
 - ✅ カラーピッカー（color_picker）
 - ✅ ストリーミング出力（write_stream）

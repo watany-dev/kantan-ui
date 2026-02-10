@@ -1686,6 +1686,66 @@ const scatterChartStyles = `
   }
 `;
 
+/** ステータスコンテナスタイル */
+const statusStyles = `
+  /* Status Container */
+  .kt-status {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+    overflow: hidden;
+  }
+
+  /* Status Header (summary) */
+  .kt-status-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 500;
+    list-style: none;
+  }
+
+  /* Safari: hide default marker */
+  .kt-status-header::-webkit-details-marker {
+    display: none;
+  }
+
+  /* Status Icon (common) */
+  .kt-status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  /* Running state */
+  .kt-status-running .kt-status-header { color: #1976d2; }
+
+  /* Complete state */
+  .kt-status-complete .kt-status-header { color: #388e3c; }
+  .kt-status-icon.kt-status-complete { color: #388e3c; font-weight: bold; }
+
+  /* Error state */
+  .kt-status-error .kt-status-header { color: #d32f2f; }
+  .kt-status-icon.kt-status-error { color: #d32f2f; font-weight: bold; }
+
+  /* Content area */
+  .kt-status-content {
+    padding: 0 1rem 0.75rem 2.75rem;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  /* State-specific border colors */
+  .kt-status.kt-status-running { border-color: #90caf9; }
+  .kt-status.kt-status-complete { border-color: #a5d6a7; }
+  .kt-status.kt-status-error { border-color: #ef9a9a; }
+`;
+
 /**
  * 全デフォルトスタイルを結合
  */
@@ -1717,6 +1777,7 @@ export const defaultStyles = [
 	barChartStyles,
 	areaChartStyles,
 	scatterChartStyles,
+	statusStyles,
 ].join("\n");
 
 /**
