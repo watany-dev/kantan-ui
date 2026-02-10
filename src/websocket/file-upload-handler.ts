@@ -159,7 +159,7 @@ export function handleFileUpload(
 /**
  * 検証エラーコードをアップロードエラーコードにマップ
  */
-function mapValidationErrorCode(code: string | undefined): UploadErrorCode {
+export function mapValidationErrorCode(code: string | undefined): UploadErrorCode {
 	switch (code) {
 		case "SIZE_EXCEEDED":
 			return "SIZE_EXCEEDED";

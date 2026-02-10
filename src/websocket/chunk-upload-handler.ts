@@ -5,6 +5,7 @@
 import type { SessionManager } from "../session/manager";
 import { validateUploadedFile } from "../utils/file-validation";
 import { FILE_UPLOAD_LIMITS } from "../widgets/types";
+import { mapValidationErrorCode } from "./file-upload-handler";
 import type {
 	ChunkUploadDataMessage,
 	ChunkUploadEndMessage,
@@ -260,20 +261,4 @@ export function handleChunkUploadComplete(
 		uploadId: message.uploadId,
 		registeredUploadId,
 	};
-}
-
-/**
- * 検証エラーコードをチャンクアップロードエラーコードにマップ
- */
-function mapValidationErrorCode(code: string | undefined): ChunkUploadErrorCode {
-	switch (code) {
-		case "SIZE_EXCEEDED":
-			return "SIZE_EXCEEDED";
-		case "TYPE_NOT_ALLOWED":
-			return "TYPE_NOT_ALLOWED";
-		case "DANGEROUS_FILE":
-			return "DANGEROUS_FILE";
-		default:
-			return "VALIDATION_ERROR";
-	}
 }
