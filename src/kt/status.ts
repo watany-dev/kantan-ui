@@ -1,6 +1,6 @@
 import { raw, renderHtml } from "../utils/html";
 import { generateWidgetId, getWidgetValue, setWidgetValue } from "../widgets/registry";
-import { requireRenderContext } from "./context";
+import { RenderContext, requireRenderContext, setRenderContext } from "./context";
 
 /**
  * ステータスコンテナの状態
@@ -100,16 +100,9 @@ export function status(
 		expanded: savedState.expanded,
 	};
 
-	const icon = STATUS_ICONS[currentState.state];
-	const srText = STATUS_SR_TEXT[currentState.state];
-	const openAttr = currentState.expanded ? " open" : "";
-
-	// <details> 開始
-	ctx.append(
-		renderHtml`<details class="kt-status kt-status-${raw(currentState.state)}"${raw(openAttr)}><summary class="kt-status-header">${raw(icon)}<span class="kt-sr-only">${srText}: </span><span class="kt-status-label">${currentState.label}</span></summary><div class="kt-status-content">`,
-	);
-
-	// コールバック実行
+	// コールバックの出力をサブコンテキストで収集し、
+	// 最終状態でまとめてレンダリングする
+	const innerCtx = new RenderContext();
 	let updated = false;
 	const controller: StatusController = {
 		update(options) {
@@ -122,16 +115,27 @@ export function status(
 	};
 
 	try {
+		setRenderContext(innerCtx);
 		content(controller);
 	} finally {
-		// update() が呼ばれていなければ自動完了
-		if (!updated) {
+		// 元のコンテキストを復元（例外時も確実に）
+		setRenderContext(ctx);
+
+		// update() が呼ばれず、状態が running のままなら自動完了
+		if (!updated && currentState.state === "running") {
 			currentState.state = "complete";
 			currentState.expanded = false;
 			setWidgetValue(id, currentState);
 		}
 
-		// </details> 閉じ（例外時もHTMLの整合性を保証）
-		ctx.append("</div></details>");
+		// 最終状態でレンダリング（例外時もHTMLの整合性を保証）
+		const icon = STATUS_ICONS[currentState.state];
+		const srText = STATUS_SR_TEXT[currentState.state];
+		const openAttr = currentState.expanded ? " open" : "";
+		const innerHtml = innerCtx.getHtml();
+
+		ctx.append(
+			renderHtml`<details class="kt-status kt-status-${raw(currentState.state)}"${raw(openAttr)}><summary class="kt-status-header">${raw(icon)}<span class="kt-sr-only">${srText}: </span><span class="kt-status-label">${currentState.label}</span></summary><div class="kt-status-content">${raw(innerHtml)}</div></details>`,
+		);
 	}
 }

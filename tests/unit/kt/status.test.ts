@@ -81,8 +81,10 @@ describe("kt.status", () => {
 	});
 
 	describe("Iteration 2: status states", () => {
-		it("defaults to running state with spinner icon", () => {
-			status("Processing...", () => {});
+		it("renders running state with spinner icon", () => {
+			status("Processing...", (s) => {
+				s.update({ state: "running" });
+			});
 			const html = ctx.getHtml();
 			expect(html).toContain("kt-status-running");
 			expect(html).toContain("kt-spinner-icon");
@@ -103,7 +105,13 @@ describe("kt.status", () => {
 		});
 
 		it("defaults expanded=true when state is running", () => {
-			status("Processing...", () => {}, { state: "running" });
+			status(
+				"Processing...",
+				(s) => {
+					s.update({ state: "running" });
+				},
+				{ state: "running" },
+			);
 			const html = ctx.getHtml();
 			expect(html).toContain(" open");
 		});
@@ -230,7 +238,13 @@ describe("kt.status", () => {
 		});
 
 		it("falls back to running for invalid state in config", () => {
-			status("Test", () => {}, { state: "invalid" as StatusState });
+			status(
+				"Test",
+				(s) => {
+					s.update({ state: "running" });
+				},
+				{ state: "invalid" as StatusState },
+			);
 			const html = ctx.getHtml();
 			expect(html).toContain("kt-status-running");
 		});
@@ -241,7 +255,13 @@ describe("kt.status", () => {
 				state: "hacked",
 				expanded: true,
 			});
-			status("Test", () => {}, { key: "status_invalid_saved" });
+			status(
+				"Test",
+				(s) => {
+					s.update({ state: "running" });
+				},
+				{ key: "status_invalid_saved" },
+			);
 			const html = ctx.getHtml();
 			expect(html).toContain("kt-status-running");
 		});
