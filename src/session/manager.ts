@@ -265,11 +265,12 @@ export class SessionManager {
 	// セッションを生成
 	createSession(): Session {
 		const id = crypto.randomUUID();
+		const now = new Date();
 		const session: Session = {
 			id,
 			state: {},
-			createdAt: new Date(),
-			lastAccessedAt: new Date(),
+			createdAt: now,
+			lastAccessedAt: now,
 			lastSeq: 0,
 			patchHistory: [],
 		};
