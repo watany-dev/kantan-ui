@@ -46,8 +46,8 @@ function renderArg(arg: unknown): string {
 		return `<div class="kt-write kt-json">${jsonHtml}</div>`;
 	}
 
-	// object (non-null) → JSON折りたたみ表示
-	if (typeof arg === "object" && arg !== null) {
+	// object → JSON折りたたみ表示（null は上で処理済み）
+	if (typeof arg === "object") {
 		const jsonHtml = renderJsonTree(arg, 0, 1);
 		return `<div class="kt-write kt-json">${jsonHtml}</div>`;
 	}
