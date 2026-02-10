@@ -16,7 +16,7 @@ import { getWidgetValue, hasWidgetValue, setWidgetValue } from "./registry";
  * ウィジェット状態を初期化する共通ヘルパー
  * 状態が存在しない場合のみ初期値を設定し、現在値を返す
  */
-export function initializeWidgetState<T>(widgetId: string, initialValue: T): T {
+function initializeWidgetState<T>(widgetId: string, initialValue: T): T {
 	if (!hasWidgetValue(widgetId)) {
 		setWidgetValue(widgetId, initialValue);
 	}

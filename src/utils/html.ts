@@ -3,7 +3,7 @@ import type { HtmlEscapedString } from "hono/utils/html";
 import { sanitizeCssValue } from "./css";
 
 /** 危険なURLスキーム */
-export const DANGEROUS_URL_SCHEMES = ["javascript:", "vbscript:", "data:"];
+const DANGEROUS_URL_SCHEMES = ["javascript:", "vbscript:", "data:"];
 
 /** 安全なdata: URLプレフィックス（画像のみ許可） */
 const SAFE_DATA_PREFIXES = ["data:image/"];
