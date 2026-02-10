@@ -176,6 +176,15 @@ export function initializeTimeInputState(widgetId: string, defaultValue?: string
 }
 
 /**
+ * 日時入力のstate管理
+ * 初期値をstateに保存し、現在値を返す
+ * デフォルト値が指定されない場合は空文字列を使用
+ */
+export function initializeDatetimeInputState(widgetId: string, defaultValue?: string): string {
+	return initializeWidgetState(widgetId, defaultValue ?? "");
+}
+
+/**
  * カラーピッカーのstate管理
  * 初期値をstateに保存し、現在値を返す
  * デフォルト値が指定されない場合は "#000000" を使用
