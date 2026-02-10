@@ -160,12 +160,7 @@ export function dataframe(
 	const id = generateWidgetId(config?.key);
 	const configWithId = { ...config, key: id };
 	const normalized = normalizeTableData(data);
-	const isSelectable = config?.onSelect === "rerun";
-
-	let selection: DataframeSelection | undefined;
-	if (isSelectable) {
-		selection = initializeDataframeSelection(id);
-	}
+	const selection = config?.onSelect === "rerun" ? initializeDataframeSelection(id) : undefined;
 
 	const html = renderDataframe(
 		{ headers: normalized.headers, rows: normalized.rows },
@@ -173,8 +168,5 @@ export function dataframe(
 	);
 	ctx.append(html);
 
-	if (isSelectable) {
-		return selection as DataframeSelection;
-	}
-	return undefined;
+	return selection;
 }
