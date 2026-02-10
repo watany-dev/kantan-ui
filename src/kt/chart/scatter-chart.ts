@@ -519,7 +519,7 @@ export function renderScatterChart(
 	// 空データチェック
 	const totalPoints = normalized.groups.reduce((sum, g) => sum + g.points.length, 0);
 	if (normalized.groups.length === 0 || totalPoints === 0) {
-		return '<div class="kt-scatter-chart kt-scatter-chart-empty">No data</div>';
+		return '<div class="kt-scatter-chart kt-chart-empty">No data</div>';
 	}
 
 	// グループ数の制限

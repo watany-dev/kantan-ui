@@ -1,5 +1,6 @@
 import { html as honoHtml, raw as honoRaw } from "hono/html";
 import type { HtmlEscapedString } from "hono/utils/html";
+import { sanitizeCssValue } from "./css";
 
 /**
  * Hono html タグのラッパー（同期版）
@@ -59,46 +60,13 @@ export function buildStyleAttr(styles: Record<string, string | number | undefine
 			parts.push(`${key}: ${value}`);
 		} else {
 			// 文字列の場合はサニタイズ
-			const safeValue = sanitizeCssValueForStyle(value);
+			const safeValue = sanitizeCssValue(value);
 			if (safeValue) {
 				parts.push(`${key}: ${safeValue}`);
 			}
 		}
 	}
 	return parts.length > 0 ? `style="${parts.join("; ")}"` : "";
-}
-
-/**
- * CSS値をサニタイズ（buildStyleAttr用の内部関数）
- * 危険なパターンを除去し、安全な値のみを返す
- */
-function sanitizeCssValueForStyle(value: string): string {
-	let sanitized = value.trim();
-
-	// セミコロン以降を除去（追加のCSSプロパティ注入を防止）
-	const semicolonIndex = sanitized.indexOf(";");
-	if (semicolonIndex !== -1) {
-		sanitized = sanitized.substring(0, semicolonIndex).trim();
-	}
-
-	// 波括弧を除去
-	sanitized = sanitized.replace(/[{}]/g, "").trim();
-
-	// 危険なパターンをチェック（完全拒否）
-	if (/url\s*\(/i.test(sanitized)) {
-		return "";
-	}
-	if (/expression\s*\(/i.test(sanitized)) {
-		return "";
-	}
-	if (/<[^>]*>/.test(sanitized)) {
-		return "";
-	}
-	if (/(javascript|vbscript)\s*:/i.test(sanitized)) {
-		return "";
-	}
-
-	return sanitized;
 }
 
 /**
@@ -140,6 +108,29 @@ export function escapeHtml(text: string): string {
  *       変更時は両方を同期すること。クライアント側は文字列として送信されるため
  *       直接参照できない。テストは両者の整合性を検証する。
  */
+const UNSAFE_HTML_PATTERNS: RegExp[] = [
+	// スクリプトタグ
+	/<script[\s\S]*?>/i,
+	// javascript/vbscript URL（空白や改行を考慮）
+	/\bjavascript\s*:/i,
+	/\bvbscript\s*:/i,
+	// data: URL with base64（XSS攻撃に使用される可能性）
+	/\bdata\s*:[^,]*?base64/i,
+	// イベントハンドラ属性（タグ内で使用される場合）
+	/\bon[a-z]+\s*=/i,
+	// 危険なタグ
+	/<iframe[\s>]/i,
+	/<embed[\s>]/i,
+	/<object[\s>]/i,
+	/<base[\s>]/i,
+	/<form[\s>]/i,
+	/<meta[\s>]/i,
+	/<link[\s>]/i,
+	// SVG/MathML経由のスクリプト実行
+	/<svg[\s\S]*?on[a-z]+\s*=/i,
+	/<math[\s\S]*?on[a-z]+\s*=/i,
+];
+
 export function containsUnsafeHtml(html: string): boolean {
 	// パフォーマンスのため、まず簡易チェック
 	const lowerHtml = html.toLowerCase();
@@ -152,29 +143,5 @@ export function containsUnsafeHtml(html: string): boolean {
 		return false;
 	}
 
-	// 危険なパターンを検出（単語境界\bを使用）
-	const unsafePatterns: RegExp[] = [
-		// スクリプトタグ
-		/<script[\s\S]*?>/i,
-		// javascript/vbscript URL（空白や改行を考慮）
-		/\bjavascript\s*:/i,
-		/\bvbscript\s*:/i,
-		// data: URL with base64（XSS攻撃に使用される可能性）
-		/\bdata\s*:[^,]*?base64/i,
-		// イベントハンドラ属性（タグ内で使用される場合）
-		/\bon[a-z]+\s*=/i,
-		// 危険なタグ
-		/<iframe[\s>]/i,
-		/<embed[\s>]/i,
-		/<object[\s>]/i,
-		/<base[\s>]/i,
-		/<form[\s>]/i,
-		/<meta[\s>]/i,
-		/<link[\s>]/i,
-		// SVG/MathML経由のスクリプト実行
-		/<svg[\s\S]*?on[a-z]+\s*=/i,
-		/<math[\s\S]*?on[a-z]+\s*=/i,
-	];
-
-	return unsafePatterns.some((pattern) => pattern.test(html));
+	return UNSAFE_HTML_PATTERNS.some((pattern) => pattern.test(html));
 }

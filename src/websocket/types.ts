@@ -1,3 +1,12 @@
+/**
+ * Node.js HTTP/HTTPS Server型（@hono/node-serverからの依存を避けるためローカル定義）
+ * Deno互換性のため、@hono/node-serverを直接インポートしない
+ */
+export type NodeServerType = {
+	close: () => void;
+	listen: (port: number, hostname?: string, callback?: () => void) => void;
+};
+
 // クライアント → サーバ
 export interface ClientMessage {
 	type:

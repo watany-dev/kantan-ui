@@ -1,16 +1,7 @@
 import type { Hono } from "hono";
-
-/**
- * Node.js HTTP/HTTPS Server型（@hono/node-serverからの依存を避けるためローカル定義）
- * Deno互換性のため、@hono/node-serverを直接インポートしない
- */
-type NodeServerType = {
-	close: () => void;
-	listen: (port: number, hostname?: string, callback?: () => void) => void;
-};
-
 import { getRuntimeKey } from "hono/adapter";
 import type { UpgradeWebSocket, WSContext } from "hono/ws";
+import type { NodeServerType } from "./types";
 
 interface WebSocketHandlers {
 	onOpen?: ((evt: Event, ws: WSContext) => void) | undefined;

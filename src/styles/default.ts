@@ -906,15 +906,13 @@ const emptyStyles = `
     display: none;
   }
 
-  /* Spinner in placeholder */
-  .kt-spinner {
+  /* Spinner in placeholder (scoped to avoid conflict with feedback spinner) */
+  .kt-empty .kt-spinner {
     display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
     padding: 0.5rem 0;
   }
 
-  .kt-spinner::before {
+  .kt-empty .kt-spinner::before {
     content: "";
     width: 1rem;
     height: 1rem;
@@ -922,14 +920,6 @@ const emptyStyles = `
     border-top-color: var(--kt-color-primary, #0d6efd);
     border-radius: 50%;
     animation: kt-spin 0.8s linear infinite;
-  }
-
-  .kt-spinner-text {
-    color: var(--kt-color-text, #212529);
-  }
-
-  @keyframes kt-spin {
-    to { transform: rotate(360deg); }
   }
 
   /* Progress in placeholder */
@@ -1375,6 +1365,19 @@ const dataframeStyles = `
   }
 `;
 
+/** チャート共通スタイル */
+const chartCommonStyles = `
+  /* Chart Empty State (shared across all chart types) */
+  .kt-chart-empty {
+    padding: 2rem;
+    text-align: center;
+    color: #6c757d;
+    background: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+  }
+`;
+
 /** 折れ線グラフスタイル */
 const lineChartStyles = `
   /* Line Chart Container */
@@ -1444,15 +1447,6 @@ const lineChartStyles = `
     fill: #495057;
   }
 
-  /* Empty State */
-  .kt-line-chart-empty {
-    padding: 2rem;
-    text-align: center;
-    color: #6c757d;
-    background: #f8f9fa;
-    border: 1px dashed #dee2e6;
-    border-radius: 4px;
-  }
 `;
 
 /** 棒グラフスタイル */
@@ -1517,15 +1511,6 @@ const barChartStyles = `
     fill: #495057;
   }
 
-  /* Empty State */
-  .kt-bar-chart-empty {
-    padding: 2rem;
-    text-align: center;
-    color: #6c757d;
-    background: #f8f9fa;
-    border: 1px dashed #dee2e6;
-    border-radius: 4px;
-  }
 `;
 
 /** 日時入力スタイル */
@@ -1636,15 +1621,6 @@ const areaChartStyles = `
     r: 5;
   }
 
-  /* Empty State */
-  .kt-area-chart-empty {
-    padding: 2rem;
-    text-align: center;
-    color: #6c757d;
-    background: #f8f9fa;
-    border: 1px dashed #dee2e6;
-    border-radius: 4px;
-  }
 `;
 
 /** 散布図スタイル */
@@ -1683,15 +1659,6 @@ const scatterChartStyles = `
     stroke-width: 2;
   }
 
-  /* Empty State */
-  .kt-scatter-chart-empty {
-    padding: 2rem;
-    text-align: center;
-    color: #6c757d;
-    background: #f8f9fa;
-    border: 1px dashed #dee2e6;
-    border-radius: 4px;
-  }
 `;
 
 /** ステータスコンテナスタイル */
@@ -1782,6 +1749,7 @@ export const defaultStyles = [
 	videoStyles,
 	datetimeInputStyles,
 	colorPickerStyles,
+	chartCommonStyles,
 	lineChartStyles,
 	barChartStyles,
 	areaChartStyles,

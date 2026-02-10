@@ -117,7 +117,7 @@ export function renderAreaChart(data: AreaChartData, config?: Partial<AreaChartC
 	// 2. 共通前処理パイプライン
 	const normalized = prepareChartData(chartData, safeConfig);
 	if (!normalized) {
-		return '<div class="kt-area-chart kt-area-chart-empty">No data</div>';
+		return '<div class="kt-area-chart kt-chart-empty">No data</div>';
 	}
 
 	// 3. SVG描画
