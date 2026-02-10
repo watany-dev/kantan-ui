@@ -5,10 +5,7 @@ import {
 	setSessionManager,
 } from "../../../src/session/manager";
 import { setCurrentSessionId } from "../../../src/session/state";
-import {
-	datetime_input,
-	renderDatetimeInput,
-} from "../../../src/widgets/datetime-input";
+import { datetime_input, renderDatetimeInput } from "../../../src/widgets/datetime-input";
 import { resetWidgetCounter, setWidgetValue } from "../../../src/widgets/registry";
 
 describe("datetime_input", () => {

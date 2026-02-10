@@ -28,10 +28,7 @@ export function toDateString(value: string | Date | undefined): string {
  *
  * Invalid Date が渡された場合は空文字列を返す（安全側に倒す）
  */
-export function toDatetimeString(
-	value: string | Date | undefined,
-	includeSeconds = false,
-): string {
+export function toDatetimeString(value: string | Date | undefined, includeSeconds = false): string {
 	if (value === undefined) {
 		return "";
 	}
