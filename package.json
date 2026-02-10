@@ -28,7 +28,7 @@
 	],
 	"scripts": {
 		"dev": "bun run --watch src/server.ts",
-		"build": "bun build src/index.ts src/serve.ts src/lambda.ts src/cloudflare.ts --outdir dist --target node --format esm && bun run build:types",
+		"build": "bun build src/index.ts src/serve.ts src/lambda.ts src/cloudflare.ts --outdir dist --target node --format esm --external @hono/node-server --external @hono/node-ws && bun run build:types",
 		"build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
 		"start:dist": "bun run scripts/serve-dist.ts",
 		"test": "vitest run",
@@ -62,11 +62,23 @@
 	},
 	"homepage": "https://github.com/watany-dev/kantan-ui#readme",
 	"dependencies": {
-		"@hono/node-server": "^1.13.0",
-		"@hono/node-ws": "^1.0.0",
 		"hono": "^4.11.7"
 	},
+	"peerDependencies": {
+		"@hono/node-server": ">=1.13.0",
+		"@hono/node-ws": ">=1.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@hono/node-server": {
+			"optional": true
+		},
+		"@hono/node-ws": {
+			"optional": true
+		}
+	},
 	"devDependencies": {
+		"@hono/node-server": "^1.13.0",
+		"@hono/node-ws": "^1.0.0",
 		"@biomejs/biome": "^2.3.11",
 		"@playwright/test": "^1.50.0",
 		"@types/bun": "^1.1.0",

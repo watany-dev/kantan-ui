@@ -12,5 +12,6 @@
 	"ignoreExportsUsedInFile": {
 		"interface": true,
 		"type": true
-	}
+	},
+	"ignoreDependencies": ["@hono/node-server", "@hono/node-ws"]
 }

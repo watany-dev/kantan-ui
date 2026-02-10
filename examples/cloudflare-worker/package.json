@@ -1,0 +1,14 @@
+{
+	"name": "kantan-ui-cloudflare-worker-example",
+	"private": true,
+	"scripts": {
+		"dev": "wrangler dev",
+		"deploy": "wrangler deploy"
+	},
+	"dependencies": {
+		"hono": "^4.11.7"
+	},
+	"devDependencies": {
+		"wrangler": "^4.0.0"
+	}
+}
