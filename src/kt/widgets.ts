@@ -2,6 +2,10 @@ import { button as imperativeButton, renderButton } from "../widgets/button";
 import { checkbox as imperativeCheckbox, renderCheckbox } from "../widgets/checkbox";
 import { color_picker as imperativeColorPicker, renderColorPicker } from "../widgets/color-picker";
 import { date_input as imperativeDateInput, renderDateInput } from "../widgets/date-input";
+import {
+	datetime_input as imperativeDatetimeInput,
+	renderDatetimeInput,
+} from "../widgets/datetime-input";
 import { download_button as imperativeDownloadButton } from "../widgets/download-button";
 import { getFileUploaderValue, renderFileUploader } from "../widgets/file-uploader";
 import { multiselect as imperativeMultiselect, renderMultiselect } from "../widgets/multiselect";
@@ -19,6 +23,7 @@ import type {
 	CheckboxConfig,
 	ColorPickerConfig,
 	DateInputConfig,
+	DatetimeInputConfig,
 	DownloadButtonConfig,
 	FileUploaderConfig,
 	MultiselectConfig,
@@ -281,6 +286,22 @@ export function time_input(
 		config,
 		(cfg) => imperativeTimeInput(label, defaultValue, cfg),
 		(value, cfg) => renderTimeInput(label, value, cfg),
+	);
+}
+
+/**
+ * 日時入力ウィジェット（宣言的API）
+ * HTMLを自動出力し、現在の値を返す（"YYYY-MM-DDTHH:MM" または "YYYY-MM-DDTHH:MM:SS" 形式）
+ */
+export function datetime_input(
+	label: string,
+	defaultValue?: string | Date,
+	config?: Partial<DatetimeInputConfig>,
+): string {
+	return wrapWidget(
+		config,
+		(cfg) => imperativeDatetimeInput(label, defaultValue, cfg),
+		(value, cfg) => renderDatetimeInput(label, value, cfg),
 	);
 }
 
