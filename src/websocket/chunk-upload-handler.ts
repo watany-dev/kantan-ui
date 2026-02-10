@@ -5,7 +5,7 @@
 import type { SessionManager } from "../session/manager";
 import { validateUploadedFile } from "../utils/file-validation";
 import { FILE_UPLOAD_LIMITS } from "../widgets/types";
-import { mapValidationErrorCode } from "./file-upload-handler";
+import { appendUploadIdToWidget, mapValidationErrorCode } from "./file-upload-handler";
 import type {
 	ChunkUploadDataMessage,
 	ChunkUploadEndMessage,
@@ -246,11 +246,7 @@ export function handleChunkUploadComplete(
 	}
 
 	// ウィジェット状態を更新
-	const currentState = sessionManager.getState(sessionId);
-	const widgetState = currentState?.[metadata.widgetId];
-	const currentUploadIds = Array.isArray(widgetState) ? widgetState : [];
-
-	sessionManager.setState(sessionId, metadata.widgetId, [...currentUploadIds, registeredUploadId]);
+	appendUploadIdToWidget(sessionManager, sessionId, metadata.widgetId, registeredUploadId);
 
 	// アップロード完了を記録
 	sessionManager.decrementConcurrentUploads(sessionId);
