@@ -158,6 +158,19 @@ export function parseMarkdown(markdown: string): string {
 		inTable = false;
 	};
 
+	const flushAll = () => {
+		flushParagraph();
+		flushList();
+		flushBlockquote();
+		flushTable();
+	};
+
+	const flushNonList = () => {
+		flushParagraph();
+		flushBlockquote();
+		flushTable();
+	};
+
 	// テーブル行をパース
 	const parseTableRow = (line: string): string[] | null => {
 		if (!line.includes("|")) return null;
@@ -194,10 +207,7 @@ export function parseMarkdown(markdown: string): string {
 		// コードブロック開始/終了
 		if (trimmedLine.startsWith("```")) {
 			if (!inCodeBlock) {
-				flushParagraph();
-				flushList();
-				flushBlockquote();
-				flushTable();
+				flushAll();
 				inCodeBlock = true;
 				codeBlockLang = trimmedLine.slice(3).trim();
 				codeBlockContent = [];
@@ -220,19 +230,13 @@ export function parseMarkdown(markdown: string): string {
 
 		// 空行はパラグラフの区切り
 		if (trimmedLine === "") {
-			flushParagraph();
-			flushList();
-			flushBlockquote();
-			flushTable();
+			flushAll();
 			continue;
 		}
 
 		// 水平線
 		if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmedLine)) {
-			flushParagraph();
-			flushList();
-			flushBlockquote();
-			flushTable();
+			flushAll();
 			result.push("<hr>");
 			continue;
 		}
@@ -240,10 +244,7 @@ export function parseMarkdown(markdown: string): string {
 		// 見出し
 		const headingMatch = trimmedLine.match(/^(#{1,6})\s+(.+)$/);
 		if (headingMatch?.[1] && headingMatch[2]) {
-			flushParagraph();
-			flushList();
-			flushBlockquote();
-			flushTable();
+			flushAll();
 			const level = headingMatch[1].length;
 			const text = headingMatch[2].trim();
 			result.push(`<h${level}>${parseInline(text)}</h${level}>`);
@@ -311,9 +312,7 @@ export function parseMarkdown(markdown: string): string {
 		// タスクリスト（- [ ] または - [x]）
 		const taskListMatch = line.match(/^(\s*)[-*]\s+\[([ xX])\]\s+(.+)$/);
 		if (taskListMatch?.[3]) {
-			flushParagraph();
-			flushBlockquote();
-			flushTable();
+			flushNonList();
 			// taskListMatch[1] is guaranteed by regex pattern (\s*), always defined
 			const itemIndent = (taskListMatch[1] as string).length;
 			const isChecked = taskListMatch[2]?.toLowerCase() === "x";
@@ -330,9 +329,7 @@ export function parseMarkdown(markdown: string): string {
 		// 無順リスト（インデント対応）
 		const unorderedListMatch = line.match(/^(\s*)[-*]\s+(.+)$/);
 		if (unorderedListMatch?.[2]) {
-			flushParagraph();
-			flushBlockquote();
-			flushTable();
+			flushNonList();
 			// unorderedListMatch[1] is guaranteed by regex pattern (\s*), always defined
 			const itemIndent = (unorderedListMatch[1] as string).length;
 			listStack.push({
@@ -346,9 +343,7 @@ export function parseMarkdown(markdown: string): string {
 		// 順序リスト（インデント対応）
 		const orderedListMatch = line.match(/^(\s*)\d+\.\s+(.+)$/);
 		if (orderedListMatch?.[2]) {
-			flushParagraph();
-			flushBlockquote();
-			flushTable();
+			flushNonList();
 			// orderedListMatch[1] is guaranteed by regex pattern (\s*), always defined
 			const itemIndent = (orderedListMatch[1] as string).length;
 			listStack.push({
@@ -369,10 +364,7 @@ export function parseMarkdown(markdown: string): string {
 	}
 
 	// 残りをフラッシュ
-	flushParagraph();
-	flushList();
-	flushBlockquote();
-	flushTable();
+	flushAll();
 
 	// コードブロックが閉じられていない場合
 	if (inCodeBlock) {
