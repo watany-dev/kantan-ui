@@ -437,7 +437,7 @@ const script = () => {
 		"Import failed",
 		(s) => {
 			kt.write("Reading file...");
-			kt.error("Invalid column: 'age' expected number");
+			kt.write("Error: Invalid column: 'age' expected number");
 			s.update({ state: "error", expanded: true });
 		},
 		{ key: "status_error" },
