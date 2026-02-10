@@ -1,6 +1,6 @@
 import { sanitizeCssLength } from "../utils/css";
 import { raw, renderHtml } from "../utils/html";
-import { generateWidgetId, getWidgetValue, setWidgetValue } from "../widgets/registry";
+import { generateWidgetId, getWidgetValue } from "../widgets/registry";
 import { requireRenderContext } from "./context";
 
 // ============================================
@@ -60,9 +60,6 @@ export function tabs(labels: string[], config?: TabsConfig): TabFunction[] {
 
 	// Get active tab from session state (default to 0)
 	const activeIndex = getWidgetValue<number>(widgetId, 0);
-
-	// Store the active index
-	setWidgetValue(widgetId, activeIndex);
 
 	// Render tabs header
 	ctx.append(renderTabsHeader(labels, activeIndex, widgetId));
