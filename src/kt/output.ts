@@ -1,4 +1,4 @@
-import { raw, renderHtml } from "../utils/html";
+import { isSafeUrl, raw, renderHtml } from "../utils/html";
 import { applyHighlight } from "./code/highlighter";
 import { requireRenderContext } from "./context";
 import { parseMarkdown } from "./markdown/parser";
@@ -160,15 +160,6 @@ export interface LinkButtonConfig {
 
 	/** コンテナ幅に合わせる（デフォルト: false） */
 	use_container_width?: boolean;
-}
-
-function isSafeUrl(url: string): boolean {
-	const trimmed = url.trim();
-	if (trimmed === "") return false;
-
-	const lower = trimmed.toLowerCase();
-	const dangerousSchemes = ["javascript:", "vbscript:", "data:"];
-	return !dangerousSchemes.some((scheme) => lower.startsWith(scheme));
 }
 
 /**

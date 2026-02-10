@@ -2,6 +2,30 @@ import { html as honoHtml, raw as honoRaw } from "hono/html";
 import type { HtmlEscapedString } from "hono/utils/html";
 import { sanitizeCssValue } from "./css";
 
+/** 危険なURLスキーム */
+export const DANGEROUS_URL_SCHEMES = ["javascript:", "vbscript:", "data:"];
+
+/** 安全なdata: URLプレフィックス（画像のみ許可） */
+const SAFE_DATA_PREFIXES = ["data:image/"];
+
+/**
+ * URLが安全かどうかをチェック
+ * @param url - チェック対象のURL
+ * @param options.allowDataImages - data:image/ URLを許可するか（デフォルト: false）
+ */
+export function isSafeUrl(url: string, options?: { allowDataImages?: boolean }): boolean {
+	const trimmed = url.trim().toLowerCase();
+	if (trimmed === "") return false;
+
+	if (options?.allowDataImages) {
+		for (const prefix of SAFE_DATA_PREFIXES) {
+			if (trimmed.startsWith(prefix)) return true;
+		}
+	}
+
+	return !DANGEROUS_URL_SCHEMES.some((scheme) => trimmed.startsWith(scheme));
+}
+
 /**
  * Hono html タグのラッパー（同期版）
  *

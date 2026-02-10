@@ -4,6 +4,7 @@
  * ホワイトリストベースでHTMLタグをフィルタリングし、
  * XSS攻撃を防ぐ
  */
+import { isSafeUrl } from "../../utils/html";
 
 /** 許可するHTMLタグ */
 const ALLOWED_TAGS = new Set([
@@ -44,35 +45,6 @@ const ALLOWED_ATTRIBUTES: Record<string, Set<string>> = {
 	th: new Set(["colspan", "rowspan"]),
 };
 
-/** 危険なURLスキーム */
-const DANGEROUS_URL_SCHEMES = ["javascript:", "vbscript:", "data:"];
-
-/** 安全なdata: URLプレフィックス（画像のみ許可） */
-const SAFE_DATA_PREFIXES = ["data:image/"];
-
-/**
- * URLが安全かどうかをチェック
- */
-function isSafeUrl(url: string): boolean {
-	const trimmed = url.trim().toLowerCase();
-
-	// 安全なdata: URLの場合は許可
-	for (const prefix of SAFE_DATA_PREFIXES) {
-		if (trimmed.startsWith(prefix)) {
-			return true;
-		}
-	}
-
-	// 危険なスキームをブロック
-	for (const scheme of DANGEROUS_URL_SCHEMES) {
-		if (trimmed.startsWith(scheme)) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
 /**
  * 属性をサニタイズ
  */
@@ -96,7 +68,10 @@ function sanitizeAttributes(tagName: string, attributes: string): string {
 
 		if (allowedAttrs.has(attrName)) {
 			// href と src は URL をチェック
-			if ((attrName === "href" || attrName === "src") && !isSafeUrl(attrValue)) {
+			if (
+				(attrName === "href" || attrName === "src") &&
+				!isSafeUrl(attrValue, { allowDataImages: attrName === "src" })
+			) {
 				// 危険なURLは空にする
 				result.push(`${attrName}=""`);
 			} else {
