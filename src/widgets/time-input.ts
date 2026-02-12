@@ -1,6 +1,6 @@
 import { toTimeString } from "../utils/date";
 import { raw, renderHtml } from "../utils/html";
-import { initializeTimeInputState } from "./core";
+import { initializeDateTimeState } from "./core";
 import { generateWidgetId } from "./registry";
 import type { TimeInputConfig } from "./types";
 
@@ -32,7 +32,7 @@ export function time_input(
 	// step が 60 未満の場合は秒を含める
 	const includeSeconds = config?.step !== undefined && config.step < 60;
 	const defaultStr = toTimeString(defaultValue, includeSeconds);
-	return initializeTimeInputState(id, defaultStr);
+	return initializeDateTimeState(id, defaultStr);
 }
 
 /**

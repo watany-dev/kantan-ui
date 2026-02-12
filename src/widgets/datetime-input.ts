@@ -1,6 +1,6 @@
 import { toDatetimeString } from "../utils/date";
 import { raw, renderHtml } from "../utils/html";
-import { initializeDatetimeInputState } from "./core";
+import { initializeDateTimeState } from "./core";
 import { generateWidgetId } from "./registry";
 import type { DatetimeInputConfig } from "./types";
 
@@ -26,7 +26,7 @@ export function datetime_input(
 	const id = generateWidgetId(config?.key);
 	const includeSeconds = config?.step !== undefined && config.step < 60;
 	const defaultStr = toDatetimeString(defaultValue, includeSeconds);
-	return initializeDatetimeInputState(id, defaultStr);
+	return initializeDateTimeState(id, defaultStr);
 }
 
 /**

@@ -7,6 +7,7 @@ import {
 import type { ResolvedSessionConfig, SecurityConfig, SessionConfig } from "../config/types";
 import { MAX_PATCH_HISTORY } from "../constants";
 import { isUUID } from "../utils/type-guards";
+import { base64ToArrayBuffer } from "../websocket/file-upload-handler";
 import type { ChunkUploadStartMessage } from "../websocket/types";
 import type { InternalUploadData } from "../widgets/types";
 import { FILE_UPLOAD_LIMITS } from "../widgets/types";
@@ -264,11 +265,12 @@ export class SessionManager {
 	// セッションを生成
 	createSession(): Session {
 		const id = crypto.randomUUID();
+		const now = new Date();
 		const session: Session = {
 			id,
 			state: {},
-			createdAt: new Date(),
-			lastAccessedAt: new Date(),
+			createdAt: now,
+			lastAccessedAt: now,
 			lastSeq: 0,
 			patchHistory: [],
 		};
@@ -989,12 +991,7 @@ export class SessionManager {
 
 		// Base64デコード
 		try {
-			const binaryString = atob(base64Data);
-			const bytes = new Uint8Array(binaryString.length);
-			for (let i = 0; i < binaryString.length; i++) {
-				bytes[i] = binaryString.charCodeAt(i);
-			}
-			state.chunks.set(chunkIndex, bytes.buffer);
+			state.chunks.set(chunkIndex, base64ToArrayBuffer(base64Data));
 			state.receivedChunks.add(chunkIndex);
 			state.lastActivityAt = Date.now();
 			return true;

@@ -31,6 +31,8 @@ const WINDOWS_RESERVED_NAMES = [
  */
 const MAX_FILENAME_BYTES = 255;
 
+const textEncoder = new TextEncoder();
+
 /**
  * Sanitize a filename to prevent path traversal and other security issues.
  *
@@ -117,8 +119,7 @@ function handleWindowsReservedName(filename: string): string {
  * Truncate filename to specified byte limit while preserving extension
  */
 function truncateFilename(filename: string, maxBytes: number): string {
-	const encoder = new TextEncoder();
-	const currentBytes = encoder.encode(filename);
+	const currentBytes = textEncoder.encode(filename);
 
 	if (currentBytes.length <= maxBytes) {
 		return filename;
@@ -134,14 +135,14 @@ function truncateFilename(filename: string, maxBytes: number): string {
 		baseName = filename.substring(0, lastDotIndex);
 
 		// If extension itself is too long, truncate it
-		const extBytes = encoder.encode(extension);
+		const extBytes = textEncoder.encode(extension);
 		if (extBytes.length >= maxBytes) {
 			return truncateToBytes(filename, maxBytes);
 		}
 	}
 
 	// Calculate available bytes for base name
-	const extBytes = encoder.encode(extension).length;
+	const extBytes = textEncoder.encode(extension).length;
 	const availableForBase = maxBytes - extBytes;
 
 	// Truncate base name
@@ -154,9 +155,7 @@ function truncateFilename(filename: string, maxBytes: number): string {
  * Truncate a string to specified byte limit without breaking multi-byte characters
  */
 function truncateToBytes(str: string, maxBytes: number): string {
-	const encoder = new TextEncoder();
-
-	const bytes = encoder.encode(str);
+	const bytes = textEncoder.encode(str);
 	if (bytes.length <= maxBytes) {
 		return str;
 	}
@@ -168,7 +167,7 @@ function truncateToBytes(str: string, maxBytes: number): string {
 	while (low < high) {
 		const mid = Math.floor((low + high + 1) / 2);
 		const slice = str.substring(0, mid);
-		const sliceBytes = encoder.encode(slice);
+		const sliceBytes = textEncoder.encode(slice);
 
 		if (sliceBytes.length <= maxBytes) {
 			low = mid;

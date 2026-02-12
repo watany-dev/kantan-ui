@@ -139,12 +139,7 @@ export function handleFileUpload(
 	}
 
 	// ウィジェット状態を更新（既存のアップロードIDリストに追加）
-	const currentState = sessionManager.getState(sessionId);
-	const widgetState = currentState?.[message.widgetId];
-	const currentUploadIds = Array.isArray(widgetState) ? widgetState : [];
-
-	// 新しいアップロードIDを追加
-	sessionManager.setState(sessionId, message.widgetId, [...currentUploadIds, uploadId]);
+	appendUploadIdToWidget(sessionManager, sessionId, message.widgetId, uploadId);
 
 	// アップロード完了を記録
 	sessionManager.decrementConcurrentUploads(sessionId);
@@ -157,9 +152,24 @@ export function handleFileUpload(
 }
 
 /**
+ * ウィジェット状態にアップロードIDを追加
+ */
+export function appendUploadIdToWidget(
+	sessionManager: SessionManager,
+	sessionId: string,
+	widgetId: string,
+	uploadId: string,
+): void {
+	const currentState = sessionManager.getState(sessionId);
+	const widgetState = currentState?.[widgetId];
+	const currentUploadIds = Array.isArray(widgetState) ? widgetState : [];
+	sessionManager.setState(sessionId, widgetId, [...currentUploadIds, uploadId]);
+}
+
+/**
  * 検証エラーコードをアップロードエラーコードにマップ
  */
-function mapValidationErrorCode(code: string | undefined): UploadErrorCode {
+export function mapValidationErrorCode(code: string | undefined): UploadErrorCode {
 	switch (code) {
 		case "SIZE_EXCEEDED":
 			return "SIZE_EXCEEDED";

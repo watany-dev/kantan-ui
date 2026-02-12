@@ -7,6 +7,11 @@ export type NodeServerType = {
 	listen: (port: number, hostname?: string, callback?: () => void) => void;
 };
 
+function asRecord(data: unknown): Record<string, unknown> | null {
+	if (typeof data !== "object" || data === null) return null;
+	return data as Record<string, unknown>;
+}
+
 // クライアント → サーバ
 export interface ClientMessage {
 	type:
@@ -39,8 +44,8 @@ export interface FileUploadMessage {
 
 /** FileUploadMessageの型ガード */
 export function isFileUploadMessage(data: unknown): data is FileUploadMessage {
-	if (typeof data !== "object" || data === null) return false;
-	const msg = data as Record<string, unknown>;
+	const msg = asRecord(data);
+	if (!msg) return false;
 	if (msg["type"] !== "file_upload") return false;
 	if (typeof msg["widgetId"] !== "string") return false;
 	if (typeof msg["filename"] !== "string") return false;
@@ -53,8 +58,8 @@ export function isFileUploadMessage(data: unknown): data is FileUploadMessage {
 
 /** ClientMessageの型ガード */
 export function isClientMessage(data: unknown): data is ClientMessage {
-	if (typeof data !== "object" || data === null) return false;
-	const msg = data as Record<string, unknown>;
+	const msg = asRecord(data);
+	if (!msg) return false;
 	const validTypes = [
 		"event",
 		"init",
@@ -103,8 +108,8 @@ export interface ChunkUploadEndMessage {
 
 /** ChunkUploadStartMessageの型ガード */
 export function isChunkUploadStartMessage(data: unknown): data is ChunkUploadStartMessage {
-	if (typeof data !== "object" || data === null) return false;
-	const msg = data as Record<string, unknown>;
+	const msg = asRecord(data);
+	if (!msg) return false;
 	if (msg["type"] !== "chunk_upload_start") return false;
 	if (typeof msg["widgetId"] !== "string") return false;
 	if (typeof msg["uploadId"] !== "string") return false;
@@ -118,8 +123,8 @@ export function isChunkUploadStartMessage(data: unknown): data is ChunkUploadSta
 
 /** ChunkUploadDataMessageの型ガード */
 export function isChunkUploadDataMessage(data: unknown): data is ChunkUploadDataMessage {
-	if (typeof data !== "object" || data === null) return false;
-	const msg = data as Record<string, unknown>;
+	const msg = asRecord(data);
+	if (!msg) return false;
 	if (msg["type"] !== "chunk_upload_data") return false;
 	if (typeof msg["uploadId"] !== "string") return false;
 	if (typeof msg["chunkIndex"] !== "number") return false;
@@ -129,8 +134,8 @@ export function isChunkUploadDataMessage(data: unknown): data is ChunkUploadData
 
 /** ChunkUploadEndMessageの型ガード */
 export function isChunkUploadEndMessage(data: unknown): data is ChunkUploadEndMessage {
-	if (typeof data !== "object" || data === null) return false;
-	const msg = data as Record<string, unknown>;
+	const msg = asRecord(data);
+	if (!msg) return false;
 	if (msg["type"] !== "chunk_upload_end") return false;
 	if (typeof msg["uploadId"] !== "string") return false;
 	// checksum is optional

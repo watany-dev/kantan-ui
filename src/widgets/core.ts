@@ -158,29 +158,11 @@ export function initializeMultiselectState(widgetId: string, defaultValue?: stri
 }
 
 /**
- * 日付入力のstate管理
+ * 日付/時刻/日時入力の共通state管理
  * 初期値をstateに保存し、現在値を返す
  * デフォルト値が指定されない場合は空文字列を使用
  */
-export function initializeDateInputState(widgetId: string, defaultValue?: string): string {
-	return initializeWidgetState(widgetId, defaultValue ?? "");
-}
-
-/**
- * 時刻入力のstate管理
- * 初期値をstateに保存し、現在値を返す
- * デフォルト値が指定されない場合は空文字列を使用
- */
-export function initializeTimeInputState(widgetId: string, defaultValue?: string): string {
-	return initializeWidgetState(widgetId, defaultValue ?? "");
-}
-
-/**
- * 日時入力のstate管理
- * 初期値をstateに保存し、現在値を返す
- * デフォルト値が指定されない場合は空文字列を使用
- */
-export function initializeDatetimeInputState(widgetId: string, defaultValue?: string): string {
+export function initializeDateTimeState(widgetId: string, defaultValue?: string): string {
 	return initializeWidgetState(widgetId, defaultValue ?? "");
 }
 

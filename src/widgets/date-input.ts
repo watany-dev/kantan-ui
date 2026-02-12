@@ -1,6 +1,6 @@
 import { toDateString } from "../utils/date";
 import { raw, renderHtml } from "../utils/html";
-import { initializeDateInputState } from "./core";
+import { initializeDateTimeState } from "./core";
 import { generateWidgetId } from "./registry";
 import type { DateInputConfig } from "./types";
 
@@ -21,7 +21,7 @@ export function date_input(
 ): string {
 	const id = generateWidgetId(config?.key);
 	const defaultStr = toDateString(defaultValue);
-	return initializeDateInputState(id, defaultStr);
+	return initializeDateTimeState(id, defaultStr);
 }
 
 /**
