@@ -87,7 +87,7 @@
 		"@vitest/coverage-istanbul": "^4.0.16",
 		"fast-check": "^4.5.3",
 		"jsdom": "^29.0.1",
-		"knip": "^5.0.0",
+		"knip": "^6.15.0",
 		"typescript": "^6.0.2",
 		"vitest": "^4.0.16"
 	},
